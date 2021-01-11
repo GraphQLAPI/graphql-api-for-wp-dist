@@ -1,0 +1,46 @@
+{
+    "name": "graphql-by-pop/graphql-parser",
+    "description": "GraphQL syntax parser",
+    "homepage": "https://github.com/GraphQLByPoP/graphql-parser",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Leonardo Losoviz",
+            "email": "leo@getpop.org",
+            "homepage": "https://getpop.org"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "ext-mbstring": "*",
+        "symfony/property-access": "^5.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": ">=9.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "GraphQLByPoP\\GraphQLParser\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GraphQLByPoP\\GraphQLParser\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "check-style": "phpcs src tests",
+        "fix-style": "phpcbf src tests",
+        "analyse": "phpstan analyse",
+        "preview-code-downgrade": "rector process src --config=rector-downgrade-code.php --dry-run --ansi"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.8-dev"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
