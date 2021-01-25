@@ -65,7 +65,10 @@ final class PropertyWriteInfo
         $this->adderInfo = $adderInfo;
     }
 
-    public function getAdderInfo(): self
+    /**
+     * @return $this
+     */
+    public function getAdderInfo()
     {
         if (null === $this->adderInfo) {
             throw new \LogicException("Calling getAdderInfo() when having a mutator of type {$this->type} is not tolerated.");
@@ -79,7 +82,10 @@ final class PropertyWriteInfo
         $this->removerInfo = $removerInfo;
     }
 
-    public function getRemoverInfo(): self
+    /**
+     * @return $this
+     */
+    public function getRemoverInfo()
     {
         if (null === $this->removerInfo) {
             throw new \LogicException("Calling getRemoverInfo() when having a mutator of type {$this->type} is not tolerated.");

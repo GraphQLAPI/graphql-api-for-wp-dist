@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e
+class ComposerStaticInit661c86b478fedd21f82f14e021c356e7
 {
     public static $files = array (
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
@@ -773,7 +773,6 @@ class ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e
         'GraphQLAPI\\GraphQLAPI\\Blocks\\SchemaConfigurationBlock' => __DIR__ . '/../..' . '/src/Blocks/SchemaConfigurationBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Blocks\\WithTypeFieldControlBlockTrait' => __DIR__ . '/../..' . '/src/Blocks/WithTypeFieldControlBlockTrait.php',
         'GraphQLAPI\\GraphQLAPI\\Cache\\CacheConfigurationManager' => __DIR__ . '/../..' . '/src/Cache/CacheConfigurationManager.php',
-        'GraphQLAPI\\GraphQLAPI\\Cache\\CacheConfigurationManagerInterface' => __DIR__ . '/../..' . '/src/Cache/CacheConfigurationManagerInterface.php',
         'GraphQLAPI\\GraphQLAPI\\Clients\\AdminGraphiQLWithExplorerClient' => __DIR__ . '/../..' . '/src/Clients/AdminGraphiQLWithExplorerClient.php',
         'GraphQLAPI\\GraphQLAPI\\Clients\\CustomEndpointClientTrait' => __DIR__ . '/../..' . '/src/Clients/CustomEndpointClientTrait.php',
         'GraphQLAPI\\GraphQLAPI\\Clients\\CustomEndpointGraphiQLClient' => __DIR__ . '/../..' . '/src/Clients/CustomEndpointGraphiQLClient.php',
@@ -1622,6 +1621,8 @@ class ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e
         'PoP\\ComponentModel\\AttachableExtensions\\AttachableExtensionManagerInterface' => __DIR__ . '/..' . '/getpop/component-model/src/AttachableExtensions/AttachableExtensionManagerInterface.php',
         'PoP\\ComponentModel\\AttachableExtensions\\AttachableExtensionTrait' => __DIR__ . '/..' . '/getpop/component-model/src/AttachableExtensions/AttachableExtensionTrait.php',
         'PoP\\ComponentModel\\Cache\\Cache' => __DIR__ . '/..' . '/getpop/component-model/src/Cache/Cache.php',
+        'PoP\\ComponentModel\\Cache\\CacheConfigurationManager' => __DIR__ . '/..' . '/getpop/component-model/src/Cache/CacheConfigurationManager.php',
+        'PoP\\ComponentModel\\Cache\\CacheConfigurationManagerInterface' => __DIR__ . '/..' . '/getpop/component-model/src/Cache/CacheConfigurationManagerInterface.php',
         'PoP\\ComponentModel\\Cache\\CacheInterface' => __DIR__ . '/..' . '/getpop/component-model/src/Cache/CacheInterface.php',
         'PoP\\ComponentModel\\Cache\\ReplaceCurrentExecutionDataWithPlaceholdersTrait' => __DIR__ . '/..' . '/getpop/component-model/src/Cache/ReplaceCurrentExecutionDataWithPlaceholdersTrait.php',
         'PoP\\ComponentModel\\CheckpointProcessors\\AbstractCheckpointProcessor' => __DIR__ . '/..' . '/getpop/component-model/src/CheckpointProcessors/AbstractCheckpointProcessor.php',
@@ -2436,10 +2437,10 @@ class ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit1be39e30d30b79c9639dbd7dc6f0e14e::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit661c86b478fedd21f82f14e021c356e7::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit661c86b478fedd21f82f14e021c356e7::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit661c86b478fedd21f82f14e021c356e7::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit661c86b478fedd21f82f14e021c356e7::$classMap;
 
         }, null, ClassLoader::class);
     }

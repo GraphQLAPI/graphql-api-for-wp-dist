@@ -22,10 +22,7 @@ class ParsedExpression extends Expression
 {
     private $nodes;
 
-    /**
-     * @param \Symfony\Component\ExpressionLanguage\Node\Node $nodes
-     */
-    public function __construct(string $expression, $nodes)
+    public function __construct(string $expression, Node $nodes)
     {
         parent::__construct($expression);
 

@@ -18,10 +18,7 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
  */
 class TraceableTagAwareAdapter extends TraceableAdapter implements TagAwareAdapterInterface, TagAwareCacheInterface
 {
-    /**
-     * @param \Symfony\Component\Cache\Adapter\TagAwareAdapterInterface $pool
-     */
-    public function __construct($pool)
+    public function __construct(TagAwareAdapterInterface $pool)
     {
         parent::__construct($pool);
     }

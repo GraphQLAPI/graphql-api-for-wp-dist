@@ -41,8 +41,10 @@ class ByteString extends AbstractString
      *
      * Copyright (c) 2004-2020, Facebook, Inc. (https://www.facebook.com/)
      */
-
-    public static function fromRandom(int $length = 16, string $alphabet = null): self
+    /**
+     * @return $this
+     */
+    public static function fromRandom(int $length = 16, string $alphabet = null)
     {
         if ($length <= 0) {
             throw new InvalidArgumentException(sprintf('A strictly positive length is expected, "%d" given.', $length));

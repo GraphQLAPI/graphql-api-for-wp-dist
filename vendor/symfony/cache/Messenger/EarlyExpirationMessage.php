@@ -24,7 +24,10 @@ final class EarlyExpirationMessage
     private $pool;
     private $callback;
 
-    public static function create(ReverseContainer $reverseContainer, callable $callback, CacheItem $item, AdapterInterface $pool): ?self
+    /**
+     * @return $this|null
+     */
+    public static function create(ReverseContainer $reverseContainer, callable $callback, CacheItem $item, AdapterInterface $pool)
     {
         try {
             $item = clone $item;

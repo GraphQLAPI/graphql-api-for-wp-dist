@@ -53,7 +53,7 @@ abstract class AbstractUnicodeString extends AbstractString
     /**
      * @return static
      */
-    public static function fromCodePoints(int ...$codes): self
+    public static function fromCodePoints(int ...$codes)
     {
         $string = '';
 
@@ -78,8 +78,9 @@ abstract class AbstractUnicodeString extends AbstractString
      * Install the intl extension for best results.
      *
      * @param string[]|\Transliterator[]|\Closure[] $rules See "*-Latin" rules from Transliterator::listIDs()
+     * @return $this
      */
-    public function ascii(array $rules = []): self
+    public function ascii(array $rules = [])
     {
         $str = clone $this;
         $s = $str->string;
@@ -255,7 +256,7 @@ abstract class AbstractUnicodeString extends AbstractString
     /**
      * @return static
      */
-    public function normalize(int $form = self::NFC): self
+    public function normalize(int $form = self::NFC)
     {
         if (!\in_array($form, [self::NFC, self::NFD, self::NFKC, self::NFKD])) {
             throw new InvalidArgumentException('Unsupported normalization form.');

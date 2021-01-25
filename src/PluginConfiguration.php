@@ -536,6 +536,8 @@ class PluginConfiguration
     protected static function addPredefinedComponentClassConfiguration(array &$componentClassConfiguration): void
     {
         $moduleRegistry = ModuleRegistryFacade::getInstance();
+        $isDev = PluginEnvironment::isPluginEnvironmentDev();
+
         $componentClassConfiguration[\PoP\Engine\Component::class] = [
             \PoP\Engine\Environment::ADD_MANDATORY_CACHE_CONTROL_DIRECTIVE => false,
         ];
@@ -558,6 +560,7 @@ class PluginConfiguration
             $componentClassConfiguration[\PoP\Root\Component::class] = [
                 \PoP\Root\Environment::CACHE_CONTAINER_CONFIGURATION => true,
                 \PoP\Root\Environment::CONTAINER_CONFIGURATION_CACHE_NAMESPACE => $cacheConfigurationManager->getNamespace(),
+                \PoP\Root\Environment::THROW_EXCEPTION_IF_CACHE_SETUP_ERROR => $isDev,
             ];
         }
         $componentClassConfiguration[\GraphQLByPoP\GraphQLServer\Component::class] = [

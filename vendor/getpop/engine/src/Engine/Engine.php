@@ -67,6 +67,7 @@ class Engine extends \PoP\ComponentModel\Engine\Engine implements EngineInterfac
                 $headers[] = $cacheControlHeader;
             }
         }
-        $formatter->outputResponse($this->getOutputData(), $headers);
+        $data = $this->getOutputData();
+        $formatter->outputResponse($data, $headers);
     }
 }

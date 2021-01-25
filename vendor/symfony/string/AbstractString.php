@@ -95,7 +95,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
      *
      * @return static
      */
-    public function after($needle, bool $includeNeedle = false, int $offset = 0): self
+    public function after($needle, bool $includeNeedle = false, int $offset = 0)
     {
         $str = clone $this;
         $i = \PHP_INT_MAX;
@@ -126,7 +126,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
      *
      * @return static
      */
-    public function afterLast($needle, bool $includeNeedle = false, int $offset = 0): self
+    public function afterLast($needle, bool $includeNeedle = false, int $offset = 0)
     {
         $str = clone $this;
         $i = null;
@@ -155,14 +155,14 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function append(string ...$suffix): self;
+    abstract public function append(string ...$suffix);
 
     /**
      * @param string|string[] $needle
      *
      * @return static
      */
-    public function before($needle, bool $includeNeedle = false, int $offset = 0): self
+    public function before($needle, bool $includeNeedle = false, int $offset = 0)
     {
         $str = clone $this;
         $i = \PHP_INT_MAX;
@@ -193,7 +193,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
      *
      * @return static
      */
-    public function beforeLast($needle, bool $includeNeedle = false, int $offset = 0): self
+    public function beforeLast($needle, bool $includeNeedle = false, int $offset = 0)
     {
         $str = clone $this;
         $i = null;
@@ -232,7 +232,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function camel(): self;
+    abstract public function camel();
 
     /**
      * @return static[]
@@ -242,7 +242,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    public function collapseWhitespace(): self
+    public function collapseWhitespace()
     {
         $str = clone $this;
         $str->string = trim(preg_replace('/(?:\s{2,}+|[^\S ])/', ' ', $str->string));
@@ -279,7 +279,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    public function ensureEnd(string $suffix): self
+    public function ensureEnd(string $suffix)
     {
         if (!$this->endsWith($suffix)) {
             return $this->append($suffix);
@@ -294,7 +294,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    public function ensureStart(string $prefix): self
+    public function ensureStart(string $prefix)
     {
         $prefix = new static($prefix);
 
@@ -334,12 +334,12 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function folded(): self;
+    abstract public function folded();
 
     /**
      * @return static
      */
-    public function ignoreCase(): self
+    public function ignoreCase()
     {
         $str = clone $this;
         $str->ignoreCase = true;
@@ -399,7 +399,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function join(array $strings, string $lastGlue = null): self;
+    abstract public function join(array $strings, string $lastGlue = null);
 
     public function jsonSerialize(): string
     {
@@ -411,7 +411,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function lower(): self;
+    abstract public function lower();
 
     /**
      * Matches the string using a regular expression.
@@ -425,27 +425,27 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function padBoth(int $length, string $padStr = ' '): self;
+    abstract public function padBoth(int $length, string $padStr = ' ');
 
     /**
      * @return static
      */
-    abstract public function padEnd(int $length, string $padStr = ' '): self;
+    abstract public function padEnd(int $length, string $padStr = ' ');
 
     /**
      * @return static
      */
-    abstract public function padStart(int $length, string $padStr = ' '): self;
+    abstract public function padStart(int $length, string $padStr = ' ');
 
     /**
      * @return static
      */
-    abstract public function prepend(string ...$prefix): self;
+    abstract public function prepend(string ...$prefix);
 
     /**
      * @return static
      */
-    public function repeat(int $multiplier): self
+    public function repeat(int $multiplier)
     {
         if (0 > $multiplier) {
             throw new InvalidArgumentException(sprintf('Multiplier must be positive, %d given.', $multiplier));
@@ -460,34 +460,34 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function replace(string $from, string $to): self;
+    abstract public function replace(string $from, string $to);
 
     /**
      * @param string|callable $to
      *
      * @return static
      */
-    abstract public function replaceMatches(string $fromRegexp, $to): self;
+    abstract public function replaceMatches(string $fromRegexp, $to);
 
     /**
      * @return static
      */
-    abstract public function reverse(): self;
+    abstract public function reverse();
 
     /**
      * @return static
      */
-    abstract public function slice(int $start = 0, int $length = null): self;
+    abstract public function slice(int $start = 0, int $length = null);
 
     /**
      * @return static
      */
-    abstract public function snake(): self;
+    abstract public function snake();
 
     /**
      * @return static
      */
-    abstract public function splice(string $replacement, int $start = 0, int $length = null): self;
+    abstract public function splice(string $replacement, int $start = 0, int $length = null);
 
     /**
      * @return static[]
@@ -558,7 +558,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function title(bool $allWords = false): self;
+    abstract public function title(bool $allWords = false);
 
     public function toByteString(string $toEncoding = null): ByteString
     {
@@ -609,22 +609,22 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function trim(string $chars = " \t\n\r\0\x0B\x0C\u{A0}\u{FEFF}"): self;
+    abstract public function trim(string $chars = " \t\n\r\0\x0B\x0C\u{A0}\u{FEFF}");
 
     /**
      * @return static
      */
-    abstract public function trimEnd(string $chars = " \t\n\r\0\x0B\x0C\u{A0}\u{FEFF}"): self;
+    abstract public function trimEnd(string $chars = " \t\n\r\0\x0B\x0C\u{A0}\u{FEFF}");
 
     /**
      * @return static
      */
-    abstract public function trimStart(string $chars = " \t\n\r\0\x0B\x0C\u{A0}\u{FEFF}"): self;
+    abstract public function trimStart(string $chars = " \t\n\r\0\x0B\x0C\u{A0}\u{FEFF}");
 
     /**
      * @return static
      */
-    public function truncate(int $length, string $ellipsis = '', bool $cut = true): self
+    public function truncate(int $length, string $ellipsis = '', bool $cut = true)
     {
         $stringLength = $this->length();
 
@@ -654,7 +654,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    abstract public function upper(): self;
+    abstract public function upper();
 
     /**
      * Returns the printable length on a terminal.
@@ -664,7 +664,7 @@ abstract class AbstractString implements \Stringable, \JsonSerializable
     /**
      * @return static
      */
-    public function wordwrap(int $width = 75, string $break = "\n", bool $cut = false): self
+    public function wordwrap(int $width = 75, string $break = "\n", bool $cut = false)
     {
         $lines = '' !== $break ? $this->split($break) : [clone $this];
         $chars = [];

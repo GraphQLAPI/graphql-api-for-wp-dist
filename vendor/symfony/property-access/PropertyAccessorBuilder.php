@@ -44,8 +44,9 @@ class PropertyAccessorBuilder
 
     /**
      * Enables the use of all magic methods by the PropertyAccessor.
+     * @return $this
      */
-    public function enableMagicMethods(): self
+    public function enableMagicMethods()
     {
         $this->magicMethods = PropertyAccessor::MAGIC_GET | PropertyAccessor::MAGIC_SET | PropertyAccessor::MAGIC_CALL;
 
@@ -54,8 +55,9 @@ class PropertyAccessorBuilder
 
     /**
      * Disable the use of all magic methods by the PropertyAccessor.
+     * @return $this
      */
-    public function disableMagicMethods(): self
+    public function disableMagicMethods()
     {
         $this->magicMethods = PropertyAccessor::DISALLOW_MAGIC_METHODS;
 
@@ -76,8 +78,9 @@ class PropertyAccessorBuilder
 
     /**
      * Enables the use of "__get" by the PropertyAccessor.
+     * @return $this
      */
-    public function enableMagicGet(): self
+    public function enableMagicGet()
     {
         $this->magicMethods |= PropertyAccessor::MAGIC_GET;
 
@@ -86,8 +89,9 @@ class PropertyAccessorBuilder
 
     /**
      * Enables the use of "__set" by the PropertyAccessor.
+     * @return $this
      */
-    public function enableMagicSet(): self
+    public function enableMagicSet()
     {
         $this->magicMethods |= PropertyAccessor::MAGIC_SET;
 
@@ -108,8 +112,9 @@ class PropertyAccessorBuilder
 
     /**
      * Disables the use of "__get" by the PropertyAccessor.
+     * @return $this
      */
-    public function disableMagicGet(): self
+    public function disableMagicGet()
     {
         $this->magicMethods &= ~PropertyAccessor::MAGIC_GET;
 
@@ -118,8 +123,9 @@ class PropertyAccessorBuilder
 
     /**
      * Disables the use of "__set" by the PropertyAccessor.
+     * @return $this
      */
-    public function disableMagicSet(): self
+    public function disableMagicSet()
     {
         $this->magicMethods &= ~PropertyAccessor::MAGIC_SET;
 

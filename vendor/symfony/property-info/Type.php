@@ -107,8 +107,9 @@ class Type
      * Gets collection key type.
      *
      * Only applicable for a collection type.
+     * @return $this|null
      */
-    public function getCollectionKeyType(): ?self
+    public function getCollectionKeyType()
     {
         return $this->collectionKeyType;
     }
@@ -117,8 +118,9 @@ class Type
      * Gets collection value type.
      *
      * Only applicable for a collection type.
+     * @return $this|null
      */
-    public function getCollectionValueType(): ?self
+    public function getCollectionValueType()
     {
         return $this->collectionValueType;
     }

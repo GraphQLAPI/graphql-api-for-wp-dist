@@ -314,7 +314,6 @@ class SchemaDefinitionReferenceRegistry implements SchemaDefinitionReferenceRegi
             // if (isset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES])) {
             //     ksort($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES]);
             // }
-
         }
 
         // Expand the full schema with more data that is needed for GraphQL

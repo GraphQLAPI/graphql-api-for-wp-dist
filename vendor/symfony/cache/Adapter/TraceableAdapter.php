@@ -30,10 +30,7 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
     protected $pool;
     private $calls = [];
 
-    /**
-     * @param \Symfony\Component\Cache\Adapter\AdapterInterface $pool
-     */
-    public function __construct($pool)
+    public function __construct(AdapterInterface $pool)
     {
         $this->pool = $pool;
     }

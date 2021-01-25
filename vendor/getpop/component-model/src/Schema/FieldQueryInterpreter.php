@@ -75,12 +75,9 @@ class FieldQueryInterpreter extends \PoP\FieldQuery\FieldQueryInterpreter implem
      */
     protected $typeCastingExecuter;
 
-    /**
-     * @param \PoP\ComponentModel\Schema\FeedbackMessageStoreInterface $feedbackMessageStore
-     */
     public function __construct(
         TranslationAPIInterface $translationAPI,
-        $feedbackMessageStore,
+        FeedbackMessageStoreInterface $feedbackMessageStore,
         TypeCastingExecuterInterface $typeCastingExecuter,
         QueryParserInterface $queryParser
     ) {

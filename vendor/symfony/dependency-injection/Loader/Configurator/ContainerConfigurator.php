@@ -74,7 +74,7 @@ class ContainerConfigurator extends AbstractConfigurator
     /**
      * @return static
      */
-    final public function withPath(string $path): self
+    final public function withPath(string $path)
     {
         $clone = clone $this;
         $clone->path = $clone->file = $path;

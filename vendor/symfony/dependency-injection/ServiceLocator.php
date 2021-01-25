@@ -67,7 +67,7 @@ class ServiceLocator implements ServiceProviderInterface
      *
      * @return static
      */
-    public function withContext(string $externalId, Container $container): self
+    public function withContext(string $externalId, Container $container)
     {
         $locator = clone $this;
         $locator->externalId = $externalId;

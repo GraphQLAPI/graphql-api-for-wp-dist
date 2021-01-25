@@ -58,7 +58,7 @@ final class Dotenv
     /**
      * @return $this
      */
-    public function setProdEnvs(array $prodEnvs): self
+    public function setProdEnvs(array $prodEnvs)
     {
         $this->prodEnvs = $prodEnvs;
 
@@ -71,7 +71,7 @@ final class Dotenv
      *
      * @return $this
      */
-    public function usePutenv($usePutenv = true): self
+    public function usePutenv($usePutenv = true)
     {
         $this->usePutenv = $usePutenv;
 

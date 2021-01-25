@@ -47,7 +47,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9aaa6b8196bb09a6f8f38577fd3745f54f5bd237',
+      'reference' => '3e8aa028ed799a9008bedf325c3226e209a9d09e',
     ),
     'getpop/api' => 
     array (
@@ -57,7 +57,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'da6d91936d59417b0b16269f1c2a2f0c7630d4f6',
+      'reference' => '10930a4ff09cecb27479356856c04603ff84f067',
     ),
     'getpop/api-clients' => 
     array (
@@ -67,7 +67,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '0ecc86659474b4e0b93ee124f404187ea7657629',
+      'reference' => '386114faff98e4a6269e20bece68d89d52adbe24',
     ),
     'getpop/api-endpoints' => 
     array (
@@ -77,7 +77,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '81d17ec95d7b31dba5a86457927304ce0f3c0abe',
+      'reference' => '0a524d222bd9d536a830090a8d3f20c4f3197410',
     ),
     'getpop/api-endpoints-for-wp' => 
     array (
@@ -87,7 +87,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '80c706200543c77bb66c194a6d48a3c03f69d673',
+      'reference' => '53d164c85516c0ff36d5359cce633abe6210c615',
     ),
     'getpop/api-graphql' => 
     array (
@@ -97,7 +97,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '43677ac5707fe3df15a48bacacfdb98fd84e01b1',
+      'reference' => 'e9bb712c868228089775ad0474e6fb4156a1aa98',
     ),
     'getpop/api-mirrorquery' => 
     array (
@@ -107,7 +107,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '66506bddb74ce5dc4ef00de5fc66af52e9d0e35b',
+      'reference' => '9db01b5ab35b9fcc82ac53ff7464f33b9634e632',
     ),
     'getpop/cache-control' => 
     array (
@@ -117,7 +117,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c7c80368477d5d38efc67665b4abc3c3cbd69ef0',
+      'reference' => 'fd71d577083361ee1b090b26d814cbdab2eeebe8',
     ),
     'getpop/component-model' => 
     array (
@@ -127,7 +127,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '315e190be8a437e37834c24dc7aa1fd22a456f4a',
+      'reference' => '6202225bb1c57f4555026dd23f5d490749172406',
     ),
     'getpop/definitions' => 
     array (
@@ -137,7 +137,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'bf7e33a05b39937dbc9d5afc923b6fb4ae325e5e',
+      'reference' => 'd6230ecb6a33dd29b2dce54cb6eef5091acba6d5',
     ),
     'getpop/engine' => 
     array (
@@ -147,7 +147,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '5a1deb4f388d5fd85c58cf9ad3e1c059ddc5f616',
+      'reference' => '70eebb199d4e167a1981834f7192eb9ccf8a1610',
     ),
     'getpop/engine-wp' => 
     array (
@@ -157,7 +157,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c68921fd7e404caaa73bcaca47197a00cf409c12',
+      'reference' => '21167ba910689e82c5b3dff3bd9f40705ab02dfd',
     ),
     'getpop/field-query' => 
     array (
@@ -167,7 +167,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'f4924086ede97c7e754629a04fd60774dca81344',
+      'reference' => 'd7080141707dd62eb7b49dc6875fd2fa803ff1f6',
     ),
     'getpop/guzzle-helpers' => 
     array (
@@ -177,7 +177,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '02a30b439e6504f81c78ec100fb0269c3026b503',
+      'reference' => 'd220083a82fa6959a4ac7f2721b8b5d99ccdce3e',
     ),
     'getpop/hooks' => 
     array (
@@ -187,7 +187,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a6ec29dd51492b08fd964c1c63c23fac856e7a0d',
+      'reference' => '348d91232182414aaf44629badc0455b567569a1',
     ),
     'getpop/hooks-wp' => 
     array (
@@ -197,7 +197,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '0f9d63d0cde8d657999af4c5ca31a01934651e4f',
+      'reference' => 'b73e75970d778343d48d0c4b1f69ab6bfa88b98e',
     ),
     'getpop/loosecontracts' => 
     array (
@@ -207,7 +207,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '551a4f6ec375319ea97f816d3122bc066da9d6c0',
+      'reference' => '8eeae44c7c3103aad0cf653fa4d38cc3d93311f5',
     ),
     'getpop/mandatory-directives-by-configuration' => 
     array (
@@ -217,7 +217,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a61a558134e7cbadc71a1ab3442b5236142bbca6',
+      'reference' => 'ef3d2960abe97717552df977ebf2e29b9539bfa9',
     ),
     'getpop/migrate-api' => 
     array (
@@ -227,7 +227,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9555dc0789ff8d95746e321fe163dc1cd6ad4de7',
+      'reference' => 'a6dd256985206fcf645fcc2a5eb0f17102bc118c',
     ),
     'getpop/migrate-api-graphql' => 
     array (
@@ -235,9 +235,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '46b3b090ba260324c2bfd3469bf7c7da9e4abf8f',
+      'reference' => '259d1af383ea5670355964c688f3c9f6691267d5',
     ),
     'getpop/migrate-component-model' => 
     array (
@@ -245,9 +245,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '99e86f2901542607021170f3171e2252fb8f2b25',
+      'reference' => '9a4ae258a4f9a97d39e3f08c8e8a1ba4013e895c',
     ),
     'getpop/migrate-engine' => 
     array (
@@ -257,7 +257,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9d014c511db9f076220d618ea964780a5bf4e82f',
+      'reference' => '25f35364fd7d773aa6b4ec47374d0aea7989084f',
     ),
     'getpop/migrate-engine-wp' => 
     array (
@@ -265,9 +265,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '3667eb56f11bfb851d243d77deaabf8a5cbc2af6',
+      'reference' => 'dd00d163807fe905851fb21094a1c8e981225c9c',
     ),
     'getpop/modulerouting' => 
     array (
@@ -277,7 +277,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e7921c4e7166877e0e31c959ad776c8ab48dccf1',
+      'reference' => '79ce5538a160bc22932e0c5a205ef8964a376238',
     ),
     'getpop/query-parsing' => 
     array (
@@ -287,7 +287,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a86763ade3a682ac50377e30dddc84113f7d7df3',
+      'reference' => '7197ad0c832e322e50d75bf08b1d2c1438e5e6e9',
     ),
     'getpop/root' => 
     array (
@@ -297,7 +297,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'cbb73d2d9de3b428057dda1d898fe2aa51b08baf',
+      'reference' => '6c60e995aea194e3f429a964359b1c853ca1ddbb',
     ),
     'getpop/routing' => 
     array (
@@ -307,7 +307,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9a1c37a0733a40c86d4e3181d391d901e9e45598',
+      'reference' => '983f710db1b28e21514d4b6f176f2a9164aef23e',
     ),
     'getpop/routing-wp' => 
     array (
@@ -317,7 +317,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'fb7b8e696757cd26b6059c3aa5639e95ec0d14c5',
+      'reference' => '4b4be4cf0a53fadf824ada79c82f9ff1a612f25a',
     ),
     'getpop/translation' => 
     array (
@@ -327,7 +327,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'd96f574b1bc0db6205a4ae6af18219362b778839',
+      'reference' => '1b06cf0051e6f1ae435903c1bc80a94e6cdf065f',
     ),
     'getpop/translation-wp' => 
     array (
@@ -337,7 +337,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e4e4671b8cd4a4b55fc5c8f7b5e95ac85e2b658a',
+      'reference' => '1e8664842b2197a066f51dc378d631d9e44c0c4f',
     ),
     'graphql-api/graphql-api-for-wp' => 
     array (
@@ -357,7 +357,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '58cde574842add6da54586df51dec89637b58149',
+      'reference' => '1f15300c70110cea9bb1e465e9c8790d7302a686',
     ),
     'graphql-by-pop/graphql-endpoint-for-wp' => 
     array (
@@ -367,7 +367,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '5fba43995114f440096dd970fdb48360ca63996c',
+      'reference' => '05cb1a3d0080a8900bd1f12f1c18dd33dfccf2e2',
     ),
     'graphql-by-pop/graphql-parser' => 
     array (
@@ -377,7 +377,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '5f671c05c7c37ff44b50a5c297a90eb748e4746c',
+      'reference' => '9c6c7770284ec66fe2fa7df478e0562385d05942',
     ),
     'graphql-by-pop/graphql-query' => 
     array (
@@ -387,7 +387,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '23fc70a0a8df3756905e56f77057d56e7d16726c',
+      'reference' => 'afa9dc33139e557ca7fac325d8ab8d0e66bf6362',
     ),
     'graphql-by-pop/graphql-request' => 
     array (
@@ -397,7 +397,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e45042284deeb9ca835a3fecfc0d287d696dbc7f',
+      'reference' => '17ca38d80d8272f5f4751c65f62ed0572f1fe61f',
     ),
     'graphql-by-pop/graphql-server' => 
     array (
@@ -407,7 +407,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '69812e76ff44b2ca0256192128aad9efa114da48',
+      'reference' => 'effe7de283470653153c64c16ae053ac24bffdc9',
     ),
     'guzzlehttp/guzzle' => 
     array (
@@ -471,7 +471,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '17004f163a59743011eb15fab52246dcb503d412',
+      'reference' => 'e4a159780d6070113675b19142091d7b9ff23595',
     ),
     'pop-schema/comment-mutations' => 
     array (
@@ -481,7 +481,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a19fa6fdec4871d09cab188bc272d7da2e7a2e29',
+      'reference' => 'ce8d9325bf0f6ceb9348a893be0ce4b3f9717a00',
     ),
     'pop-schema/comment-mutations-wp' => 
     array (
@@ -491,7 +491,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e108184ece75133ffded60d5f5bdf2dce0ba78c4',
+      'reference' => '1b88136090837bd627d997ca153d307d056bc302',
     ),
     'pop-schema/commentmeta' => 
     array (
@@ -501,7 +501,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'fe58e176f2acd1f11515f896e46b0b79711c41fa',
+      'reference' => '85d3a978a5e5d15c0c76f2c2927ec30ee467193b',
     ),
     'pop-schema/commentmeta-wp' => 
     array (
@@ -511,7 +511,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'be4fefa8832b3efc0e1d3bbdfbc1fa0fd4ff7531',
+      'reference' => 'b865ac844809493a96464c63e650b7a5b2d28eee',
     ),
     'pop-schema/comments' => 
     array (
@@ -521,7 +521,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '7941c8fecb88846c01521c227d2b545c19b9bbd7',
+      'reference' => '4da1c20260b2f6346b346763c9d32762150bded2',
     ),
     'pop-schema/comments-wp' => 
     array (
@@ -531,7 +531,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '3642ed75bdef87ed3db3e1197e472a81b53f63cc',
+      'reference' => 'ec528244c9162f06dc88c0367063a1e818616751',
     ),
     'pop-schema/custompost-mutations' => 
     array (
@@ -541,7 +541,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'b15f789c0bb00de7103d77ffe0ea9440f0acd4cb',
+      'reference' => 'c0a327d862355ac84c2e13adfb07900edecc3c91',
     ),
     'pop-schema/custompost-mutations-wp' => 
     array (
@@ -551,7 +551,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'fb721abca5b8db8631663da0146e5fbef95e0ef1',
+      'reference' => '8ba153f583945ed7ca2ef5b851134227ae73c3fc',
     ),
     'pop-schema/custompostmedia' => 
     array (
@@ -561,7 +561,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'edbf1cdb3ef553c8bbc0e21ab94ae70ede18d4a6',
+      'reference' => 'c84eff4cff96b07eca222cd3cf07ba8e068775ca',
     ),
     'pop-schema/custompostmedia-mutations' => 
     array (
@@ -571,7 +571,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '26666546fd1268f8aa5abee84a4a6c8e13d259cc',
+      'reference' => '930be391b9c8d48d81b84cefd829f08d75d47b6a',
     ),
     'pop-schema/custompostmedia-mutations-wp' => 
     array (
@@ -581,7 +581,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'bc579667b1aac654db01a8b3643cb456235ea61d',
+      'reference' => '96293b9b7e5d620883abe87f6a086157e5a88084',
     ),
     'pop-schema/custompostmedia-wp' => 
     array (
@@ -591,7 +591,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'bcc8ea5877adbae60b1a364a71bffc356d408d0b',
+      'reference' => 'dddc37ee2291a3011297b217af37a4cdc1d9b649',
     ),
     'pop-schema/custompostmeta' => 
     array (
@@ -601,7 +601,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '5354ae48f88a47a5866f2796130bb68e870eabb0',
+      'reference' => '37306374625fff88c8cec2d5ca6920b76e1a2af6',
     ),
     'pop-schema/custompostmeta-wp' => 
     array (
@@ -611,7 +611,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'baee7524b495ac1b0bafda08d10d2980407eb1dd',
+      'reference' => '39114e3dde4a7e350ef955f85a3bfa0d230dc36e',
     ),
     'pop-schema/customposts' => 
     array (
@@ -621,7 +621,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'b1a806ea961c21e97e85090c34ecf6002ae8f299',
+      'reference' => 'bf51f6e07faad5da6145e0ebe1d76c8d7cdfd2a2',
     ),
     'pop-schema/customposts-wp' => 
     array (
@@ -631,7 +631,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '70c23d188550cc05084a73221180542a1c14d20c',
+      'reference' => 'c231ccce03fc5b13b336fa1469bba71009348a39',
     ),
     'pop-schema/generic-customposts' => 
     array (
@@ -641,7 +641,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '2ebd6c1381f18c1d4f528ccb8d11a2f1abea00ed',
+      'reference' => 'd4ade66e5936acf03c4198788c5739995ad7d251',
     ),
     'pop-schema/media' => 
     array (
@@ -651,7 +651,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a31142227e53f15f0a16ce7268ada5c6d1d4cd41',
+      'reference' => 'e3b67999b2910f50941d23071dfaf356f4480a9a',
     ),
     'pop-schema/media-wp' => 
     array (
@@ -661,7 +661,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'dad97d062062a16137d272416d23187e5b2525f5',
+      'reference' => '393bf1c4c7b2d14735fedc883e3cc23dc2041177',
     ),
     'pop-schema/meta' => 
     array (
@@ -671,7 +671,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '763101783f949f228086d6720ded96b62afc37ff',
+      'reference' => '604d7af2da85c123120f654833dbe249f680796a',
     ),
     'pop-schema/metaquery' => 
     array (
@@ -681,7 +681,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'ce10e5da83262d000f645b5fca5d89ee8cd347b2',
+      'reference' => 'ae72163dc9c5d757a2fe133b0697cdb76625983d',
     ),
     'pop-schema/metaquery-wp' => 
     array (
@@ -691,7 +691,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '85639a9c7d503fbee017c0731930cd183fc35021',
+      'reference' => '9bf61802df81388d9296f4d2254efab59e1e4891',
     ),
     'pop-schema/migrate-commentmeta' => 
     array (
@@ -699,9 +699,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '7514420e26f1d03b23a8ed2feb2cce84286be76a',
+      'reference' => 'e9150ff6ed3958a92882e8506081bff2fa58320a',
     ),
     'pop-schema/migrate-commentmeta-wp' => 
     array (
@@ -709,9 +709,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'fda046a60319fcb90a08bb5aaf191f026beeaa41',
+      'reference' => '6c67bed6887057821ef518d57aa1375d75dee750',
     ),
     'pop-schema/migrate-comments' => 
     array (
@@ -719,9 +719,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '79b07d55d21a9851245dd8611bc9880a7ff0a5d5',
+      'reference' => '026718cb9f83d338c72da562ee19a4c8ef5baadc',
     ),
     'pop-schema/migrate-comments-wp' => 
     array (
@@ -729,9 +729,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '214a0654b15835158c595d32628b9bf1332900c6',
+      'reference' => '6284aaa4838ff5e4e94c8e696dbdf1001f5c3435',
     ),
     'pop-schema/migrate-custompostmedia' => 
     array (
@@ -739,9 +739,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '75c2afa18e47d7cd9efcf1dbeb783bf51eed12e2',
+      'reference' => 'd80e7b50bc92fdc3113def008f0874ca92ac38ad',
     ),
     'pop-schema/migrate-custompostmedia-wp' => 
     array (
@@ -749,9 +749,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'b9eefa4d4ef93b4c9959a587662683e07e7c854c',
+      'reference' => '19ed84d8eb53e28042297c0612bbaf95c964c44e',
     ),
     'pop-schema/migrate-custompostmeta' => 
     array (
@@ -759,9 +759,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'ba67954ac79326b44c7673388dd1e519da2778ad',
+      'reference' => '73e733097a99832de8781f9b936f69777d2b5125',
     ),
     'pop-schema/migrate-custompostmeta-wp' => 
     array (
@@ -769,9 +769,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '8194c095613e41a1331adc86f105d96d3233c663',
+      'reference' => '6e79cec29a8c8afc467c7bb2850ed3bab550d29c',
     ),
     'pop-schema/migrate-customposts' => 
     array (
@@ -779,9 +779,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'e6208799bc91c9f6c544e08bf40bf28b199138d2',
+      'reference' => '7160f412c1685a534a9bfb65f467593b3153b6e3',
     ),
     'pop-schema/migrate-customposts-wp' => 
     array (
@@ -789,9 +789,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '625b7e525a6c9edaf020b5656f5b6bd9698742bc',
+      'reference' => '87ed7f51e8fee0e617325b6f56511b9f20ea7e65',
     ),
     'pop-schema/migrate-media' => 
     array (
@@ -799,9 +799,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '6a231342a01393b5198071093718dceb26b094b1',
+      'reference' => '668d089d3da5ea9d93c9df83572a12d44a458dcb',
     ),
     'pop-schema/migrate-media-wp' => 
     array (
@@ -809,9 +809,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '1580dd1629097fe4affcbabff210d55b675e9664',
+      'reference' => '9232f074dbe9d2b78a0cc49e736a83d6fa68e8f2',
     ),
     'pop-schema/migrate-meta' => 
     array (
@@ -819,9 +819,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '51d4bd957b83faa1613e440f578d89edb99f2238',
+      'reference' => 'cbb81c3cf075c55ef75c01e037f446afcefe9ed4',
     ),
     'pop-schema/migrate-metaquery' => 
     array (
@@ -829,9 +829,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'ecc351b3b67072c9309af1279046139214ceb12f',
+      'reference' => '8996f8dd7fc73d71a66c4182445948f558e0d84e',
     ),
     'pop-schema/migrate-metaquery-wp' => 
     array (
@@ -839,9 +839,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '04a659f3a6e88cbe83998ed8452f773c398a5e9a',
+      'reference' => '70b566d01508c7a8879389c140e998b37197c0c9',
     ),
     'pop-schema/migrate-pages' => 
     array (
@@ -849,9 +849,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '2f0e179f03a27eb7226f536412a9dde7cfdfbb31',
+      'reference' => '4d25c3d2a3a666777a856ca1fb91a4ab1a5b7637',
     ),
     'pop-schema/migrate-pages-wp' => 
     array (
@@ -859,9 +859,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '15ca73e6f9f0d4b370ae9541b30d30d19c563c14',
+      'reference' => '6d860872a0fccefcfbb0564fc4cbd8103998d1ee',
     ),
     'pop-schema/migrate-post-tags' => 
     array (
@@ -869,9 +869,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'c408350a05e6cb85c087b88c9b6325bc98830654',
+      'reference' => 'f29aadbef974461cb56195736db52d7dd95a00c7',
     ),
     'pop-schema/migrate-post-tags-wp' => 
     array (
@@ -879,9 +879,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'b0cc8f8d52825a774cdaa5a434b39fb64179821b',
+      'reference' => '49d861b3213547b8c095a05ee32c685a74d734c4',
     ),
     'pop-schema/migrate-posts' => 
     array (
@@ -889,9 +889,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '425fdf1be00dcc91c643900245aa86352caf81e5',
+      'reference' => '844745f5f680f8275cd881631ec2dd590fa6d551',
     ),
     'pop-schema/migrate-posts-wp' => 
     array (
@@ -899,9 +899,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '7ce8d10c7e6425d5984bb0a1a81ad87af8e8e103',
+      'reference' => '431b1d1397e5542b33365e9290f93c658a0aae7b',
     ),
     'pop-schema/migrate-queriedobject' => 
     array (
@@ -909,9 +909,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '615972951fff1f153f64bf13dff0977fab705c28',
+      'reference' => '39e657fa1b721e8f669a274cc44ad4248232308a',
     ),
     'pop-schema/migrate-queriedobject-wp' => 
     array (
@@ -919,9 +919,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '558c0ba687fc120df869178d6c7235ba3a6c0560',
+      'reference' => '057337cb84ea6a07761018486d09c4457ba2d4a4',
     ),
     'pop-schema/migrate-tags' => 
     array (
@@ -929,9 +929,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '69cf87cfa2c020718fa3017abe75ac0eedf1ad0b',
+      'reference' => '01a022dacda35a75646495f95f887c7a389b2fdf',
     ),
     'pop-schema/migrate-tags-wp' => 
     array (
@@ -939,9 +939,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'bae2b46f10839946e47b3626bd14b0c4b5b007ad',
+      'reference' => '7868559cc0e1b7b6bce631d2ac73c47e0397429c',
     ),
     'pop-schema/migrate-taxonomies' => 
     array (
@@ -949,9 +949,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '73d77d255da8faee06689209ffe14a73463d3c10',
+      'reference' => 'b5873dc6fc43f2913e569d31fb026fa2229b3077',
     ),
     'pop-schema/migrate-taxonomies-wp' => 
     array (
@@ -959,9 +959,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '651e5c82e63ae27b0852adeaabb485b481714ccb',
+      'reference' => '591577894d387034e68c431e17514142ab1e135a',
     ),
     'pop-schema/migrate-taxonomymeta' => 
     array (
@@ -969,9 +969,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'aba2992cf2d11f73bbda56cf7fc57b575b68095e',
+      'reference' => '810e7de0922e1ae06f9a15f6a4ae4028904d73fa',
     ),
     'pop-schema/migrate-taxonomymeta-wp' => 
     array (
@@ -979,9 +979,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '23c3676ee4b39861bd2d0dc64a280fc080fc19bd',
+      'reference' => 'f90b1e466f1ee1d54205a7f0238973a1e44a5d5f',
     ),
     'pop-schema/migrate-taxonomyquery' => 
     array (
@@ -989,9 +989,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'a607e5824bffe3b49ca07a4d1c6dca12010de302',
+      'reference' => '9a6780700ecc4270f3425b1e147a5d6cdaa60f4f',
     ),
     'pop-schema/migrate-taxonomyquery-wp' => 
     array (
@@ -999,9 +999,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'd9226ada418ffc7251f42908042273da3fc669d0',
+      'reference' => 'bdf1628b1e49b7775380f9cc434558ef7ac7be94',
     ),
     'pop-schema/migrate-usermeta' => 
     array (
@@ -1009,9 +1009,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => '45422c8e386bae1ea342357a4d19bdc44e89b017',
+      'reference' => '35118ded6d0994a39f00eb2b850b28a92d142c93',
     ),
     'pop-schema/migrate-usermeta-wp' => 
     array (
@@ -1019,9 +1019,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'fccb40e9a74addc92ff145cb5a5689b591c7f7f7',
+      'reference' => '92dd9ce18123a3e365aa8dc82537f150be42c35c',
     ),
     'pop-schema/migrate-users' => 
     array (
@@ -1029,9 +1029,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'c8142d13609120b11e9e33ff9e578eebc5f40939',
+      'reference' => 'de35d80d66b970a21e1a7ad5b7123cf8b271a1ea',
     ),
     'pop-schema/migrate-users-wp' => 
     array (
@@ -1039,9 +1039,9 @@
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '0.8.x-dev',
+        0 => '1.0.x-dev',
       ),
-      'reference' => 'd32c3e648c67ad060571ed407752727cd2039e20',
+      'reference' => '798763353aa6ac52ba0c694721525403af2a5d86',
     ),
     'pop-schema/pages' => 
     array (
@@ -1051,7 +1051,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c4ebcfdd0d2a3f0f80afcee1334bcb87090d7263',
+      'reference' => '4e00e74b1c088529f0c0fc10068c6526f324c349',
     ),
     'pop-schema/pages-wp' => 
     array (
@@ -1061,7 +1061,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '317ddcf2a0daf0310ad0d1190fb4a38ecb49764c',
+      'reference' => '3e27782f92b9a61024d06d2831f6f8eb72bbd3ff',
     ),
     'pop-schema/post-mutations' => 
     array (
@@ -1071,7 +1071,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '3d223c660cf8f37de42125685b227ac27e38f7ba',
+      'reference' => '9d639bce223e9717d656c9f36c009c7d3c930cd8',
     ),
     'pop-schema/post-tags' => 
     array (
@@ -1081,7 +1081,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '555c07d57a735c7fdaf56918c8f477b2f0789f6e',
+      'reference' => '4d9932006e7bf4663b413791e9788b610d89bbb1',
     ),
     'pop-schema/post-tags-wp' => 
     array (
@@ -1091,7 +1091,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '665721619c37a1c762c11be6b463c50658a146a5',
+      'reference' => 'd7fded7331935349c37307bf31361943fdc888a1',
     ),
     'pop-schema/posts' => 
     array (
@@ -1101,7 +1101,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '5c773c048d365c0d4530250cb2ca11ad54acaf00',
+      'reference' => 'e079555231484aa027311b184def705910feac67',
     ),
     'pop-schema/posts-wp' => 
     array (
@@ -1111,7 +1111,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '513deef1fe85916ecabdffb525849c1837aadc14',
+      'reference' => 'bc8b8078be61a2bf417e1cb728df96d5efc02547',
     ),
     'pop-schema/queriedobject' => 
     array (
@@ -1121,7 +1121,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '6572103749501d25498a3d0dc3beeea33f60a436',
+      'reference' => 'dfe97aa001c29b4c37c26104ea330d78538aba29',
     ),
     'pop-schema/queriedobject-wp' => 
     array (
@@ -1131,7 +1131,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '0e2c52c322bd28f151c2d9c0032c7f42fe3019ac',
+      'reference' => '7fbdf1dec20bb094427a1be462808a34671f7f88',
     ),
     'pop-schema/schema-commons' => 
     array (
@@ -1141,7 +1141,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'f8ade26da2055e79db4d5ae5dd7802c7e32981f5',
+      'reference' => '21316d42fc916c00173226ec61291e923c2068ea',
     ),
     'pop-schema/tags' => 
     array (
@@ -1151,7 +1151,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '43582322b698a3c99c0f1cfccc0508b7708d8431',
+      'reference' => 'e49366db6bab0a5ae7f2a57ae3be01412c792719',
     ),
     'pop-schema/tags-wp' => 
     array (
@@ -1161,7 +1161,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '4473176552a8bbc19ffb2cff850e08dbc3c688a4',
+      'reference' => '67110c42a5ac704a0781ba2113464092b899c016',
     ),
     'pop-schema/taxonomies' => 
     array (
@@ -1171,7 +1171,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '998afb6af11be01195773c6d85e4222fcb8b893f',
+      'reference' => 'a98d9fcf77eb4b4f5ebc1e0dfccd16139ddf21da',
     ),
     'pop-schema/taxonomies-wp' => 
     array (
@@ -1181,7 +1181,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'bb206847664cd171261baf219dfdf8145005b871',
+      'reference' => 'a86ae85f9e5077438736a837286bf88c411b4c4a',
     ),
     'pop-schema/taxonomymeta' => 
     array (
@@ -1191,7 +1191,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '0ee565b56eef40f091b3f338faf9d53f86ff0bce',
+      'reference' => '8cf00bed28ade9c92b62b970a3d471cc33fe0db5',
     ),
     'pop-schema/taxonomymeta-wp' => 
     array (
@@ -1201,7 +1201,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '65c0faea5f1ee25f328539561a2a19daacc5981c',
+      'reference' => 'fb8811586a77c245fffed787309801dee5fe0c77',
     ),
     'pop-schema/taxonomyquery' => 
     array (
@@ -1211,7 +1211,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'f1380bc359c9d76dae2363c2c923b305893d9277',
+      'reference' => '840ac82c5b39d9411b10b6909d8b216b7e683168',
     ),
     'pop-schema/taxonomyquery-wp' => 
     array (
@@ -1221,7 +1221,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'de53de021be6c882c5a886c069cd9d0ed1fecedf',
+      'reference' => '68a14365c095e720a2caf27ede1d5c7b6bbf619e',
     ),
     'pop-schema/user-roles' => 
     array (
@@ -1231,7 +1231,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a3807b0d2ebcde3914c9e448a4a78e8178846758',
+      'reference' => 'a0f1a805275f741118940cea3c22380c8cc402b6',
     ),
     'pop-schema/user-roles-access-control' => 
     array (
@@ -1241,7 +1241,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '5087bf94032a98701bc2c1e3a1d3659dd7048721',
+      'reference' => 'e5c7a894f73b8658626ba0683602fbfde2d4c08f',
     ),
     'pop-schema/user-roles-wp' => 
     array (
@@ -1251,7 +1251,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'ebc263c0cecec32bfc41eaf14c7cad48f07647db',
+      'reference' => '291c0ef03062da3c126c3f984259a2d6eeffc139',
     ),
     'pop-schema/user-state' => 
     array (
@@ -1261,7 +1261,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '695ac938c9e6c81c8fd02a013f10948a0a8cacc3',
+      'reference' => 'c984901bbd3cf7b5a372b66634ece431ef3876dd',
     ),
     'pop-schema/user-state-access-control' => 
     array (
@@ -1271,7 +1271,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c24169894a79064dd11f27fda10f2b52278281f5',
+      'reference' => 'c109777b1a17230d67dee290f3db297455c22af1',
     ),
     'pop-schema/user-state-mutations' => 
     array (
@@ -1281,7 +1281,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'ba17ac7fd8ce29b2ee776e3f6188822a3719fc11',
+      'reference' => 'b1fd84953618eb92cb30ccc2d8251a7ece7c3a71',
     ),
     'pop-schema/user-state-mutations-wp' => 
     array (
@@ -1291,7 +1291,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '467c3b127c04e10a901e8da43805fdba03a7461d',
+      'reference' => '5f1621008f3c2b56a599c429d73763cb16438695',
     ),
     'pop-schema/user-state-wp' => 
     array (
@@ -1301,7 +1301,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'de2d0cb77b7bccd8a22ae2f2d115cf9e84daf402',
+      'reference' => '7db975d0382c48dca5efa78e7469fa0d04b7be61',
     ),
     'pop-schema/usermeta' => 
     array (
@@ -1311,7 +1311,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '773d0cf0eef93a21b61eba395d04504559ee8550',
+      'reference' => '30acb971d8dd5d77cddbb25f63650f7e295743cb',
     ),
     'pop-schema/usermeta-wp' => 
     array (
@@ -1321,7 +1321,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '7eb39929ed6b1bc23ba3539fe343cd359565c1a7',
+      'reference' => 'b38b22d4e872d024038d46d116290999d8d71496',
     ),
     'pop-schema/users' => 
     array (
@@ -1331,7 +1331,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'b17923f0a8c0ca2c79581699958173fb21744f62',
+      'reference' => 'df3c6b4710eabf56fc63d8a44c88b632ba98352a',
     ),
     'pop-schema/users-wp' => 
     array (
@@ -1341,7 +1341,7 @@
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '7eddbf1f642b4e522c06785bd5566be343fb5150',
+      'reference' => '6a7287b47bef848cd0a341a9e586b3e63dec6f17',
     ),
     'psr/cache' => 
     array (
