@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\Hooks\Misc;
 
 use PoP\Engine\Environment;
 use PoP\Hooks\AbstractHookSet;
 use PoP\Definitions\Facades\DefinitionManagerFacade;
-
-class DefinitionPersistenceHookSet extends AbstractHookSet
+class DefinitionPersistenceHookSet extends \PoP\Hooks\AbstractHookSet
 {
     protected function init()
     {
@@ -16,8 +14,8 @@ class DefinitionPersistenceHookSet extends AbstractHookSet
     }
     public function maybePersist()
     {
-        if (!Environment::disablePersistingDefinitionsOnEachRequest()) {
-            DefinitionManagerFacade::getInstance()->maybeStoreDefinitionsPersistently();
+        if (!\PoP\Engine\Environment::disablePersistingDefinitionsOnEachRequest()) {
+            \PoP\Definitions\Facades\DefinitionManagerFacade::getInstance()->maybeStoreDefinitionsPersistently();
         }
     }
 }

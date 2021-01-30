@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Schema;
 
 class SchemaDefinition
@@ -48,10 +47,8 @@ class SchemaDefinition
     const ARGNAME_DIRECTIVE_NEEDS_DATA_TO_EXECUTE = 'needsDataToExecute';
     const ARGNAME_DIRECTIVE_LIMITED_TO_FIELDS = 'limitedToFields';
     const ARGNAME_DIRECTIVE_EXPRESSIONS = 'expressions';
-
     const ARGVALUE_SCHEMA_SHAPE_FLAT = 'flat';
     const ARGVALUE_SCHEMA_SHAPE_NESTED = 'nested';
-
     // Field/Directive Argument Types
     const TYPE_MIXED = 'mixed';
     const TYPE_ID = 'id';
@@ -68,7 +65,6 @@ class SchemaDefinition
     const TYPE_ENUM = 'enum';
     const TYPE_ARRAY = 'array';
     const TYPE_INPUT_OBJECT = 'input_object';
-
     /**
      * Using "/" doesn't work with GraphQL Voyager!
      */

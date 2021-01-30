@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserRolesAccessControl\TypeResolverDecorators;
 
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-
 trait ValidateDoesLoggedInUserHaveCapabilityPublicSchemaTypeResolverDecoratorTrait
 {
     /**
@@ -15,19 +13,14 @@ trait ValidateDoesLoggedInUserHaveCapabilityPublicSchemaTypeResolverDecoratorTra
      * @param TypeResolverInterface $typeResolver
      * @return array
      */
-    protected function getMandatoryDirectives($entryValue = null): array
+    protected function getMandatoryDirectives($entryValue = null) : array
     {
         $capabilities = $entryValue;
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         $directiveResoverClass = $this->getValidateCapabilityDirectiveResolverClass();
         $directiveName = $directiveResoverClass::getDirectiveName();
-        $validateDoesLoggedInUserHaveAnyCapabilityDirective = $fieldQueryInterpreter->getDirective($directiveName, [
-            'capabilities' => $capabilities,
-        ]);
-        return [
-            $validateDoesLoggedInUserHaveAnyCapabilityDirective,
-        ];
+        $validateDoesLoggedInUserHaveAnyCapabilityDirective = $fieldQueryInterpreter->getDirective($directiveName, ['capabilities' => $capabilities]);
+        return [$validateDoesLoggedInUserHaveAnyCapabilityDirective];
     }
-
-    abstract protected function getValidateCapabilityDirectiveResolverClass(): string;
+    protected abstract function getValidateCapabilityDirectiveResolverClass() : string;
 }

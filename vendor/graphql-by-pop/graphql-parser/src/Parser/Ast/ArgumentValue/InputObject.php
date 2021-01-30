@@ -5,29 +5,23 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class InputObject extends AbstractAst implements ValueInterface
+class InputObject extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface
 {
-
     protected $object = [];
-
     /**
      * @param array    $object
      * @param Location $location
      */
-    public function __construct(array $object, Location $location)
+    public function __construct(array $object, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
         $this->object = $object;
     }
-
     /**
      * @return array
      */
@@ -35,7 +29,6 @@ class InputObject extends AbstractAst implements ValueInterface
     {
         return $this->object;
     }
-
     /**
      * @param array $value
      */

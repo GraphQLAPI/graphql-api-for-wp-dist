@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\QueriedObject\TypeAPIs;
 
 // use PoP\ComponentModel\Feedback\Tokens;
 // use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
 // use PoP\Translation\Facades\TranslationAPIFacade;
-
 class TypeAPIUtils
 {
     /**
@@ -17,12 +15,10 @@ class TypeAPIUtils
      * @param integer|null $maxLimit
      * @return integer|null
      */
-    public static function getLimitOrMaxLimit(
-        ?int $limit,
-        ?int $maxLimit/*, bool $addSchemaWarning = true*/
-    ): ?int {
+    public static function getLimitOrMaxLimit(?int $limit, ?int $maxLimit) : ?int
+    {
         // $limit with values -1 or 0 could mean "unlimited"
-        if (!is_null($maxLimit) && $maxLimit != -1 && ($limit <= 0 || $limit > $maxLimit)) {
+        if (!\is_null($maxLimit) && $maxLimit != -1 && ($limit <= 0 || $limit > $maxLimit)) {
             // Commented adding the schema warning because it doesn't work in nested queries
             // Eg: "posts" under the author has max limit of 5, the warning is added successfully,
             // but it doesn't show in the response (I didn't check out why)
@@ -34,7 +30,6 @@ class TypeAPIUtils
             //     }
             //   }
             // }
-
             // Add a warning in the query response
             // if ($addSchemaWarning) {
             //     $translationAPI = TranslationAPIFacade::getInstance();

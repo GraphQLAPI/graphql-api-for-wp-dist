@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\Media;
 
-abstract class ObjectPropertyResolver_Base implements ObjectPropertyResolver
+abstract class ObjectPropertyResolver_Base implements \PoPSchema\Media\ObjectPropertyResolver
 {
     public function __construct()
     {
-        ObjectPropertyResolverFactory::setInstance($this);
+        \PoPSchema\Media\ObjectPropertyResolverFactory::setInstance($this);
     }
 }

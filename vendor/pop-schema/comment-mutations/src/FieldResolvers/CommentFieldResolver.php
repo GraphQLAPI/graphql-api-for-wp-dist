@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CommentMutations\FieldResolvers;
 
 use PoP\ComponentModel\Schema\SchemaDefinition;
@@ -12,102 +11,78 @@ use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
 use PoPSchema\CommentMutations\MutationResolvers\MutationInputProperties;
 use PoPSchema\CommentMutations\MutationResolvers\AddCommentToCustomPostMutationResolver;
 use PoPSchema\CommentMutations\Schema\SchemaDefinitionHelpers;
-
-class CommentFieldResolver extends AbstractDBDataFieldResolver
+class CommentFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(CommentTypeResolver::class);
+        return array(\PoPSchema\Comments\TypeResolvers\CommentTypeResolver::class);
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        return [
-            'reply',
-        ];
+        return ['reply'];
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'reply' => $translationAPI->__('Reply a comment with another comment', 'comment-mutations'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['reply' => $translationAPI->__('Reply a comment with another comment', 'comment-mutations')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $types = [
-            'reply' => SchemaDefinition::TYPE_ID,
-        ];
+        $types = ['reply' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): array
+    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         switch ($fieldName) {
             case 'reply':
-                return SchemaDefinitionHelpers::getAddCommentToCustomPostSchemaFieldArgs($typeResolver, $fieldName, false, false);
+                return \PoPSchema\CommentMutations\Schema\SchemaDefinitionHelpers::getAddCommentToCustomPostSchemaFieldArgs($typeResolver, $fieldName, \false, \false);
         }
         return parent::getSchemaFieldArgs($typeResolver, $fieldName);
     }
-
     /**
      * Validated the mutation on the resultItem because the ID
      * is obtained from the same object, so it's not originally
      * present in $form_data
      */
-    public function validateMutationOnResultItem(
-        TypeResolverInterface $typeResolver,
-        string $fieldName
-    ): bool {
+    public function validateMutationOnResultItem(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    {
         switch ($fieldName) {
             case 'reply':
-                return true;
+                return \true;
         }
         return parent::validateMutationOnResultItem($typeResolver, $fieldName);
     }
-
     /**
      * @param object $resultItem
      */
-    protected function getFieldArgsToExecuteMutation(
-        array $fieldArgs,
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName
-    ): array {
+    protected function getFieldArgsToExecuteMutation(array $fieldArgs, \PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName) : array
+    {
         $fieldArgs = parent::getFieldArgsToExecuteMutation($fieldArgs, $typeResolver, $resultItem, $fieldName);
         $comment = $resultItem;
         switch ($fieldName) {
             case 'reply':
                 $cmscommentsresolver = \PoPSchema\Comments\ObjectPropertyResolverFactory::getInstance();
-                $fieldArgs[MutationInputProperties::CUSTOMPOST_ID] = $cmscommentsresolver->getCommentPostId($comment);
-                $fieldArgs[MutationInputProperties::PARENT_COMMENT_ID] = $typeResolver->getID($comment);
+                $fieldArgs[\PoPSchema\CommentMutations\MutationResolvers\MutationInputProperties::CUSTOMPOST_ID] = $cmscommentsresolver->getCommentPostId($comment);
+                $fieldArgs[\PoPSchema\CommentMutations\MutationResolvers\MutationInputProperties::PARENT_COMMENT_ID] = $typeResolver->getID($comment);
                 break;
         }
-
         return $fieldArgs;
     }
-
-    public function resolveFieldMutationResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldMutationResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'reply':
-                return AddCommentToCustomPostMutationResolver::class;
+                return \PoPSchema\CommentMutations\MutationResolvers\AddCommentToCustomPostMutationResolver::class;
         }
-
         return parent::resolveFieldMutationResolverClass($typeResolver, $fieldName);
     }
-
-    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'reply':
-                return CommentTypeResolver::class;
+                return \PoPSchema\Comments\TypeResolvers\CommentTypeResolver::class;
         }
-
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }
 }

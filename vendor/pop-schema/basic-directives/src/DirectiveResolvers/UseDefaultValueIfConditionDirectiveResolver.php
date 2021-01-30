@@ -1,18 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\BasicDirectives\DirectiveResolvers;
 
 use PoP\ComponentModel\DirectiveResolvers\GlobalDirectiveResolverTrait;
 use PoPSchema\BasicDirectives\DirectiveResolvers\AbstractUseDefaultValueIfConditionDirectiveResolver;
-
-class UseDefaultValueIfConditionDirectiveResolver extends AbstractUseDefaultValueIfConditionDirectiveResolver
+class UseDefaultValueIfConditionDirectiveResolver extends \PoPSchema\BasicDirectives\DirectiveResolvers\AbstractUseDefaultValueIfConditionDirectiveResolver
 {
     use GlobalDirectiveResolverTrait;
-
     const DIRECTIVE_NAME = 'default';
-    public static function getDirectiveName(): string
+    public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;
     }

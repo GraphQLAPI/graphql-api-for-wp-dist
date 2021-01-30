@@ -8,55 +8,50 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Cache;
 
-namespace Symfony\Component\Cache;
-
-use Psr\Log\LoggerInterface;
-use Symfony\Component\Cache\Exception\InvalidArgumentException;
-use Symfony\Component\Cache\Exception\LogicException;
-use Symfony\Contracts\Cache\ItemInterface;
-
+use PrefixedByPoP\Psr\Log\LoggerInterface;
+use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
+use PrefixedByPoP\Symfony\Component\Cache\Exception\LogicException;
+use PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-final class CacheItem implements ItemInterface
+final class CacheItem implements \PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface
 {
     private const METADATA_EXPIRY_OFFSET = 1527506807;
-
     protected $key;
     protected $value;
-    protected $isHit = false;
+    protected $isHit = \false;
     protected $expiry;
     protected $metadata = [];
     protected $newMetadata = [];
     protected $innerItem;
     protected $poolHash;
-    protected $isTaggable = false;
-
+    protected $isTaggable = \false;
     /**
      * {@inheritdoc}
      */
-    public function getKey(): string
+    public function getKey() : string
     {
         return $this->key;
     }
-
     /**
      * {@inheritdoc}
+     *
+     * @return mixed
      */
     public function get()
     {
         return $this->value;
     }
-
     /**
      * {@inheritdoc}
      */
-    public function isHit(): bool
+    public function isHit() : bool
     {
         return $this->isHit;
     }
-
     /**
      * {@inheritdoc}
      *
@@ -65,10 +60,8 @@ final class CacheItem implements ItemInterface
     public function set($value)
     {
         $this->value = $value;
-
         return $this;
     }
-
     /**
      * {@inheritdoc}
      *
@@ -81,12 +74,10 @@ final class CacheItem implements ItemInterface
         } elseif ($expiration instanceof \DateTimeInterface) {
             $this->expiry = (float) $expiration->format('U.u');
         } else {
-            throw new InvalidArgumentException(sprintf('Expiration date must implement DateTimeInterface or be null, "%s" given.', get_debug_type($expiration)));
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Expiration date must implement DateTimeInterface or be null, "%s" given.', \get_debug_type($expiration)));
         }
-
         return $this;
     }
-
     /**
      * {@inheritdoc}
      *
@@ -97,56 +88,51 @@ final class CacheItem implements ItemInterface
         if (null === $time) {
             $this->expiry = null;
         } elseif ($time instanceof \DateInterval) {
-            $this->expiry = microtime(true) + \DateTime::createFromFormat('U', 0)->add($time)->format('U.u');
+            $this->expiry = \microtime(\true) + \DateTime::createFromFormat('U', 0)->add($time)->format('U.u');
         } elseif (\is_int($time)) {
-            $this->expiry = $time + microtime(true);
+            $this->expiry = $time + \microtime(\true);
         } else {
-            throw new InvalidArgumentException(sprintf('Expiration date must be an integer, a DateInterval or null, "%s" given.', get_debug_type($time)));
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Expiration date must be an integer, a DateInterval or null, "%s" given.', \get_debug_type($time)));
         }
-
         return $this;
     }
-
     /**
      * {@inheritdoc}
      * @return \Symfony\Contracts\Cache\ItemInterface
      */
-    public function tag($tags): self
+    public function tag($tags) : self
     {
         if (!$this->isTaggable) {
-            throw new LogicException(sprintf('Cache item "%s" comes from a non tag-aware pool: you cannot tag it.', $this->key));
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\LogicException(\sprintf('Cache item "%s" comes from a non tag-aware pool: you cannot tag it.', $this->key));
         }
-        if (!is_iterable($tags)) {
+        if (!\is_iterable($tags)) {
             $tags = [$tags];
         }
         foreach ($tags as $tag) {
-            if (!\is_string($tag) && !(\is_object($tag) && method_exists($tag, '__toString'))) {
-                throw new InvalidArgumentException(sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', \is_object($tag) ? \get_class($tag) : \gettype($tag)));
+            if (!\is_string($tag) && !(\is_object($tag) && \method_exists($tag, '__toString'))) {
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', \is_object($tag) ? \get_class($tag) : \gettype($tag)));
             }
             $tag = (string) $tag;
             if (isset($this->newMetadata[self::METADATA_TAGS][$tag])) {
                 continue;
             }
             if ('' === $tag) {
-                throw new InvalidArgumentException('Cache tag length must be greater than zero.');
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException('Cache tag length must be greater than zero.');
             }
-            if (false !== strpbrk($tag, self::RESERVED_CHARACTERS)) {
-                throw new InvalidArgumentException(sprintf('Cache tag "%s" contains reserved characters "%s".', $tag, self::RESERVED_CHARACTERS));
+            if (\false !== \strpbrk($tag, self::RESERVED_CHARACTERS)) {
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache tag "%s" contains reserved characters "%s".', $tag, self::RESERVED_CHARACTERS));
             }
             $this->newMetadata[self::METADATA_TAGS][$tag] = $tag;
         }
-
         return $this;
     }
-
     /**
      * {@inheritdoc}
      */
-    public function getMetadata(): array
+    public function getMetadata() : array
     {
         return $this->metadata;
     }
-
     /**
      * Validates a cache key according to PSR-6.
      *
@@ -154,38 +140,36 @@ final class CacheItem implements ItemInterface
      *
      * @throws InvalidArgumentException When $key is not valid
      */
-    public static function validateKey($key): string
+    public static function validateKey($key) : string
     {
         if (!\is_string($key)) {
-            throw new InvalidArgumentException(sprintf('Cache key must be string, "%s" given.', get_debug_type($key)));
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
         }
         if ('' === $key) {
-            throw new InvalidArgumentException('Cache key length must be greater than zero.');
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException('Cache key length must be greater than zero.');
         }
-        if (false !== strpbrk($key, self::RESERVED_CHARACTERS)) {
-            throw new InvalidArgumentException(sprintf('Cache key "%s" contains reserved characters "%s".', $key, self::RESERVED_CHARACTERS));
+        if (\false !== \strpbrk($key, self::RESERVED_CHARACTERS)) {
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key "%s" contains reserved characters "%s".', $key, self::RESERVED_CHARACTERS));
         }
-
         return $key;
     }
-
     /**
      * Internal logging helper.
      *
      * @internal
      */
-    public static function log(?LoggerInterface $logger, string $message, array $context = [])
+    public static function log(?\PrefixedByPoP\Psr\Log\LoggerInterface $logger, string $message, array $context = [])
     {
         if ($logger) {
             $logger->warning($message, $context);
         } else {
             $replace = [];
             foreach ($context as $k => $v) {
-                if (is_scalar($v)) {
-                    $replace['{'.$k.'}'] = $v;
+                if (\is_scalar($v)) {
+                    $replace['{' . $k . '}'] = $v;
                 }
             }
-            @trigger_error(strtr($message, $replace), \E_USER_WARNING);
+            @\trigger_error(\strtr($message, $replace), \E_USER_WARNING);
         }
     }
 }

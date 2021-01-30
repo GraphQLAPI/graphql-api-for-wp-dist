@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\Comments;
 
-abstract class ObjectPropertyResolver_Base implements ObjectPropertyResolver
+abstract class ObjectPropertyResolver_Base implements \PoPSchema\Comments\ObjectPropertyResolver
 {
     public function __construct()
     {
-        ObjectPropertyResolverFactory::setInstance($this);
+        \PoPSchema\Comments\ObjectPropertyResolverFactory::setInstance($this);
     }
 }

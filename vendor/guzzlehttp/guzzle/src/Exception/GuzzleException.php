@@ -1,10 +1,10 @@
 <?php
-namespace GuzzleHttp\Exception;
+
+namespace PrefixedByPoP\GuzzleHttp\Exception;
 
 use Throwable;
-
-if (interface_exists(Throwable::class)) {
-    interface GuzzleException extends Throwable
+if (\interface_exists(\Throwable::class)) {
+    interface GuzzleException extends \Throwable
     {
     }
 } else {

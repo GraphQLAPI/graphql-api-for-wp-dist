@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPostMutations\MutationResolvers;
 
 trait CreateCustomPostMutationResolverTrait
@@ -13,11 +12,9 @@ trait CreateCustomPostMutationResolverTrait
     {
         return $this->create($form_data);
     }
-
-    public function validateErrors(array $form_data): ?array
+    public function validateErrors(array $form_data) : ?array
     {
         return $this->validateCreateErrors($form_data);
     }
-
-    abstract protected function validateCreateErrors(array $form_data): ?array;
+    protected abstract function validateCreateErrors(array $form_data) : ?array;
 }

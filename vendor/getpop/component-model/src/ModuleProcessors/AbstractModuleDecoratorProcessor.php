@@ -1,47 +1,39 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\ModuleProcessors;
 
 use PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade;
-
-abstract class AbstractModuleDecoratorProcessor implements ModuleDecoratorProcessorInterface
+abstract class AbstractModuleDecoratorProcessor implements \PoP\ComponentModel\ModuleProcessors\ModuleDecoratorProcessorInterface
 {
     use ModulePathProcessorTrait;
-
     //-------------------------------------------------
     // PROTECTED Functions
     //-------------------------------------------------
-
-    final protected function getModuleProcessor(array $module)
+    protected final function getModuleProcessor(array $module)
     {
         return $this->getModuleProcessordecorator($module);
     }
-
-    final protected function getModuleProcessordecorator(array $module)
+    protected final function getModuleProcessordecorator(array $module)
     {
         $processor = $this->getDecoratedmoduleProcessor($module);
         return $this->getModuledecoratorprocessorManager()->getProcessordecorator($processor);
     }
-
-    final protected function getDecoratedmoduleProcessor(array $module)
+    protected final function getDecoratedmoduleProcessor(array $module)
     {
-        $moduleprocessor_manager = ModuleProcessorManagerFacade::getInstance();
+        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
         return $moduleprocessor_manager->getProcessor($module);
     }
-
     protected function getModuledecoratorprocessorManager()
     {
         return null;
     }
-
     //-------------------------------------------------
     // PUBLIC Functions
     //-------------------------------------------------
-    final public function getAllSubmodules(array $module): array
+    public final function getAllSubmodules(array $module) : array
     {
-        $moduleprocessor_manager = ModuleProcessorManagerFacade::getInstance();
+        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
         $processor = $moduleprocessor_manager->getProcessor($module);
         return $processor->getAllSubmodules($module);
     }

@@ -8,11 +8,9 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Yaml;
 
-namespace Symfony\Component\Yaml;
-
-use Symfony\Component\Yaml\Exception\ParseException;
-
+use PrefixedByPoP\Symfony\Component\Yaml\Exception\ParseException;
 /**
  * Yaml offers convenience methods to load and dump YAML.
  *
@@ -34,7 +32,6 @@ class Yaml
     public const PARSE_CUSTOM_TAGS = 512;
     public const DUMP_EMPTY_ARRAY_AS_SEQUENCE = 1024;
     public const DUMP_NULL_AS_TILDE = 2048;
-
     /**
      * Parses a YAML file into a PHP value.
      *
@@ -52,11 +49,9 @@ class Yaml
      */
     public static function parseFile(string $filename, int $flags = 0)
     {
-        $yaml = new Parser();
-
+        $yaml = new \PrefixedByPoP\Symfony\Component\Yaml\Parser();
         return $yaml->parseFile($filename, $flags);
     }
-
     /**
      * Parses YAML into a PHP value.
      *
@@ -75,11 +70,9 @@ class Yaml
      */
     public static function parse(string $input, int $flags = 0)
     {
-        $yaml = new Parser();
-
+        $yaml = new \PrefixedByPoP\Symfony\Component\Yaml\Parser();
         return $yaml->parse($input, $flags);
     }
-
     /**
      * Dumps a PHP value to a YAML string.
      *
@@ -93,10 +86,9 @@ class Yaml
      *
      * @return string A YAML string representing the original PHP value
      */
-    public static function dump($input, int $inline = 2, int $indent = 4, int $flags = 0): string
+    public static function dump($input, int $inline = 2, int $indent = 4, int $flags = 0) : string
     {
-        $yaml = new Dumper($indent);
-
+        $yaml = new \PrefixedByPoP\Symfony\Component\Yaml\Dumper($indent);
         return $yaml->dump($input, $inline, 0, $flags);
     }
 }

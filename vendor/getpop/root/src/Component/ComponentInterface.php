@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Root\Component;
 
 /**
@@ -16,12 +15,7 @@ interface ComponentInterface
      * @param boolean $skipSchema Indicate if to skip initializing the schema
      * @param string[] $skipSchemaComponentClasses
      */
-    public static function initialize(
-        array $configuration = [],
-        bool $skipSchema = false,
-        array $skipSchemaComponentClasses = []
-    ): void;
-
+    public static function initialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void;
     /**
      * All component classes that this component depends upon, to initialize them
      *
@@ -32,38 +26,33 @@ interface ComponentInterface
      *
      * @return string[]
      */
-    public static function getDependedComponentClasses(): array;
-
+    public static function getDependedComponentClasses() : array;
     /**
      * All conditional component classes that this component depends upon, to initialize them
      *
      * @return string[]
      */
-    public static function getDependedConditionalComponentClasses(): array;
-
+    public static function getDependedConditionalComponentClasses() : array;
     // /**
     //  * Initialize services
     //  */
     // public static function init(): void;
-
     /**
      * Function called by the Bootloader after all components have been loaded
      *
      * @return void
      */
-    public static function beforeBoot(): void;
-
+    public static function beforeBoot() : void;
     /**
      * Function called by the Bootloader when booting the system
      *
      * @return void
      */
-    public static function boot(): void;
-
+    public static function boot() : void;
     /**
      * Function called by the Bootloader when booting the system
      *
      * @return void
      */
-    public static function afterBoot(): void;
+    public static function afterBoot() : void;
 }

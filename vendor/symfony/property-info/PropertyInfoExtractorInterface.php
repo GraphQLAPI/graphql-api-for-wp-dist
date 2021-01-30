@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\PropertyInfo;
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
 
 /**
  * Gets info about PHP class properties.
@@ -18,6 +17,6 @@ namespace Symfony\Component\PropertyInfo;
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
-interface PropertyInfoExtractorInterface extends PropertyTypeExtractorInterface, PropertyDescriptionExtractorInterface, PropertyAccessExtractorInterface, PropertyListExtractorInterface
+interface PropertyInfoExtractorInterface extends \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyDescriptionExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyAccessExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyListExtractorInterface
 {
 }

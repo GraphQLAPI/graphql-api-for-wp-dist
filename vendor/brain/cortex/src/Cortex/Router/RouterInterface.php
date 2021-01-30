@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,11 +8,9 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Brain\Cortex\Router;
 
-namespace Brain\Cortex\Router;
-
-use Brain\Cortex\Uri\UriInterface;
-
+use PrefixedByPoP\Brain\Cortex\Uri\UriInterface;
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
@@ -24,5 +23,5 @@ interface RouterInterface
      * @param  string                         $httpMethod
      * @return \Brain\Cortex\Router\MatchingResult
      */
-    public function match(UriInterface $uri, $httpMethod);
+    public function match(\PrefixedByPoP\Brain\Cortex\Uri\UriInterface $uri, $httpMethod);
 }

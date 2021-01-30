@@ -1,33 +1,30 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use PoP\ComponentModel\Schema\SchemaDefinition;
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject;
-
-class EnumValue extends AbstractSchemaDefinitionReferenceObject
+class EnumValue extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject
 {
-
-    public function getName(): string
+    public function getName() : string
     {
-        return (string)$this->getValue();
+        return (string) $this->getValue();
     }
     public function getValue()
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_NAME];
+        return $this->schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME];
     }
-    public function getDescription(): ?string
+    public function getDescription() : ?string
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] ?? null;
+        return $this->schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] ?? null;
     }
-    public function isDeprecated(): bool
+    public function isDeprecated() : bool
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATED] ?? false;
+        return $this->schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATED] ?? \false;
     }
-    public function getDeprecatedReason(): ?string
+    public function getDeprecatedReason() : ?string
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] ?? null;
+        return $this->schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] ?? null;
     }
 }

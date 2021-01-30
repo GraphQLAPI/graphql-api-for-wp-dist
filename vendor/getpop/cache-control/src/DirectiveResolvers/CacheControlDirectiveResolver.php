@@ -1,30 +1,27 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\CacheControl\DirectiveResolvers;
 
 use PoP\CacheControl\ComponentConfiguration;
-
-class CacheControlDirectiveResolver extends AbstractCacheControlDirectiveResolver
+class CacheControlDirectiveResolver extends \PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver
 {
     /**
      * Do add this directive to the schema
      *
      * @return void
      */
-    public function skipAddingToSchemaDefinition(): bool
+    public function skipAddingToSchemaDefinition() : bool
     {
-        return false;
+        return \false;
     }
-
     /**
      * The default max-age is configured through an environment variable
      *
      * @return integer|null
      */
-    public function getMaxAge(): ?int
+    public function getMaxAge() : ?int
     {
-        return ComponentConfiguration::getDefaultCacheControlMaxAge();
+        return \PoP\CacheControl\ComponentConfiguration::getDefaultCacheControlMaxAge();
     }
 }

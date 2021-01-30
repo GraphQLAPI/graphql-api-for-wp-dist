@@ -1,27 +1,19 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPosts\Enums;
 
 use PoPSchema\CustomPosts\Types\Status;
 use PoP\ComponentModel\Enums\AbstractEnum;
-
-class CustomPostStatusEnum extends AbstractEnum
+class CustomPostStatusEnum extends \PoP\ComponentModel\Enums\AbstractEnum
 {
     public const NAME = 'CustomPostStatus';
-
-    protected function getEnumName(): string
+    protected function getEnumName() : string
     {
         return self::NAME;
     }
-    public function getValues(): array
+    public function getValues() : array
     {
-        return [
-            Status::PUBLISHED,
-            Status::PENDING,
-            Status::DRAFT,
-            Status::TRASH,
-        ];
+        return [\PoPSchema\CustomPosts\Types\Status::PUBLISHED, \PoPSchema\CustomPosts\Types\Status::PENDING, \PoPSchema\CustomPosts\Types\Status::DRAFT, \PoPSchema\CustomPosts\Types\Status::TRASH];
     }
 }

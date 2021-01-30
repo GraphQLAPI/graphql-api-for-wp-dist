@@ -5,43 +5,31 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class Variable extends AbstractAst implements ValueInterface
+class Variable extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface
 {
-
     /** @var  string */
     private $name;
-
     /** @var  mixed */
     private $value;
-
     /** @var string */
     private $type;
-
     /** @var bool */
-    private $nullable = false;
-
+    private $nullable = \false;
     /** @var bool */
-    private $isArray = false;
-
+    private $isArray = \false;
     /** @var bool */
-    private $used = false;
-
+    private $used = \false;
     /** @var bool */
-    private $arrayElementNullable = true;
-
+    private $arrayElementNullable = \true;
     /** @var bool */
-    private $hasDefaultValue = false;
-
+    private $hasDefaultValue = \false;
     /** @var mixed */
     private $defaultValue = null;
-
     /**
      * @param string   $name
      * @param string   $type
@@ -50,17 +38,15 @@ class Variable extends AbstractAst implements ValueInterface
      * @param bool     $arrayElementNullable
      * @param Location $location
      */
-    public function __construct($name, $type, $nullable, $isArray, $arrayElementNullable, Location $location)
+    public function __construct($name, $type, $nullable, $isArray, $arrayElementNullable, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
-        $this->name                 = $name;
-        $this->type                 = $type;
-        $this->isArray              = $isArray;
-        $this->nullable             = $nullable;
+        $this->name = $name;
+        $this->type = $type;
+        $this->isArray = $isArray;
+        $this->nullable = $nullable;
         $this->arrayElementNullable = $arrayElementNullable;
     }
-
     /**
      * @return mixed
      *
@@ -74,10 +60,8 @@ class Variable extends AbstractAst implements ValueInterface
             }
             throw new \LogicException('Value is not set for variable "' . $this->name . '"');
         }
-
         return $this->value;
     }
-
     /**
      * @param mixed $value
      */
@@ -85,7 +69,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         $this->value = $value;
     }
-
     /**
      * @return string
      */
@@ -93,7 +76,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->name;
     }
-
     /**
      * @param string $name
      */
@@ -101,7 +83,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         $this->name = $name;
     }
-
     /**
      * @return string
      */
@@ -109,7 +90,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->type;
     }
-
     /**
      * @param string $type
      */
@@ -117,7 +97,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         $this->type = $type;
     }
-
     /**
      * @return boolean
      */
@@ -125,7 +104,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->isArray;
     }
-
     /**
      * @param boolean $isArray
      */
@@ -133,7 +111,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         $this->isArray = $isArray;
     }
-
     /**
      * @return boolean
      */
@@ -141,7 +118,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->nullable;
     }
-
     /**
      * @param boolean $nullable
      */
@@ -149,7 +125,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         $this->nullable = $nullable;
     }
-
     /**
      * @return bool
      */
@@ -157,7 +132,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->hasDefaultValue;
     }
-
     /**
      * @return mixed
      */
@@ -165,17 +139,14 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->defaultValue;
     }
-
     /**
      * @param mixed $defaultValue
      */
     public function setDefaultValue($defaultValue)
     {
-        $this->hasDefaultValue = true;
-
+        $this->hasDefaultValue = \true;
         $this->defaultValue = $defaultValue;
     }
-
     /**
      * @return boolean
      */
@@ -183,7 +154,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->used;
     }
-
     /**
      * @param boolean $used
      *
@@ -192,10 +162,8 @@ class Variable extends AbstractAst implements ValueInterface
     public function setUsed($used)
     {
         $this->used = $used;
-
         return $this;
     }
-
     /**
      * @return bool
      */
@@ -203,7 +171,6 @@ class Variable extends AbstractAst implements ValueInterface
     {
         return $this->arrayElementNullable;
     }
-
     /**
      * @param bool $arrayElementNullable
      */

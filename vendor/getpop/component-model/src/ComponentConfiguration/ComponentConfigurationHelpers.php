@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\ComponentConfiguration;
 
 /**
@@ -9,8 +8,8 @@ namespace PoP\ComponentModel\ComponentConfiguration;
  */
 class ComponentConfigurationHelpers
 {
-    public static function getHookName(string $class, string $envVariable): string
+    public static function getHookName(string $class, string $envVariable) : string
     {
-        return sprintf('%s:configuration:%s', $class, $envVariable);
+        return \sprintf('%s:configuration:%s', $class, $envVariable);
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Schema;
 
 /**
@@ -10,9 +9,8 @@ namespace PoP\ComponentModel\Schema;
 class HookHelpers
 {
     public const HOOK_SCHEMA_DEFINITION_FOR_FIELD = __CLASS__ . ':schema_definition_for_field:%s:%s';
-
-    public static function getSchemaDefinitionForFieldHookName(string $typeOrFieldInterfaceResolverClass, string $fieldName): string
+    public static function getSchemaDefinitionForFieldHookName(string $typeOrFieldInterfaceResolverClass, string $fieldName) : string
     {
-        return sprintf(self::HOOK_SCHEMA_DEFINITION_FOR_FIELD, $typeOrFieldInterfaceResolverClass, $fieldName);
+        return \sprintf(self::HOOK_SCHEMA_DEFINITION_FOR_FIELD, $typeOrFieldInterfaceResolverClass, $fieldName);
     }
 }

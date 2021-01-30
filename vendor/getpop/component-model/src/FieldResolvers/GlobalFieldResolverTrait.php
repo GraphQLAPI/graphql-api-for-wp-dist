@@ -1,23 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\FieldResolvers;
 
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-
 trait GlobalFieldResolverTrait
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return [
-            AbstractTypeResolver::class,
-        ];
+        return [\PoP\ComponentModel\TypeResolvers\AbstractTypeResolver::class];
     }
-
-    public function isGlobal(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function isGlobal(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
-        return true;
+        return \true;
     }
 }

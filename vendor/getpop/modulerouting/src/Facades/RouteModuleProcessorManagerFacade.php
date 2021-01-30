@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ModuleRouting\Facades;
 
 use PoP\ModuleRouting\RouteModuleProcessorManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
-
 class RouteModuleProcessorManagerFacade
 {
-    public static function getInstance(): RouteModuleProcessorManagerInterface
+    public static function getInstance() : \PoP\ModuleRouting\RouteModuleProcessorManagerInterface
     {
         /**
          * @var RouteModuleProcessorManagerInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(RouteModuleProcessorManagerInterface::class);
+        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ModuleRouting\RouteModuleProcessorManagerInterface::class);
         return $service;
     }
 }

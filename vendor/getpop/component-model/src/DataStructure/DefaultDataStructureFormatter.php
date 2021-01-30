@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\DataStructure;
 
-class DefaultDataStructureFormatter extends AbstractJSONDataStructureFormatter
+class DefaultDataStructureFormatter extends \PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter
 {
     public const NAME = 'default';
-
-    public static function getName(): string
+    public static function getName() : string
     {
         return self::NAME;
     }

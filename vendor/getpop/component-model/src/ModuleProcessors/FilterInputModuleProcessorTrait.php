@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\ModuleProcessors;
 
 use PoP\ComponentModel\Schema\SchemaDefinition;
-
 trait FilterInputModuleProcessorTrait
 {
     /**
@@ -14,15 +12,12 @@ trait FilterInputModuleProcessorTrait
      * @param array $module
      * @return array
      */
-    public function getFilterInputSchemaDefinitionItems(array $module): array
+    public function getFilterInputSchemaDefinitionItems(array $module) : array
     {
-        $schemaDefinitionItems = [
-            $this->getFilterInputSchemaDefinition($module),
-        ];
+        $schemaDefinitionItems = [$this->getFilterInputSchemaDefinition($module)];
         $this->modifyFilterSchemaDefinitionItems($schemaDefinitionItems, $module);
         return $schemaDefinitionItems;
     }
-
     /**
      * Function to override
      *
@@ -33,36 +28,32 @@ trait FilterInputModuleProcessorTrait
     protected function modifyFilterSchemaDefinitionItems(array &$schemaDefinitionItems, array $module)
     {
     }
-
-    public function getFilterInputSchemaDefinitionResolver(array $module): ?DataloadQueryArgsSchemaFilterInputModuleProcessorInterface
+    public function getFilterInputSchemaDefinitionResolver(array $module) : ?\PoP\ComponentModel\ModuleProcessors\DataloadQueryArgsSchemaFilterInputModuleProcessorInterface
     {
         return null;
     }
-
     /**
      * Documentation for the module
      *
      * @param array $module
      * @return array
      */
-    protected function getFilterInputSchemaDefinition(array $module): array
+    protected function getFilterInputSchemaDefinition(array $module) : array
     {
-        $schemaDefinition = [
-            SchemaDefinition::ARGNAME_NAME => $this->getName($module),
-        ];
+        $schemaDefinition = [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => $this->getName($module)];
         if ($filterSchemaDefinitionResolver = $this->getFilterInputSchemaDefinitionResolver($module)) {
             if ($type = $filterSchemaDefinitionResolver->getSchemaFilterInputType($module)) {
-                $schemaDefinition[SchemaDefinition::ARGNAME_TYPE] = $type;
+                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE] = $type;
             }
             if ($description = $filterSchemaDefinitionResolver->getSchemaFilterInputDescription($module)) {
-                $schemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
             }
             if ($filterSchemaDefinitionResolver->getSchemaFilterInputMandatory($module)) {
-                $schemaDefinition[SchemaDefinition::ARGNAME_MANDATORY] = true;
+                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY] = \true;
             }
             if ($deprecationDescription = $filterSchemaDefinitionResolver->getSchemaFilterInputDeprecationDescription($module)) {
-                $schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATED] = true;
-                $schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] = $deprecationDescription;
+                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATED] = \true;
+                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] = $deprecationDescription;
             }
         }
         return $schemaDefinition;

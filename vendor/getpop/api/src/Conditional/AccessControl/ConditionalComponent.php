@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\API\Conditional\AccessControl;
 
 use PoP\API\Component;
@@ -10,34 +9,27 @@ use PoP\Root\Component\YAMLServicesTrait;
 use PoP\ComponentModel\Container\ContainerBuilderUtils;
 use PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups;
 use PoP\API\DirectiveResolvers\ConditionalOnEnvironment\SchemaNoCacheCacheControlDirectiveResolver;
-
 /**
  * Initialize component
  */
 class ConditionalComponent
 {
     use YAMLServicesTrait;
-
-    public static function initialize(
-        array $configuration = [],
-        bool $skipSchema = false,
-        array $skipSchemaComponentClasses = []
-    ): void {
-        self::initYAMLServices(Component::$COMPONENT_DIR, '/Conditional/AccessControl');
+    public static function initialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    {
+        self::initYAMLServices(\PoP\API\Component::$COMPONENT_DIR, '/Conditional/AccessControl');
     }
-
     /**
      * Boot component
      *
      * @return void
      */
-    public static function beforeBoot(): void
+    public static function beforeBoot() : void
     {
         // Initialize classes
-        ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
+        \PoP\ComponentModel\Container\ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
         self::attachDynamicDirectiveResolvers();
     }
-
     /**
      * Attach directive resolvers based on environment variables
      *
@@ -52,11 +44,8 @@ class ConditionalComponent
          * Fields will be available or not depending on the user being logged in or not
          * Then, the CacheControl for field "__schema" must be set to "no-cache"
          */
-        if (
-            ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() ||
-            ComponentConfiguration::usePrivateSchemaMode()
-        ) {
-            SchemaNoCacheCacheControlDirectiveResolver::attach(AttachableExtensionGroups::DIRECTIVERESOLVERS);
+        if (\PoP\AccessControl\ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() || \PoP\AccessControl\ComponentConfiguration::usePrivateSchemaMode()) {
+            \PoP\API\DirectiveResolvers\ConditionalOnEnvironment\SchemaNoCacheCacheControlDirectiveResolver::attach(\PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::DIRECTIVERESOLVERS);
         }
     }
 }

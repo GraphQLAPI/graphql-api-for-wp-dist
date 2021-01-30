@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,23 +8,20 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Brain\Cortex\Route;
+namespace PrefixedByPoP\Brain\Cortex\Route;
 
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class ActionRoute implements RouteInterface
+final class ActionRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterface
 {
     use DerivativeRouteTrait;
-
     /**
      * @var array
      */
     private $route;
-
     /**
      * QueryRoute constructor.
      *
@@ -35,7 +33,6 @@ final class ActionRoute implements RouteInterface
     {
         $options['path'] = $path;
         $options['handler'] = $action;
-
-        $this->route = new Route($options);
+        $this->route = new \PrefixedByPoP\Brain\Cortex\Route\Route($options);
     }
 }

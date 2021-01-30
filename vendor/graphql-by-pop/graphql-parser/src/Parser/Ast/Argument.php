@@ -5,34 +5,27 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class Argument extends AbstractAst
+class Argument extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst
 {
-
     /** @var string */
     private $name;
-
     /** @var ValueInterface */
     private $value;
-
     /**
      * @param string         $name
      * @param ValueInterface $value
      * @param Location       $location
      */
-    public function __construct($name, ValueInterface $value, Location $location)
+    public function __construct($name, \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface $value, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
-        $this->name  = $name;
+        $this->name = $name;
         $this->value = $value;
     }
-
     /**
      * @return mixed
      */
@@ -40,7 +33,6 @@ class Argument extends AbstractAst
     {
         return $this->name;
     }
-
     /**
      * @param mixed $name
      */
@@ -48,7 +40,6 @@ class Argument extends AbstractAst
     {
         $this->name = $name;
     }
-
     /**
      * @return \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface
      */
@@ -56,7 +47,6 @@ class Argument extends AbstractAst
     {
         return $this->value;
     }
-
     /**
      * @param mixed $value
      */

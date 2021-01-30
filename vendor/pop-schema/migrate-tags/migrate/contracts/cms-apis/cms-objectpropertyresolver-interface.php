@@ -1,4 +1,5 @@
 <?php
+
 namespace PoPSchema\Tags;
 
 interface ObjectPropertyResolver

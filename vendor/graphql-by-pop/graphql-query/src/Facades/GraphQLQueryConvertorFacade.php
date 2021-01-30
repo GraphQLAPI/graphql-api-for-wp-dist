@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLQuery\Facades;
 
 use GraphQLByPoP\GraphQLQuery\Schema\GraphQLQueryConvertorInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
-
 class GraphQLQueryConvertorFacade
 {
-    public static function getInstance(): GraphQLQueryConvertorInterface
+    public static function getInstance() : \GraphQLByPoP\GraphQLQuery\Schema\GraphQLQueryConvertorInterface
     {
         /**
          * @var GraphQLQueryConvertorInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(GraphQLQueryConvertorInterface::class);
+        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\GraphQLByPoP\GraphQLQuery\Schema\GraphQLQueryConvertorInterface::class);
         return $service;
     }
 }

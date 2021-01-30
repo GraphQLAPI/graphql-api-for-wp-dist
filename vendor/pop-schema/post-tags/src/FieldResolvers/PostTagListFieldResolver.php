@@ -1,44 +1,32 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\PostTags\FieldResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoPSchema\Posts\FieldResolvers\AbstractPostFieldResolver;
 use PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver;
-
-class PostTagListFieldResolver extends AbstractPostFieldResolver
+class PostTagListFieldResolver extends \PoPSchema\Posts\FieldResolvers\AbstractPostFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(PostTagTypeResolver::class);
+        return array(\PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver::class);
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'posts' => $translationAPI->__('Posts which contain this tag', 'pop-taxonomies'),
-            'postCount' => $translationAPI->__('Number of posts which contain this tag', 'pop-taxonomies'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['posts' => $translationAPI->__('Posts which contain this tag', 'pop-taxonomies'), 'postCount' => $translationAPI->__('Number of posts which contain this tag', 'pop-taxonomies')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @return array<string, mixed>
      * @param object $resultItem
      */
-    protected function getQuery(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = []
-    ): array {
+    protected function getQuery(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : array
+    {
         $query = parent::getQuery($typeResolver, $resultItem, $fieldName, $fieldArgs);
-
         $tag = $resultItem;
         switch ($fieldName) {
             case 'posts':
@@ -46,7 +34,6 @@ class PostTagListFieldResolver extends AbstractPostFieldResolver
                 $query['tag-ids'] = [$typeResolver->getID($tag)];
                 break;
         }
-
         return $query;
     }
 }

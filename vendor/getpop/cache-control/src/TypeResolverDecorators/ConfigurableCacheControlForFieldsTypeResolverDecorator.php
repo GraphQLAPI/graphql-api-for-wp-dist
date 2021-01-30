@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\CacheControl\TypeResolverDecorators;
 
 use PoP\CacheControl\Facades\CacheControlManagerFacade;
 use PoP\CacheControl\TypeResolverDecorators\ConfigurableCacheControlTypeResolverDecoratorTrait;
 use PoP\MandatoryDirectivesByConfiguration\TypeResolverDecorators\AbstractMandatoryDirectivesForFieldsTypeResolverDecorator;
-
-class ConfigurableCacheControlForFieldsTypeResolverDecorator extends AbstractMandatoryDirectivesForFieldsTypeResolverDecorator
+class ConfigurableCacheControlForFieldsTypeResolverDecorator extends \PoP\MandatoryDirectivesByConfiguration\TypeResolverDecorators\AbstractMandatoryDirectivesForFieldsTypeResolverDecorator
 {
     use ConfigurableCacheControlTypeResolverDecoratorTrait;
-
-    protected static function getConfigurationEntries(): array
+    protected static function getConfigurationEntries() : array
     {
-        $cacheControlManager = CacheControlManagerFacade::getInstance();
+        $cacheControlManager = \PoP\CacheControl\Facades\CacheControlManagerFacade::getInstance();
         return $cacheControlManager->getEntriesForFields();
     }
 }

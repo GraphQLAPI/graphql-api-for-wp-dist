@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\Comments;
 
-abstract class FunctionAPI_Base implements FunctionAPI
+abstract class FunctionAPI_Base implements \PoPSchema\Comments\FunctionAPI
 {
     public function __construct()
     {
-        FunctionAPIFactory::setInstance($this);
+        \PoPSchema\Comments\FunctionAPIFactory::setInstance($this);
     }
 }

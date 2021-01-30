@@ -8,21 +8,18 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 
-namespace Symfony\Component\Cache\Adapter;
-
-use Symfony\Contracts\Cache\TagAwareCacheInterface;
-
+use PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface;
 /**
  * @author Robin Chalas <robin.chalas@gmail.com>
  */
-class TraceableTagAwareAdapter extends TraceableAdapter implements TagAwareAdapterInterface, TagAwareCacheInterface
+class TraceableTagAwareAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\TagAwareAdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface
 {
-    public function __construct(TagAwareAdapterInterface $pool)
+    public function __construct(\PrefixedByPoP\Symfony\Component\Cache\Adapter\TagAwareAdapterInterface $pool)
     {
         parent::__construct($pool);
     }
-
     /**
      * {@inheritdoc}
      */
@@ -32,7 +29,7 @@ class TraceableTagAwareAdapter extends TraceableAdapter implements TagAwareAdapt
         try {
             return $event->result = $this->pool->invalidateTags($tags);
         } finally {
-            $event->end = microtime(true);
+            $event->end = \microtime(\true);
         }
     }
 }

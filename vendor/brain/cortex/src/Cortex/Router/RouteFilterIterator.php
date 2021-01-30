@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,13 +8,11 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Brain\Cortex\Router;
 
-namespace Brain\Cortex\Router;
-
-use Brain\Cortex\Route\RouteCollectionInterface;
-use Brain\Cortex\Route\RouteInterface;
-use Brain\Cortex\Uri\UriInterface;
-
+use PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface;
+use PrefixedByPoP\Brain\Cortex\Route\RouteInterface;
+use PrefixedByPoP\Brain\Cortex\Uri\UriInterface;
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
@@ -25,7 +24,6 @@ final class RouteFilterIterator extends \FilterIterator
      * @var \Brain\Cortex\Uri\WordPressUri
      */
     private $uri;
-
     /**
      * @param  string $routeHost
      * @param  string $serverHost
@@ -33,29 +31,25 @@ final class RouteFilterIterator extends \FilterIterator
      */
     private static function checkHost($routeHost, $serverHost)
     {
-        if (strpos($routeHost, '*') === false) {
+        if (\strpos($routeHost, '*') === \false) {
             return $routeHost === $serverHost;
         }
-
-        if (strpos($routeHost, '*.') === 0) {
-            return fnmatch($routeHost, $serverHost) || fnmatch(substr($routeHost, 2), $serverHost);
+        if (\strpos($routeHost, '*.') === 0) {
+            return \fnmatch($routeHost, $serverHost) || \fnmatch(\substr($routeHost, 2), $serverHost);
         }
-
-        return fnmatch($routeHost, $serverHost);
+        return \fnmatch($routeHost, $serverHost);
     }
-
     /**
      * RouteFilterIterator constructor.
      *
      * @param \Brain\Cortex\Route\RouteCollectionInterface $routes
      * @param \Brain\Cortex\Uri\UriInterface               $uri
      */
-    public function __construct(RouteCollectionInterface $routes, UriInterface $uri)
+    public function __construct(\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $routes, \PrefixedByPoP\Brain\Cortex\Uri\UriInterface $uri)
     {
         parent::__construct($routes);
         $this->uri = $uri;
     }
-
     /**
      * @inheritdoc
      */
@@ -63,20 +57,17 @@ final class RouteFilterIterator extends \FilterIterator
     {
         /** @var RouteInterface $route */
         $route = $this->getInnerIterator()->current();
-        if (! $route instanceof RouteInterface) {
-            return false;
+        if (!$route instanceof \PrefixedByPoP\Brain\Cortex\Route\RouteInterface) {
+            return \false;
         }
-
-        $scheme = strtolower((string)$route['scheme']);
-        if (! empty($scheme) && $scheme !== $this->uri->scheme()) {
-            return false;
+        $scheme = \strtolower((string) $route['scheme']);
+        if (!empty($scheme) && $scheme !== $this->uri->scheme()) {
+            return \false;
         }
-
-        $host = filter_var(strtolower((string)$route['host']), FILTER_SANITIZE_URL);
-        if (! empty($host) && ! self::checkHost($route['host'], $this->uri->host())) {
-            return false;
+        $host = \filter_var(\strtolower((string) $route['host']), \FILTER_SANITIZE_URL);
+        if (!empty($host) && !self::checkHost($route['host'], $this->uri->host())) {
+            return \false;
         }
-
-        return true;
+        return \true;
     }
 }

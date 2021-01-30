@@ -8,19 +8,16 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator;
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
-
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
-
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class PrototypeConfigurator extends AbstractServiceConfigurator
+class PrototypeConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractServiceConfigurator
 {
     public const FACTORY = 'load';
-
     use Traits\AbstractTrait;
     use Traits\ArgumentTrait;
     use Traits\AutoconfigureTrait;
@@ -36,44 +33,37 @@ class PrototypeConfigurator extends AbstractServiceConfigurator
     use Traits\PublicTrait;
     use Traits\ShareTrait;
     use Traits\TagTrait;
-
     private $loader;
     private $resource;
     private $excludes;
     private $allowParent;
-
     /**
      * @param bool $allowParent
      */
-    public function __construct(ServicesConfigurator $parent, PhpFileLoader $loader, Definition $defaults, string $namespace, string $resource, $allowParent)
+    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator $parent, \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\PhpFileLoader $loader, \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $defaults, string $namespace, string $resource, $allowParent)
     {
-        $definition = new Definition();
+        $definition = new \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition();
         if (!$defaults->isPublic() || !$defaults->isPrivate()) {
             $definition->setPublic($defaults->isPublic());
         }
         $definition->setAutowired($defaults->isAutowired());
         $definition->setAutoconfigured($defaults->isAutoconfigured());
         // deep clone, to avoid multiple process of the same instance in the passes
-        $definition->setBindings(unserialize(serialize($defaults->getBindings())));
+        $definition->setBindings(\unserialize(\serialize($defaults->getBindings())));
         $definition->setChanges([]);
-
         $this->loader = $loader;
         $this->resource = $resource;
         $this->allowParent = $allowParent;
-
         parent::__construct($parent, $definition, $namespace, $defaults->getTags());
     }
-
     public function __destruct()
     {
         parent::__destruct();
-
         if ($this->loader) {
             $this->loader->registerClasses($this->definition, $this->id, $this->resource, $this->excludes);
         }
         $this->loader = null;
     }
-
     /**
      * Excludes files from registration using glob patterns.
      *
@@ -81,10 +71,9 @@ class PrototypeConfigurator extends AbstractServiceConfigurator
      *
      * @return $this
      */
-    final public function exclude($excludes)
+    public final function exclude($excludes)
     {
         $this->excludes = (array) $excludes;
-
         return $this;
     }
 }

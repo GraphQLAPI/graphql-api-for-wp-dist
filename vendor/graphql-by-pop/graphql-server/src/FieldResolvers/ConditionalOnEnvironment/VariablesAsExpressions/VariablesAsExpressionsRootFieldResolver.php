@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\FieldResolvers\ConditionalOnEnvironment\VariablesAsExpressions;
 
 use PoP\Engine\TypeResolvers\RootTypeResolver;
@@ -12,15 +11,13 @@ use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use GraphQLByPoP\GraphQLServer\DirectiveResolvers\ConditionalOnEnvironment\ExportDirectiveResolver;
 use GraphQLByPoP\GraphQLQuery\Facades\GraphQLQueryConvertorFacade;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
-
-class VariablesAsExpressionsRootFieldResolver extends AbstractDBDataFieldResolver
+class VariablesAsExpressionsRootFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(RootTypeResolver::class);
+        return array(\PoP\Engine\TypeResolvers\RootTypeResolver::class);
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
         return [
             'exportedVariables',
@@ -28,34 +25,29 @@ class VariablesAsExpressionsRootFieldResolver extends AbstractDBDataFieldResolve
             'echoVar',
         ];
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         $types = [
-            'exportedVariables' => TypeCastingHelpers::makeArray(SchemaDefinition::TYPE_MIXED),
+            'exportedVariables' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_MIXED),
             // 'exportedVariable' => SchemaDefinition::TYPE_MIXED,
-            'echoVar' => SchemaDefinition::TYPE_MIXED,
+            'echoVar' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_MIXED,
         ];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function isSchemaFieldResponseNonNullable(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
-        $nonNullableFieldNames = [
-            'exportedVariables',
-        ];
-        if (in_array($fieldName, $nonNullableFieldNames)) {
-            return true;
+        $nonNullableFieldNames = ['exportedVariables'];
+        if (\in_array($fieldName, $nonNullableFieldNames)) {
+            return \true;
         }
         return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $exportDirectiveName = ExportDirectiveResolver::getDirectiveName();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $exportDirectiveName = \GraphQLByPoP\GraphQLServer\DirectiveResolvers\ConditionalOnEnvironment\ExportDirectiveResolver::getDirectiveName();
         $descriptions = [
-            'exportedVariables' => sprintf($translationAPI->__('Returns a dictionary with the values for all variables exported through the `%s` directive', 'graphql-server'), $exportDirectiveName),
+            'exportedVariables' => \sprintf($translationAPI->__('Returns a dictionary with the values for all variables exported through the `%s` directive', 'graphql-server'), $exportDirectiveName),
             // 'exportedVariable' => sprintf(
             //     $translationAPI->__('Returns the value for a variable exported through the `%s` directive', 'graphql-server'),
             //     $exportDirectiveName
@@ -64,11 +56,10 @@ class VariablesAsExpressionsRootFieldResolver extends AbstractDBDataFieldResolve
         ];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): array
+    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         $schemaFieldArgs = parent::getSchemaFieldArgs($typeResolver, $fieldName);
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         switch ($fieldName) {
             // case 'exportedVariable':
             //     return array_merge(
@@ -86,19 +77,10 @@ class VariablesAsExpressionsRootFieldResolver extends AbstractDBDataFieldResolve
             //         ]
             //     );
             case 'echoVar':
-                return array_merge($schemaFieldArgs, [
-                    [
-                        SchemaDefinition::ARGNAME_NAME => 'variable',
-                        SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_MIXED,
-                        SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('The variable to echo back, of any type', 'graphql-server'),
-                        SchemaDefinition::ARGNAME_MANDATORY => true,
-                    ],
-                ]);
+                return \array_merge($schemaFieldArgs, [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'variable', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_MIXED, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('The variable to echo back, of any type', 'graphql-server'), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true]]);
         }
-
         return $schemaFieldArgs;
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @param array<string, mixed>|null $variables
@@ -107,22 +89,15 @@ class VariablesAsExpressionsRootFieldResolver extends AbstractDBDataFieldResolve
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = [],
-        ?array $variables = null,
-        ?array $expressions = null,
-        array $options = []
-    ) {
-        $graphQLQueryConvertor = GraphQLQueryConvertorFacade::getInstance();
+    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    {
+        $graphQLQueryConvertor = \GraphQLByPoP\GraphQLQuery\Facades\GraphQLQueryConvertorFacade::getInstance();
         switch ($fieldName) {
             case 'exportedVariables':
                 // All the variables starting with "_" are treated as expressions
-                return array_filter($variables ?? [], function ($variableName) use ($graphQLQueryConvertor) {
+                return \array_filter($variables ?? [], function ($variableName) use($graphQLQueryConvertor) {
                     return $graphQLQueryConvertor->treatVariableAsExpression($variableName);
-                }, ARRAY_FILTER_USE_KEY);
+                }, \ARRAY_FILTER_USE_KEY);
             // case 'exportedVariable':
             //     if ($variables) {
             //         return $variables[$fieldArgs['name']];
@@ -131,7 +106,6 @@ class VariablesAsExpressionsRootFieldResolver extends AbstractDBDataFieldResolve
             case 'echoVar':
                 return $fieldArgs['variable'];
         }
-
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
 }

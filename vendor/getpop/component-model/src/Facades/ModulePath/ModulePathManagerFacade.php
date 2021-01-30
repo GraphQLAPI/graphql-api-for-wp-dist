@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Facades\ModulePath;
 
 use PoP\ComponentModel\ModulePath\ModulePathManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
-
 class ModulePathManagerFacade
 {
-    public static function getInstance(): ModulePathManagerInterface
+    public static function getInstance() : \PoP\ComponentModel\ModulePath\ModulePathManagerInterface
     {
         /**
          * @var ModulePathManagerInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(ModulePathManagerInterface::class);
+        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\ModulePath\ModulePathManagerInterface::class);
         return $service;
     }
 }

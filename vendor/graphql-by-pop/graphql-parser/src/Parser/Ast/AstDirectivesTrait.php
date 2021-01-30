@@ -5,28 +5,21 @@
  *
  * @author Volodymyr Rashchepkin <rashepkin@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 trait AstDirectivesTrait
 {
-
     /** @var Directive[] */
     protected $directives;
-
     private $directivesCache = null;
-
-
     public function hasDirectives()
     {
-        return (bool)count($this->directives);
+        return (bool) \count($this->directives);
     }
-
     public function hasDirective($name)
     {
-        return array_key_exists($name, $this->directives);
+        return \array_key_exists($name, $this->directives);
     }
-
     /**
      * @param $name
      *
@@ -38,10 +31,8 @@ trait AstDirectivesTrait
         if (isset($this->directives[$name])) {
             $directive = $this->directives[$name];
         }
-
         return $directive;
     }
-
     /**
      * @return Directive[]
      */
@@ -49,21 +40,18 @@ trait AstDirectivesTrait
     {
         return $this->directives;
     }
-
     /**
      * @param $directives Directive[]
      */
     public function setDirectives(array $directives)
     {
-        $this->directives      = [];
+        $this->directives = [];
         $this->directivesCache = null;
-
         foreach ($directives as $directive) {
             $this->addDirective($directive);
         }
     }
-
-    public function addDirective(Directive $directive)
+    public function addDirective(\GraphQLByPoP\GraphQLParser\Parser\Ast\Directive $directive)
     {
         /**
          * Watch out! In this query, a field contains the same directive twice:

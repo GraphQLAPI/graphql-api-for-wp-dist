@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\FieldResolvers;
 
 use PoP\API\Schema\SchemaDefinition;
@@ -12,85 +11,45 @@ use PoP\Translation\Facades\TranslationAPIFacade;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\DirectiveTypeResolver;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
-
-class SchemaFieldResolver extends AbstractDBDataFieldResolver
+class SchemaFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(SchemaTypeResolver::class);
+        return array(\GraphQLByPoP\GraphQLServer\TypeResolvers\SchemaTypeResolver::class);
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        return [
-            'queryType',
-            'mutationType',
-            'subscriptionType',
-            'types',
-            'directives',
-            'type',
-        ];
+        return ['queryType', 'mutationType', 'subscriptionType', 'types', 'directives', 'type'];
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $types = [
-            'queryType' => SchemaDefinition::TYPE_ID,
-            'mutationType' => SchemaDefinition::TYPE_ID,
-            'subscriptionType' => SchemaDefinition::TYPE_ID,
-            'types' => TypeCastingHelpers::makeArray(SchemaDefinition::TYPE_ID),
-            'directives' => TypeCastingHelpers::makeArray(SchemaDefinition::TYPE_ID),
-            'type' => SchemaDefinition::TYPE_ID,
-        ];
+        $types = ['queryType' => \PoP\API\Schema\SchemaDefinition::TYPE_ID, 'mutationType' => \PoP\API\Schema\SchemaDefinition::TYPE_ID, 'subscriptionType' => \PoP\API\Schema\SchemaDefinition::TYPE_ID, 'types' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\API\Schema\SchemaDefinition::TYPE_ID), 'directives' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\API\Schema\SchemaDefinition::TYPE_ID), 'type' => \PoP\API\Schema\SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function isSchemaFieldResponseNonNullable(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
-        $nonNullableFieldNames = [
-            'queryType',
-            'types',
-            'directives',
-        ];
-        if (in_array($fieldName, $nonNullableFieldNames)) {
-            return true;
+        $nonNullableFieldNames = ['queryType', 'types', 'directives'];
+        if (\in_array($fieldName, $nonNullableFieldNames)) {
+            return \true;
         }
         return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'queryType' => $translationAPI->__('The type, accessible from the root, that resolves queries', 'graphql-server'),
-            'mutationType' => $translationAPI->__('The type, accessible from the root, that resolves mutations', 'graphql-server'),
-            'subscriptionType' => $translationAPI->__('The type, accessible from the root, that resolves subscriptions', 'graphql-server'),
-            'types' => $translationAPI->__('All types registered in the data graph', 'graphql-server'),
-            'directives' => $translationAPI->__('All directives registered in the data graph', 'graphql-server'),
-            'type' => $translationAPI->__('Obtain a specific type from the schema', 'graphql-server'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['queryType' => $translationAPI->__('The type, accessible from the root, that resolves queries', 'graphql-server'), 'mutationType' => $translationAPI->__('The type, accessible from the root, that resolves mutations', 'graphql-server'), 'subscriptionType' => $translationAPI->__('The type, accessible from the root, that resolves subscriptions', 'graphql-server'), 'types' => $translationAPI->__('All types registered in the data graph', 'graphql-server'), 'directives' => $translationAPI->__('All directives registered in the data graph', 'graphql-server'), 'type' => $translationAPI->__('Obtain a specific type from the schema', 'graphql-server')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): array
+    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         $schemaFieldArgs = parent::getSchemaFieldArgs($typeResolver, $fieldName);
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         switch ($fieldName) {
             case 'type':
-                return array_merge($schemaFieldArgs, [
-                    [
-                        SchemaDefinition::ARGNAME_NAME => 'name',
-                        SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_STRING,
-                        SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('The name of the type', 'graphql-server'),
-                        SchemaDefinition::ARGNAME_MANDATORY => true,
-                    ],
-                ]);
+                return \array_merge($schemaFieldArgs, [[\PoP\API\Schema\SchemaDefinition::ARGNAME_NAME => 'name', \PoP\API\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\API\Schema\SchemaDefinition::TYPE_STRING, \PoP\API\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('The name of the type', 'graphql-server'), \PoP\API\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true]]);
         }
-
         return $schemaFieldArgs;
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @param array<string, mixed>|null $variables
@@ -99,15 +58,8 @@ class SchemaFieldResolver extends AbstractDBDataFieldResolver
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = [],
-        ?array $variables = null,
-        ?array $expressions = null,
-        array $options = []
-    ) {
+    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    {
         $schema = $resultItem;
         switch ($fieldName) {
             case 'queryType':
@@ -123,11 +75,9 @@ class SchemaFieldResolver extends AbstractDBDataFieldResolver
             case 'type':
                 return $schema->getTypeID($fieldArgs['name']);
         }
-
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-
-    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'queryType':
@@ -135,11 +85,10 @@ class SchemaFieldResolver extends AbstractDBDataFieldResolver
             case 'subscriptionType':
             case 'types':
             case 'type':
-                return TypeTypeResolver::class;
+                return \GraphQLByPoP\GraphQLServer\TypeResolvers\TypeTypeResolver::class;
             case 'directives':
-                return DirectiveTypeResolver::class;
+                return \GraphQLByPoP\GraphQLServer\TypeResolvers\DirectiveTypeResolver::class;
         }
-
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }
 }

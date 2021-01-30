@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\AccessControl\TypeResolverDecorators;
 
 use PoP\AccessControl\TypeResolverDecorators\ConfigurableAccessControlForFieldsTypeResolverDecoratorTrait;
-
-abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaTypeResolverDecorator extends AbstractPrivateSchemaTypeResolverDecorator
+abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaTypeResolverDecorator extends \PoP\AccessControl\TypeResolverDecorators\AbstractPrivateSchemaTypeResolverDecorator
 {
     use ConfigurableAccessControlForFieldsTypeResolverDecoratorTrait;
 }

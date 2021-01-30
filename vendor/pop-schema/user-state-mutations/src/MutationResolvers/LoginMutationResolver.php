@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserStateMutations\MutationResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
@@ -12,38 +11,33 @@ use PoP\ComponentModel\MutationResolvers\AbstractMutationResolver;
 use PoP\ComponentModel\ErrorHandling\Error;
 use PoPSchema\UserStateMutations\Facades\UserStateTypeAPIFacade;
 use PoPSchema\UserState\State\ApplicationStateUtils;
-
-class LoginMutationResolver extends AbstractMutationResolver
+class LoginMutationResolver extends \PoP\ComponentModel\MutationResolvers\AbstractMutationResolver
 {
-    public function validateErrors(array $form_data): ?array
+    public function validateErrors(array $form_data) : ?array
     {
         $errors = [];
-        $username_or_email = $form_data[MutationInputProperties::USERNAME_OR_EMAIL];
-        $pwd = $form_data[MutationInputProperties::PASSWORD];
-
+        $username_or_email = $form_data[\PoPSchema\UserStateMutations\MutationResolvers\MutationInputProperties::USERNAME_OR_EMAIL];
+        $pwd = $form_data[\PoPSchema\UserStateMutations\MutationResolvers\MutationInputProperties::PASSWORD];
         if (!$username_or_email) {
-            $errors[] = TranslationAPIFacade::getInstance()->__('Please supply your username or email', 'user-state-mutations');
+            $errors[] = \PoP\Translation\Facades\TranslationAPIFacade::getInstance()->__('Please supply your username or email', 'user-state-mutations');
         }
         if (!$pwd) {
-            $errors[] = TranslationAPIFacade::getInstance()->__('Please supply your password', 'user-state-mutations');
+            $errors[] = \PoP\Translation\Facades\TranslationAPIFacade::getInstance()->__('Please supply your password', 'user-state-mutations');
         }
-
-        $vars = ApplicationState::getVars();
+        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
         if ($vars['global-userstate']['is-user-logged-in']) {
             $errors[] = $this->getUserAlreadyLoggedInErrorMessage($user_id);
         }
         return $errors;
     }
-
     /**
      * @param mixed $user_id Maybe int, maybe string
      */
-    protected function getUserAlreadyLoggedInErrorMessage($user_id): string
+    protected function getUserAlreadyLoggedInErrorMessage($user_id) : string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('You are already logged in', 'user-state-mutations');
     }
-
     /**
      * @return mixed
      */
@@ -52,44 +46,30 @@ class LoginMutationResolver extends AbstractMutationResolver
         // If the user is already logged in, then return the error
         $cmsusersapi = \PoPSchema\Users\FunctionAPIFactory::getInstance();
         $cmsusersresolver = \PoPSchema\Users\ObjectPropertyResolverFactory::getInstance();
-        $userStateTypeAPI = UserStateTypeAPIFacade::getInstance();
-
-        $username_or_email = $form_data[MutationInputProperties::USERNAME_OR_EMAIL];
-        $pwd = $form_data[MutationInputProperties::PASSWORD];
-
+        $userStateTypeAPI = \PoPSchema\UserStateMutations\Facades\UserStateTypeAPIFacade::getInstance();
+        $username_or_email = $form_data[\PoPSchema\UserStateMutations\MutationResolvers\MutationInputProperties::USERNAME_OR_EMAIL];
+        $pwd = $form_data[\PoPSchema\UserStateMutations\MutationResolvers\MutationInputProperties::PASSWORD];
         // Find out if it was a username or an email that was provided
-        $is_email = strpos($username_or_email, '@');
+        $is_email = \strpos($username_or_email, '@');
         if ($is_email) {
             $user = $cmsusersapi->getUserByEmail($username_or_email);
             if (!$user) {
-                return new Error(
-                    'no-user',
-                    TranslationAPIFacade::getInstance()->__('There is no user registered with that email address.')
-                );
+                return new \PoP\ComponentModel\ErrorHandling\Error('no-user', \PoP\Translation\Facades\TranslationAPIFacade::getInstance()->__('There is no user registered with that email address.'));
             }
             $username = $cmsusersresolver->getUserLogin($user);
         } else {
             $username = $username_or_email;
         }
-
-        $credentials = array(
-            'login' => $username,
-            'password' => $pwd,
-            'remember' => true,
-        );
+        $credentials = array('login' => $username, 'password' => $pwd, 'remember' => \true);
         $loginResult = $userStateTypeAPI->login($credentials);
-
-        if (GeneralUtils::isError($loginResult)) {
+        if (\PoP\ComponentModel\Misc\GeneralUtils::isError($loginResult)) {
             return $loginResult;
         }
-
         $user = $loginResult;
-
         // Modify the routing-state with the newly logged in user info
-        ApplicationStateUtils::setUserStateVars(ApplicationState::$vars);
-
+        \PoPSchema\UserState\State\ApplicationStateUtils::setUserStateVars(\PoP\ComponentModel\State\ApplicationState::$vars);
         $userID = $cmsusersresolver->getUserId($user);
-        HooksAPIFacade::getInstance()->doAction('gd:user:loggedin', $userID);
+        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->doAction('gd:user:loggedin', $userID);
         return $userID;
     }
 }

@@ -1,19 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\PostTags;
 
 use PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers;
 use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
-
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
-
     // private static $getPostTagListDefaultLimit;
     // private static $getPostTagListMaxLimit;
-
     // public static function getPostTagListDefaultLimit(): ?int
     // {
     //     // Define properties
@@ -21,7 +17,6 @@ class ComponentConfiguration
     //     $selfProperty = &self::$getPostTagListDefaultLimit;
     //     $defaultValue = 10;
     //     $callback = [EnvironmentValueHelpers::class, 'toInt'];
-
     //     // Initialize property from the environment/hook
     //     self::maybeInitializeConfigurationValue(
     //         $envVariable,
@@ -31,7 +26,6 @@ class ComponentConfiguration
     //     );
     //     return $selfProperty;
     // }
-
     // public static function getPostTagListMaxLimit(): ?int
     // {
     //     // Define properties
@@ -39,7 +33,6 @@ class ComponentConfiguration
     //     $selfProperty = &self::$getPostTagListMaxLimit;
     //     $defaultValue = -1; // Unlimited
     //     $callback = [EnvironmentValueHelpers::class, 'toInt'];
-
     //     // Initialize property from the environment/hook
     //     self::maybeInitializeConfigurationValue(
     //         $envVariable,

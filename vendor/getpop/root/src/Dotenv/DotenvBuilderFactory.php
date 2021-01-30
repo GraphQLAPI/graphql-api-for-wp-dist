@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Root\Dotenv;
 
-use Symfony\Component\Dotenv\Dotenv;
-
+use PrefixedByPoP\Symfony\Component\Dotenv\Dotenv;
 class DotenvBuilderFactory
 {
     /**
@@ -13,18 +11,17 @@ class DotenvBuilderFactory
      *
      * @return void
      */
-    public static function init(): void
+    public static function init() : void
     {
         // Set the folder where to find .env files through an environment constant.
         // If not set, use "/config" in the root directory
-        $envConfigFolder = getenv('ENV_CONFIG_FOLDER');
+        $envConfigFolder = \getenv('ENV_CONFIG_FOLDER');
         if (!$envConfigFolder) {
             $envConfigFolder = $_SERVER['DOCUMENT_ROOT'] . '/config';
         }
-
         // If the file location has been set, then load the environment variables from .env files stored there
-        if (file_exists($envConfigFolder . '/.env')) {
-            $dotenv = new Dotenv();
+        if (\file_exists($envConfigFolder . '/.env')) {
+            $dotenv = new \PrefixedByPoP\Symfony\Component\Dotenv\Dotenv();
             $dotenv->loadEnv($envConfigFolder . '/.env');
         }
     }

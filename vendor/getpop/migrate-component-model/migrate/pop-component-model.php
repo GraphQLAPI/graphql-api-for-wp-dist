@@ -1,4 +1,5 @@
 <?php
+
 /*
 Plugin Name: PoP Component Model
 Version: 0.1
@@ -7,46 +8,44 @@ Plugin URI: https://getpop.org/
 Author: Leonardo Losoviz
 */
 namespace PoP\ComponentModel;
-use PoP\Hooks\Facades\HooksAPIFacade;
 
+use PoP\Hooks\Facades\HooksAPIFacade;
 //-------------------------------------------------------------------------------------
 // Constants Definition
 //-------------------------------------------------------------------------------------
-define('POP_COMPONENTMODEL_VERSION', 0.108);
-define('POP_COMPONENTMODEL_DIR', dirname(__FILE__));
-define('POP_COMPONENTMODEL_TEMPLATES', POP_COMPONENTMODEL_DIR.'/templates');
-
+\define('POP_COMPONENTMODEL_VERSION', 0.108);
+\define('POP_COMPONENTMODEL_DIR', \dirname(__FILE__));
+\define('POP_COMPONENTMODEL_TEMPLATES', POP_COMPONENTMODEL_DIR . '/templates');
 class Plugin
 {
     public function __construct()
     {
         // Allow the Theme to override definitions.
         // Priority: new section, after PoP CMS section
-        HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 22);
+        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 22);
     }
     public function init()
     {
         if ($this->validate()) {
             $this->initialize();
-            define('POP_COMPONENTMODEL_INITIALIZED', true);
+            \define('POP_COMPONENTMODEL_INITIALIZED', \true);
         }
     }
     public function validate()
     {
-        return true;
+        return \true;
         include_once 'validation.php';
-        $validation = new Validation();
+        $validation = new \PoP\ComponentModel\Validation();
         return $validation->validate();
     }
     public function initialize()
     {
         include_once 'initialization.php';
-        $initialization = new Initialization();
+        $initialization = new \PoP\ComponentModel\Initialization();
         return $initialization->initialize();
     }
 }
-
 /**
  * Initialization
  */
-new Plugin();
+new \PoP\ComponentModel\Plugin();

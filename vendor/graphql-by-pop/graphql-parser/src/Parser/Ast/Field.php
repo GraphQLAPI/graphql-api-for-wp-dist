@@ -5,23 +5,18 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class Field extends AbstractAst implements FieldInterface
+class Field extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface
 {
     use AstArgumentsTrait;
     use AstDirectivesTrait;
-
     /** @var string */
     private $name;
-
     /** @var null|string */
     private $alias = null;
-
     /**
      * @param string   $name
      * @param string   $alias
@@ -29,16 +24,14 @@ class Field extends AbstractAst implements FieldInterface
      * @param array    $directives
      * @param Location $location
      */
-    public function __construct($name, $alias, array $arguments, array $directives, Location $location)
+    public function __construct($name, $alias, array $arguments, array $directives, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
-        $this->name      = $name;
-        $this->alias     = $alias;
+        $this->name = $name;
+        $this->alias = $alias;
         $this->setArguments($arguments);
         $this->setDirectives($directives);
     }
-
     /**
      * @return string
      */
@@ -46,7 +39,6 @@ class Field extends AbstractAst implements FieldInterface
     {
         return $this->name;
     }
-
     /**
      * @param string $name
      */
@@ -54,7 +46,6 @@ class Field extends AbstractAst implements FieldInterface
     {
         $this->name = $name;
     }
-
     /**
      * @return null|string
      */
@@ -62,7 +53,6 @@ class Field extends AbstractAst implements FieldInterface
     {
         return $this->alias;
     }
-
     /**
      * @param null|string $alias
      */
@@ -70,12 +60,10 @@ class Field extends AbstractAst implements FieldInterface
     {
         $this->alias = $alias;
     }
-
     public function hasFields()
     {
-        return false;
+        return \false;
     }
-
     public function getFields()
     {
         return [];

@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\PropertyInfo;
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
 
 /**
  * Extract read information for the property of a class.
@@ -21,5 +20,5 @@ interface PropertyReadInfoExtractorInterface
     /**
      * Get read information object for a given property of a class.
      */
-    public function getReadInfo(string $class, string $property, array $context = []): ?PropertyReadInfo;
+    public function getReadInfo(string $class, string $property, array $context = []) : ?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo;
 }

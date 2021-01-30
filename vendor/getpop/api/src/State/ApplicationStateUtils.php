@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\API\State;
 
 use PoP\API\Facades\FieldQueryConvertorFacade;
-
 class ApplicationStateUtils
 {
     /**
@@ -25,13 +23,13 @@ class ApplicationStateUtils
      *
      * @param array|string $query
      */
-    public static function maybeConvertQueryAndAddToVars(array &$vars, $query): void
+    public static function maybeConvertQueryAndAddToVars(array &$vars, $query) : void
     {
         // The fields param can either be an array or a string. Convert them to array
-        if (is_array($query)) {
+        if (\is_array($query)) {
             $vars['query'] = $query;
-        } elseif (is_string($query)) {
-            $fieldQueryConvertor = FieldQueryConvertorFacade::getInstance();
+        } elseif (\is_string($query)) {
+            $fieldQueryConvertor = \PoP\API\Facades\FieldQueryConvertorFacade::getInstance();
             $fieldQuerySet = $fieldQueryConvertor->convertAPIQuery($query);
             $vars['query'] = $fieldQuerySet->getExecutableFieldQuery();
             if ($fieldQuerySet->areRequestedAndExecutableFieldQueriesDifferent()) {

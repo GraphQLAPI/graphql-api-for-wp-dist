@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\DirectiveResolvers\Cache;
 
 use PoP\API\Cache\CacheUtils;
@@ -9,7 +8,6 @@ use PoP\FieldQuery\FieldQueryInterpreter;
 use PoP\ComponentModel\Directives\DirectiveTypes;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-
 /**
  * Common functionality between LoadCache and SaveCache directive resolver classes
  */
@@ -20,11 +18,10 @@ trait CacheDirectiveResolverTrait
      *
      * @return string
      */
-    public function getDirectiveType(): string
+    public function getDirectiveType() : string
     {
-        return DirectiveTypes::SCHEMA;
+        return \PoP\ComponentModel\Directives\DirectiveTypes::SCHEMA;
     }
-
     /**
      * Create a unique ID under which to store the cache, based on the type, ID and field (without the alias)
      *
@@ -33,31 +30,27 @@ trait CacheDirectiveResolverTrait
      * @param string $field
      * @return string
      */
-    protected function getCacheID(TypeResolverInterface $typeResolver, $id, string $field): string
+    protected function getCacheID(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $id, string $field) : string
     {
         // Remove the alias from the field
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         if ($fieldAliasPositionSpan = $fieldQueryInterpreter->getFieldAliasPositionSpanInField($field)) {
-            $aliasPos = $fieldAliasPositionSpan[FieldQueryInterpreter::ALIAS_POSITION_KEY];
-            $aliasLength = $fieldAliasPositionSpan[FieldQueryInterpreter::ALIAS_LENGTH_KEY];
-            $noAliasField = substr($field, 0, $aliasPos) . substr($field, $aliasPos + $aliasLength);
+            $aliasPos = $fieldAliasPositionSpan[\PoP\FieldQuery\FieldQueryInterpreter::ALIAS_POSITION_KEY];
+            $aliasLength = $fieldAliasPositionSpan[\PoP\FieldQuery\FieldQueryInterpreter::ALIAS_LENGTH_KEY];
+            $noAliasField = \substr($field, 0, $aliasPos) . \substr($field, $aliasPos + $aliasLength);
         } else {
             $noAliasField = $field;
         }
-        $components = array_merge(
+        $components = \array_merge(
             // The namespacing and version constraints also affect the result of the field, so incorporate them too
-            CacheUtils::getSchemaCacheKeyComponents(),
-            [
-                'name' => $typeResolver->getNamespacedTypeName(),
-                'id' => $id,
-                'field' => $noAliasField,
-            ]
+            \PoP\API\Cache\CacheUtils::getSchemaCacheKeyComponents(),
+            ['name' => $typeResolver->getNamespacedTypeName(), 'id' => $id, 'field' => $noAliasField]
         );
-        $cacheID = implode('|', $components);
+        $cacheID = \implode('|', $components);
         /**
          * Hash this key, because the $field may contain reserved characters, such as "()" for the field args:
          * PHP Fatal error:  Uncaught Symfony\Component\Cache\Exception\InvalidArgumentException: Cache key "cache-directive.Root|root|echo(hola)<cache>" contains reserved characters "{}()/\@:". in .../vendor/symfony/cache/CacheItem.php:177
          */
-        return hash('md5', $cacheID);
+        return \hash('md5', $cacheID);
     }
 }

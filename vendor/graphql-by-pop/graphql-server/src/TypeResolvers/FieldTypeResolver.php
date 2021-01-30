@@ -1,28 +1,23 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\TypeResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\AbstractIntrospectionTypeResolver;
 use GraphQLByPoP\GraphQLServer\TypeDataLoaders\SchemaDefinitionReferenceTypeDataLoader;
-
-class FieldTypeResolver extends AbstractIntrospectionTypeResolver
+class FieldTypeResolver extends \GraphQLByPoP\GraphQLServer\TypeResolvers\AbstractIntrospectionTypeResolver
 {
     public const NAME = '__Field';
-
-    public function getTypeName(): string
+    public function getTypeName() : string
     {
         return self::NAME;
     }
-
-    public function getSchemaTypeDescription(): ?string
+    public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Representation of a GraphQL type\'s field', 'graphql-server');
     }
-
     /**
      * @param object $resultItem
      */
@@ -31,9 +26,8 @@ class FieldTypeResolver extends AbstractIntrospectionTypeResolver
         $field = $resultItem;
         return $field->getID();
     }
-
-    public function getTypeDataLoaderClass(): string
+    public function getTypeDataLoaderClass() : string
     {
-        return SchemaDefinitionReferenceTypeDataLoader::class;
+        return \GraphQLByPoP\GraphQLServer\TypeDataLoaders\SchemaDefinitionReferenceTypeDataLoader::class;
     }
 }

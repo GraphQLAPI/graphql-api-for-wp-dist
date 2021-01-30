@@ -1,29 +1,21 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Media\Enums;
 
 use PoP\ComponentModel\Enums\AbstractEnum;
-
-class MediaDeviceEnum extends AbstractEnum
+class MediaDeviceEnum extends \PoP\ComponentModel\Enums\AbstractEnum
 {
     public const NAME = 'MediaDevice';
-
     public const MOBILE = 'MOBILE';
     public const DESKTOP = 'DESKTOP';
     public const AUTOMATIC = 'AUTOMATIC';
-
-    protected function getEnumName(): string
+    protected function getEnumName() : string
     {
         return self::NAME;
     }
-    public function getValues(): array
+    public function getValues() : array
     {
-        return [
-            self::MOBILE,
-            self::DESKTOP,
-            self::AUTOMATIC,
-        ];
+        return [self::MOBILE, self::DESKTOP, self::AUTOMATIC];
     }
 }

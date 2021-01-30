@@ -1,26 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Media\TypeDataLoaders;
 
 use PoP\ComponentModel\TypeDataLoaders\AbstractTypeQueryableDataLoader;
 use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
-
 // use PoPSchema\CustomPosts\Types\Status;
-
-class MediaTypeDataLoader extends AbstractTypeQueryableDataLoader
+class MediaTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTypeQueryableDataLoader
 {
-    public function getObjects(array $ids): array
+    public function getObjects(array $ids) : array
     {
         $cmsmediaapi = \PoPSchema\Media\FunctionAPIFactory::getInstance();
-        $query = array(
-            'include' => $ids,
-        );
+        $query = array('include' => $ids);
         return $cmsmediaapi->getMediaElements($query);
     }
-
-    public function getDataFromIdsQuery(array $ids): array
+    public function getDataFromIdsQuery(array $ids) : array
     {
         $query = array();
         $query['include'] = $ids;
@@ -28,21 +22,16 @@ class MediaTypeDataLoader extends AbstractTypeQueryableDataLoader
         //     Status::PUBLISHED,
         // ];
         $query['custompost-types'] = 'attachment';
-
         return $query;
     }
-
     public function executeQuery($query, array $options = [])
     {
         $cmsmediaapi = \PoPSchema\Media\FunctionAPIFactory::getInstance();
         return $cmsmediaapi->getMediaElements($query, $options);
     }
-
-    public function executeQueryIds($query): array
+    public function executeQueryIds($query) : array
     {
-        $options = [
-            'return-type' => ReturnTypes::IDS,
-        ];
-        return (array)$this->executeQuery($query, $options);
+        $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
+        return (array) $this->executeQuery($query, $options);
     }
 }

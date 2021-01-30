@@ -8,15 +8,13 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler;
 
-namespace Symfony\Component\DependencyInjection\Compiler;
-
-use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\DependencyInjection\TypedReference;
-
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference;
 /**
  * Trait that allows a generic method to find and sort service by priority option in the tag.
  *
@@ -38,76 +36,65 @@ trait PriorityTaggedServiceTrait
      *
      * @return Reference[]
      */
-    private function findAndSortTaggedServices($tagName, ContainerBuilder $container): array
+    private function findAndSortTaggedServices($tagName, \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container) : array
     {
         $indexAttribute = $defaultIndexMethod = $needsIndexes = $defaultPriorityMethod = null;
-
-        if ($tagName instanceof TaggedIteratorArgument) {
+        if ($tagName instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument) {
             $indexAttribute = $tagName->getIndexAttribute();
             $defaultIndexMethod = $tagName->getDefaultIndexMethod();
             $needsIndexes = $tagName->needsIndexes();
             $defaultPriorityMethod = $tagName->getDefaultPriorityMethod() ?? 'getDefaultPriority';
             $tagName = $tagName->getTag();
         }
-
         $i = 0;
         $services = [];
-
-        foreach ($container->findTaggedServiceIds($tagName, true) as $serviceId => $attributes) {
+        foreach ($container->findTaggedServiceIds($tagName, \true) as $serviceId => $attributes) {
             $defaultPriority = null;
             $defaultIndex = null;
             $class = $container->getDefinition($serviceId)->getClass();
             $class = $container->getParameterBag()->resolveValue($class) ?: null;
-
             foreach ($attributes as $attribute) {
                 $index = $priority = null;
-
                 if (isset($attribute['priority'])) {
                     $priority = $attribute['priority'];
                 } elseif (null === $defaultPriority && $defaultPriorityMethod && $class) {
-                    $defaultPriority = PriorityTaggedServiceUtil::getDefaultPriority($container, $serviceId, $class, $defaultPriorityMethod, $tagName);
+                    $defaultPriority = \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceUtil::getDefaultPriority($container, $serviceId, $class, $defaultPriorityMethod, $tagName);
                 }
-                $priority = $priority ?? $defaultPriority ?? $defaultPriority = 0;
-
+                $priority = $priority ?? $defaultPriority ?? ($defaultPriority = 0);
                 if (null === $indexAttribute && !$defaultIndexMethod && !$needsIndexes) {
                     $services[] = [$priority, ++$i, null, $serviceId, null];
                     continue 2;
                 }
-
                 if (null !== $indexAttribute && isset($attribute[$indexAttribute])) {
                     $index = $attribute[$indexAttribute];
                 } elseif (null === $defaultIndex && $defaultPriorityMethod && $class) {
-                    $defaultIndex = PriorityTaggedServiceUtil::getDefaultIndex($container, $serviceId, $class, $defaultIndexMethod ?? 'getDefaultName', $tagName, $indexAttribute);
+                    $defaultIndex = \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceUtil::getDefaultIndex($container, $serviceId, $class, $defaultIndexMethod ?? 'getDefaultName', $tagName, $indexAttribute);
                 }
-                $index = $index ?? $defaultIndex ?? $defaultIndex = $serviceId;
-
+                $index = $index ?? $defaultIndex ?? ($defaultIndex = $serviceId);
                 $services[] = [$priority, ++$i, $index, $serviceId, $class];
             }
         }
-
-        uasort($services, static function ($a, $b) { return $b[0] <=> $a[0] ?: $a[1] <=> $b[1]; });
-
+        \uasort($services, static function ($a, $b) {
+            return $b[0] <=> $a[0] ?: $a[1] <=> $b[1];
+        });
         $refs = [];
         foreach ($services as [, , $index, $serviceId, $class]) {
             if (!$class) {
-                $reference = new Reference($serviceId);
+                $reference = new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($serviceId);
             } elseif ($index === $serviceId) {
-                $reference = new TypedReference($serviceId, $class);
+                $reference = new \PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference($serviceId, $class);
             } else {
-                $reference = new TypedReference($serviceId, $class, ContainerBuilder::EXCEPTION_ON_INVALID_REFERENCE, $index);
+                $reference = new \PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference($serviceId, $class, \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder::EXCEPTION_ON_INVALID_REFERENCE, $index);
             }
-
             if (null === $index) {
                 $refs[] = $reference;
             } else {
                 $refs[$index] = $reference;
             }
         }
-
         return $refs;
     }
 }
-
 /**
  * @internal
  */
@@ -116,59 +103,47 @@ class PriorityTaggedServiceUtil
     /**
      * Gets the index defined by the default index method.
      */
-    public static function getDefaultIndex(ContainerBuilder $container, string $serviceId, string $class, string $defaultIndexMethod, string $tagName, ?string $indexAttribute): ?string
+    public static function getDefaultIndex(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container, string $serviceId, string $class, string $defaultIndexMethod, string $tagName, ?string $indexAttribute) : ?string
     {
         if (!($r = $container->getReflectionClass($class)) || !$r->hasMethod($defaultIndexMethod)) {
             return null;
         }
-
         if (null !== $indexAttribute) {
-            $service = $class !== $serviceId ? sprintf('service "%s"', $serviceId) : 'on the corresponding service';
-            $message = [sprintf('Either method "%s::%s()" should ', $class, $defaultIndexMethod), sprintf(' or tag "%s" on %s is missing attribute "%s".', $tagName, $service, $indexAttribute)];
+            $service = $class !== $serviceId ? \sprintf('service "%s"', $serviceId) : 'on the corresponding service';
+            $message = [\sprintf('Either method "%s::%s()" should ', $class, $defaultIndexMethod), \sprintf(' or tag "%s" on %s is missing attribute "%s".', $tagName, $service, $indexAttribute)];
         } else {
-            $message = [sprintf('Method "%s::%s()" should ', $class, $defaultIndexMethod), '.'];
+            $message = [\sprintf('Method "%s::%s()" should ', $class, $defaultIndexMethod), '.'];
         }
-
         if (!($rm = $r->getMethod($defaultIndexMethod))->isStatic()) {
-            throw new InvalidArgumentException(implode('be static', $message));
+            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\implode('be static', $message));
         }
-
         if (!$rm->isPublic()) {
-            throw new InvalidArgumentException(implode('be public', $message));
+            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\implode('be public', $message));
         }
-
         $defaultIndex = $rm->invoke(null);
-
         if (!\is_string($defaultIndex)) {
-            throw new InvalidArgumentException(implode(sprintf('return a string (got "%s")', get_debug_type($defaultIndex)), $message));
+            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\implode(\sprintf('return a string (got "%s")', \get_debug_type($defaultIndex)), $message));
         }
-
         return $defaultIndex;
     }
-
     /**
      * Gets the priority defined by the default priority method.
      */
-    public static function getDefaultPriority(ContainerBuilder $container, string $serviceId, string $class, string $defaultPriorityMethod, string $tagName): ?int
+    public static function getDefaultPriority(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container, string $serviceId, string $class, string $defaultPriorityMethod, string $tagName) : ?int
     {
         if (!($r = $container->getReflectionClass($class)) || !$r->hasMethod($defaultPriorityMethod)) {
             return null;
         }
-
         if (!($rm = $r->getMethod($defaultPriorityMethod))->isStatic()) {
-            throw new InvalidArgumentException(sprintf('Either method "%s::%s()" should be static or tag "%s" on service "%s" is missing attribute "priority".', $class, $defaultPriorityMethod, $tagName, $serviceId));
+            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\sprintf('Either method "%s::%s()" should be static or tag "%s" on service "%s" is missing attribute "priority".', $class, $defaultPriorityMethod, $tagName, $serviceId));
         }
-
         if (!$rm->isPublic()) {
-            throw new InvalidArgumentException(sprintf('Either method "%s::%s()" should be public or tag "%s" on service "%s" is missing attribute "priority".', $class, $defaultPriorityMethod, $tagName, $serviceId));
+            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\sprintf('Either method "%s::%s()" should be public or tag "%s" on service "%s" is missing attribute "priority".', $class, $defaultPriorityMethod, $tagName, $serviceId));
         }
-
         $defaultPriority = $rm->invoke(null);
-
         if (!\is_int($defaultPriority)) {
-            throw new InvalidArgumentException(sprintf('Method "%s::%s()" should return an integer (got "%s") or tag "%s" on service "%s" is missing attribute "priority".', $class, $defaultPriorityMethod, get_debug_type($defaultPriority), $tagName, $serviceId));
+            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\sprintf('Method "%s::%s()" should return an integer (got "%s") or tag "%s" on service "%s" is missing attribute "priority".', $class, $defaultPriorityMethod, \get_debug_type($defaultPriority), $tagName, $serviceId));
         }
-
         return $defaultPriority;
     }
 }

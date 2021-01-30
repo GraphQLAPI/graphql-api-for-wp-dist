@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPostMediaMutations\TypeAPIs;
 
 /**
@@ -13,10 +12,9 @@ interface CustomPostMediaTypeAPIInterface
      * @param mixed $customPostID
      * @param mixed $mediaItemID
      */
-    public function setFeaturedImage($customPostID, $mediaItemID): void;
-
+    public function setFeaturedImage($customPostID, $mediaItemID) : void;
     /**
      * @param mixed $customPostID
      */
-    public function removeFeaturedImage($customPostID): void;
+    public function removeFeaturedImage($customPostID) : void;
 }

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
@@ -11,28 +10,24 @@ use GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeTrait;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeTrait;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeInterface;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface;
-
-class InterfaceType extends AbstractType implements HasFieldsTypeInterface, HasPossibleTypesTypeInterface, HasInterfacesTypeInterface
+class InterfaceType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType implements \GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeInterface, \GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface, \GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeInterface
 {
     use HasFieldsTypeTrait;
     use HasPossibleTypesTypeTrait;
     use HasInterfacesTypeTrait;
-
     public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath, array $customDefinition = [])
     {
         parent::__construct($fullSchemaDefinition, $schemaDefinitionPath, $customDefinition);
-
-        $this->initFields($fullSchemaDefinition, $schemaDefinitionPath, false, false);
+        $this->initFields($fullSchemaDefinition, $schemaDefinitionPath, \false, \false);
         $this->initInterfaces($fullSchemaDefinition, $schemaDefinitionPath);
     }
-    public function initializeTypeDependencies(): void
+    public function initializeTypeDependencies() : void
     {
         $this->initPossibleTypes();
         $this->initializeFieldTypeDependencies();
     }
-
-    public function getKind(): string
+    public function getKind() : string
     {
-        return TypeKinds::INTERFACE;
+        return \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::INTERFACE;
     }
 }

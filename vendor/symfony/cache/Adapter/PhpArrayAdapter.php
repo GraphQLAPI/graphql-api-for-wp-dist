@@ -8,20 +8,18 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 
-namespace Symfony\Component\Cache\Adapter;
-
-use Psr\Cache\CacheItemInterface;
-use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\Cache\CacheItem;
-use Symfony\Component\Cache\Exception\InvalidArgumentException;
-use Symfony\Component\Cache\PruneableInterface;
-use Symfony\Component\Cache\ResettableInterface;
-use Symfony\Component\Cache\Traits\ContractsTrait;
-use Symfony\Component\Cache\Traits\ProxyTrait;
-use Symfony\Component\VarExporter\VarExporter;
-use Symfony\Contracts\Cache\CacheInterface;
-
+use PrefixedByPoP\Psr\Cache\CacheItemInterface;
+use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
+use PrefixedByPoP\Symfony\Component\Cache\CacheItem;
+use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
+use PrefixedByPoP\Symfony\Component\Cache\PruneableInterface;
+use PrefixedByPoP\Symfony\Component\Cache\ResettableInterface;
+use PrefixedByPoP\Symfony\Component\Cache\Traits\ContractsTrait;
+use PrefixedByPoP\Symfony\Component\Cache\Traits\ProxyTrait;
+use PrefixedByPoP\Symfony\Component\VarExporter\VarExporter;
+use PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface;
 /**
  * Caches items at warm up time using a PHP array that is stored in shared memory by OPCache since PHP 7.0.
  * Warmed up items are read-only and run-time discovered items are cached using a fallback adapter.
@@ -29,36 +27,31 @@ use Symfony\Contracts\Cache\CacheInterface;
  * @author Titouan Galopin <galopintitouan@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInterface, ResettableInterface
+class PhpArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface, \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
 {
     use ContractsTrait;
     use ProxyTrait;
-
     private $file;
     private $keys;
     private $values;
     private $createCacheItem;
-
     private static $valuesCache = [];
-
     /**
      * @param string           $file         The PHP file were values are cached
      * @param AdapterInterface $fallbackPool A pool to fallback on when an item is not hit
      */
-    public function __construct(string $file, AdapterInterface $fallbackPool)
+    public function __construct(string $file, \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface $fallbackPool)
     {
         $this->file = $file;
         $this->pool = $fallbackPool;
         $this->createCacheItem = \Closure::bind(static function ($key, $value, $isHit) {
-            $item = new CacheItem();
+            $item = new \PrefixedByPoP\Symfony\Component\Cache\CacheItem();
             $item->key = $key;
             $item->value = $value;
             $item->isHit = $isHit;
-
             return $item;
-        }, null, CacheItem::class);
+        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
     }
-
     /**
      * This adapter takes advantage of how PHP stores arrays in its latest versions.
      *
@@ -67,15 +60,13 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
      *
      * @return CacheItemPoolInterface
      */
-    public static function create(string $file, CacheItemPoolInterface $fallbackPool)
+    public static function create(string $file, \PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $fallbackPool)
     {
-        if (!$fallbackPool instanceof AdapterInterface) {
-            $fallbackPool = new ProxyAdapter($fallbackPool);
+        if (!$fallbackPool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+            $fallbackPool = new \PrefixedByPoP\Symfony\Component\Cache\Adapter\ProxyAdapter($fallbackPool);
         }
-
         return new static($file, $fallbackPool);
     }
-
     /**
      * {@inheritdoc}
      */
@@ -86,14 +77,12 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
         }
         if (!isset($this->keys[$key])) {
             get_from_pool:
-            if ($this->pool instanceof CacheInterface) {
+            if ($this->pool instanceof \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface) {
                 return $this->pool->get($key, $callback, $beta, $metadata);
             }
-
             return $this->doGet($this->pool, $key, $callback, $beta, $metadata);
         }
         $value = $this->values[$this->keys[$key]];
-
         if ('N;' === $value) {
             return null;
         }
@@ -105,17 +94,15 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
             unset($this->keys[$key]);
             goto get_from_pool;
         }
-
         return $value;
     }
-
     /**
      * {@inheritdoc}
      */
     public function getItem($key)
     {
         if (!\is_string($key)) {
-            throw new InvalidArgumentException(sprintf('Cache key must be string, "%s" given.', get_debug_type($key)));
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
         }
         if (null === $this->values) {
             $this->initialize();
@@ -123,10 +110,8 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
         if (!isset($this->keys[$key])) {
             return $this->pool->getItem($key);
         }
-
         $value = $this->values[$this->keys[$key]];
-        $isHit = true;
-
+        $isHit = \true;
         if ('N;' === $value) {
             $value = null;
         } elseif ($value instanceof \Closure) {
@@ -134,15 +119,12 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
                 $value = $value();
             } catch (\Throwable $e) {
                 $value = null;
-                $isHit = false;
+                $isHit = \false;
             }
         }
-
         $f = $this->createCacheItem;
-
         return $f($key, $value, $isHit);
     }
-
     /**
      * {@inheritdoc}
      */
@@ -150,16 +132,14 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
     {
         foreach ($keys as $key) {
             if (!\is_string($key)) {
-                throw new InvalidArgumentException(sprintf('Cache key must be string, "%s" given.', get_debug_type($key)));
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
             }
         }
         if (null === $this->values) {
             $this->initialize();
         }
-
         return $this->generateItems($keys);
     }
-
     /**
      * {@inheritdoc}
      *
@@ -168,15 +148,13 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
     public function hasItem($key)
     {
         if (!\is_string($key)) {
-            throw new InvalidArgumentException(sprintf('Cache key must be string, "%s" given.', get_debug_type($key)));
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
         }
         if (null === $this->values) {
             $this->initialize();
         }
-
         return isset($this->keys[$key]) || $this->pool->hasItem($key);
     }
-
     /**
      * {@inheritdoc}
      *
@@ -185,15 +163,13 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
     public function deleteItem($key)
     {
         if (!\is_string($key)) {
-            throw new InvalidArgumentException(sprintf('Cache key must be string, "%s" given.', get_debug_type($key)));
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
         }
         if (null === $this->values) {
             $this->initialize();
         }
-
         return !isset($this->keys[$key]) && $this->pool->deleteItem($key);
     }
-
     /**
      * {@inheritdoc}
      *
@@ -201,16 +177,14 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
      */
     public function deleteItems(array $keys)
     {
-        $deleted = true;
+        $deleted = \true;
         $fallbackKeys = [];
-
         foreach ($keys as $key) {
             if (!\is_string($key)) {
-                throw new InvalidArgumentException(sprintf('Cache key must be string, "%s" given.', get_debug_type($key)));
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
             }
-
             if (isset($this->keys[$key])) {
-                $deleted = false;
+                $deleted = \false;
             } else {
                 $fallbackKeys[] = $key;
             }
@@ -218,42 +192,35 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
         if (null === $this->values) {
             $this->initialize();
         }
-
         if ($fallbackKeys) {
             $deleted = $this->pool->deleteItems($fallbackKeys) && $deleted;
         }
-
         return $deleted;
     }
-
     /**
      * {@inheritdoc}
      *
      * @return bool
      */
-    public function save(CacheItemInterface $item)
+    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
     {
         if (null === $this->values) {
             $this->initialize();
         }
-
         return !isset($this->keys[$item->getKey()]) && $this->pool->save($item);
     }
-
     /**
      * {@inheritdoc}
      *
      * @return bool
      */
-    public function saveDeferred(CacheItemInterface $item)
+    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
     {
         if (null === $this->values) {
             $this->initialize();
         }
-
         return !isset($this->keys[$item->getKey()]) && $this->pool->saveDeferred($item);
     }
-
     /**
      * {@inheritdoc}
      *
@@ -263,7 +230,6 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
     {
         return $this->pool->commit();
     }
-
     /**
      * {@inheritdoc}
      *
@@ -272,17 +238,13 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
     public function clear(string $prefix = '')
     {
         $this->keys = $this->values = [];
-
-        $cleared = @unlink($this->file) || !file_exists($this->file);
+        $cleared = @\unlink($this->file) || !\file_exists($this->file);
         unset(self::$valuesCache[$this->file]);
-
-        if ($this->pool instanceof AdapterInterface) {
+        if ($this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
             return $this->pool->clear($prefix) && $cleared;
         }
-
         return $this->pool->clear() && $cleared;
     }
-
     /**
      * Store an array of cached values.
      *
@@ -292,26 +254,22 @@ class PhpArrayAdapter implements AdapterInterface, CacheInterface, PruneableInte
      */
     public function warmUp(array $values)
     {
-        if (file_exists($this->file)) {
-            if (!is_file($this->file)) {
-                throw new InvalidArgumentException(sprintf('Cache path exists and is not a file: "%s".', $this->file));
+        if (\file_exists($this->file)) {
+            if (!\is_file($this->file)) {
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache path exists and is not a file: "%s".', $this->file));
             }
-
-            if (!is_writable($this->file)) {
-                throw new InvalidArgumentException(sprintf('Cache file is not writable: "%s".', $this->file));
+            if (!\is_writable($this->file)) {
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache file is not writable: "%s".', $this->file));
             }
         } else {
             $directory = \dirname($this->file);
-
-            if (!is_dir($directory) && !@mkdir($directory, 0777, true)) {
-                throw new InvalidArgumentException(sprintf('Cache directory does not exist and cannot be created: "%s".', $directory));
+            if (!\is_dir($directory) && !@\mkdir($directory, 0777, \true)) {
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache directory does not exist and cannot be created: "%s".', $directory));
             }
-
-            if (!is_writable($directory)) {
-                throw new InvalidArgumentException(sprintf('Cache directory is not writable: "%s".', $directory));
+            if (!\is_writable($directory)) {
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache directory is not writable: "%s".', $directory));
             }
         }
-
         $preload = [];
         $dumpedValues = '';
         $dumpedMap = [];
@@ -324,61 +282,49 @@ return [[
 
 
 EOF;
-
         foreach ($values as $key => $value) {
-            CacheItem::validateKey(\is_int($key) ? (string) $key : $key);
-            $isStaticValue = true;
-
+            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey(\is_int($key) ? (string) $key : $key);
+            $isStaticValue = \true;
             if (null === $value) {
                 $value = "'N;'";
             } elseif (\is_object($value) || \is_array($value)) {
                 try {
-                    $value = VarExporter::export($value, $isStaticValue, $preload);
+                    $value = \PrefixedByPoP\Symfony\Component\VarExporter\VarExporter::export($value, $isStaticValue, $preload);
                 } catch (\Exception $e) {
-                    throw new InvalidArgumentException(sprintf('Cache key "%s" has non-serializable "%s" value.', $key, get_debug_type($value)), 0, $e);
+                    throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key "%s" has non-serializable "%s" value.', $key, \get_debug_type($value)), 0, $e);
                 }
             } elseif (\is_string($value)) {
                 // Wrap "N;" in a closure to not confuse it with an encoded `null`
                 if ('N;' === $value) {
-                    $isStaticValue = false;
+                    $isStaticValue = \false;
                 }
-                $value = var_export($value, true);
-            } elseif (!is_scalar($value)) {
-                throw new InvalidArgumentException(sprintf('Cache key "%s" has non-serializable "%s" value.', $key, get_debug_type($value)));
+                $value = \var_export($value, \true);
+            } elseif (!\is_scalar($value)) {
+                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key "%s" has non-serializable "%s" value.', $key, \get_debug_type($value)));
             } else {
-                $value = var_export($value, true);
+                $value = \var_export($value, \true);
             }
-
             if (!$isStaticValue) {
-                $value = str_replace("\n", "\n    ", $value);
+                $value = \str_replace("\n", "\n    ", $value);
                 $value = "static function () {\n    return {$value};\n}";
             }
-            $hash = hash('md5', $value);
-
-            if (null === $id = $dumpedMap[$hash] ?? null) {
+            $hash = \hash('md5', $value);
+            if (null === ($id = $dumpedMap[$hash] ?? null)) {
                 $id = $dumpedMap[$hash] = \count($dumpedMap);
                 $dumpedValues .= "{$id} => {$value},\n";
             }
-
-            $dump .= var_export($key, true)." => {$id},\n";
+            $dump .= \var_export($key, \true) . " => {$id},\n";
         }
-
         $dump .= "\n], [\n\n{$dumpedValues}\n]];\n";
-
-        $tmpFile = uniqid($this->file, true);
-
-        file_put_contents($tmpFile, $dump);
-        @chmod($tmpFile, 0666 & ~umask());
+        $tmpFile = \uniqid($this->file, \true);
+        \file_put_contents($tmpFile, $dump);
+        @\chmod($tmpFile, 0666 & ~\umask());
         unset($serialized, $value, $dump);
-
-        @rename($tmpFile, $this->file);
+        @\rename($tmpFile, $this->file);
         unset(self::$valuesCache[$this->file]);
-
         $this->initialize();
-
         return $preload;
     }
-
     /**
      * Load the cache file.
      */
@@ -386,46 +332,40 @@ EOF;
     {
         if (isset(self::$valuesCache[$this->file])) {
             $values = self::$valuesCache[$this->file];
-        } elseif (!is_file($this->file)) {
+        } elseif (!\is_file($this->file)) {
             $this->keys = $this->values = [];
-
             return;
         } else {
             $values = self::$valuesCache[$this->file] = (include $this->file) ?: [[], []];
         }
-
         if (2 !== \count($values) || !isset($values[0], $values[1])) {
             $this->keys = $this->values = [];
         } else {
             [$this->keys, $this->values] = $values;
         }
     }
-
-    private function generateItems(array $keys): \Generator
+    private function generateItems(array $keys) : \Generator
     {
         $f = $this->createCacheItem;
         $fallbackKeys = [];
-
         foreach ($keys as $key) {
             if (isset($this->keys[$key])) {
                 $value = $this->values[$this->keys[$key]];
-
                 if ('N;' === $value) {
-                    yield $key => $f($key, null, true);
+                    (yield $key => $f($key, null, \true));
                 } elseif ($value instanceof \Closure) {
                     try {
-                        yield $key => $f($key, $value(), true);
+                        (yield $key => $f($key, $value(), \true));
                     } catch (\Throwable $e) {
-                        yield $key => $f($key, null, false);
+                        (yield $key => $f($key, null, \false));
                     }
                 } else {
-                    yield $key => $f($key, $value, true);
+                    (yield $key => $f($key, $value, \true));
                 }
             } else {
                 $fallbackKeys[] = $key;
             }
         }
-
         if ($fallbackKeys) {
             yield from $this->pool->getItems($fallbackKeys);
         }

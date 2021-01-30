@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Instances;
 
 use PoP\Root\Container\ContainerBuilderFactory;
-
 trait InstanceManagerTrait
 {
     /**
@@ -16,23 +14,19 @@ trait InstanceManagerTrait
      * @var array<string, string>
      */
     private $overridingClasses = [];
-
-    public function overrideClass(string $overrideClass, string $withClass): void
+    public function overrideClass(string $overrideClass, string $withClass) : void
     {
         $this->overridingClasses[$overrideClass] = $withClass;
     }
-
-    protected function hasClassBeenLoaded(string $class): bool
+    protected function hasClassBeenLoaded(string $class) : bool
     {
-        return !is_null($this->instances[$class] ?? null);
+        return !\is_null($this->instances[$class] ?? null);
     }
-
-    public function getImplementationClass(string $class): string
+    public function getImplementationClass(string $class) : string
     {
         // Allow a class to take the place of another one
         return $this->overridingClasses[$class] ?? $class;
     }
-
     /**
      * @return object
      */
@@ -41,9 +35,8 @@ trait InstanceManagerTrait
         if (!$this->hasClassBeenLoaded($class)) {
             // Allow a class to take the place of another one
             $class = $this->getImplementationClass($class);
-
             // First ask the ContainerBuilder to handle the class as a Service
-            $containerBuilder = ContainerBuilderFactory::getInstance();
+            $containerBuilder = \PoP\Root\Container\ContainerBuilderFactory::getInstance();
             if ($containerBuilder->has($class)) {
                 $instance = $containerBuilder->get($class);
             } else {
@@ -52,10 +45,8 @@ trait InstanceManagerTrait
             }
             $this->instances[$class] = $instance;
         }
-
         return $this->instances[$class];
     }
-
     /**
      * @return object
      */

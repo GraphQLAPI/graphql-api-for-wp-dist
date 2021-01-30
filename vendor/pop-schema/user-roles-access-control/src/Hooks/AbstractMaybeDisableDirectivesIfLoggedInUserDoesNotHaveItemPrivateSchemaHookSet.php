@@ -1,32 +1,27 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserRolesAccessControl\Hooks;
 
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\AccessControl\Hooks\AbstractConfigurableAccessControlForDirectivesInPrivateSchemaHookSet;
-
-abstract class AbstractMaybeDisableDirectivesIfLoggedInUserDoesNotHaveItemPrivateSchemaHookSet extends AbstractConfigurableAccessControlForDirectivesInPrivateSchemaHookSet
+abstract class AbstractMaybeDisableDirectivesIfLoggedInUserDoesNotHaveItemPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractConfigurableAccessControlForDirectivesInPrivateSchemaHookSet
 {
     /**
      * @var string[]|null
      */
     protected $directiveResolverClasses;
-
-    protected function enabled(): bool
+    protected function enabled() : bool
     {
         return parent::enabled() && !empty($this->getDirectiveResolverClasses());
     }
-
     /**
      * Indicate if the user has the item, to be implemented
      *
      * @param string $item
      * @return boolean
      */
-    abstract protected function doesCurrentUserHaveAnyItem(array $items): bool;
-
+    protected abstract function doesCurrentUserHaveAnyItem(array $items) : bool;
     /**
      * Remove directiveName "translate" if the user is not logged in
      *
@@ -35,14 +30,14 @@ abstract class AbstractMaybeDisableDirectivesIfLoggedInUserDoesNotHaveItemPrivat
      * @param string $directiveName
      * @return boolean
      */
-    protected function getDirectiveResolverClasses(): array
+    protected function getDirectiveResolverClasses() : array
     {
-        if (is_null($this->directiveResolverClasses)) {
+        if (\is_null($this->directiveResolverClasses)) {
             $entries = $this->getEntries();
             // If the user is not logged in, then it's all directives
-            $vars = ApplicationState::getVars();
+            $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
             if (!$vars['global-userstate']['is-user-logged-in']) {
-                $this->directiveResolverClasses = array_values(array_unique(array_map(function ($entry) {
+                $this->directiveResolverClasses = \array_values(\array_unique(\array_map(function ($entry) {
                     return $entry[0];
                 }, $entries)));
             } else {

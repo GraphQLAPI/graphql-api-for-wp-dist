@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,23 +8,20 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Brain\Cortex\Group;
 
-namespace Brain\Cortex\Group;
-
-use Brain\Cortex\Route\Route;
-
+use PrefixedByPoP\Brain\Cortex\Route\Route;
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class Group implements GroupInterface
+final class Group implements \PrefixedByPoP\Brain\Cortex\Group\GroupInterface
 {
     /**
      * @var \Brain\Cortex\Route\Route
      */
     private $route;
-
     /**
      * Group constructor.
      *
@@ -31,18 +29,13 @@ final class Group implements GroupInterface
      */
     public function __construct(array $data)
     {
-        array_change_key_case($data, CASE_LOWER);
+        \array_change_key_case($data, \CASE_LOWER);
         if (isset($data['group'])) {
             unset($data['group']);
         }
-
-        $data['id'] = ! empty($data['id']) && is_string($data['id'])
-            ? $data['id']
-            : 'group_'.spl_object_hash($this);
-
-        $this->route = new Route($data);
+        $data['id'] = !empty($data['id']) && \is_string($data['id']) ? $data['id'] : 'group_' . \spl_object_hash($this);
+        $this->route = new \PrefixedByPoP\Brain\Cortex\Route\Route($data);
     }
-
     /**
      * @inheritdoc
      */
@@ -50,7 +43,6 @@ final class Group implements GroupInterface
     {
         return $this->route->id();
     }
-
     /**
      * @inheritdoc
      */
@@ -58,7 +50,6 @@ final class Group implements GroupInterface
     {
         return $this->route->toArray();
     }
-
     /**
      * @inheritdoc
      */
@@ -66,7 +57,6 @@ final class Group implements GroupInterface
     {
         return $this->route->offsetExists($offset);
     }
-
     /**
      * @inheritdoc
      */
@@ -74,7 +64,6 @@ final class Group implements GroupInterface
     {
         return $this->route->offsetGet($offset);
     }
-
     /**
      * @inheritdoc
      */
@@ -82,7 +71,6 @@ final class Group implements GroupInterface
     {
         $this->route->offsetSet($offset, $value);
     }
-
     /**
      * @inheritdoc
      */

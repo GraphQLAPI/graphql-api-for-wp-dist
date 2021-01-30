@@ -1,30 +1,28 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\FieldInterfaceResolvers;
 
 use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceSchemaDefinitionResolverInterface;
-
-interface FieldInterfaceResolverInterface extends FieldInterfaceSchemaDefinitionResolverInterface
+interface FieldInterfaceResolverInterface extends \PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceSchemaDefinitionResolverInterface
 {
     /**
      * Get an array with the fieldNames that the fieldResolver must implement
      *
      * @return array
      */
-    public static function getFieldNamesToImplement(): array;
+    public static function getFieldNamesToImplement() : array;
     /**
      * An interface can itself implement other interfaces!
      *
      * @return array
      */
-    public static function getImplementedInterfaceClasses(): array;
-    public function getInterfaceName(): string;
-    public function getNamespace(): string;
-    public function getNamespacedInterfaceName(): string;
-    public function getMaybeNamespacedInterfaceName(): string;
-    public function getSchemaInterfaceDescription(): ?string;
+    public static function getImplementedInterfaceClasses() : array;
+    public function getInterfaceName() : string;
+    public function getNamespace() : string;
+    public function getNamespacedInterfaceName() : string;
+    public function getMaybeNamespacedInterfaceName() : string;
+    public function getSchemaInterfaceDescription() : ?string;
     // public function getSchemaInterfaceVersion(string $fieldName): ?string;
     /**
      * This function is not called by the engine, to generate the schema.
@@ -33,5 +31,5 @@ interface FieldInterfaceResolverInterface extends FieldInterfaceSchemaDefinition
      * return the expected type for the field, they can obtain it from the
      * interface through this function.
      */
-    public function getFieldTypeResolverClass(string $fieldName): ?string;
+    public function getFieldTypeResolverClass(string $fieldName) : ?string;
 }

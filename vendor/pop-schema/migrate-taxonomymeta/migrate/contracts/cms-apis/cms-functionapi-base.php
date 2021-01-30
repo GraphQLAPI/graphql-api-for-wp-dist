@@ -1,11 +1,12 @@
 <?php
+
 namespace PoPSchema\TaxonomyMeta;
 
-abstract class FunctionAPI_Base implements FunctionAPI
+abstract class FunctionAPI_Base implements \PoPSchema\TaxonomyMeta\FunctionAPI
 {
     public function __construct()
     {
-        FunctionAPIFactory::setInstance($this);
+        \PoPSchema\TaxonomyMeta\FunctionAPIFactory::setInstance($this);
     }
     public function getMetaKey($meta_key)
     {

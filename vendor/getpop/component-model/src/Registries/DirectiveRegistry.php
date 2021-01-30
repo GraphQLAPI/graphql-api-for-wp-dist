@@ -1,21 +1,19 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Registries;
 
-class DirectiveRegistry implements DirectiveRegistryInterface
+class DirectiveRegistry implements \PoP\ComponentModel\Registries\DirectiveRegistryInterface
 {
     /**
      * @var string[]
      */
     protected $directiveResolverClasses = [];
-
-    public function addDirectiveResolverClass(string $directiveResolverClass): void
+    public function addDirectiveResolverClass(string $directiveResolverClass) : void
     {
         $this->directiveResolverClasses[] = $directiveResolverClass;
     }
-    public function getDirectiveResolverClasses(): array
+    public function getDirectiveResolverClasses() : array
     {
         return $this->directiveResolverClasses;
     }

@@ -1,21 +1,20 @@
 <?php
-define('POP_STRATUM_DATA', 'data');
+
+namespace PrefixedByPoP;
 
 class GD_Stratum_Data extends \PoP\ComponentModel\StratumBase
 {
-	public function getStratum()
+    public function getStratum()
     {
-        return POP_STRATUM_DATA;
+        return \PoP\Engine\Constants\Stratum::DATA;
     }
-
-    public function getStrata() {
-    	return [
-    		POP_STRATUM_DATA
-    	];
+    public function getStrata()
+    {
+        return [\PoP\Engine\Constants\Stratum::DATA];
     }
 }
-
+\class_alias('PrefixedByPoP\\GD_Stratum_Data', 'GD_Stratum_Data', \false);
 /**
  * Initialization
  */
-new GD_Stratum_Data();
+new \PrefixedByPoP\GD_Stratum_Data();

@@ -1,18 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPosts\FieldResolvers;
 
 use PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver;
 use PoPSchema\CustomPosts\FieldResolvers\AbstractCustomPostFieldResolver;
-
-class CustomPostFieldResolver extends AbstractCustomPostFieldResolver
+class CustomPostFieldResolver extends \PoPSchema\CustomPosts\FieldResolvers\AbstractCustomPostFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return [
-            AbstractCustomPostTypeResolver::class,
-        ];
+        return [\PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver::class];
     }
 }

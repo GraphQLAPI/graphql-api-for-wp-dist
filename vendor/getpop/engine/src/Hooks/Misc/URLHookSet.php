@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\Hooks\Misc;
 
 use PoP\Hooks\AbstractHookSet;
 use PoP\Engine\ModuleFilters\HeadModule;
-
-class URLHookSet extends AbstractHookSet
+class URLHookSet extends \PoP\Hooks\AbstractHookSet
 {
     protected function init()
     {
@@ -15,7 +13,7 @@ class URLHookSet extends AbstractHookSet
     }
     public function getParamsToRemoveFromURL($params)
     {
-        $params[] = HeadModule::URLPARAM_HEADMODULE;
+        $params[] = \PoP\Engine\ModuleFilters\HeadModule::URLPARAM_HEADMODULE;
         return $params;
     }
 }

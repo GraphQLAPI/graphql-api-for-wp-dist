@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\Users;
 
-abstract class FunctionAPI_Base implements FunctionAPI
+abstract class FunctionAPI_Base implements \PoPSchema\Users\FunctionAPI
 {
     public function __construct()
     {
-        FunctionAPIFactory::setInstance($this);
+        \PoPSchema\Users\FunctionAPIFactory::setInstance($this);
     }
 }

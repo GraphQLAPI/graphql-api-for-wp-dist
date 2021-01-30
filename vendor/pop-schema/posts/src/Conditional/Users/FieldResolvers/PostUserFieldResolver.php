@@ -1,44 +1,32 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Posts\Conditional\Users\FieldResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoPSchema\Posts\FieldResolvers\AbstractPostFieldResolver;
 use PoPSchema\Users\TypeResolvers\UserTypeResolver;
-
-class PostUserFieldResolver extends AbstractPostFieldResolver
+class PostUserFieldResolver extends \PoPSchema\Posts\FieldResolvers\AbstractPostFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(UserTypeResolver::class);
+        return array(\PoPSchema\Users\TypeResolvers\UserTypeResolver::class);
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'posts' => $translationAPI->__('Posts by the user', 'users'),
-            'postCount' => $translationAPI->__('Number of posts by the user', 'users'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['posts' => $translationAPI->__('Posts by the user', 'users'), 'postCount' => $translationAPI->__('Number of posts by the user', 'users')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @return array<string, mixed>
      * @param object $resultItem
      */
-    protected function getQuery(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = []
-    ): array {
+    protected function getQuery(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : array
+    {
         $query = parent::getQuery($typeResolver, $resultItem, $fieldName, $fieldArgs);
-
         $user = $resultItem;
         switch ($fieldName) {
             case 'posts':
@@ -46,7 +34,6 @@ class PostUserFieldResolver extends AbstractPostFieldResolver
                 $query['authors'] = [$typeResolver->getID($user)];
                 break;
         }
-
         return $query;
     }
 }

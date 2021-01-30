@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Psr7;
+namespace PrefixedByPoP\GuzzleHttp\Psr7;
 
 final class Header
 {
@@ -18,16 +18,15 @@ final class Header
     {
         static $trimmed = "\"'  \n\t\r";
         $params = $matches = [];
-
         foreach (self::normalize($header) as $val) {
             $part = [];
-            foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
-                if (preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
+            foreach (\preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
+                if (\preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
                     $m = $matches[0];
                     if (isset($m[1])) {
-                        $part[trim($m[0], $trimmed)] = trim($m[1], $trimmed);
+                        $part[\trim($m[0], $trimmed)] = \trim($m[1], $trimmed);
                     } else {
-                        $part[] = trim($m[0], $trimmed);
+                        $part[] = \trim($m[0], $trimmed);
                     }
                 }
             }
@@ -35,10 +34,8 @@ final class Header
                 $params[] = $part;
             }
         }
-
         return $params;
     }
-
     /**
      * Converts an array of header values that may contain comma separated
      * headers into an array of headers with no comma separated values.
@@ -49,23 +46,21 @@ final class Header
      */
     public static function normalize($header)
     {
-        if (!is_array($header)) {
-            return array_map('trim', explode(',', $header));
+        if (!\is_array($header)) {
+            return \array_map('trim', \explode(',', $header));
         }
-
         $result = [];
         foreach ($header as $value) {
             foreach ((array) $value as $v) {
-                if (strpos($v, ',') === false) {
+                if (\strpos($v, ',') === \false) {
                     $result[] = $v;
                     continue;
                 }
-                foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $v) as $vv) {
-                    $result[] = trim($vv);
+                foreach (\preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $v) as $vv) {
+                    $result[] = \trim($vv);
                 }
             }
         }
-
         return $result;
     }
 }

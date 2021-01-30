@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Posts\FieldResolvers;
 
 use PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade;
@@ -11,61 +10,42 @@ use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
 use PoPSchema\CustomPosts\Types\Status;
-
-class PostLegacyContentFieldResolver extends AbstractDBDataFieldResolver
+class PostLegacyContentFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return [
-            PostTypeResolver::class,
-        ];
+        return [\PoPSchema\Posts\TypeResolvers\PostTypeResolver::class];
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        return [
-            'isPublished',
-        ];
+        return ['isPublished'];
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $types = [
-            'isPublished' => SchemaDefinition::TYPE_BOOL,
-        ];
+        $types = ['isPublished' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_BOOL];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function isSchemaFieldResponseNonNullable(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
-        $nonNullableFieldNames = [
-            'isPublished',
-        ];
-        if (in_array($fieldName, $nonNullableFieldNames)) {
-            return true;
+        $nonNullableFieldNames = ['isPublished'];
+        if (\in_array($fieldName, $nonNullableFieldNames)) {
+            return \true;
         }
         return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'isPublished' => $translationAPI->__('Has the post been published?', 'content'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['isPublished' => $translationAPI->__('Has the post been published?', 'content')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldDeprecationDescription(TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []): ?string
+    public function getSchemaFieldDeprecationDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         $placeholder_status = $translationAPI->__('Use \'isStatus(status:%s)\' instead of \'%s\'', 'content');
-        $descriptions = [
-            'isPublished' => sprintf($placeholder_status, Status::PUBLISHED, $fieldName),
-        ];
+        $descriptions = ['isPublished' => \sprintf($placeholder_status, \PoPSchema\CustomPosts\Types\Status::PUBLISHED, $fieldName)];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDeprecationDescription($typeResolver, $fieldName, $fieldArgs);
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @param array<string, mixed>|null $variables
@@ -74,22 +54,14 @@ class PostLegacyContentFieldResolver extends AbstractDBDataFieldResolver
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = [],
-        ?array $variables = null,
-        ?array $expressions = null,
-        array $options = []
-    ) {
-        $customPostTypeAPI = CustomPostTypeAPIFacade::getInstance();
+    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    {
+        $customPostTypeAPI = \PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade::getInstance();
         $post = $resultItem;
         switch ($fieldName) {
             case 'isPublished':
-                return Status::PUBLISHED == $customPostTypeAPI->getStatus($post);
+                return \PoPSchema\CustomPosts\Types\Status::PUBLISHED == $customPostTypeAPI->getStatus($post);
         }
-
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
 }

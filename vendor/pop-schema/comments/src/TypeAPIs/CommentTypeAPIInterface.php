@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Comments\TypeAPIs;
 
 /**
@@ -15,5 +14,5 @@ interface CommentTypeAPIInterface
      * @param [type] $object
      * @return boolean
      */
-    public function isInstanceOfCommentType($object): bool;
+    public function isInstanceOfCommentType($object) : bool;
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Promise;
+namespace PrefixedByPoP\GuzzleHttp\Promise;
 
 /**
  * Get the global task queue used for promise resolution.
@@ -21,11 +21,10 @@ namespace GuzzleHttp\Promise;
  *
  * @deprecated queue will be removed in guzzlehttp/promises:2.0. Use Utils::queue instead.
  */
-function queue(TaskQueueInterface $assign = null)
+function queue(\PrefixedByPoP\GuzzleHttp\Promise\TaskQueueInterface $assign = null)
 {
-    return Utils::queue($assign);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::queue($assign);
 }
-
 /**
  * Adds a function to run in the task queue when it is next `run()` and returns
  * a promise that is fulfilled or rejected with the result.
@@ -38,9 +37,8 @@ function queue(TaskQueueInterface $assign = null)
  */
 function task(callable $task)
 {
-    return Utils::task($task);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::task($task);
 }
-
 /**
  * Creates a promise for a value if the value is not a promise.
  *
@@ -52,9 +50,8 @@ function task(callable $task)
  */
 function promise_for($value)
 {
-    return Create::promiseFor($value);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Create::promiseFor($value);
 }
-
 /**
  * Creates a rejected promise for a reason if the reason is not a promise. If
  * the provided reason is a promise, then it is returned as-is.
@@ -67,9 +64,8 @@ function promise_for($value)
  */
 function rejection_for($reason)
 {
-    return Create::rejectionFor($reason);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Create::rejectionFor($reason);
 }
-
 /**
  * Create an exception for a rejected promise value.
  *
@@ -81,9 +77,8 @@ function rejection_for($reason)
  */
 function exception_for($reason)
 {
-    return Create::exceptionFor($reason);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Create::exceptionFor($reason);
 }
-
 /**
  * Returns an iterator for the given value.
  *
@@ -95,9 +90,8 @@ function exception_for($reason)
  */
 function iter_for($value)
 {
-    return Create::iterFor($value);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Create::iterFor($value);
 }
-
 /**
  * Synchronously waits on a promise to resolve and returns an inspection state
  * array.
@@ -114,11 +108,10 @@ function iter_for($value)
  *
  * @deprecated inspect will be removed in guzzlehttp/promises:2.0. Use Utils::inspect instead.
  */
-function inspect(PromiseInterface $promise)
+function inspect(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
 {
-    return Utils::inspect($promise);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::inspect($promise);
 }
-
 /**
  * Waits on all of the provided promises, but does not unwrap rejected promises
  * as thrown exception.
@@ -135,9 +128,8 @@ function inspect(PromiseInterface $promise)
  */
 function inspect_all($promises)
 {
-    return Utils::inspectAll($promises);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::inspectAll($promises);
 }
-
 /**
  * Waits on all of the provided promises and returns the fulfilled values.
  *
@@ -156,9 +148,8 @@ function inspect_all($promises)
  */
 function unwrap($promises)
 {
-    return Utils::unwrap($promises);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::unwrap($promises);
 }
-
 /**
  * Given an array of promises, return a promise that is fulfilled when all the
  * items in the array are fulfilled.
@@ -174,11 +165,10 @@ function unwrap($promises)
  *
  * @deprecated all will be removed in guzzlehttp/promises:2.0. Use Utils::all instead.
  */
-function all($promises, $recursive = false)
+function all($promises, $recursive = \false)
 {
-    return Utils::all($promises, $recursive);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::all($promises, $recursive);
 }
-
 /**
  * Initiate a competitive race between multiple promises or values (values will
  * become immediately fulfilled promises).
@@ -199,9 +189,8 @@ function all($promises, $recursive = false)
  */
 function some($count, $promises)
 {
-    return Utils::some($count, $promises);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::some($count, $promises);
 }
-
 /**
  * Like some(), with 1 as count. However, if the promise fulfills, the
  * fulfillment value is not an array of 1 but the value directly.
@@ -214,9 +203,8 @@ function some($count, $promises)
  */
 function any($promises)
 {
-    return Utils::any($promises);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::any($promises);
 }
-
 /**
  * Returns a promise that is fulfilled when all of the provided promises have
  * been fulfilled or rejected.
@@ -233,9 +221,8 @@ function any($promises)
  */
 function settle($promises)
 {
-    return Utils::settle($promises);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Utils::settle($promises);
 }
-
 /**
  * Given an iterator that yields promises or values, returns a promise that is
  * fulfilled with a null value when the iterator has been consumed or the
@@ -257,14 +244,10 @@ function settle($promises)
  *
  * @deprecated each will be removed in guzzlehttp/promises:2.0. Use Each::of instead.
  */
-function each(
-    $iterable,
-    callable $onFulfilled = null,
-    callable $onRejected = null
-) {
-    return Each::of($iterable, $onFulfilled, $onRejected);
+function each($iterable, callable $onFulfilled = null, callable $onRejected = null)
+{
+    return \PrefixedByPoP\GuzzleHttp\Promise\Each::of($iterable, $onFulfilled, $onRejected);
 }
-
 /**
  * Like each, but only allows a certain number of outstanding promises at any
  * given time.
@@ -282,15 +265,10 @@ function each(
  *
  * @deprecated each_limit will be removed in guzzlehttp/promises:2.0. Use Each::ofLimit instead.
  */
-function each_limit(
-    $iterable,
-    $concurrency,
-    callable $onFulfilled = null,
-    callable $onRejected = null
-) {
-    return Each::ofLimit($iterable, $concurrency, $onFulfilled, $onRejected);
+function each_limit($iterable, $concurrency, callable $onFulfilled = null, callable $onRejected = null)
+{
+    return \PrefixedByPoP\GuzzleHttp\Promise\Each::ofLimit($iterable, $concurrency, $onFulfilled, $onRejected);
 }
-
 /**
  * Like each_limit, but ensures that no promise in the given $iterable argument
  * is rejected. If any promise is rejected, then the aggregate promise is
@@ -304,14 +282,10 @@ function each_limit(
  *
  * @deprecated each_limit_all will be removed in guzzlehttp/promises:2.0. Use Each::ofLimitAll instead.
  */
-function each_limit_all(
-    $iterable,
-    $concurrency,
-    callable $onFulfilled = null
-) {
-    return Each::ofLimitAll($iterable, $concurrency, $onFulfilled);
+function each_limit_all($iterable, $concurrency, callable $onFulfilled = null)
+{
+    return \PrefixedByPoP\GuzzleHttp\Promise\Each::ofLimitAll($iterable, $concurrency, $onFulfilled);
 }
-
 /**
  * Returns true if a promise is fulfilled.
  *
@@ -319,11 +293,10 @@ function each_limit_all(
  *
  * @deprecated is_fulfilled will be removed in guzzlehttp/promises:2.0. Use Is::fulfilled instead.
  */
-function is_fulfilled(PromiseInterface $promise)
+function is_fulfilled(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
 {
-    return Is::fulfilled($promise);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Is::fulfilled($promise);
 }
-
 /**
  * Returns true if a promise is rejected.
  *
@@ -331,11 +304,10 @@ function is_fulfilled(PromiseInterface $promise)
  *
  * @deprecated is_rejected will be removed in guzzlehttp/promises:2.0. Use Is::rejected instead.
  */
-function is_rejected(PromiseInterface $promise)
+function is_rejected(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
 {
-    return Is::rejected($promise);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Is::rejected($promise);
 }
-
 /**
  * Returns true if a promise is fulfilled or rejected.
  *
@@ -343,11 +315,10 @@ function is_rejected(PromiseInterface $promise)
  *
  * @deprecated is_settled will be removed in guzzlehttp/promises:2.0. Use Is::settled instead.
  */
-function is_settled(PromiseInterface $promise)
+function is_settled(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
 {
-    return Is::settled($promise);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Is::settled($promise);
 }
-
 /**
  * Create a new coroutine.
  *
@@ -359,5 +330,5 @@ function is_settled(PromiseInterface $promise)
  */
 function coroutine(callable $generatorFn)
 {
-    return Coroutine::of($generatorFn);
+    return \PrefixedByPoP\GuzzleHttp\Promise\Coroutine::of($generatorFn);
 }

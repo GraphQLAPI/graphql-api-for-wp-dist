@@ -8,23 +8,19 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag;
 
-namespace Symfony\Component\DependencyInjection\ParameterBag;
-
-use Symfony\Component\DependencyInjection\Container;
-
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Container;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
+class ContainerBag extends \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\FrozenParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface
 {
     private $container;
-
-    public function __construct(Container $container)
+    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\Container $container)
     {
         $this->container = $container;
     }
-
     /**
      * {@inheritdoc}
      */
@@ -32,7 +28,6 @@ class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
     {
         return $this->container->getParameterBag()->all();
     }
-
     /**
      * {@inheritdoc}
      */
@@ -40,7 +35,6 @@ class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
     {
         return $this->container->getParameter($name);
     }
-
     /**
      * {@inheritdoc}
      */

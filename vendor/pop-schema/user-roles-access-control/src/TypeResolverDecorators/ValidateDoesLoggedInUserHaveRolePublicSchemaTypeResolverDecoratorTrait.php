@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserRolesAccessControl\TypeResolverDecorators;
 
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver;
-
 trait ValidateDoesLoggedInUserHaveRolePublicSchemaTypeResolverDecoratorTrait
 {
     /**
@@ -16,19 +14,14 @@ trait ValidateDoesLoggedInUserHaveRolePublicSchemaTypeResolverDecoratorTrait
      * @param TypeResolverInterface $typeResolver
      * @return array
      */
-    protected function getMandatoryDirectives($entryValue = null): array
+    protected function getMandatoryDirectives($entryValue = null) : array
     {
         $roles = $entryValue;
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         $directiveResoverClass = $this->getValidateRoleDirectiveResolverClass();
         $directiveName = $directiveResoverClass::getDirectiveName();
-        $validateDoesLoggedInUserHaveAnyRoleDirective = $fieldQueryInterpreter->getDirective($directiveName, [
-            'roles' => $roles,
-        ]);
-        return [
-            $validateDoesLoggedInUserHaveAnyRoleDirective,
-        ];
+        $validateDoesLoggedInUserHaveAnyRoleDirective = $fieldQueryInterpreter->getDirective($directiveName, ['roles' => $roles]);
+        return [$validateDoesLoggedInUserHaveAnyRoleDirective];
     }
-
-    abstract protected function getValidateRoleDirectiveResolverClass(): string;
+    protected abstract function getValidateRoleDirectiveResolverClass() : string;
 }

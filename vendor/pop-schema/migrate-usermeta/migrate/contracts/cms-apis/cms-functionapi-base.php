@@ -1,11 +1,12 @@
 <?php
+
 namespace PoPSchema\UserMeta;
 
-abstract class FunctionAPI_Base implements FunctionAPI
+abstract class FunctionAPI_Base implements \PoPSchema\UserMeta\FunctionAPI
 {
     public function __construct()
     {
-        FunctionAPIFactory::setInstance($this);
+        \PoPSchema\UserMeta\FunctionAPIFactory::setInstance($this);
     }
     public function getMetaKey($meta_key)
     {

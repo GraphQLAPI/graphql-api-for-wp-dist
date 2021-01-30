@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\VarExporter\Internal;
+namespace PrefixedByPoP\Symfony\Component\VarExporter\Internal;
 
 /**
  * @author Nicolas Grekas <p@tchwork.com>
@@ -19,7 +18,6 @@ namespace Symfony\Component\VarExporter\Internal;
 class Values
 {
     public $values;
-
     public function __construct(array $values)
     {
         $this->values = $values;

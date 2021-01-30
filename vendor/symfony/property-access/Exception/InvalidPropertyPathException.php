@@ -8,14 +8,13 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\PropertyAccess\Exception;
+namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
 
 /**
  * Thrown when a property path is malformed.
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class InvalidPropertyPathException extends RuntimeException
+class InvalidPropertyPathException extends \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\RuntimeException
 {
 }

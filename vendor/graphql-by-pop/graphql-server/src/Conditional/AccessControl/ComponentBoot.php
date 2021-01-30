@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Conditional\AccessControl;
 
 use PoP\AccessControl\ComponentConfiguration as AccessControlComponentConfiguration;
 use PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups;
 use GraphQLByPoP\GraphQLServer\DirectiveResolvers\ConditionalOnEnvironment\SchemaNoCacheCacheControlDirectiveResolver;
-
 /**
  * Initialize component
  */
@@ -18,12 +16,11 @@ class ComponentBoot
      *
      * @return void
      */
-    public static function beforeBoot(): void
+    public static function beforeBoot() : void
     {
         // Initialize classes
         self::attachDynamicDirectiveResolvers();
     }
-
     /**
      * Attach directive resolvers based on environment variables
      *
@@ -38,11 +35,8 @@ class ComponentBoot
          * Fields will be available or not depending on the user being logged in or not
          * Then, the CacheControl for field "__schema" must be set to "no-cache"
          */
-        if (
-            AccessControlComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() ||
-            AccessControlComponentConfiguration::usePrivateSchemaMode()
-        ) {
-            SchemaNoCacheCacheControlDirectiveResolver::attach(AttachableExtensionGroups::DIRECTIVERESOLVERS);
+        if (\PoP\AccessControl\ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() || \PoP\AccessControl\ComponentConfiguration::usePrivateSchemaMode()) {
+            \GraphQLByPoP\GraphQLServer\DirectiveResolvers\ConditionalOnEnvironment\SchemaNoCacheCacheControlDirectiveResolver::attach(\PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::DIRECTIVERESOLVERS);
         }
     }
 }

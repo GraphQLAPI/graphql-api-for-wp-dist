@@ -8,92 +8,83 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Cache\Marshaller;
 
-namespace Symfony\Component\Cache\Marshaller;
-
-use Symfony\Component\Cache\Exception\CacheException;
-
+use PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException;
 /**
  * Serializes/unserializes values using igbinary_serialize() if available, serialize() otherwise.
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class DefaultMarshaller implements MarshallerInterface
+class DefaultMarshaller implements \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface
 {
-    private $useIgbinarySerialize = true;
-
+    private $useIgbinarySerialize = \true;
     public function __construct(bool $useIgbinarySerialize = null)
     {
         if (null === $useIgbinarySerialize) {
-            $useIgbinarySerialize = \extension_loaded('igbinary') && (\PHP_VERSION_ID < 70400 || version_compare('3.1.6', phpversion('igbinary'), '<='));
-        } elseif ($useIgbinarySerialize && (!\extension_loaded('igbinary') || (\PHP_VERSION_ID >= 70400 && version_compare('3.1.6', phpversion('igbinary'), '>')))) {
-            throw new CacheException(\extension_loaded('igbinary') && \PHP_VERSION_ID >= 70400 ? 'Please upgrade the "igbinary" PHP extension to v3.1.6 or higher.' : 'The "igbinary" PHP extension is not loaded.');
+            $useIgbinarySerialize = \extension_loaded('igbinary') && (\PHP_VERSION_ID < 70400 || \version_compare('3.1.6', \phpversion('igbinary'), '<='));
+        } elseif ($useIgbinarySerialize && (!\extension_loaded('igbinary') || \PHP_VERSION_ID >= 70400 && \version_compare('3.1.6', \phpversion('igbinary'), '>'))) {
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException(\extension_loaded('igbinary') && \PHP_VERSION_ID >= 70400 ? 'Please upgrade the "igbinary" PHP extension to v3.1.6 or higher.' : 'The "igbinary" PHP extension is not loaded.');
         }
         $this->useIgbinarySerialize = $useIgbinarySerialize;
     }
-
     /**
      * {@inheritdoc}
      */
-    public function marshall(array $values, ?array &$failed): array
+    public function marshall(array $values, ?array &$failed) : array
     {
         $serialized = $failed = [];
-
         foreach ($values as $id => $value) {
             try {
                 if ($this->useIgbinarySerialize) {
-                    $serialized[$id] = igbinary_serialize($value);
+                    $serialized[$id] = \igbinary_serialize($value);
                 } else {
-                    $serialized[$id] = serialize($value);
+                    $serialized[$id] = \serialize($value);
                 }
             } catch (\Exception $e) {
                 $failed[] = $id;
             }
         }
-
         return $serialized;
     }
-
     /**
      * {@inheritdoc}
      */
     public function unmarshall(string $value)
     {
         if ('b:0;' === $value) {
-            return false;
+            return \false;
         }
         if ('N;' === $value) {
             return null;
         }
         static $igbinaryNull;
-        if ($value === ($igbinaryNull ?? $igbinaryNull = \extension_loaded('igbinary') ? igbinary_serialize(null) : false)) {
+        if ($value === ($igbinaryNull ?? ($igbinaryNull = \extension_loaded('igbinary') ? \igbinary_serialize(null) : \false))) {
             return null;
         }
-        $unserializeCallbackHandler = ini_set('unserialize_callback_func', __CLASS__.'::handleUnserializeCallback');
+        $unserializeCallbackHandler = \ini_set('unserialize_callback_func', __CLASS__ . '::handleUnserializeCallback');
         try {
             if (':' === ($value[1] ?? ':')) {
-                if (false !== $value = unserialize($value)) {
+                if (\false !== ($value = \unserialize($value))) {
                     return $value;
                 }
-            } elseif (false === $igbinaryNull) {
+            } elseif (\false === $igbinaryNull) {
                 throw new \RuntimeException('Failed to unserialize values, did you forget to install the "igbinary" extension?');
-            } elseif (null !== $value = igbinary_unserialize($value)) {
+            } elseif (null !== ($value = \igbinary_unserialize($value))) {
                 return $value;
             }
-
-            throw new \DomainException(error_get_last() ? error_get_last()['message'] : 'Failed to unserialize values.');
+            throw new \DomainException(\error_get_last() ? \error_get_last()['message'] : 'Failed to unserialize values.');
         } catch (\Error $e) {
             throw new \ErrorException($e->getMessage(), $e->getCode(), \E_ERROR, $e->getFile(), $e->getLine());
         } finally {
-            ini_set('unserialize_callback_func', $unserializeCallbackHandler);
+            \ini_set('unserialize_callback_func', $unserializeCallbackHandler);
         }
     }
-
     /**
      * @internal
      */
     public static function handleUnserializeCallback(string $class)
     {
-        throw new \DomainException('Class not found: '.$class);
+        throw new \DomainException('Class not found: ' . $class);
     }
 }

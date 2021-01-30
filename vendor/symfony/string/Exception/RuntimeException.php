@@ -8,9 +8,8 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\String\Exception;
 
-namespace Symfony\Component\String\Exception;
-
-class RuntimeException extends \RuntimeException implements ExceptionInterface
+class RuntimeException extends \RuntimeException implements \PrefixedByPoP\Symfony\Component\String\Exception\ExceptionInterface
 {
 }

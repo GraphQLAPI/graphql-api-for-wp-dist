@@ -1,26 +1,22 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\MutationResolverBridges;
 
 use PoP\ComponentModel\ModuleProcessors\DataloadingConstants;
-
-abstract class AbstractCRUDComponentMutationResolverBridge extends AbstractComponentMutationResolverBridge
+abstract class AbstractCRUDComponentMutationResolverBridge extends \PoP\ComponentModel\MutationResolverBridges\AbstractComponentMutationResolverBridge
 {
-    protected function skipDataloadIfError(): bool
+    protected function skipDataloadIfError() : bool
     {
-        return true;
+        return \true;
     }
-
     /**
      * @param mixed $result_id Maybe an int, maybe a string
      */
-    protected function modifyDataProperties(array &$data_properties, $result_id): void
+    protected function modifyDataProperties(array &$data_properties, $result_id) : void
     {
         parent::modifyDataProperties($data_properties, $result_id);
-
         // Modify the block-data-settings, saying to select the id of the newly created post
-        $data_properties[DataloadingConstants::QUERYARGS]['include'] = array($result_id);
+        $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS]['include'] = array($result_id);
     }
 }

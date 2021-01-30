@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\PostTags\TypeAPIs;
 
 use PoPSchema\Tags\TypeAPIs\TagTypeAPIInterface;
-
 /**
  * Methods to interact with the Type, to be implemented by the underlying CMS
  */
-interface PostTagTypeAPIInterface extends TagTypeAPIInterface
+interface PostTagTypeAPIInterface extends \PoPSchema\Tags\TypeAPIs\TagTypeAPIInterface
 {
     /**
      * Indicates if the passed object is of type PostTag
@@ -17,12 +15,11 @@ interface PostTagTypeAPIInterface extends TagTypeAPIInterface
      * @param [type] $object
      * @return boolean
      */
-    public function isInstanceOfPostTagType($object): bool;
-
+    public function isInstanceOfPostTagType($object) : bool;
     /**
      * The taxonomy name representing a post tag ("post_tag")
      *
      * @return string
      */
-    public function getPostTagTaxonomyName(): string;
+    public function getPostTagTaxonomyName() : string;
 }

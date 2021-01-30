@@ -1,7 +1,8 @@
 <?php
-namespace PoPSchema\Taxonomies;
-use PoPSchema\Taxonomies\Facades\TaxonomyTypeAPIFacade;
 
+namespace PoPSchema\Taxonomies;
+
+use PoPSchema\Taxonomies\Facades\TaxonomyTypeAPIFacade;
 class VarsHelpers
 {
     /**
@@ -13,7 +14,7 @@ class VarsHelpers
      */
     public static function addQueriedObjectTaxonomyNameToVars(&$vars)
     {
-        $taxonomyTypeAPI = TaxonomyTypeAPIFacade::getInstance();
+        $taxonomyTypeAPI = \PoPSchema\Taxonomies\Facades\TaxonomyTypeAPIFacade::getInstance();
         $termObjectID = $vars['routing-state']['queried-object-id'];
         $vars['routing-state']['taxonomy-name'] = $taxonomyTypeAPI->getTermTaxonomyName($termObjectID);
     }

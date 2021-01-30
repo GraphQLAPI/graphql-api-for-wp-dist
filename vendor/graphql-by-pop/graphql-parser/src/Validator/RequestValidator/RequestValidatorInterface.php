@@ -5,13 +5,10 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Validator\RequestValidator;
 
 use GraphQLByPoP\GraphQLParser\Execution\Request;
-
 interface RequestValidatorInterface
 {
-
-    public function validate(Request $request);
+    public function validate(\GraphQLByPoP\GraphQLParser\Execution\Request $request);
 }

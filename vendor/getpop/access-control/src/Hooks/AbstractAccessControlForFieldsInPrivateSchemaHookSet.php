@@ -1,29 +1,24 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\AccessControl\Hooks;
 
 use PoP\AccessControl\ComponentConfiguration;
 use PoP\AccessControl\Schema\SchemaModes;
 use PoP\AccessControl\Hooks\AbstractAccessControlForFieldsHookSet;
-
-abstract class AbstractAccessControlForFieldsInPrivateSchemaHookSet extends AbstractAccessControlForFieldsHookSet
+abstract class AbstractAccessControlForFieldsInPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractAccessControlForFieldsHookSet
 {
     /**
      * Indicate if this hook is enabled
      *
      * @return boolean
      */
-    protected function enabled(): bool
+    protected function enabled() : bool
     {
-        return
-            ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() ||
-            ComponentConfiguration::usePrivateSchemaMode();
+        return \PoP\AccessControl\ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() || \PoP\AccessControl\ComponentConfiguration::usePrivateSchemaMode();
     }
-
-    protected function getSchemaMode(): string
+    protected function getSchemaMode() : string
     {
-        return SchemaModes::PRIVATE_SCHEMA_MODE;
+        return \PoP\AccessControl\Schema\SchemaModes::PRIVATE_SCHEMA_MODE;
     }
 }

@@ -1,28 +1,23 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\TypeResolvers;
 
 use GraphQLByPoP\GraphQLServer\TypeDataLoaders\SchemaDefinitionReferenceTypeDataLoader;
 use PoP\Translation\Facades\TranslationAPIFacade;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\AbstractIntrospectionTypeResolver;
-
-class DirectiveTypeResolver extends AbstractIntrospectionTypeResolver
+class DirectiveTypeResolver extends \GraphQLByPoP\GraphQLServer\TypeResolvers\AbstractIntrospectionTypeResolver
 {
     public const NAME = '__Directive';
-
-    public function getTypeName(): string
+    public function getTypeName() : string
     {
         return self::NAME;
     }
-
-    public function getSchemaTypeDescription(): ?string
+    public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('A GraphQL directive in the data graph', 'graphql-server');
     }
-
     /**
      * @param object $resultItem
      */
@@ -31,9 +26,8 @@ class DirectiveTypeResolver extends AbstractIntrospectionTypeResolver
         $directive = $resultItem;
         return $directive->getID();
     }
-
-    public function getTypeDataLoaderClass(): string
+    public function getTypeDataLoaderClass() : string
     {
-        return SchemaDefinitionReferenceTypeDataLoader::class;
+        return \GraphQLByPoP\GraphQLServer\TypeDataLoaders\SchemaDefinitionReferenceTypeDataLoader::class;
     }
 }

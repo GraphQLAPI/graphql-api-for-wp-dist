@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\APIMirrorQuery\DataStructureFormatters;
 
 use PoP\ComponentModel\TypeResolvers\UnionTypeHelpers;
@@ -9,23 +8,19 @@ use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter;
 use PoP\ComponentModel\State\ApplicationState;
-
-class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatter
+class MirrorQueryDataStructureFormatter extends \PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter
 {
     public const NAME = 'mirrorquery';
-
-    public static function getName(): string
+    public static function getName() : string
     {
         return self::NAME;
     }
-
     protected function getFields()
     {
         // Allow REST to override with default fields
-        $vars = ApplicationState::getVars();
+        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
         return $vars['requested-query'] ?? $vars['query'] ?? [];
     }
-
     public function getFormattedData($data)
     {
         // Re-create the shape of the query by iterating through all dbObjectIDs and all required fields,
@@ -38,10 +33,9 @@ class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatt
             foreach ($datasetModuleData as $moduleName => $dbObjectIDs) {
                 $dbKeyPaths = $data['datasetmodulesettings'][$moduleName]['dbkeys'] ?? [];
                 $dbObjectIDorIDs = $dbObjectIDs['dbobjectids'];
-                $this->addData($ret, $fields, $databases, $unionDBKeyIDs, $dbObjectIDorIDs, 'id', $dbKeyPaths, false);
+                $this->addData($ret, $fields, $databases, $unionDBKeyIDs, $dbObjectIDorIDs, 'id', $dbKeyPaths, \false);
             }
         }
-
         return $ret;
     }
     // GraphQL/REST cannot have getExtraRoutes()!!!!! Because the fields can't be applied to different resources! (Eg: author/leo/ and author/leo/?route=posts)
@@ -55,11 +49,10 @@ class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatt
     //         list($has_extra_routes) = $engine->listExtraRouteVars();
     //         $vars = ApplicationState::getVars();
     //         $dataoutputmode = $vars['dataoutputmode'];
-
     //         $databases = $data['dbData'] ?? [];
     //         $datasetModuleData = $data['datasetmoduledata'] ?? [];
     //         $datasetModuleSettings = $data['datasetmodulesettings'] ?? [];
-    //         if ($dataoutputmode == GD_URLPARAM_DATAOUTPUTMODE_SPLITBYSOURCES) {
+    //         if ($dataoutputmode == \PoP\ComponentModel\Constants\DataOutputModes::SPLITBYSOURCES) {
     //             if ($has_extra_routes) {
     //                 $datasetModuleData = array_merge_recursive(
     //                     $datasetModuleData['immutable'] ?? [],
@@ -72,7 +65,7 @@ class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatt
     //                     ($has_extra_routes ? array_values($datasetModuleSettings['mutableonrequest'])[0] : $datasetModuleSettings['mutableonrequest']) ?? []
     //                 );
     //             }
-    //         } elseif ($dataoutputmode == GD_URLPARAM_DATAOUTPUTMODE_COMBINED) {
+    //         } elseif ($dataoutputmode == \PoP\ComponentModel\Constants\DataOutputModes::COMBINED) {
     //             if ($has_extra_routes) {
     //                 $datasetModuleData = array_values($datasetModuleData)[0];
     //                 $datasetModuleSettings = array_values($datasetModuleSettings)[0];
@@ -84,27 +77,24 @@ class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatt
     //             $this->addData($ret, $fields, $databases, $dbObjectIDorIDs, 'id', $dbKeyPaths, false);
     //         }
     //     }
-
     //     return $ret;
     // }
-
-    protected function addData(&$ret, $fields, &$databases, &$unionDBKeyIDs, $dbObjectIDorIDs, $dbObjectKeyPath, &$dbKeyPaths, $concatenateField = true)
+    protected function addData(&$ret, $fields, &$databases, &$unionDBKeyIDs, $dbObjectIDorIDs, $dbObjectKeyPath, &$dbKeyPaths, $concatenateField = \true)
     {
         // Property fields have numeric key only. From them, obtain the fields to print for the object
-        $propertyFields = array_filter($fields, function ($key) {
-            return is_numeric($key);
-        }, ARRAY_FILTER_USE_KEY);
+        $propertyFields = \array_filter($fields, function ($key) {
+            return \is_numeric($key);
+        }, \ARRAY_FILTER_USE_KEY);
         // All other fields must be nested, to keep fetching data for the object relationships
-        $nestedFields = array_filter($fields, function ($key) {
-            return !is_numeric($key);
-        }, ARRAY_FILTER_USE_KEY);
-
+        $nestedFields = \array_filter($fields, function ($key) {
+            return !\is_numeric($key);
+        }, \ARRAY_FILTER_USE_KEY);
         // The results can be a single ID or value, or an array of IDs
-        if (is_array($dbObjectIDorIDs)) {
+        if (\is_array($dbObjectIDorIDs)) {
             foreach ($dbObjectIDorIDs as $dbObjectID) {
                 // Add a new array for this DB object, where to return all its properties
                 $ret[] = [];
-                $dbObjectRet = &$ret[count($ret) - 1];
+                $dbObjectRet =& $ret[\count($ret) - 1];
                 $this->addDBObjectData($dbObjectRet, $propertyFields, $nestedFields, $databases, $unionDBKeyIDs, $dbObjectID, $dbObjectKeyPath, $dbKeyPaths, $concatenateField);
             }
         } else {
@@ -112,7 +102,6 @@ class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatt
             $this->addDBObjectData($ret, $propertyFields, $nestedFields, $databases, $unionDBKeyIDs, $dbObjectID, $dbObjectKeyPath, $dbKeyPaths, $concatenateField);
         }
     }
-
     protected function addDBObjectData(&$dbObjectRet, $propertyFields, $nestedFields, &$databases, &$unionDBKeyIDs, $dbObjectID, $dbObjectKeyPath, &$dbKeyPaths, $concatenateField)
     {
         // If there are no property fields and no nestedFields, then do nothing.
@@ -127,10 +116,7 @@ class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatt
         // Eg: /?query=content.comments.id. In this case, "content" is handled by UnionTypeResolver, and "comments" would not be found since its entry can't be added under "datasetmodulesettings.dbkeys", since the module (of class AbstractRelationalFieldQueryDataModuleProcessor) with a UnionTypeResolver can't resolve the 'succeeding-typeResolver' to set to its submodules
         // if (UnionTypeHelpers::isUnionType($dbKey))
         if ($concatenateField) {
-            list(
-                $dbKey,
-                $dbObjectID
-            ) = UnionTypeHelpers::extractDBObjectTypeAndID($dbObjectID);
+            list($dbKey, $dbObjectID) = \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::extractDBObjectTypeAndID($dbObjectID);
         } else {
             // Add all properties requested from the object
             $dbKey = $dbKeyPaths[$dbObjectKeyPath];
@@ -139,58 +125,51 @@ class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatt
         if (!$dbKey) {
             return;
         }
-
         $dbObject = $databases[$dbKey][$dbObjectID] ?? [];
         foreach ($propertyFields as $propertyField) {
             // Only if the property has been set (in case of dbError it is not set)
-            $propertyFieldOutputKey = FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($propertyField);
-            if (array_key_exists($propertyFieldOutputKey, $dbObject)) {
+            $propertyFieldOutputKey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($propertyField);
+            if (\array_key_exists($propertyFieldOutputKey, $dbObject)) {
                 $dbObjectRet[$propertyFieldOutputKey] = $dbObject[$propertyFieldOutputKey];
             }
         }
-
         // Add the nested levels
         foreach ($nestedFields as $nestedField => $nestedPropertyFields) {
-            $nestedFieldOutputKey = FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($nestedField);
+            $nestedFieldOutputKey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($nestedField);
             // If the key doesn't exist, then do nothing. This supports the "skip output if null" behaviour: if it is to be skipped, there will be no value (which is different than a null)
-            if (array_key_exists($nestedFieldOutputKey, $dbObject)) {
+            if (\array_key_exists($nestedFieldOutputKey, $dbObject)) {
                 // If it's null, directly assign the null to the result
-                if (is_null($dbObject[$nestedFieldOutputKey])) {
+                if (\is_null($dbObject[$nestedFieldOutputKey])) {
                     $dbObjectRet[$nestedFieldOutputKey] = null;
                 } else {
                     // Watch out! If the property has already been loaded from a previous iteration, in some cases it can create trouble!
                     // But make sure that there truly are subproperties! It could also be a schemaError.
                     // Eg: ?query=posts.title.id, then no need to transform "title" from string to {"id" => ...}
-                    if (FeedbackMessageStoreFacade::getInstance()->getSchemaErrorsForField($dbKey, $nestedField)) {
+                    if (\PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance()->getSchemaErrorsForField($dbKey, $nestedField)) {
                         $dbObjectRet[$nestedFieldOutputKey] = $dbObject[$nestedFieldOutputKey];
                     } else {
                         // The first field, "id", needs not be concatenated. All the others do need
                         $nextField = ($concatenateField ? $dbObjectKeyPath . '.' : '') . $nestedFieldOutputKey;
-
                         // The type with ID may be stored under $unionDBKeyIDs
                         $unionDBKeyID = $unionDBKeyIDs[$dbKey][$dbObjectID][$nestedFieldOutputKey] ?? null;
-
                         // Add a new subarray for the nested property
-                        $dbObjectNestedPropertyRet = &$dbObjectRet[$nestedFieldOutputKey];
-
+                        $dbObjectNestedPropertyRet =& $dbObjectRet[$nestedFieldOutputKey];
                         // If it is an empty array, then directly add an empty array as the result
-                        if (is_array($dbObject[$nestedFieldOutputKey]) && empty($dbObject[$nestedFieldOutputKey])) {
+                        if (\is_array($dbObject[$nestedFieldOutputKey]) && empty($dbObject[$nestedFieldOutputKey])) {
                             $dbObjectRet[$nestedFieldOutputKey] = [];
                         } else {
                             if (!empty($dbObjectNestedPropertyRet)) {
                                 // 1. If we load a relational property as its ID, and then load properties on the corresponding object, then it will fail because it will attempt to add a property to a non-array element
                                 // Eg: /posts/api/graphql/?query=id|author,author.name will first return "author => 1" and on the "1" element add property "name"
                                 // Then, if this situation happens, simply override the ID (which is a scalar value, such as an int or string) with an object with the 'id' property
-                                if (!is_array($dbObjectNestedPropertyRet)) {
-                                    $dbObjectRet[$nestedFieldOutputKey] = [
-                                        'id' => $dbObjectRet[$nestedFieldOutputKey],
-                                    ];
+                                if (!\is_array($dbObjectNestedPropertyRet)) {
+                                    $dbObjectRet[$nestedFieldOutputKey] = ['id' => $dbObjectRet[$nestedFieldOutputKey]];
                                 } else {
                                     // 2. If the previous iteration loaded an array of IDs, then override this value with an empty array and initialize the ID again to this object, through adding property 'id' on the next iteration
                                     // Eg: /api/graphql/?query=tags,tags.name
                                     $dbObjectRet[$nestedFieldOutputKey] = [];
-                                    if (!in_array('id', $nestedPropertyFields)) {
-                                        array_unshift($nestedPropertyFields, 'id');
+                                    if (!\in_array('id', $nestedPropertyFields)) {
+                                        \array_unshift($nestedPropertyFields, 'id');
                                     }
                                 }
                             }

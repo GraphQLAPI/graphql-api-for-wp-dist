@@ -8,36 +8,25 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node;
 
-namespace Symfony\Component\ExpressionLanguage\Node;
-
-use Symfony\Component\ExpressionLanguage\Compiler;
-
+use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
 /**
  * @author Fabien Potencier <fabien@symfony.com>
  *
  * @internal
  */
-class UnaryNode extends Node
+class UnaryNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
 {
-    private static $operators = [
-        '!' => '!',
-        'not' => '!',
-        '+' => '+',
-        '-' => '-',
-    ];
-
-    public function __construct(string $operator, Node $node)
+    private const OPERATORS = ['!' => '!', 'not' => '!', '+' => '+', '-' => '-'];
+    public function __construct(string $operator, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $node)
     {
         parent::__construct(['node' => $node], ['operator' => $operator]);
     }
-
-    public function compile(Compiler $compiler)
+    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
     {
-        $compiler->raw('(')->raw(self::$operators[$this->attributes['operator']])->compile($this->nodes['node'])->raw(')')
-        ;
+        $compiler->raw('(')->raw(self::OPERATORS[$this->attributes['operator']])->compile($this->nodes['node'])->raw(')');
     }
-
     public function evaluate(array $functions, array $values)
     {
         $value = $this->nodes['node']->evaluate($functions, $values);
@@ -48,12 +37,10 @@ class UnaryNode extends Node
             case '-':
                 return -$value;
         }
-
         return $value;
     }
-
-    public function toArray(): array
+    public function toArray() : array
     {
-        return ['(', $this->attributes['operator'].' ', $this->nodes['node'], ')'];
+        return ['(', $this->attributes['operator'] . ' ', $this->nodes['node'], ')'];
     }
 }

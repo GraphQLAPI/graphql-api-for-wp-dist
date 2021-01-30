@@ -1,9 +1,9 @@
 <?php
+
 /**
  * @license http://www.opensource.org/licenses/mit-license.php MIT (see the LICENSE file)
  */
-
-namespace Psr\Container;
+namespace PrefixedByPoP\Psr\Container;
 
 /**
  * Describes the interface of a container that exposes methods to read its entries.
@@ -21,7 +21,6 @@ interface ContainerInterface
      * @return mixed Entry.
      */
     public function get($id);
-
     /**
      * Returns true if the container can return an entry for the given identifier.
      * Returns false otherwise.

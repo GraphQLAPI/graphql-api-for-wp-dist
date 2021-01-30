@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Hooks;
 
 use PoP\Hooks\HooksAPIInterface;
 use PoP\Translation\TranslationAPIInterface;
-
 abstract class AbstractHookSet
 {
     /**
@@ -17,14 +15,10 @@ abstract class AbstractHookSet
      * @var \PoP\Translation\TranslationAPIInterface
      */
     protected $translationAPI;
-
-    public function __construct(
-        HooksAPIInterface $hooksAPI,
-        TranslationAPIInterface $translationAPI
-    ) {
+    public function __construct(\PoP\Hooks\HooksAPIInterface $hooksAPI, \PoP\Translation\TranslationAPIInterface $translationAPI)
+    {
         $this->hooksAPI = $hooksAPI;
         $this->translationAPI = $translationAPI;
-
         // Initialize the hooks
         $this->init();
     }
@@ -33,5 +27,5 @@ abstract class AbstractHookSet
      *
      * @return void
      */
-    abstract protected function init();
+    protected abstract function init();
 }

@@ -1,10 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\QueryParsing;
 
-class QueryParser implements QueryParserInterface
+class QueryParser implements \PoP\QueryParsing\QueryParserInterface
 {
     /**
      * Parse elements by a separator, not failing whenever the separator
@@ -17,50 +16,41 @@ class QueryParser implements QueryParserInterface
      * @return string[]
      * @see https://stackoverflow.com/a/1084924
      */
-    public function splitElements(
-        string $query,
-        string $separator = ',',
-        $skipFromChars = '(',
-        $skipUntilChars = ')',
-        ?string $ignoreSkippingFromChar = null,
-        ?string $ignoreSkippingUntilChar = null,
-        array $options = []
-    ): array {
+    public function splitElements(string $query, string $separator = ',', $skipFromChars = '(', $skipUntilChars = ')', ?string $ignoreSkippingFromChar = null, ?string $ignoreSkippingUntilChar = null, array $options = []) : array
+    {
         $buffer = '';
         $stack = array();
         $depth = 0;
-        $len = strlen($query);
-        if (!is_array($skipFromChars)) {
+        $len = \strlen($query);
+        if (!\is_array($skipFromChars)) {
             $skipFromChars = [$skipFromChars];
         }
-        if (!is_array($skipUntilChars)) {
+        if (!\is_array($skipUntilChars)) {
             $skipUntilChars = [$skipUntilChars];
         }
         // To reduce the amount of "if" statements executed, first ask if the character is any of the special chars
-        $specialChars = array_merge([
-            $separator,
-        ], $skipFromChars, $skipUntilChars);
+        $specialChars = \array_merge([$separator], $skipFromChars, $skipUntilChars);
         // Both $ignoreSkippingFromChar and $ignoreSkippingUntilChar must be provided to be used, only 1 cannot
-        if (is_null($ignoreSkippingFromChar) || is_null($ignoreSkippingUntilChar)) {
+        if (\is_null($ignoreSkippingFromChar) || \is_null($ignoreSkippingUntilChar)) {
             $ignoreSkippingFromChar = $ignoreSkippingUntilChar = null;
         } else {
             $specialChars[] = $ignoreSkippingFromChar;
             $specialChars[] = $ignoreSkippingUntilChar;
         }
-        $specialChars = array_unique($specialChars);
+        $specialChars = \array_unique($specialChars);
         // If there is any character that is both in $skipFromChars and $skipUntilChars,
         // then allow only 1 instance of it for starting/closing
         // Potential eg: "%" for demarcating variables
-        $skipFromUntilChars = array_intersect($skipFromChars, $skipUntilChars);
+        $skipFromUntilChars = \array_intersect($skipFromChars, $skipUntilChars);
         // From the options we may indicate to stop after either the first or last occurrences are found
-        $onlyFirstOccurrence = $options[QueryParserOptions::ONLY_FIRST_OCCURRENCE] ?? false;
-        $startFromEnd = $options[QueryParserOptions::START_FROM_END] ?? false;
+        $onlyFirstOccurrence = $options[\PoP\QueryParsing\QueryParserOptions::ONLY_FIRST_OCCURRENCE] ?? \false;
+        $startFromEnd = $options[\PoP\QueryParsing\QueryParserOptions::START_FROM_END] ?? \false;
         // If iterating right to left, we reverse the string, treat closing symbols
         // as opening ones and vice versa, and then inverse once again the results
         // just before returing them
         if ($startFromEnd) {
             // Reverse string
-            $query = strrev($query);
+            $query = \strrev($query);
             // Treat "skip" from symbols as until, and viceversa
             $temp = $skipFromChars;
             $skipFromChars = $skipUntilChars;
@@ -75,34 +65,34 @@ class QueryParser implements QueryParserInterface
         while ($charPos < $len - 1) {
             $charPos++;
             $char = $query[$charPos];
-            if (in_array($char, $specialChars)) {
+            if (\in_array($char, $specialChars)) {
                 if ($char == $ignoreSkippingFromChar) {
                     // Search the closing symbol and shortcut to that position
                     // (eg: opening then closing quotes for strings)
                     // If it is not there, then treat this char as a normal char
                     // Eg: search:with some quote " is ok
-                    $restStrIgnoreSkippingUntilCharPos = strpos($query, (string) $ignoreSkippingUntilChar, $charPos + 1);
-                    if ($restStrIgnoreSkippingUntilCharPos !== false) {
+                    $restStrIgnoreSkippingUntilCharPos = \strpos($query, (string) $ignoreSkippingUntilChar, $charPos + 1);
+                    if ($restStrIgnoreSkippingUntilCharPos !== \false) {
                         // Add this stretch of string into the buffer
-                        $buffer .= substr($query, $charPos, $restStrIgnoreSkippingUntilCharPos - $charPos + 1);
+                        $buffer .= \substr($query, $charPos, $restStrIgnoreSkippingUntilCharPos - $charPos + 1);
                         // Continue iterating from that position
                         $charPos = $restStrIgnoreSkippingUntilCharPos;
                         continue;
                     }
-                } elseif (in_array($char, $skipFromUntilChars)) {
+                } elseif (\in_array($char, $skipFromUntilChars)) {
                     // If first occurrence, flag that from now on we start ignoring the chars,
                     // so everything goes to the buffer
                     if (!$isInsideSkipFromUntilChars[$char]) {
-                        $isInsideSkipFromUntilChars[$char] = true;
+                        $isInsideSkipFromUntilChars[$char] = \true;
                         $depth++;
                     } else {
                         // If second occurrence, flag it as false
-                        $isInsideSkipFromUntilChars[$char] = false;
+                        $isInsideSkipFromUntilChars[$char] = \false;
                         $depth--;
                     }
-                } elseif (in_array($char, $skipFromChars)) {
+                } elseif (\in_array($char, $skipFromChars)) {
                     $depth++;
-                } elseif (in_array($char, $skipUntilChars)) {
+                } elseif (\in_array($char, $skipUntilChars)) {
                     if ($depth) {
                         $depth--;
                     } else {
@@ -111,17 +101,10 @@ class QueryParser implements QueryParserInterface
                         // Then, we can search by strings like this (notice that the ".", "(" and ")"
                         // inside the search are ignored):
                         // /api/?query=posts(searchfor:(.)).id|title
-                        $restStr = substr($query, $charPos + 1);
-                        $restStrEndBracketPos = strpos($restStr, (string) $skipUntilChars[0]);
-                        $restStrSeparatorPos = strpos($restStr, $separator);
-                        if (
-                            $restStrEndBracketPos === false
-                            || (
-                                $restStrSeparatorPos !== false
-                                && $restStrEndBracketPos !== false
-                                && $restStrEndBracketPos > $restStrSeparatorPos
-                            )
-                        ) {
+                        $restStr = \substr($query, $charPos + 1);
+                        $restStrEndBracketPos = \strpos($restStr, (string) $skipUntilChars[0]);
+                        $restStrSeparatorPos = \strpos($restStr, $separator);
+                        if ($restStrEndBracketPos === \false || $restStrSeparatorPos !== \false && $restStrEndBracketPos !== \false && $restStrEndBracketPos > $restStrSeparatorPos) {
                             $depth--;
                         }
                     }
@@ -132,11 +115,11 @@ class QueryParser implements QueryParserInterface
                             $buffer = '';
                             // If we need only one occurrence, then already return.
                             if ($onlyFirstOccurrence) {
-                                $restStr = substr($query, $charPos + 1);
+                                $restStr = \substr($query, $charPos + 1);
                                 $stack[] = $restStr;
                                 if ($startFromEnd) {
                                     // Reverse each result, and the order of the results
-                                    $stack = array_reverse(array_map('strrev', $stack));
+                                    $stack = \array_reverse(\array_map('strrev', $stack));
                                 }
                                 return $stack;
                             }
@@ -152,7 +135,7 @@ class QueryParser implements QueryParserInterface
         }
         if ($startFromEnd) {
             // Reverse each result, and the order of the results
-            $stack = array_reverse(array_map('strrev', $stack));
+            $stack = \array_reverse(\array_map('strrev', $stack));
         }
         return $stack;
     }

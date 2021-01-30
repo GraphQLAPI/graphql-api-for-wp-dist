@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\Config;
 
 use PoP\Engine\ComponentConfiguration;
@@ -14,34 +13,26 @@ use PoP\ComponentModel\DataStructure\DataStructureManagerInterface;
 use PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface;
 use PoP\CacheControl\DirectiveResolvers\CacheControlDirectiveResolver;
 use PoP\Engine\DirectiveResolvers\SetSelfAsExpressionDirectiveResolver;
-
 class ServiceConfiguration
 {
     use PHPServiceConfigurationTrait;
-
-    protected static function configure(): void
+    protected static function configure() : void
     {
         // Add ModuleFilters to the ModuleFilterManager
-        ContainerBuilderUtils::injectServicesIntoService(ModuleFilterManagerInterface::class, 'PoP\\Engine\\ModuleFilters', 'add');
-
+        \PoP\ComponentModel\Container\ContainerBuilderUtils::injectServicesIntoService(\PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface::class, 'PoP\\Engine\\ModuleFilters', 'add');
         // Add RouteModuleProcessors to the Manager
-        ContainerBuilderUtils::injectServicesIntoService(RouteModuleProcessorManagerInterface::class, 'PoP\\Engine\\RouteModuleProcessors', 'add');
-
-        ContainerBuilderUtils::injectServicesIntoService(DataStructureManagerInterface::class, 'PoP\\Engine\\DataStructureFormatters', 'add');
-
+        \PoP\ComponentModel\Container\ContainerBuilderUtils::injectServicesIntoService(\PoP\ModuleRouting\RouteModuleProcessorManagerInterface::class, 'PoP\\Engine\\RouteModuleProcessors', 'add');
+        \PoP\ComponentModel\Container\ContainerBuilderUtils::injectServicesIntoService(\PoP\ComponentModel\DataStructure\DataStructureManagerInterface::class, 'PoP\\Engine\\DataStructureFormatters', 'add');
         // Inject the mandatory root directives
-        ContainerBuilderUtils::injectValuesIntoService(DataloadingEngineInterface::class, 'addMandatoryDirectiveClass', SetSelfAsExpressionDirectiveResolver::class);
-        if (ComponentConfiguration::addMandatoryCacheControlDirective()) {
+        \PoP\ComponentModel\Container\ContainerBuilderUtils::injectValuesIntoService(\PoP\ComponentModel\Engine\DataloadingEngineInterface::class, 'addMandatoryDirectiveClass', \PoP\Engine\DirectiveResolvers\SetSelfAsExpressionDirectiveResolver::class);
+        if (\PoP\Engine\ComponentConfiguration::addMandatoryCacheControlDirective()) {
             static::configureCacheControl();
         }
     }
-
     public static function configureCacheControl()
     {
-        if (CacheControlComponent::isEnabled() && $_SERVER['REQUEST_METHOD'] == 'GET') {
-            ContainerBuilderUtils::injectValuesIntoService(DataloadingEngineInterface::class, 'addMandatoryDirectives', [
-                CacheControlDirectiveResolver::getDirectiveName(),
-            ]);
+        if (\PoP\CacheControl\Component::isEnabled() && $_SERVER['REQUEST_METHOD'] == 'GET') {
+            \PoP\ComponentModel\Container\ContainerBuilderUtils::injectValuesIntoService(\PoP\ComponentModel\Engine\DataloadingEngineInterface::class, 'addMandatoryDirectives', [\PoP\CacheControl\DirectiveResolvers\CacheControlDirectiveResolver::getDirectiveName()]);
         }
     }
 }

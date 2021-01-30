@@ -1,4 +1,5 @@
 <?php
+
 namespace PoP\Engine;
 
 class FilterInputProcessor extends \PoP\ComponentModel\AbstractFilterInputProcessor
@@ -9,19 +10,10 @@ class FilterInputProcessor extends \PoP\ComponentModel\AbstractFilterInputProces
     public const FILTERINPUT_SEARCH = 'filterinput-search';
     public const FILTERINPUT_DATES = 'filterinput-dates';
     public const FILTERINPUT_INCLUDE = 'filterinput-include';
-
     public function getFilterInputsToProcess()
     {
-        return array(
-            [self::class, self::FILTERINPUT_ORDER],
-            [self::class, self::FILTERINPUT_LIMIT],
-            [self::class, self::FILTERINPUT_OFFSET],
-            [self::class, self::FILTERINPUT_SEARCH],
-            [self::class, self::FILTERINPUT_DATES],
-            [self::class, self::FILTERINPUT_INCLUDE],
-        );
+        return array([self::class, self::FILTERINPUT_ORDER], [self::class, self::FILTERINPUT_LIMIT], [self::class, self::FILTERINPUT_OFFSET], [self::class, self::FILTERINPUT_SEARCH], [self::class, self::FILTERINPUT_DATES], [self::class, self::FILTERINPUT_INCLUDE]);
     }
-
     public function filterDataloadQueryArgs(array $filterInput, array &$query, $value)
     {
         switch ($filterInput[1]) {
@@ -48,6 +40,3 @@ class FilterInputProcessor extends \PoP\ComponentModel\AbstractFilterInputProces
         }
     }
 }
-
-
-

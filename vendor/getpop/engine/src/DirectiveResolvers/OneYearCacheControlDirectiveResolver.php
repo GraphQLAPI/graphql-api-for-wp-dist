@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\DirectiveResolvers;
 
 use PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver;
-
-class OneYearCacheControlDirectiveResolver extends AbstractCacheControlDirectiveResolver
+class OneYearCacheControlDirectiveResolver extends \PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver
 {
-    public static function getFieldNamesToApplyTo(): array
+    public static function getFieldNamesToApplyTo() : array
     {
         return [
             'id',
@@ -24,8 +22,7 @@ class OneYearCacheControlDirectiveResolver extends AbstractCacheControlDirective
             'echo',
         ];
     }
-
-    public function getMaxAge(): ?int
+    public function getMaxAge() : ?int
     {
         // One year = 315360000 seconds
         return 315360000;

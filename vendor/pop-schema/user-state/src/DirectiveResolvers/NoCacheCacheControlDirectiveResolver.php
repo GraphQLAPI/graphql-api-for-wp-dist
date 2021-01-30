@@ -1,22 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserState\DirectiveResolvers;
 
 use PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver;
-
-class NoCacheCacheControlDirectiveResolver extends AbstractCacheControlDirectiveResolver
+class NoCacheCacheControlDirectiveResolver extends \PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver
 {
-    public static function getFieldNamesToApplyTo(): array
+    public static function getFieldNamesToApplyTo() : array
     {
-        return [
-            'me',
-            'isUserLoggedIn',
-        ];
+        return ['me', 'isUserLoggedIn'];
     }
-
-    public function getMaxAge(): ?int
+    public function getMaxAge() : ?int
     {
         // Do not cache
         return 0;

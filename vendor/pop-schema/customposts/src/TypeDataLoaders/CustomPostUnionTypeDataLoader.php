@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPosts\TypeDataLoaders;
 
 use PoP\ComponentModel\TypeDataLoaders\AbstractUnionTypeDataLoader;
 use PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver;
-
-class CustomPostUnionTypeDataLoader extends AbstractUnionTypeDataLoader
+class CustomPostUnionTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractUnionTypeDataLoader
 {
-    protected function getUnionTypeResolverClass(): string
+    protected function getUnionTypeResolverClass() : string
     {
-        return CustomPostUnionTypeResolver::class;
+        return \PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class;
     }
 }

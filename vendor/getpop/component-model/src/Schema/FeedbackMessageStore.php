@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Schema;
 
 use PoP\ComponentModel\Feedback\Tokens;
-
-class FeedbackMessageStore extends \PoP\FieldQuery\FeedbackMessageStore implements FeedbackMessageStoreInterface
+class FeedbackMessageStore extends \PoP\FieldQuery\FeedbackMessageStore implements \PoP\ComponentModel\Schema\FeedbackMessageStoreInterface
 {
     /**
      * @var array[]
@@ -28,73 +26,65 @@ class FeedbackMessageStore extends \PoP\FieldQuery\FeedbackMessageStore implemen
      * @var string[]
      */
     protected $logEntries = [];
-
     public function addDBWarnings(array $dbWarnings)
     {
         foreach ($dbWarnings as $resultItemID => $resultItemWarnings) {
-            $this->dbWarnings[$resultItemID] = array_merge($this->dbWarnings[$resultItemID] ?? [], $resultItemWarnings);
+            $this->dbWarnings[$resultItemID] = \array_merge($this->dbWarnings[$resultItemID] ?? [], $resultItemWarnings);
         }
     }
     public function addDBDeprecations(array $dbDeprecations)
     {
         foreach ($dbDeprecations as $resultItemID => $resultItemDeprecations) {
-            $this->dbDeprecations[$resultItemID] = array_merge($this->dbDeprecations[$resultItemID] ?? [], $resultItemDeprecations);
+            $this->dbDeprecations[$resultItemID] = \array_merge($this->dbDeprecations[$resultItemID] ?? [], $resultItemDeprecations);
         }
     }
     public function addSchemaWarnings(array $schemaWarnings)
     {
-        $this->schemaWarnings = array_merge($this->schemaWarnings, $schemaWarnings);
+        $this->schemaWarnings = \array_merge($this->schemaWarnings, $schemaWarnings);
     }
-    public function retrieveAndClearResultItemDBWarnings($resultItemID): ?array
+    public function retrieveAndClearResultItemDBWarnings($resultItemID) : ?array
     {
         $resultItemDBWarnings = $this->dbWarnings[$resultItemID] ?? null;
         unset($this->dbWarnings[$resultItemID]);
         return $resultItemDBWarnings;
     }
-    public function retrieveAndClearResultItemDBDeprecations($resultItemID): ?array
+    public function retrieveAndClearResultItemDBDeprecations($resultItemID) : ?array
     {
         $resultItemDBDeprecations = $this->dbDeprecations[$resultItemID] ?? null;
         unset($this->dbDeprecations[$resultItemID]);
         return $resultItemDBDeprecations;
     }
-
     public function addSchemaError(string $dbKey, string $field, string $error)
     {
-        $this->schemaErrors[$dbKey][] = [
-            Tokens::PATH => [$field],
-            Tokens::MESSAGE => $error,
-        ];
+        $this->schemaErrors[$dbKey][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $error];
     }
-    public function retrieveAndClearSchemaErrors(): array
+    public function retrieveAndClearSchemaErrors() : array
     {
         $schemaErrors = $this->schemaErrors;
         $this->schemaErrors = [];
         return $schemaErrors;
     }
-    public function retrieveAndClearSchemaWarnings(): array
+    public function retrieveAndClearSchemaWarnings() : array
     {
         $schemaWarnings = $this->schemaWarnings;
         $this->schemaWarnings = [];
         return $schemaWarnings;
     }
-    public function getSchemaErrorsForField(string $dbKey, string $field): ?array
+    public function getSchemaErrorsForField(string $dbKey, string $field) : ?array
     {
         return $this->schemaErrors[$dbKey][$field] ?? null;
     }
-
-    public function addLogEntry(string $entry): void
+    public function addLogEntry(string $entry) : void
     {
         $this->logEntries[] = $entry;
     }
-
-    public function maybeAddLogEntry(string $entry): void
+    public function maybeAddLogEntry(string $entry) : void
     {
-        if (!in_array($entry, $this->logEntries)) {
+        if (!\in_array($entry, $this->logEntries)) {
             $this->addLogEntry($entry);
         }
     }
-
-    public function getLogEntries(): array
+    public function getLogEntries() : array
     {
         return $this->logEntries;
     }

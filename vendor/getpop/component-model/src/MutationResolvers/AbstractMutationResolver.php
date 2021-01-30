@@ -1,23 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\MutationResolvers;
 
-abstract class AbstractMutationResolver implements MutationResolverInterface
+abstract class AbstractMutationResolver implements \PoP\ComponentModel\MutationResolvers\MutationResolverInterface
 {
-    public function validateErrors(array $form_data): ?array
+    public function validateErrors(array $form_data) : ?array
     {
         return null;
     }
-
-    public function validateWarnings(array $form_data): ?array
+    public function validateWarnings(array $form_data) : ?array
     {
         return null;
     }
-
-    public function getErrorType(): int
+    public function getErrorType() : int
     {
-        return ErrorTypes::DESCRIPTIONS;
+        return \PoP\ComponentModel\MutationResolvers\ErrorTypes::DESCRIPTIONS;
     }
 }

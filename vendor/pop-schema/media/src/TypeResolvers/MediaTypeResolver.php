@@ -1,28 +1,23 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Media\TypeResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
 use PoPSchema\Media\TypeDataLoaders\MediaTypeDataLoader;
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
-
-class MediaTypeResolver extends AbstractTypeResolver
+class MediaTypeResolver extends \PoP\ComponentModel\TypeResolvers\AbstractTypeResolver
 {
     public const NAME = 'Media';
-
-    public function getTypeName(): string
+    public function getTypeName() : string
     {
         return self::NAME;
     }
-
-    public function getSchemaTypeDescription(): ?string
+    public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Media elements (such as images, videos, etc), attached to a post or independent', 'media');
     }
-
     /**
      * @param object $resultItem
      */
@@ -32,9 +27,8 @@ class MediaTypeResolver extends AbstractTypeResolver
         $media = $resultItem;
         return $cmsmediaresolver->getMediaId($media);
     }
-
-    public function getTypeDataLoaderClass(): string
+    public function getTypeDataLoaderClass() : string
     {
-        return MediaTypeDataLoader::class;
+        return \PoPSchema\Media\TypeDataLoaders\MediaTypeDataLoader::class;
     }
 }

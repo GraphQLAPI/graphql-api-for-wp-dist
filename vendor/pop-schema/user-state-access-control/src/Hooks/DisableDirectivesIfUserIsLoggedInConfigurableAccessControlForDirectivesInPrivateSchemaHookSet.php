@@ -1,20 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserStateAccessControl\Hooks;
 
 use PoPSchema\UserStateAccessControl\ConfigurationEntries\UserStates;
-
-class DisableDirectivesIfUserIsLoggedInConfigurableAccessControlForDirectivesInPrivateSchemaHookSet extends AbstractUserStateConfigurableAccessControlForDirectivesInPrivateSchemaHookSet
+class DisableDirectivesIfUserIsLoggedInConfigurableAccessControlForDirectivesInPrivateSchemaHookSet extends \PoPSchema\UserStateAccessControl\Hooks\AbstractUserStateConfigurableAccessControlForDirectivesInPrivateSchemaHookSet
 {
-    protected function enableBasedOnUserState(bool $isUserLoggedIn): bool
+    protected function enableBasedOnUserState(bool $isUserLoggedIn) : bool
     {
         return $isUserLoggedIn;
     }
-
-    protected function getRequiredEntryValue(): ?string
+    protected function getRequiredEntryValue() : ?string
     {
-        return UserStates::OUT;
+        return \PoPSchema\UserStateAccessControl\ConfigurationEntries\UserStates::OUT;
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Media\FieldResolvers;
 
 use PoP\Engine\TypeResolvers\RootTypeResolver;
@@ -16,69 +15,44 @@ use PoPSchema\CustomPosts\TypeResolvers\CustomPostTypeResolver;
 use PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver;
 use PoPSchema\Media\MutationResolvers\SetFeaturedImageOnCustomPostMutationResolver;
 use PoPSchema\Media\MutationResolvers\RemoveFeaturedImageOnCustomPostMutationResolver;
-
-class RootFieldResolver extends AbstractQueryableFieldResolver
+class RootFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(RootTypeResolver::class);
+        return array(\PoP\Engine\TypeResolvers\RootTypeResolver::class);
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        return [
-            'mediaItems',
-            'mediaItem',
-        ];
+        return ['mediaItems', 'mediaItem'];
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'mediaItems' => $translationAPI->__('Get the media items', 'media'),
-            'mediaItem' => $translationAPI->__('Get a media item', 'media'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['mediaItems' => $translationAPI->__('Get the media items', 'media'), 'mediaItem' => $translationAPI->__('Get a media item', 'media')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $types = [
-            'mediaItems' => TypeCastingHelpers::makeArray(SchemaDefinition::TYPE_ID),
-            'mediaItem' => SchemaDefinition::TYPE_ID,
-        ];
+        $types = ['mediaItems' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID), 'mediaItem' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): array
+    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         switch ($fieldName) {
             case 'mediaItem':
-                return [
-                    [
-                        SchemaDefinition::ARGNAME_NAME => 'id',
-                        SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_ID,
-                        SchemaDefinition::ARGNAME_DESCRIPTION => sprintf($translationAPI->__('The ID of the media element, of type \'%s\'', 'media'), CustomPostTypeResolver::NAME),
-                        SchemaDefinition::ARGNAME_MANDATORY => true,
-                    ],
-                ];
+                return [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'id', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($translationAPI->__('The ID of the media element, of type \'%s\'', 'media'), \PoPSchema\CustomPosts\TypeResolvers\CustomPostTypeResolver::NAME), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true]];
         }
         return parent::getSchemaFieldArgs($typeResolver, $fieldName);
     }
-
-    public function isSchemaFieldResponseNonNullable(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
-        $nonNullableFieldNames = [
-            'mediaItems',
-        ];
-        if (in_array($fieldName, $nonNullableFieldNames)) {
-            return true;
+        $nonNullableFieldNames = ['mediaItems'];
+        if (\in_array($fieldName, $nonNullableFieldNames)) {
+            return \true;
         }
         return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @param array<string, mixed>|null $variables
@@ -87,46 +61,29 @@ class RootFieldResolver extends AbstractQueryableFieldResolver
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = [],
-        ?array $variables = null,
-        ?array $expressions = null,
-        array $options = []
-    ) {
+    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    {
         $cmsmediaapi = \PoPSchema\Media\FunctionAPIFactory::getInstance();
         switch ($fieldName) {
             case 'mediaItems':
             case 'mediaItem':
-                $query = [
-                    'include' => [$fieldArgs['id']],
-                    // 'status' => [
-                    //     Status::PUBLISHED,
-                    // ],
-                ];
-                $options = [
-                    'return-type' => ReturnTypes::IDS,
-                ];
+                $query = ['include' => [$fieldArgs['id']]];
+                $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
                 $mediaItems = $cmsmediaapi->getMediaElements($query, $options);
                 if ($fieldName == 'mediaItem') {
-                    return count($mediaItems) > 0 ? $mediaItems[0] : null;
+                    return \count($mediaItems) > 0 ? $mediaItems[0] : null;
                 }
                 return $mediaItems;
         }
-
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-
-    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'mediaItems':
             case 'mediaItem':
-                return MediaTypeResolver::class;
+                return \PoPSchema\Media\TypeResolvers\MediaTypeResolver::class;
         }
-
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }
 }

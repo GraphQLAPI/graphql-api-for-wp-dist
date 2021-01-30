@@ -8,12 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Cache\Traits;
 
-namespace Symfony\Component\Cache\Traits;
-
-use Symfony\Component\Cache\PruneableInterface;
-use Symfony\Contracts\Service\ResetInterface;
-
+use PrefixedByPoP\Symfony\Component\Cache\PruneableInterface;
+use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  *
@@ -22,21 +20,19 @@ use Symfony\Contracts\Service\ResetInterface;
 trait ProxyTrait
 {
     private $pool;
-
     /**
      * {@inheritdoc}
      */
     public function prune()
     {
-        return $this->pool instanceof PruneableInterface && $this->pool->prune();
+        return $this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface && $this->pool->prune();
     }
-
     /**
      * {@inheritdoc}
      */
     public function reset()
     {
-        if ($this->pool instanceof ResetInterface) {
+        if ($this->pool instanceof \PrefixedByPoP\Symfony\Contracts\Service\ResetInterface) {
             $this->pool->reset();
         }
     }

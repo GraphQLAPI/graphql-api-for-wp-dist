@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,26 +8,22 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Brain\Cortex\Route;
 
-namespace Brain\Cortex\Route;
-
-use Brain\Cortex\Controller\ControllerInterface;
-use Brain\Cortex\Controller\QueryVarsController;
-
+use PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface;
+use PrefixedByPoP\Brain\Cortex\Controller\QueryVarsController;
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class QueryRoute implements RouteInterface
+final class QueryRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterface
 {
     use DerivativeRouteTrait;
-
     /**
      * @var array
      */
     private $route;
-
     /**
      * QueryRoute constructor.
      *
@@ -38,17 +35,12 @@ final class QueryRoute implements RouteInterface
     {
         $options['path'] = $path;
         $options['vars'] = $queryBuilder;
-        $handler = isset($options['handler']) && $options['handler'] instanceof ControllerInterface
-            ? $options['handler']
-            : new QueryVarsController();
+        $handler = isset($options['handler']) && $options['handler'] instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface ? $options['handler'] : new \PrefixedByPoP\Brain\Cortex\Controller\QueryVarsController();
         $options['handler'] = $handler;
-        $default = isset($options['default_vars']) && is_array($options['default_vars'])
-            ? $options['default_vars']
-            : [];
-        if (isset($options['default']) && is_array($options['default'])) {
-            $options['default_vars'] = array_merge($options['default'], $default);
+        $default = isset($options['default_vars']) && \is_array($options['default_vars']) ? $options['default_vars'] : [];
+        if (isset($options['default']) && \is_array($options['default'])) {
+            $options['default_vars'] = \array_merge($options['default'], $default);
         }
-
-        $this->route = new Route($options);
+        $this->route = new \PrefixedByPoP\Brain\Cortex\Route\Route($options);
     }
 }

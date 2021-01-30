@@ -1,63 +1,50 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\RoutingWP;
 
-use Brain\Cortex;
+use PrefixedByPoP\Brain\Cortex;
 use PoP\Root\Component\AbstractComponent;
 use PoP\Root\Component\YAMLServicesTrait;
 use PoP\Root\Container\ContainerBuilderUtils;
-
 /**
  * Initialize component
  */
-class Component extends AbstractComponent
+class Component extends \PoP\Root\Component\AbstractComponent
 {
     use YAMLServicesTrait;
-
     // const VERSION = '0.1.0';
-
     /**
      * Classes from PoP components that must be initialized before this component
      *
      * @return string[]
      */
-    public static function getDependedComponentClasses(): array
+    public static function getDependedComponentClasses() : array
     {
-        return [
-            \PoP\Routing\Component::class,
-        ];
+        return [\PoP\Routing\Component::class];
     }
-
     /**
      * Initialize services
      *
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(
-        array $configuration = [],
-        bool $skipSchema = false,
-        array $skipSchemaComponentClasses = []
-    ): void {
+    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    {
         parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
-        self::initYAMLServices(dirname(__DIR__));
+        self::initYAMLServices(\dirname(__DIR__));
     }
-
     /**
      * Boot component
      *
      * @return void
      */
-    public static function beforeBoot(): void
+    public static function beforeBoot() : void
     {
         parent::beforeBoot();
-
         // Boot Cortex
-        Cortex::boot();
-
+        \PrefixedByPoP\Brain\Cortex::boot();
         // Initialize classes
-        ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
+        \PoP\Root\Container\ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
     }
 }

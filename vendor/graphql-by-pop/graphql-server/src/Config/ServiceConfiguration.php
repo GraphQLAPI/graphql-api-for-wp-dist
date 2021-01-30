@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Config;
 
 use PoP\Root\Component\PHPServiceConfigurationTrait;
@@ -10,25 +9,21 @@ use PoP\ModuleRouting\RouteModuleProcessorManagerInterface;
 use PoP\ComponentModel\DataStructure\DataStructureManagerInterface;
 use GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface;
 use GraphQLByPoP\GraphQLServer\Environment;
-
 class ServiceConfiguration
 {
     use PHPServiceConfigurationTrait;
-
-    protected static function configure(): void
+    protected static function configure() : void
     {
         /**
          * Override class GraphQLDataStructureFormatter from GraphQLAPI
          */
-        ContainerBuilderUtils::injectServicesIntoService(DataStructureManagerInterface::class, 'GraphQLByPoP\\GraphQLServer\\DataStructureFormatters', 'add');
-
+        \PoP\ComponentModel\Container\ContainerBuilderUtils::injectServicesIntoService(\PoP\ComponentModel\DataStructure\DataStructureManagerInterface::class, 'GraphQLByPoP\\GraphQLServer\\DataStructureFormatters', 'add');
         // Add RouteModuleProcessors to the Manager
-        ContainerBuilderUtils::injectServicesIntoService(RouteModuleProcessorManagerInterface::class, 'GraphQLByPoP\\GraphQLServer\\RouteModuleProcessors', 'add');
-
+        \PoP\ComponentModel\Container\ContainerBuilderUtils::injectServicesIntoService(\PoP\ModuleRouting\RouteModuleProcessorManagerInterface::class, 'GraphQLByPoP\\GraphQLServer\\RouteModuleProcessors', 'add');
         /**
          * GraphQL persisted query for Introspection query
          */
-        if (Environment::addGraphQLIntrospectionPersistedQuery()) {
+        if (\GraphQLByPoP\GraphQLServer\Environment::addGraphQLIntrospectionPersistedQuery()) {
             $introspectionPersistedQuery = <<<EOT
 query IntrospectionQuery {
     __schema {
@@ -136,7 +131,7 @@ EOT;
             // $description = $translationAPI->__('GraphQL introspection query', 'examples-for-pop')
             $description = 'GraphQL introspection query';
             // Inject the values into the service
-            ContainerBuilderUtils::injectValuesIntoService(GraphQLPersistedQueryManagerInterface::class, 'add', 'introspectionQuery', $introspectionPersistedQuery, $description);
+            \PoP\ComponentModel\Container\ContainerBuilderUtils::injectValuesIntoService(\GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface::class, 'add', 'introspectionQuery', $introspectionPersistedQuery, $description);
         }
     }
 }

@@ -1,10 +1,11 @@
 <?php
+
 namespace PoP\Engine;
 
-class GD_FormInput_MultiSelect extends GD_FormInput_Select
+class GD_FormInput_MultiSelect extends \PoP\Engine\GD_FormInput_Select
 {
     public function isMultiple()
     {
-        return true;
+        return \true;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI;
 
+use PoP\Engine\Component;
 use PoP\APIEndpoints\EndpointUtils;
 use GraphQLAPI\GraphQLAPI\Environment;
 use PoP\AccessControl\Schema\SchemaModes;
@@ -538,7 +539,7 @@ class PluginConfiguration
         $moduleRegistry = ModuleRegistryFacade::getInstance();
         $isDev = PluginEnvironment::isPluginEnvironmentDev();
 
-        $componentClassConfiguration[\PoP\Engine\Component::class] = [
+        $componentClassConfiguration[Component::class] = [
             \PoP\Engine\Environment::ADD_MANDATORY_CACHE_CONTROL_DIRECTIVE => false,
         ];
         $componentClassConfiguration[\GraphQLByPoP\GraphQLClientsForWP\Component::class] = [
@@ -579,8 +580,8 @@ class PluginConfiguration
 
         ];
         $componentClassConfiguration[\GraphQLByPoP\GraphQLQuery\Component::class] = [
-            // Enable Composable Directives?
-            // Temporarily commented
+            // Temporarily disabled
+            // // Enable Composable Directives?
             // GraphQLQueryEnvironment::ENABLE_COMPOSABLE_DIRECTIVES => $moduleRegistry->isModuleEnabled(OperationalFunctionalityModuleResolver::COMPOSABLE_DIRECTIVES),
         ];
     }

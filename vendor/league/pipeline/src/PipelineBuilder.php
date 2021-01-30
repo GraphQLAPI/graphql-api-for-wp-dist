@@ -1,27 +1,24 @@
 <?php
-declare(strict_types=1);
 
-namespace League\Pipeline;
+declare (strict_types=1);
+namespace PrefixedByPoP\League\Pipeline;
 
-class PipelineBuilder implements PipelineBuilderInterface
+class PipelineBuilder implements \PrefixedByPoP\League\Pipeline\PipelineBuilderInterface
 {
     /**
      * @var callable[]
      */
     private $stages = [];
-
     /**
      * @return self
      */
-    public function add(callable $stage): PipelineBuilderInterface
+    public function add(callable $stage) : \PrefixedByPoP\League\Pipeline\PipelineBuilderInterface
     {
         $this->stages[] = $stage;
-
         return $this;
     }
-
-    public function build(ProcessorInterface $processor = null): PipelineInterface
+    public function build(\PrefixedByPoP\League\Pipeline\ProcessorInterface $processor = null) : \PrefixedByPoP\League\Pipeline\PipelineInterface
     {
-        return new Pipeline($processor, ...$this->stages);
+        return new \PrefixedByPoP\League\Pipeline\Pipeline($processor, ...$this->stages);
     }
 }

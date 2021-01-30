@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 trait NonDocumentableTypeTrait
@@ -12,7 +11,7 @@ trait NonDocumentableTypeTrait
      *
      * @return string
      */
-    public function getDescription(): ?string
+    public function getDescription() : ?string
     {
         return null;
     }

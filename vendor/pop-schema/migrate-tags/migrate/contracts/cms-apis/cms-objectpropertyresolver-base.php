@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\Tags;
 
-abstract class ObjectPropertyResolver_Base implements ObjectPropertyResolver
+abstract class ObjectPropertyResolver_Base implements \PoPSchema\Tags\ObjectPropertyResolver
 {
     public function __construct()
     {
-        ObjectPropertyResolverFactory::setInstance($this);
+        \PoPSchema\Tags\ObjectPropertyResolverFactory::setInstance($this);
     }
 }

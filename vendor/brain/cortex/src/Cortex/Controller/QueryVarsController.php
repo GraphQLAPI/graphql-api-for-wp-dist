@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,15 +8,14 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Brain\Cortex\Controller;
+namespace PrefixedByPoP\Brain\Cortex\Controller;
 
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class QueryVarsController implements ControllerInterface
+final class QueryVarsController implements \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface
 {
     /**
      * @inheritdoc
@@ -23,7 +23,6 @@ final class QueryVarsController implements ControllerInterface
     public function run(array $vars, \WP $wp, $template = '')
     {
         $wp->query_vars = $vars;
-
-        return false;
+        return \false;
     }
 }

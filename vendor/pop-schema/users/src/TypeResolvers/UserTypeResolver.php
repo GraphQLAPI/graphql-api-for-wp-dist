@@ -1,28 +1,23 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Users\TypeResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
 use PoPSchema\Users\TypeDataLoaders\UserTypeDataLoader;
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
-
-class UserTypeResolver extends AbstractTypeResolver
+class UserTypeResolver extends \PoP\ComponentModel\TypeResolvers\AbstractTypeResolver
 {
     public const NAME = 'User';
-
-    public function getTypeName(): string
+    public function getTypeName() : string
     {
         return self::NAME;
     }
-
-    public function getSchemaTypeDescription(): ?string
+    public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Representation of a user', 'users');
     }
-
     /**
      * @param object $resultItem
      */
@@ -32,9 +27,8 @@ class UserTypeResolver extends AbstractTypeResolver
         $user = $resultItem;
         return $cmsusersresolver->getUserId($user);
     }
-
-    public function getTypeDataLoaderClass(): string
+    public function getTypeDataLoaderClass() : string
     {
-        return UserTypeDataLoader::class;
+        return \PoPSchema\Users\TypeDataLoaders\UserTypeDataLoader::class;
     }
 }

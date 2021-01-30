@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\TypeDataLoaders;
 
 use PoP\ComponentModel\Facades\Container\ObjectDictionaryFacade;
-
 trait UseObjectDictionaryTypeDataLoaderTrait
 {
-    public function getObjects(array $ids): array
+    public function getObjects(array $ids) : array
     {
-        $objectDictionary = ObjectDictionaryFacade::getInstance();
+        $objectDictionary = \PoP\ComponentModel\Facades\Container\ObjectDictionaryFacade::getInstance();
         $typeResolverClass = $this->getTypeResolverClass();
         $ret = [];
         foreach ($ids as $id) {
@@ -21,7 +19,6 @@ trait UseObjectDictionaryTypeDataLoaderTrait
         }
         return $ret;
     }
-
-    abstract protected function getTypeResolverClass(): string;
-    abstract protected function getTypeNewInstance($id);
+    protected abstract function getTypeResolverClass() : string;
+    protected abstract function getTypeNewInstance($id);
 }

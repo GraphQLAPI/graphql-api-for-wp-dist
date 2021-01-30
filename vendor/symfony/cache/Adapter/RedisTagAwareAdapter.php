@@ -8,19 +8,17 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 
-namespace Symfony\Component\Cache\Adapter;
-
-use Predis\Connection\Aggregate\ClusterInterface;
-use Predis\Connection\Aggregate\PredisCluster;
-use Predis\Response\Status;
-use Symfony\Component\Cache\Exception\InvalidArgumentException;
-use Symfony\Component\Cache\Exception\LogicException;
-use Symfony\Component\Cache\Marshaller\DeflateMarshaller;
-use Symfony\Component\Cache\Marshaller\MarshallerInterface;
-use Symfony\Component\Cache\Marshaller\TagAwareMarshaller;
-use Symfony\Component\Cache\Traits\RedisTrait;
-
+use PrefixedByPoP\Predis\Connection\Aggregate\ClusterInterface;
+use PrefixedByPoP\Predis\Connection\Aggregate\PredisCluster;
+use PrefixedByPoP\Predis\Response\Status;
+use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
+use PrefixedByPoP\Symfony\Component\Cache\Exception\LogicException;
+use PrefixedByPoP\Symfony\Component\Cache\Marshaller\DeflateMarshaller;
+use PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface;
+use PrefixedByPoP\Symfony\Component\Cache\Marshaller\TagAwareMarshaller;
+use PrefixedByPoP\Symfony\Component\Cache\Traits\RedisTrait;
 /**
  * Stores tag id <> cache id relationship as a Redis Set, lookup on invalidation using RENAME+SMEMBERS.
  *
@@ -44,108 +42,89 @@ use Symfony\Component\Cache\Traits\RedisTrait;
  * @author Nicolas Grekas <p@tchwork.com>
  * @author André Rømcke <andre.romcke+symfony@gmail.com>
  */
-class RedisTagAwareAdapter extends AbstractTagAwareAdapter
+class RedisTagAwareAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\AbstractTagAwareAdapter
 {
     use RedisTrait;
-
     /**
      * Limits for how many keys are deleted in batch.
      */
     private const BULK_DELETE_LIMIT = 10000;
-
     /**
      * On cache items without a lifetime set, we set it to 100 days. This is to make sure cache items are
      * preferred to be evicted over tag Sets, if eviction policy is configured according to requirements.
      */
     private const DEFAULT_CACHE_TTL = 8640000;
-
     /**
      * @var string|null detected eviction policy used on Redis server
      */
     private $redisEvictionPolicy;
-
     /**
      * @param \Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface $redisClient     The redis client
      * @param string                                                   $namespace       The default namespace
      * @param int                                                      $defaultLifetime The default lifetime
      */
-    public function __construct($redisClient, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
+    public function __construct($redisClient, string $namespace = '', int $defaultLifetime = 0, \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface $marshaller = null)
     {
-        if ($redisClient instanceof \Predis\ClientInterface && $redisClient->getConnection() instanceof ClusterInterface && !$redisClient->getConnection() instanceof PredisCluster) {
-            throw new InvalidArgumentException(sprintf('Unsupported Predis cluster connection: only "%s" is, "%s" given.', PredisCluster::class, get_debug_type($redisClient->getConnection())));
+        if ($redisClient instanceof \PrefixedByPoP\Predis\ClientInterface && $redisClient->getConnection() instanceof \PrefixedByPoP\Predis\Connection\Aggregate\ClusterInterface && !$redisClient->getConnection() instanceof \PrefixedByPoP\Predis\Connection\Aggregate\PredisCluster) {
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Unsupported Predis cluster connection: only "%s" is, "%s" given.', \PrefixedByPoP\Predis\Connection\Aggregate\PredisCluster::class, \get_debug_type($redisClient->getConnection())));
         }
-
         if (\defined('Redis::OPT_COMPRESSION') && ($redisClient instanceof \Redis || $redisClient instanceof \RedisArray || $redisClient instanceof \RedisCluster)) {
             $compression = $redisClient->getOption(\Redis::OPT_COMPRESSION);
-
             foreach (\is_array($compression) ? $compression : [$compression] as $c) {
                 if (\Redis::COMPRESSION_NONE !== $c) {
-                    throw new InvalidArgumentException(sprintf('phpredis compression must be disabled when using "%s", use "%s" instead.', static::class, DeflateMarshaller::class));
+                    throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('phpredis compression must be disabled when using "%s", use "%s" instead.', static::class, \PrefixedByPoP\Symfony\Component\Cache\Marshaller\DeflateMarshaller::class));
                 }
             }
         }
-
-        $this->init($redisClient, $namespace, $defaultLifetime, new TagAwareMarshaller($marshaller));
+        $this->init($redisClient, $namespace, $defaultLifetime, new \PrefixedByPoP\Symfony\Component\Cache\Marshaller\TagAwareMarshaller($marshaller));
     }
-
     /**
      * {@inheritdoc}
      */
-    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $delTagData = []): array
+    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $delTagData = []) : array
     {
         $eviction = $this->getRedisEvictionPolicy();
-        if ('noeviction' !== $eviction && 0 !== strpos($eviction, 'volatile-')) {
-            throw new LogicException(sprintf('Redis maxmemory-policy setting "%s" is *not* supported by RedisTagAwareAdapter, use "noeviction" or  "volatile-*" eviction policies.', $eviction));
+        if ('noeviction' !== $eviction && 0 !== \strpos($eviction, 'volatile-')) {
+            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\LogicException(\sprintf('Redis maxmemory-policy setting "%s" is *not* supported by RedisTagAwareAdapter, use "noeviction" or  "volatile-*" eviction policies.', $eviction));
         }
-
         // serialize values
-        if (!$serialized = $this->marshaller->marshall($values, $failed)) {
+        if (!($serialized = $this->marshaller->marshall($values, $failed))) {
             return $failed;
         }
-
         // While pipeline isn't supported on RedisCluster, other setups will at least benefit from doing this in one op
-        $results = $this->pipeline(static function () use ($serialized, $lifetime, $addTagData, $delTagData, $failed) {
+        $results = $this->pipeline(static function () use($serialized, $lifetime, $addTagData, $delTagData, $failed) {
             // Store cache items, force a ttl if none is set, as there is no MSETEX we need to set each one
             foreach ($serialized as $id => $value) {
-                yield 'setEx' => [
-                    $id,
-                    0 >= $lifetime ? self::DEFAULT_CACHE_TTL : $lifetime,
-                    $value,
-                ];
+                (yield 'setEx' => [$id, 0 >= $lifetime ? self::DEFAULT_CACHE_TTL : $lifetime, $value]);
             }
-
             // Add and Remove Tags
             foreach ($addTagData as $tagId => $ids) {
-                if (!$failed || $ids = array_diff($ids, $failed)) {
-                    yield 'sAdd' => array_merge([$tagId], $ids);
+                if (!$failed || ($ids = \array_diff($ids, $failed))) {
+                    (yield 'sAdd' => \array_merge([$tagId], $ids));
                 }
             }
-
             foreach ($delTagData as $tagId => $ids) {
-                if (!$failed || $ids = array_diff($ids, $failed)) {
-                    yield 'sRem' => array_merge([$tagId], $ids);
+                if (!$failed || ($ids = \array_diff($ids, $failed))) {
+                    (yield 'sRem' => \array_merge([$tagId], $ids));
                 }
             }
         });
-
         foreach ($results as $id => $result) {
             // Skip results of SADD/SREM operations, they'll be 1 or 0 depending on if set value already existed or not
-            if (is_numeric($result)) {
+            if (\is_numeric($result)) {
                 continue;
             }
             // setEx results
-            if (true !== $result && (!$result instanceof Status || Status::get('OK') !== $result)) {
+            if (\true !== $result && (!$result instanceof \PrefixedByPoP\Predis\Response\Status || \PrefixedByPoP\Predis\Response\Status::get('OK') !== $result)) {
                 $failed[] = $id;
             }
         }
-
         return $failed;
     }
-
     /**
      * {@inheritdoc}
      */
-    protected function doDeleteYieldTags(array $ids): iterable
+    protected function doDeleteYieldTags(array $ids) : iterable
     {
         $lua = <<<'EOLUA'
             local v = redis.call('GET', KEYS[1])
@@ -161,90 +140,76 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
 
             return v:sub(14, 13 + v:byte(13) + v:byte(12) * 256 + v:byte(11) * 65536)
 EOLUA;
-
-        if ($this->redis instanceof \Predis\ClientInterface) {
+        if ($this->redis instanceof \PrefixedByPoP\Predis\ClientInterface) {
             $evalArgs = [$lua, 1, &$id];
         } else {
             $evalArgs = [$lua, [&$id], 1];
         }
-
-        $results = $this->pipeline(function () use ($ids, &$id, $evalArgs) {
+        $results = $this->pipeline(function () use($ids, &$id, $evalArgs) {
             foreach ($ids as $id) {
-                yield 'eval' => $evalArgs;
+                (yield 'eval' => $evalArgs);
             }
         });
-
         foreach ($results as $id => $result) {
             try {
-                yield $id => !\is_string($result) || '' === $result ? [] : $this->marshaller->unmarshall($result);
+                (yield $id => !\is_string($result) || '' === $result ? [] : $this->marshaller->unmarshall($result));
             } catch (\Exception $e) {
-                yield $id => [];
+                (yield $id => []);
             }
         }
     }
-
     /**
      * {@inheritdoc}
      */
-    protected function doDeleteTagRelations(array $tagData): bool
+    protected function doDeleteTagRelations(array $tagData) : bool
     {
-        $this->pipeline(static function () use ($tagData) {
+        $this->pipeline(static function () use($tagData) {
             foreach ($tagData as $tagId => $idList) {
-                array_unshift($idList, $tagId);
-                yield 'sRem' => $idList;
+                \array_unshift($idList, $tagId);
+                (yield 'sRem' => $idList);
             }
         })->rewind();
-
-        return true;
+        return \true;
     }
-
     /**
      * {@inheritdoc}
      */
-    protected function doInvalidate(array $tagIds): bool
+    protected function doInvalidate(array $tagIds) : bool
     {
-        if (!$this->redis instanceof \Predis\ClientInterface || !$this->redis->getConnection() instanceof PredisCluster) {
+        if (!$this->redis instanceof \PrefixedByPoP\Predis\ClientInterface || !$this->redis->getConnection() instanceof \PrefixedByPoP\Predis\Connection\Aggregate\PredisCluster) {
             $movedTagSetIds = $this->renameKeys($this->redis, $tagIds);
         } else {
             $clusterConnection = $this->redis->getConnection();
             $tagIdsByConnection = new \SplObjectStorage();
             $movedTagSetIds = [];
-
             foreach ($tagIds as $id) {
                 $connection = $clusterConnection->getConnectionByKey($id);
-                $slot = $tagIdsByConnection[$connection] ?? $tagIdsByConnection[$connection] = new \ArrayObject();
+                $slot = $tagIdsByConnection[$connection] ?? ($tagIdsByConnection[$connection] = new \ArrayObject());
                 $slot[] = $id;
             }
-
             foreach ($tagIdsByConnection as $connection) {
                 $slot = $tagIdsByConnection[$connection];
-                $movedTagSetIds = array_merge($movedTagSetIds, $this->renameKeys(new $this->redis($connection, $this->redis->getOptions()), $slot->getArrayCopy()));
+                $movedTagSetIds = \array_merge($movedTagSetIds, $this->renameKeys(new $this->redis($connection, $this->redis->getOptions()), $slot->getArrayCopy()));
             }
         }
-
         // No Sets found
         if (!$movedTagSetIds) {
-            return false;
+            return \false;
         }
-
         // Now safely take the time to read the keys in each set and collect ids we need to delete
-        $tagIdSets = $this->pipeline(static function () use ($movedTagSetIds) {
+        $tagIdSets = $this->pipeline(static function () use($movedTagSetIds) {
             foreach ($movedTagSetIds as $movedTagId) {
-                yield 'sMembers' => [$movedTagId];
+                (yield 'sMembers' => [$movedTagId]);
             }
         });
-
         // Return combination of the temporary Tag Set ids and their values (cache ids)
-        $ids = array_merge($movedTagSetIds, ...iterator_to_array($tagIdSets, false));
-
+        $ids = \array_merge($movedTagSetIds, ...\iterator_to_array($tagIdSets, \false));
         // Delete cache in chunks to avoid overloading the connection
-        foreach (array_chunk(array_unique($ids), self::BULK_DELETE_LIMIT) as $chunkIds) {
+        foreach (\array_chunk(\array_unique($ids), self::BULK_DELETE_LIMIT) as $chunkIds) {
             $this->doDelete($chunkIds);
         }
-
-        return true;
+        return \true;
     }
-
     /**
      * Renames several keys in order to be able to operate on them without risk of race conditions.
      *
@@ -255,40 +220,33 @@ EOLUA;
      *
      * @return array Filtered list of the valid moved keys (only those that existed)
      */
-    private function renameKeys($redis, array $ids): array
+    private function renameKeys($redis, array $ids) : array
     {
         $newIds = [];
-        $uniqueToken = bin2hex(random_bytes(10));
-
-        $results = $this->pipeline(static function () use ($ids, $uniqueToken) {
+        $uniqueToken = \bin2hex(\random_bytes(10));
+        $results = $this->pipeline(static function () use($ids, $uniqueToken) {
             foreach ($ids as $id) {
-                yield 'rename' => [$id, '{'.$id.'}'.$uniqueToken];
+                (yield 'rename' => [$id, '{' . $id . '}' . $uniqueToken]);
             }
         }, $redis);
-
         foreach ($results as $id => $result) {
-            if (true === $result || ($result instanceof Status && Status::get('OK') === $result)) {
+            if (\true === $result || $result instanceof \PrefixedByPoP\Predis\Response\Status && \PrefixedByPoP\Predis\Response\Status::get('OK') === $result) {
                 // Only take into account if ok (key existed), will be false on phpredis if it did not exist
-                $newIds[] = '{'.$id.'}'.$uniqueToken;
+                $newIds[] = '{' . $id . '}' . $uniqueToken;
             }
         }
-
         return $newIds;
     }
-
-    private function getRedisEvictionPolicy(): string
+    private function getRedisEvictionPolicy() : string
     {
         if (null !== $this->redisEvictionPolicy) {
             return $this->redisEvictionPolicy;
         }
-
         foreach ($this->getHosts() as $host) {
             $info = $host->info('Memory');
-            $info = isset($info['Memory']) ? $info['Memory'] : $info;
-
+            $info = $info['Memory'] ?? $info;
             return $this->redisEvictionPolicy = $info['maxmemory_policy'];
         }
-
         return $this->redisEvictionPolicy = '';
     }
 }

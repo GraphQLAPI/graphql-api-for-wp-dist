@@ -1,4 +1,5 @@
 <?php
+
 namespace PoPSchema\Users;
 
 interface ObjectPropertyResolver

@@ -8,9 +8,8 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\String\Exception;
 
-namespace Symfony\Component\String\Exception;
-
-class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
+class InvalidArgumentException extends \InvalidArgumentException implements \PrefixedByPoP\Symfony\Component\String\Exception\ExceptionInterface
 {
 }

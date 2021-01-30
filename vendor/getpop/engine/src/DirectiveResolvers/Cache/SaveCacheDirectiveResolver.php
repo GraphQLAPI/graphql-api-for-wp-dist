@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\DirectiveResolvers\Cache;
 
 use PoP\Engine\Cache\CacheTypes;
@@ -13,7 +12,6 @@ use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoP\Engine\DirectiveResolvers\Cache\CacheDirectiveResolverTrait;
 use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
-
 /**
  * Save the field value into the cache. This directive is executed after `@resolveAndMerge`,
  * and it works together with "@loadCache" which is executed before `@resolveAndMerge`.
@@ -32,21 +30,19 @@ use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
  * However, the directives before @cache are executed, but they are not passed any $idsDataFields to execute upon
  * Hence, directives where `needsIDsDataFieldsToExecute` is false should not be affected (eg: @cacheControl)
  */
-class SaveCacheDirectiveResolver extends AbstractGlobalDirectiveResolver
+class SaveCacheDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
 {
     use CacheDirectiveResolverTrait;
-
     /**
      * It's called "cache" instead of "saveCache" because it's more user-friendly,
      * and because "cache" involves both "loadCache" and "saveCache", where "loadCache"
      * is added as a mandatory directive on directive
      */
     const DIRECTIVE_NAME = 'cache';
-    public static function getDirectiveName(): string
+    public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;
     }
-
     /**
      * Save all the field values into the cache
      *
@@ -67,61 +63,32 @@ class SaveCacheDirectiveResolver extends AbstractGlobalDirectiveResolver
      * @param array $schemaDeprecations
      * @return void
      */
-    public function resolveDirective(
-        TypeResolverInterface $typeResolver,
-        array &$idsDataFields,
-        array &$succeedingPipelineIDsDataFields,
-        array &$succeedingPipelineDirectiveResolverInstances,
-        array &$resultIDItems,
-        array &$unionDBKeyIDs,
-        array &$dbItems,
-        array &$previousDBItems,
-        array &$variables,
-        array &$messages,
-        array &$dbErrors,
-        array &$dbWarnings,
-        array &$dbDeprecations,
-        array &$dbNotices,
-        array &$dbTraces,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations,
-        array &$schemaNotices,
-        array &$schemaTraces
-    ): void {
-        $persistentCache = PersistentCacheFacade::getInstance();
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $cacheType = CacheTypes::CACHE_DIRECTIVE;
+    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    {
+        $persistentCache = \PoP\ComponentModel\Facades\Cache\PersistentCacheFacade::getInstance();
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $cacheType = \PoP\Engine\Cache\CacheTypes::CACHE_DIRECTIVE;
         foreach ($idsDataFields as $id => $dataFields) {
             foreach ($dataFields['direct'] as $field) {
                 $cacheID = $this->getCacheID($typeResolver, $id, $field);
                 $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
-                if (!array_key_exists($fieldOutputKey, $dbItems[(string)$id])) {
-                    $dbWarnings[(string)$id][] = [
-                        Tokens::PATH => [$this->directive],
-                        Tokens::MESSAGE => sprintf($translationAPI->__('Property \'%s\' doesn\'t exist in object with ID \'%s\', so it can\'t be cached'), $fieldOutputKey, $id),
-                    ];
+                if (!\array_key_exists($fieldOutputKey, $dbItems[(string) $id])) {
+                    $dbWarnings[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Property \'%s\' doesn\'t exist in object with ID \'%s\', so it can\'t be cached'), $fieldOutputKey, $id)];
                     continue;
                 }
-                $persistentCache->storeCache($cacheID, $cacheType, $dbItems[(string)$id][$fieldOutputKey], $this->directiveArgsForSchema['time']);
+                $persistentCache->storeCache($cacheID, $cacheType, $dbItems[(string) $id][$fieldOutputKey], $this->directiveArgsForSchema['time']);
             }
         }
     }
-    public function getSchemaDirectiveDescription(TypeResolverInterface $typeResolver): ?string
+    public function getSchemaDirectiveDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Cache the field value, and retrive from the cache if available', 'engine');
     }
-    public function getSchemaDirectiveArgs(TypeResolverInterface $typeResolver): array
+    public function getSchemaDirectiveArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        return [
-            [
-                SchemaDefinition::ARGNAME_NAME => 'time',
-                SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_INT,
-                SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('Amount of time, in seconds, that the cache is valid. If not defining this value, the cache has no expiry date', 'engine'),
-            ],
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        return [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'time', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_INT, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('Amount of time, in seconds, that the cache is valid. If not defining this value, the cache has no expiry date', 'engine')]];
     }
 }

@@ -8,15 +8,12 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\ExpressionLanguage;
 
-namespace Symfony\Component\ExpressionLanguage;
-
-use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
-
+use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
+use PrefixedByPoP\Symfony\Component\Cache\Adapter\ArrayAdapter;
 // Help opcache.preload discover always-needed symbols
-class_exists(ParsedExpression::class);
-
+\class_exists(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression::class);
 /**
  * Allows to compile and evaluate expressions written in your own DSL.
  *
@@ -28,21 +25,18 @@ class ExpressionLanguage
     private $lexer;
     private $parser;
     private $compiler;
-
     protected $functions = [];
-
     /**
      * @param ExpressionFunctionProviderInterface[] $providers
      */
-    public function __construct(CacheItemPoolInterface $cache = null, array $providers = [])
+    public function __construct(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $cache = null, array $providers = [])
     {
-        $this->cache = $cache ?: new ArrayAdapter();
+        $this->cache = $cache ?: new \PrefixedByPoP\Symfony\Component\Cache\Adapter\ArrayAdapter();
         $this->registerFunctions();
         foreach ($providers as $provider) {
             $this->registerProvider($provider);
         }
     }
-
     /**
      * Compiles an expression source code.
      *
@@ -54,7 +48,6 @@ class ExpressionLanguage
     {
         return $this->getCompiler()->compile($this->parse($expression, $names)->getNodes())->getSource();
     }
-
     /**
      * Evaluate an expression.
      *
@@ -64,9 +57,8 @@ class ExpressionLanguage
      */
     public function evaluate($expression, array $values = [])
     {
-        return $this->parse($expression, array_keys($values))->getNodes()->evaluate($this->functions, $values);
+        return $this->parse($expression, \array_keys($values))->getNodes()->evaluate($this->functions, $values);
     }
-
     /**
      * Parses an expression.
      *
@@ -76,30 +68,23 @@ class ExpressionLanguage
      */
     public function parse($expression, array $names)
     {
-        if ($expression instanceof ParsedExpression) {
+        if ($expression instanceof \PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression) {
             return $expression;
         }
-
-        asort($names);
+        \asort($names);
         $cacheKeyItems = [];
-
         foreach ($names as $nameKey => $name) {
-            $cacheKeyItems[] = \is_int($nameKey) ? $name : $nameKey.':'.$name;
+            $cacheKeyItems[] = \is_int($nameKey) ? $name : $nameKey . ':' . $name;
         }
-
-        $cacheItem = $this->cache->getItem(rawurlencode($expression.'//'.implode('|', $cacheKeyItems)));
-
-        if (null === $parsedExpression = $cacheItem->get()) {
+        $cacheItem = $this->cache->getItem(\rawurlencode($expression . '//' . \implode('|', $cacheKeyItems)));
+        if (null === ($parsedExpression = $cacheItem->get())) {
             $nodes = $this->getParser()->parse($this->getLexer()->tokenize((string) $expression), $names);
-            $parsedExpression = new ParsedExpression((string) $expression, $nodes);
-
+            $parsedExpression = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression((string) $expression, $nodes);
             $cacheItem->set($parsedExpression);
             $this->cache->save($cacheItem);
         }
-
         return $parsedExpression;
     }
-
     /**
      * Validates the syntax of an expression.
      *
@@ -108,15 +93,13 @@ class ExpressionLanguage
      *
      * @throws SyntaxError When the passed expression is invalid
      */
-    public function lint($expression, ?array $names): void
+    public function lint($expression, ?array $names) : void
     {
-        if ($expression instanceof ParsedExpression) {
+        if ($expression instanceof \PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression) {
             return;
         }
-
         $this->getParser()->lint($this->getLexer()->tokenize((string) $expression), $names);
     }
-
     /**
      * Registers a function.
      *
@@ -132,51 +115,41 @@ class ExpressionLanguage
         if (null !== $this->parser) {
             throw new \LogicException('Registering functions after calling evaluate(), compile() or parse() is not supported.');
         }
-
         $this->functions[$name] = ['compiler' => $compiler, 'evaluator' => $evaluator];
     }
-
-    public function addFunction(ExpressionFunction $function)
+    public function addFunction(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ExpressionFunction $function)
     {
         $this->register($function->getName(), $function->getCompiler(), $function->getEvaluator());
     }
-
-    public function registerProvider(ExpressionFunctionProviderInterface $provider)
+    public function registerProvider(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface $provider)
     {
         foreach ($provider->getFunctions() as $function) {
             $this->addFunction($function);
         }
     }
-
     protected function registerFunctions()
     {
-        $this->addFunction(ExpressionFunction::fromPhp('constant'));
+        $this->addFunction(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ExpressionFunction::fromPhp('constant'));
     }
-
-    private function getLexer(): Lexer
+    private function getLexer() : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Lexer
     {
         if (null === $this->lexer) {
-            $this->lexer = new Lexer();
+            $this->lexer = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Lexer();
         }
-
         return $this->lexer;
     }
-
-    private function getParser(): Parser
+    private function getParser() : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Parser
     {
         if (null === $this->parser) {
-            $this->parser = new Parser($this->functions);
+            $this->parser = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Parser($this->functions);
         }
-
         return $this->parser;
     }
-
-    private function getCompiler(): Compiler
+    private function getCompiler() : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler
     {
         if (null === $this->compiler) {
-            $this->compiler = new Compiler($this->functions);
+            $this->compiler = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler($this->functions);
         }
-
         return $this->compiler->reset();
     }
 }

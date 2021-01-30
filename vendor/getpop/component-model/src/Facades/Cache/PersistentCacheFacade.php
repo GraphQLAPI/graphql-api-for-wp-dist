@@ -1,17 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Facades\Cache;
 
 use PoP\ComponentModel\Cache\CacheInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
-
 class PersistentCacheFacade
 {
-    public static function getInstance(): ?CacheInterface
+    public static function getInstance() : ?\PoP\ComponentModel\Cache\CacheInterface
     {
-        $containerBuilderFactory = ContainerBuilderFactory::getInstance();
+        $containerBuilderFactory = \PoP\Root\Container\ContainerBuilderFactory::getInstance();
         if ($containerBuilderFactory->has('persistent_cache')) {
             return $containerBuilderFactory->get('persistent_cache');
         }

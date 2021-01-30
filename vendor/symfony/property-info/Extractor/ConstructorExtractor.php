@@ -8,21 +8,18 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor;
 
-namespace Symfony\Component\PropertyInfo\Extractor;
-
-use Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface;
-
+use PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface;
 /**
  * Extracts the constructor argument type using ConstructorArgumentTypeExtractorInterface implementations.
  *
  * @author Dmitrii Poddubnyi <dpoddubny@gmail.com>
  */
-final class ConstructorExtractor implements PropertyTypeExtractorInterface
+final class ConstructorExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface
 {
     /** @var iterable|ConstructorArgumentTypeExtractorInterface[] */
     private $extractors;
-
     /**
      * @param iterable|ConstructorArgumentTypeExtractorInterface[] $extractors
      */
@@ -30,7 +27,6 @@ final class ConstructorExtractor implements PropertyTypeExtractorInterface
     {
         $this->extractors = $extractors;
     }
-
     /**
      * {@inheritdoc}
      */
@@ -42,7 +38,6 @@ final class ConstructorExtractor implements PropertyTypeExtractorInterface
                 return $value;
             }
         }
-
         return null;
     }
 }

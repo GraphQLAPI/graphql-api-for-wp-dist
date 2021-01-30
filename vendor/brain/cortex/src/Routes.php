@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,15 +8,13 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Brain;
 
-namespace Brain;
-
-use Brain\Cortex\Group\Group;
-use Brain\Cortex\Group\GroupCollectionInterface;
-use Brain\Cortex\Route\QueryRoute;
-use Brain\Cortex\Route\RedirectRoute;
-use Brain\Cortex\Route\RouteCollectionInterface;
-
+use PrefixedByPoP\Brain\Cortex\Group\Group;
+use PrefixedByPoP\Brain\Cortex\Group\GroupCollectionInterface;
+use PrefixedByPoP\Brain\Cortex\Route\QueryRoute;
+use PrefixedByPoP\Brain\Cortex\Route\RedirectRoute;
+use PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface;
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
@@ -28,21 +27,15 @@ class Routes
      */
     private static function checkTiming($method)
     {
-        if (! Cortex::late() && ! did_action('parse_request')) {
+        if (!\PrefixedByPoP\Brain\Cortex::late() && !did_action('parse_request')) {
             return;
         }
-
-        $exception = new \BadMethodCallException(
-            sprintf('%s must be called before "do_parse_request".', $method)
-        );
-
-        if (defined('WP_DEBUG') && WP_DEBUG) {
+        $exception = new \BadMethodCallException(\sprintf('%s must be called before "do_parse_request".', $method));
+        if (\defined('WP_DEBUG') && WP_DEBUG) {
             throw $exception;
         }
-
         do_action('cortex.fail', $exception);
     }
-
     /**
      * @param  string         $path
      * @param  callable|array $query
@@ -52,19 +45,12 @@ class Routes
     public static function add($path, $query, array $options = [])
     {
         self::checkTiming(__METHOD__);
-
-        $routeObj = new QueryRoute($path, $query, $options);
-
-        add_action(
-            'cortex.routes',
-            function (RouteCollectionInterface $collection) use ($routeObj) {
-                $collection->addRoute($routeObj);
-            }
-        );
-
+        $routeObj = new \PrefixedByPoP\Brain\Cortex\Route\QueryRoute($path, $query, $options);
+        add_action('cortex.routes', function (\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $collection) use($routeObj) {
+            $collection->addRoute($routeObj);
+        });
         return $routeObj;
     }
-
     /**
      * @param  string          $path
      * @param  string|callable $to
@@ -72,25 +58,15 @@ class Routes
      * @param  bool            $external
      * @return \Brain\Cortex\Route\RedirectRoute
      */
-    public static function redirect($path, $to, $status = 301, $external = false)
+    public static function redirect($path, $to, $status = 301, $external = \false)
     {
         self::checkTiming(__METHOD__);
-
-        $routeObj = new RedirectRoute($path, $to, [
-            'redirect_status'   => $status,
-            'redirect_external' => $external,
-        ]);
-
-        add_action(
-            'cortex.routes',
-            function (RouteCollectionInterface $collection) use ($routeObj) {
-                $collection->addRoute($routeObj);
-            }
-        );
-
+        $routeObj = new \PrefixedByPoP\Brain\Cortex\Route\RedirectRoute($path, $to, ['redirect_status' => $status, 'redirect_external' => $external]);
+        add_action('cortex.routes', function (\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $collection) use($routeObj) {
+            $collection->addRoute($routeObj);
+        });
         return $routeObj;
     }
-
     /**
      * @param  string $id
      * @param  array  $group
@@ -99,17 +75,11 @@ class Routes
     public static function group($id, array $group)
     {
         self::checkTiming(__METHOD__);
-
         $group['id'] = $id;
-        $groupObj = new Group($group);
-
-        add_action(
-            'cortex.groups',
-            function (GroupCollectionInterface $collection) use ($groupObj) {
-                $collection->addGroup($groupObj);
-            }
-        );
-
+        $groupObj = new \PrefixedByPoP\Brain\Cortex\Group\Group($group);
+        add_action('cortex.groups', function (\PrefixedByPoP\Brain\Cortex\Group\GroupCollectionInterface $collection) use($groupObj) {
+            $collection->addGroup($groupObj);
+        });
         return $groupObj;
     }
 }

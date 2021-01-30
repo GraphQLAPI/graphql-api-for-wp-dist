@@ -5,10 +5,8 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Exception\Parser;
 
-class SyntaxErrorException extends AbstractParserError
+class SyntaxErrorException extends \GraphQLByPoP\GraphQLParser\Exception\Parser\AbstractParserError
 {
-
 }

@@ -1,29 +1,24 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Info;
 
 use PoP\Root\Environment;
-
-class ApplicationInfo implements ApplicationInfoInterface
+class ApplicationInfo implements \PoP\ComponentModel\Info\ApplicationInfoInterface
 {
     /**
      * @var string
      */
     private $version;
-
     public function __construct(string $version)
     {
         $this->version = $version;
-
         // If the version is provided by environment var, then use that one
-        if ($version = Environment::getApplicationVersion()) {
+        if ($version = \PoP\Root\Environment::getApplicationVersion()) {
             $this->version = $version;
         }
     }
-
-    public function getVersion(): string
+    public function getVersion() : string
     {
         return $this->version;
     }

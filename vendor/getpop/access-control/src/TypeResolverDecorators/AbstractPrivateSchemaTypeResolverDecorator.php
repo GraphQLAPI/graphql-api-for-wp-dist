@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\AccessControl\TypeResolverDecorators;
 
 use PoP\AccessControl\ComponentConfiguration;
 use PoP\AccessControl\Schema\SchemaModes;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\TypeResolverDecorators\AbstractTypeResolverDecorator;
-
-abstract class AbstractPrivateSchemaTypeResolverDecorator extends AbstractTypeResolverDecorator
+abstract class AbstractPrivateSchemaTypeResolverDecorator extends \PoP\ComponentModel\TypeResolverDecorators\AbstractTypeResolverDecorator
 {
     /**
      * Enable only for private schema
@@ -17,15 +15,12 @@ abstract class AbstractPrivateSchemaTypeResolverDecorator extends AbstractTypeRe
      * @param TypeResolverInterface $typeResolver
      * @return array
      */
-    public function enabled(TypeResolverInterface $typeResolver): bool
+    public function enabled(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : bool
     {
-        return
-            ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() ||
-            ComponentConfiguration::usePrivateSchemaMode();
+        return \PoP\AccessControl\ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() || \PoP\AccessControl\ComponentConfiguration::usePrivateSchemaMode();
     }
-
-    protected function getSchemaMode(): string
+    protected function getSchemaMode() : string
     {
-        return SchemaModes::PRIVATE_SCHEMA_MODE;
+        return \PoP\AccessControl\Schema\SchemaModes::PRIVATE_SCHEMA_MODE;
     }
 }

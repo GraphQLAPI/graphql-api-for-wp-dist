@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\FieldResolvers\Extensions;
 
 use PoP\API\Schema\SchemaDefinition;
@@ -16,21 +15,16 @@ use GraphQLByPoP\GraphQLServer\TypeResolvers\SchemaTypeResolver;
 use GraphQLByPoP\GraphQLServer\FieldResolvers\SchemaFieldResolver;
 use PoP\ComponentModel\Facades\Registries\DirectiveRegistryFacade;
 use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
-
-class FilterSystemDirectiveSchemaFieldResolver extends SchemaFieldResolver
+class FilterSystemDirectiveSchemaFieldResolver extends \GraphQLByPoP\GraphQLServer\FieldResolvers\SchemaFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(SchemaTypeResolver::class);
+        return array(\GraphQLByPoP\GraphQLServer\TypeResolvers\SchemaTypeResolver::class);
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        return [
-            'directives',
-        ];
+        return ['directives'];
     }
-
     // /**
     //  * Only use this fieldResolver when parameter `ofTypes` is provided.
     //  * Otherwise, use the default implementation
@@ -44,7 +38,6 @@ class FilterSystemDirectiveSchemaFieldResolver extends SchemaFieldResolver
     // {
     //     return $fieldName == 'directives' && isset($fieldArgs['ofTypes']);
     // }
-
     // public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
     // {
     //     $translationAPI = TranslationAPIFacade::getInstance();
@@ -53,36 +46,31 @@ class FilterSystemDirectiveSchemaFieldResolver extends SchemaFieldResolver
     //     ];
     //     return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     // }
-
-    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): array
+    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         $schemaFieldArgs = parent::getSchemaFieldArgs($typeResolver, $fieldName);
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $instanceManager = InstanceManagerFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         switch ($fieldName) {
             case 'directives':
                 /**
                  * @var DirectiveTypeEnum
                  */
-                $directiveTypeEnum = $instanceManager->getInstance(DirectiveTypeEnum::class);
-                return array_merge($schemaFieldArgs, [
-                    [
-                        SchemaDefinition::ARGNAME_NAME => 'ofTypes',
-                        SchemaDefinition::ARGNAME_TYPE => TypeCastingHelpers::makeArray(SchemaDefinition::TYPE_ENUM),
-                        SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('Include only directives of provided types', 'graphql-api'),
-                        // SchemaDefinition::ARGNAME_MANDATORY => true,
-                        // SchemaDefinition::ARGNAME_DEFAULT_VALUE => [
-                        //     DirectiveTypes::QUERY,
-                        // ],
-                        SchemaDefinition::ARGNAME_ENUM_NAME => $directiveTypeEnum->getName(),
-                        SchemaDefinition::ARGNAME_ENUM_VALUES => SchemaHelpers::convertToSchemaFieldArgEnumValueDefinitions($directiveTypeEnum->getValues()),
-                    ],
-                ]);
+                $directiveTypeEnum = $instanceManager->getInstance(\GraphQLByPoP\GraphQLServer\Enums\DirectiveTypeEnum::class);
+                return \array_merge($schemaFieldArgs, [[
+                    \PoP\API\Schema\SchemaDefinition::ARGNAME_NAME => 'ofTypes',
+                    \PoP\API\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\API\Schema\SchemaDefinition::TYPE_ENUM),
+                    \PoP\API\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('Include only directives of provided types', 'graphql-api'),
+                    // SchemaDefinition::ARGNAME_MANDATORY => true,
+                    // SchemaDefinition::ARGNAME_DEFAULT_VALUE => [
+                    //     DirectiveTypes::QUERY,
+                    // ],
+                    \PoP\API\Schema\SchemaDefinition::ARGNAME_ENUM_NAME => $directiveTypeEnum->getName(),
+                    \PoP\API\Schema\SchemaDefinition::ARGNAME_ENUM_VALUES => \PoP\ComponentModel\Schema\SchemaHelpers::convertToSchemaFieldArgEnumValueDefinitions($directiveTypeEnum->getValues()),
+                ]]);
         }
-
         return $schemaFieldArgs;
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @param array<string, mixed>|null $variables
@@ -91,51 +79,40 @@ class FilterSystemDirectiveSchemaFieldResolver extends SchemaFieldResolver
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = [],
-        ?array $variables = null,
-        ?array $expressions = null,
-        array $options = []
-    ) {
+    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    {
         $schema = $resultItem;
         switch ($fieldName) {
             case 'directives':
                 $directiveIDs = $schema->getDirectiveIDs();
                 if ($ofTypes = $fieldArgs['ofTypes'] ?? null) {
-                    $instanceManager = InstanceManagerFacade::getInstance();
+                    $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
                     /**
                      * @var DirectiveTypeEnum
                      */
-                    $directiveTypeEnum = $instanceManager->getInstance(DirectiveTypeEnum::class);
+                    $directiveTypeEnum = $instanceManager->getInstance(\GraphQLByPoP\GraphQLServer\Enums\DirectiveTypeEnum::class);
                     // Convert the enum from uppercase (as exposed in the API) to lowercase (as is its real value)
-                    $ofTypes = array_map([$directiveTypeEnum, 'getCoreValue'], $ofTypes);
-                    $directiveRegistry = DirectiveRegistryFacade::getInstance();
-                    $ofTypeDirectiveResolverClasses = array_filter($directiveRegistry->getDirectiveResolverClasses(), function ($directiveResolverClass) use ($instanceManager, $ofTypes) {
+                    $ofTypes = \array_map([$directiveTypeEnum, 'getCoreValue'], $ofTypes);
+                    $directiveRegistry = \PoP\ComponentModel\Facades\Registries\DirectiveRegistryFacade::getInstance();
+                    $ofTypeDirectiveResolverClasses = \array_filter($directiveRegistry->getDirectiveResolverClasses(), function ($directiveResolverClass) use($instanceManager, $ofTypes) {
                         /**
                          * @var DirectiveResolverInterface
                          */
                         $directiveResolver = $instanceManager->getInstance($directiveResolverClass);
-                        return in_array($directiveResolver->getDirectiveType(), $ofTypes);
+                        return \in_array($directiveResolver->getDirectiveType(), $ofTypes);
                     });
                     // Calculate the directive IDs
-                    $ofTypeDirectiveIDs = array_map(function ($directiveResolverClass) {
+                    $ofTypeDirectiveIDs = \array_map(function ($directiveResolverClass) {
                         // To retrieve the ID, use the same method to calculate the ID
                         // used when creating a new Directive instance
                         // (which we can't do here, since it has side-effects)
-                        $directiveSchemaDefinitionPath = [
-                            SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES,
-                            $directiveResolverClass::getDirectiveName(),
-                        ];
-                        return SchemaDefinitionHelpers::getID($directiveSchemaDefinitionPath);
+                        $directiveSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES, $directiveResolverClass::getDirectiveName()];
+                        return \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers::getID($directiveSchemaDefinitionPath);
                     }, $ofTypeDirectiveResolverClasses);
-                    return array_intersect($directiveIDs, $ofTypeDirectiveIDs);
+                    return \array_intersect($directiveIDs, $ofTypeDirectiveIDs);
                 }
                 return $directiveIDs;
         }
-
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
 }

@@ -8,12 +8,10 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor;
 
-namespace Symfony\Component\PropertyInfo\Extractor;
-
-use Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
-use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
-
+use PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyListExtractorInterface;
+use PrefixedByPoP\Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
 /**
  * Lists available properties using Symfony Serializer Component metadata.
  *
@@ -21,38 +19,32 @@ use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface;
  *
  * @final
  */
-class SerializerExtractor implements PropertyListExtractorInterface
+class SerializerExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyListExtractorInterface
 {
     private $classMetadataFactory;
-
-    public function __construct(ClassMetadataFactoryInterface $classMetadataFactory)
+    public function __construct(\PrefixedByPoP\Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface $classMetadataFactory)
     {
         $this->classMetadataFactory = $classMetadataFactory;
     }
-
     /**
      * {@inheritdoc}
      */
-    public function getProperties(string $class, array $context = []): ?array
+    public function getProperties(string $class, array $context = []) : ?array
     {
-        if (!\array_key_exists('serializer_groups', $context) || (null !== $context['serializer_groups'] && !\is_array($context['serializer_groups']))) {
+        if (!\array_key_exists('serializer_groups', $context) || null !== $context['serializer_groups'] && !\is_array($context['serializer_groups'])) {
             return null;
         }
-
         if (!$this->classMetadataFactory->getMetadataFor($class)) {
             return null;
         }
-
         $properties = [];
         $serializerClassMetadata = $this->classMetadataFactory->getMetadataFor($class);
-
         foreach ($serializerClassMetadata->getAttributesMetadata() as $serializerAttributeMetadata) {
-            $ignored = method_exists($serializerAttributeMetadata, 'isIgnored') && $serializerAttributeMetadata->isIgnored();
-            if (!$ignored && (null === $context['serializer_groups'] || array_intersect($context['serializer_groups'], $serializerAttributeMetadata->getGroups()))) {
+            $ignored = \method_exists($serializerAttributeMetadata, 'isIgnored') && $serializerAttributeMetadata->isIgnored();
+            if (!$ignored && (null === $context['serializer_groups'] || \array_intersect($context['serializer_groups'], $serializerAttributeMetadata->getGroups()))) {
                 $properties[] = $serializerAttributeMetadata->getName();
             }
         }
-
         return $properties;
     }
 }

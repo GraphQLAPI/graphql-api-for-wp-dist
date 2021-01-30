@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Registries;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject;
-
 interface SchemaDefinitionReferenceRegistryInterface
 {
     /**
@@ -13,12 +11,8 @@ interface SchemaDefinitionReferenceRegistryInterface
      *
      * @return array
      */
-    public function &getFullSchemaDefinition(): array;
-    public function registerSchemaDefinitionReference(
-        AbstractSchemaDefinitionReferenceObject $referenceObject
-    ): string;
-    public function getSchemaDefinitionReference(
-        string $referenceObjectID
-    ): ?AbstractSchemaDefinitionReferenceObject;
-    public function getDynamicTypes(bool $filterRepeated = true): array;
+    public function &getFullSchemaDefinition() : array;
+    public function registerSchemaDefinitionReference(\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject $referenceObject) : string;
+    public function getSchemaDefinitionReference(string $referenceObjectID) : ?\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject;
+    public function getDynamicTypes(bool $filterRepeated = \true) : array;
 }

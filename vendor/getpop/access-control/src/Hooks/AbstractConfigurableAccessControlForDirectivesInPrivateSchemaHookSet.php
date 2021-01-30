@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\AccessControl\Hooks;
 
 use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForDirectivesTrait;
 use PoP\AccessControl\ConfigurationEntries\AccessControlConfigurableMandatoryDirectivesForDirectivesTrait;
-
-abstract class AbstractConfigurableAccessControlForDirectivesInPrivateSchemaHookSet extends AbstractAccessControlForDirectivesInPrivateSchemaHookSet
+abstract class AbstractConfigurableAccessControlForDirectivesInPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractAccessControlForDirectivesInPrivateSchemaHookSet
 {
     use ConfigurableMandatoryDirectivesForDirectivesTrait, AccessControlConfigurableMandatoryDirectivesForDirectivesTrait {
         AccessControlConfigurableMandatoryDirectivesForDirectivesTrait::getMatchingEntries insteadof ConfigurableMandatoryDirectivesForDirectivesTrait;
@@ -19,8 +17,7 @@ abstract class AbstractConfigurableAccessControlForDirectivesInPrivateSchemaHook
         AccessControlConfigurableMandatoryDirectivesForDirectivesTrait::getRequiredEntryValue insteadof ConfigurableMandatoryDirectivesForDirectivesTrait;
         AccessControlConfigurableMandatoryDirectivesForDirectivesTrait::getDirectiveResolverClasses insteadof ConfigurableMandatoryDirectivesForDirectivesTrait;
     }
-
-    protected function enabled(): bool
+    protected function enabled() : bool
     {
         return parent::enabled() && !empty($this->getEntries());
     }

@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserStateAccessControl\TypeResolverDecorators;
 
 use PoPSchema\UserStateAccessControl\ConfigurationEntries\UserStates;
 use PoPSchema\UserStateAccessControl\DirectiveResolvers\ValidateIsUserNotLoggedInDirectiveResolver;
-
 trait ValidateUserNotLoggedInForFieldsTypeResolverDecoratorTrait
 {
-    protected function removeFieldNameBasedOnMatchingEntryValue($entryValue = null): bool
+    protected function removeFieldNameBasedOnMatchingEntryValue($entryValue = null) : bool
     {
-        return UserStates::OUT == $entryValue;
+        return \PoPSchema\UserStateAccessControl\ConfigurationEntries\UserStates::OUT == $entryValue;
     }
-    protected function getValidateUserStateDirectiveResolverClass(): string
+    protected function getValidateUserStateDirectiveResolverClass() : string
     {
-        return ValidateIsUserNotLoggedInDirectiveResolver::class;
+        return \PoPSchema\UserStateAccessControl\DirectiveResolvers\ValidateIsUserNotLoggedInDirectiveResolver::class;
     }
 }

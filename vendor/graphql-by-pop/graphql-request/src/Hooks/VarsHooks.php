@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLRequest\Hooks;
 
 use PoP\Hooks\AbstractHookSet;
@@ -18,72 +17,60 @@ use GraphQLByPoP\GraphQLQuery\Facades\GraphQLQueryConvertorFacade;
 use PoP\ComponentModel\CheckpointProcessors\MutationCheckpointProcessor;
 use PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter;
 use GraphQLByPoP\GraphQLRequest\Facades\GraphQLPersistedQueryManagerFacade;
-
-class VarsHooks extends AbstractHookSet
+class VarsHooks extends \PoP\Hooks\AbstractHookSet
 {
     protected function init()
     {
         // Priority 20: execute after the same code in API, as to remove $vars['query]
         $this->hooksAPI->addAction('ApplicationState:addVars', array($this, 'addVars'), 20, 1);
-
         // Change the error message when mutations are not supported
-        $this->hooksAPI->addFilter(MutationCheckpointProcessor::HOOK_MUTATIONS_NOT_SUPPORTED_ERROR_MSG, array($this, 'getMutationsNotSupportedErrorMessage'), 10, 1);
+        $this->hooksAPI->addFilter(\PoP\ComponentModel\CheckpointProcessors\MutationCheckpointProcessor::HOOK_MUTATIONS_NOT_SUPPORTED_ERROR_MSG, array($this, 'getMutationsNotSupportedErrorMessage'), 10, 1);
     }
-
     /**
      * Override the error message when executing a query through standard GraphQL
      * @param array<array> $vars_in_array
      */
-    public function getMutationsNotSupportedErrorMessage($errorMessage): string
+    public function getMutationsNotSupportedErrorMessage($errorMessage) : string
     {
-        $vars = ApplicationState::getVars();
+        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
         if ($vars['standard-graphql']) {
-            $translationAPI = TranslationAPIFacade::getInstance();
-            return sprintf($translationAPI->__('Use the operation type \'%s\' to execute mutations', 'graphql-request'), OperationTypes::MUTATION);
+            $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+            return \sprintf($translationAPI->__('Use the operation type \'%s\' to execute mutations', 'graphql-request'), \GraphQLByPoP\GraphQLQuery\Schema\OperationTypes::MUTATION);
         }
         return $errorMessage;
     }
-
     /**
      * @param array<array> $vars_in_array
      */
-    public function addVars(array $vars_in_array): void
+    public function addVars(array $vars_in_array) : void
     {
         $vars =& $vars_in_array[0];
-
         // Set always. It will be overriden below
-        $vars['standard-graphql'] = false;
-
-        if ($vars['scheme'] == APISchemes::API && $vars['datastructure'] == GraphQLDataStructureFormatter::getName()) {
+        $vars['standard-graphql'] = \false;
+        if ($vars['scheme'] == \PoP\API\Response\Schemes::API && $vars['datastructure'] == \PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter::getName()) {
             $this->processURLParamVars($vars);
         }
     }
-
-    public function setStandardGraphQLVars(array &$vars): void
+    public function setStandardGraphQLVars(array &$vars) : void
     {
         // Add a flag indicating that we are doing standard GraphQL
-        $vars['standard-graphql'] = true;
+        $vars['standard-graphql'] = \true;
     }
-
     /**
      * @param array<string, mixed> $vars
      */
-    protected function processURLParamVars(array &$vars): void
+    protected function processURLParamVars(array &$vars) : void
     {
-        $disablePoPQuery = isset($_REQUEST[QueryInputs::QUERY]) && ComponentConfiguration::disableGraphQLAPIForPoP();
+        $disablePoPQuery = isset($_REQUEST[\PoP\API\Schema\QueryInputs::QUERY]) && \GraphQLByPoP\GraphQLRequest\ComponentConfiguration::disableGraphQLAPIForPoP();
         if ($disablePoPQuery) {
             // Remove the query set by package API
             unset($vars['query']);
         }
         // If the "query" param is set, this case is already handled in API package
         // Unless it is a persisted query for GraphQL, then deal with it here
-        $graphQLPersistedQueryManager = GraphQLPersistedQueryManagerFacade::getInstance();
-        $isGraphQLPersistedQuery = isset($_REQUEST[QueryInputs::QUERY]) && $graphQLPersistedQueryManager->isPersistedQuery($_REQUEST[QueryInputs::QUERY]);
-        if (
-            !isset($_REQUEST[QueryInputs::QUERY])
-            || ComponentConfiguration::disableGraphQLAPIForPoP()
-            || $isGraphQLPersistedQuery
-        ) {
+        $graphQLPersistedQueryManager = \GraphQLByPoP\GraphQLRequest\Facades\GraphQLPersistedQueryManagerFacade::getInstance();
+        $isGraphQLPersistedQuery = isset($_REQUEST[\PoP\API\Schema\QueryInputs::QUERY]) && $graphQLPersistedQueryManager->isPersistedQuery($_REQUEST[\PoP\API\Schema\QueryInputs::QUERY]);
+        if (!isset($_REQUEST[\PoP\API\Schema\QueryInputs::QUERY]) || \GraphQLByPoP\GraphQLRequest\ComponentConfiguration::disableGraphQLAPIForPoP() || $isGraphQLPersistedQuery) {
             // Add a flag indicating that we are doing standard GraphQL
             // Do it already, so that even if there is no query, the error doesn't have "extensions"
             $this->setStandardGraphQLVars($vars);
@@ -93,17 +80,13 @@ class VarsHooks extends AbstractHookSet
             if ($isGraphQLPersistedQuery) {
                 $graphQLQuery = $variables = $operationName = null;
                 // Get the query name, and extract the query from the PersistedQueryManager
-                $query = $_REQUEST[QueryInputs::QUERY] ?? '';
+                $query = $_REQUEST[\PoP\API\Schema\QueryInputs::QUERY] ?? '';
                 $queryName = $graphQLPersistedQueryManager->getPersistedQueryName($query);
                 if ($graphQLPersistedQueryManager->hasPersistedQuery($queryName)) {
                     $graphQLQuery = $graphQLPersistedQueryManager->getPersistedQuery($queryName);
                 }
             } else {
-                list(
-                    $graphQLQuery,
-                    $variables,
-                    $operationName
-                ) = QueryExecutionHelpers::extractRequestedGraphQLQueryPayload();
+                list($graphQLQuery, $variables, $operationName) = \GraphQLByPoP\GraphQLRequest\Execution\QueryExecutionHelpers::extractRequestedGraphQLQueryPayload();
             }
             // Process the query, or show an error if empty
             if ($graphQLQuery) {
@@ -117,16 +100,13 @@ class VarsHooks extends AbstractHookSet
                 // since the "field ... does not exist" already takes care of it,
                 // here for GraphQL and also for PoP.
                 // Show error only for the other cases
-                $translationAPI = TranslationAPIFacade::getInstance();
-                $feedbackMessageStore = FeedbackMessageStoreFacade::getInstance();
-                $errorMessage = $disablePoPQuery ?
-                    $translationAPI->__('No query was provided. (The body has no query, and the query provided as a URL param is ignored because of configuration)', 'graphql-request')
-                    : $translationAPI->__('The query in the body is empty', 'graphql-request');
+                $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+                $feedbackMessageStore = \PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance();
+                $errorMessage = $disablePoPQuery ? $translationAPI->__('No query was provided. (The body has no query, and the query provided as a URL param is ignored because of configuration)', 'graphql-request') : $translationAPI->__('The query in the body is empty', 'graphql-request');
                 $feedbackMessageStore->addQueryError($errorMessage);
             }
         }
     }
-
     /**
      * Function is public so it can be invoked from the WordPress plugin
      *
@@ -139,20 +119,14 @@ class VarsHooks extends AbstractHookSet
         // Take the existing variables from $vars, so they must be set in advance
         $variables = $vars['variables'] ?? [];
         // Convert from GraphQL syntax to Field Query syntax
-        $graphQLQueryConvertor = GraphQLQueryConvertorFacade::getInstance();
-        list(
-            $operationType,
-            $fieldQuery
-        ) = $graphQLQueryConvertor->convertFromGraphQLToFieldQuery($graphQLQuery, $variables, ComponentConfiguration::enableMultipleQueryExecution(), $operationName);
-
+        $graphQLQueryConvertor = \GraphQLByPoP\GraphQLQuery\Facades\GraphQLQueryConvertorFacade::getInstance();
+        list($operationType, $fieldQuery) = $graphQLQueryConvertor->convertFromGraphQLToFieldQuery($graphQLQuery, $variables, \GraphQLByPoP\GraphQLRequest\ComponentConfiguration::enableMultipleQueryExecution(), $operationName);
         // Set the operation type and, based on it, if mutations are supported
         $vars['graphql-operation-type'] = $operationType;
-        $vars['are-mutations-enabled'] = $operationType == OperationTypes::MUTATION;
-
+        $vars['are-mutations-enabled'] = $operationType == \GraphQLByPoP\GraphQLQuery\Schema\OperationTypes::MUTATION;
         // Set the query in $vars
-        ApplicationStateUtils::maybeConvertQueryAndAddToVars($vars, $fieldQuery);
-
+        \PoP\API\State\ApplicationStateUtils::maybeConvertQueryAndAddToVars($vars, $fieldQuery);
         // Do not include the fieldArgs and directives when outputting the field
-        $vars['only-fieldname-as-outputkey'] = true;
+        $vars['only-fieldname-as-outputkey'] = \true;
     }
 }

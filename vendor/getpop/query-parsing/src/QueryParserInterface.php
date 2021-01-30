@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\QueryParsing;
 
 interface QueryParserInterface
@@ -16,13 +15,5 @@ interface QueryParserInterface
      * @param array<string,mixed> $options
      * @return string[]
      */
-    public function splitElements(
-        string $query,
-        string $separator = ',',
-        $skipFromChars = '(',
-        $skipUntilChars = ')',
-        ?string $ignoreSkippingFromChar = null,
-        ?string $ignoreSkippingUntilChar = null,
-        array $options = []
-    ): array;
+    public function splitElements(string $query, string $separator = ',', $skipFromChars = '(', $skipUntilChars = ')', ?string $ignoreSkippingFromChar = null, ?string $ignoreSkippingUntilChar = null, array $options = []) : array;
 }

@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\TypeResolvers;
 
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\TypeResolverPickers\TypeResolverPickerInterface;
-
 interface UnionTypeResolverInterface
 {
     // public function addTypeToID($resultItemID): string;
@@ -14,13 +12,13 @@ interface UnionTypeResolverInterface
     /**
      * @param object $resultItem
      */
-    public function getTargetTypeResolverPicker($resultItem): ?TypeResolverPickerInterface;
+    public function getTargetTypeResolverPicker($resultItem) : ?\PoP\ComponentModel\TypeResolverPickers\TypeResolverPickerInterface;
     /**
      * @param object $resultItem
      */
-    public function getTargetTypeResolver($resultItem): ?TypeResolverInterface;
-    public function getResultItemIDTargetTypeResolvers(array $ids): array;
-    public function getTargetTypeResolverClasses(): array;
-    public function getSchemaTypeInterfaceClass(): ?string;
-    public function getTypeResolverPickers(): array;
+    public function getTargetTypeResolver($resultItem) : ?\PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+    public function getResultItemIDTargetTypeResolvers(array $ids) : array;
+    public function getTargetTypeResolverClasses() : array;
+    public function getSchemaTypeInterfaceClass() : ?string;
+    public function getTypeResolverPickers() : array;
 }

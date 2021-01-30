@@ -1,16 +1,16 @@
 <?php
+
 namespace PoP\ComponentModel\Settings;
 
-class SettingsProcessorManager extends AbstractSettingsProcessorManager
+class SettingsProcessorManager extends \PoP\ComponentModel\Settings\AbstractSettingsProcessorManager
 {
     public function __construct()
     {
         parent::__construct();
-        SettingsProcessorManagerFactory::setInstance($this);
+        \PoP\ComponentModel\Settings\SettingsProcessorManagerFactory::setInstance($this);
     }
 }
-
 /**
  * Initialization
  */
-new SettingsProcessorManager();
+new \PoP\ComponentModel\Settings\SettingsProcessorManager();

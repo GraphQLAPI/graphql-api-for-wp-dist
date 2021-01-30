@@ -1,17 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\ModuleFilters;
 
 use PoP\ComponentModel\ModulePath\ModulePathManagerInterface;
 use PoP\ComponentModel\ModulePath\ModulePathUtils;
-
-class ModulePaths extends AbstractModuleFilter
+class ModulePaths extends \PoP\ComponentModel\ModuleFilters\AbstractModuleFilter
 {
     public const NAME = 'modulepaths';
     public const URLPARAM_MODULEPATHS = 'modulepaths';
-
     /**
      * @var array[]
      */
@@ -24,66 +21,55 @@ class ModulePaths extends AbstractModuleFilter
      * @var array<string, array>
      */
     protected $backlog_unsettled_paths = [];
-
     /**
      * @var \PoP\ComponentModel\ModulePath\ModulePathManagerInterface
      */
     protected $modulePathManager;
-    public function __construct(ModulePathManagerInterface $modulePathManager)
+    public function __construct(\PoP\ComponentModel\ModulePath\ModulePathManagerInterface $modulePathManager)
     {
         $this->modulePathManager = $modulePathManager;
     }
-
     protected function init()
     {
-        $this->paths = ModulePathUtils::getModulePaths();
+        $this->paths = \PoP\ComponentModel\ModulePath\ModulePathUtils::getModulePaths();
         $this->propagation_unsettled_paths = $this->paths;
         $this->backlog_unsettled_paths = array();
     }
-
     public function getName()
     {
         return self::NAME;
     }
-
     public function excludeModule(array $module, array &$props)
     {
-        if (is_null($this->paths)) {
+        if (\is_null($this->paths)) {
             $this->init();
         }
-
         // If there are no paths to include, then exclude everything
         if (!$this->paths) {
-            return true;
+            return \true;
         }
-
         // The module is included for rendering, if either there is no path, or if there is, if it's the last module
         // on the path or any module thereafter
         if (!$this->propagation_unsettled_paths) {
-            return false;
+            return \false;
         }
-
         // Check if this module is the last item of any modulepath
         foreach ($this->propagation_unsettled_paths as $unsettled_path) {
-            if (count($unsettled_path) == 1 && $unsettled_path[0] == $module) {
-                return false;
+            if (\count($unsettled_path) == 1 && $unsettled_path[0] == $module) {
+                return \false;
             }
         }
-
-        return true;
+        return \true;
     }
-
     public function removeExcludedSubmodules(array $module, $submodules)
     {
-        if (is_null($this->paths)) {
+        if (\is_null($this->paths)) {
             $this->init();
         }
-
         // If there are no remaining path left, then everything goes in
         if (!$this->propagation_unsettled_paths) {
             return $submodules;
         }
-
         // $module_unsettled_path: Start only from the specified module. It is passed under URL param "modulepaths", and it's the list of module paths
         // starting from the entry, and joined by ".", like this: modulepaths[]=toplevel.pagesection-top.frame-top.block-notifications-scroll-list
         // This way, the component can interact with itself to fetch or post data, etc
@@ -92,7 +78,7 @@ class ModulePaths extends AbstractModuleFilter
             // Validate that the current module is at the head of the path
             // This validation will work for the entry module only, since the array_intersect below will guarantee that only the path modules are returned
             $unsettled_path_module = $unsettled_path[0];
-            if (count($unsettled_path) == 1) {
+            if (\count($unsettled_path) == 1) {
                 // We reached the end of the unsettled path => from now on, all modules must be included
                 if ($unsettled_path_module == $module) {
                     return $submodules;
@@ -100,32 +86,29 @@ class ModulePaths extends AbstractModuleFilter
             } else {
                 // Then, check that the following element in the unsettled_path, which is the submodule, is on the submodules
                 $unsettled_path_submodule = $unsettled_path[1];
-                if ($unsettled_path_module == $module && in_array($unsettled_path_submodule, $submodules) && !in_array($unsettled_path_submodule, $matching_submodules)) {
+                if ($unsettled_path_module == $module && \in_array($unsettled_path_submodule, $submodules) && !\in_array($unsettled_path_submodule, $matching_submodules)) {
                     $matching_submodules[] = $unsettled_path_submodule;
                 }
             }
         }
-
         return $matching_submodules;
     }
-
     /**
      * The `prepare` function advances the modulepath one level down, when interating into the submodules, and then calling `restore` the value goes one level up again
      */
     public function prepareForPropagation(array $module, array &$props)
     {
-        if (is_null($this->paths)) {
+        if (\is_null($this->paths)) {
             $this->init();
         }
         if ($this->paths) {
             // Save the current propagation_unsettled_paths, to restore it later on
             $this->backlog_unsettled_paths[$this->getBacklogEntry()] = $this->propagation_unsettled_paths;
-
             $matching_unsettled_paths = array();
             foreach ($this->propagation_unsettled_paths as $unsettled_path) {
                 $module_unsettled_path = $unsettled_path[0];
                 if ($module_unsettled_path == $module) {
-                    array_shift($unsettled_path);
+                    \array_shift($unsettled_path);
                     // If there are still elements, then add it to the list
                     if ($unsettled_path) {
                         $matching_unsettled_paths[] = $unsettled_path;
@@ -137,10 +120,9 @@ class ModulePaths extends AbstractModuleFilter
     }
     public function restoreFromPropagation(array $module, array &$props)
     {
-        if (is_null($this->paths)) {
+        if (\is_null($this->paths)) {
             $this->init();
         }
-
         // Restore the previous propagation_unsettled_paths
         if ($this->paths) {
             $backlog_entry = $this->getBacklogEntry();
@@ -149,10 +131,10 @@ class ModulePaths extends AbstractModuleFilter
             unset($this->backlog_unsettled_paths[$backlog_entry]);
         }
     }
-    protected function getBacklogEntry(): string
+    protected function getBacklogEntry() : string
     {
-        $entry = json_encode($this->modulePathManager->getPropagationCurrentPath());
-        if ($entry === false) {
+        $entry = \json_encode($this->modulePathManager->getPropagationCurrentPath());
+        if ($entry === \false) {
             return '';
         }
         return $entry;

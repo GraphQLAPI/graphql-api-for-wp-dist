@@ -1,11 +1,10 @@
 <?php
 
-namespace GuzzleHttp\Promise;
+namespace PrefixedByPoP\GuzzleHttp\Promise;
 
 use Exception;
 use Generator;
 use Throwable;
-
 /**
  * Creates a promise that is resolved using a generator that yields values or
  * promises (somewhat similar to C#'s async keyword).
@@ -42,27 +41,24 @@ use Throwable;
  *
  * @link https://github.com/petkaantonov/bluebird/blob/master/API.md#generators inspiration
  */
-final class Coroutine implements PromiseInterface
+final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
 {
     /**
      * @var PromiseInterface|null
      */
     private $currentPromise;
-
     /**
      * @var Generator
      */
     private $generator;
-
     /**
      * @var Promise
      */
     private $result;
-
     public function __construct(callable $generatorFn)
     {
         $this->generator = $generatorFn();
-        $this->result = new Promise(function () {
+        $this->result = new \PrefixedByPoP\GuzzleHttp\Promise\Promise(function () {
             while (isset($this->currentPromise)) {
                 $this->currentPromise->wait();
             }
@@ -71,11 +67,10 @@ final class Coroutine implements PromiseInterface
             $this->nextCoroutine($this->generator->current());
         } catch (\Exception $exception) {
             $this->result->reject($exception);
-        } catch (Throwable $throwable) {
+        } catch (\Throwable $throwable) {
             $this->result->reject($throwable);
         }
     }
-
     /**
      * Create a new coroutine.
      *
@@ -85,51 +80,39 @@ final class Coroutine implements PromiseInterface
     {
         return new self($generatorFn);
     }
-
-    public function then(
-        callable $onFulfilled = null,
-        callable $onRejected = null
-    ) {
+    public function then(callable $onFulfilled = null, callable $onRejected = null)
+    {
         return $this->result->then($onFulfilled, $onRejected);
     }
-
     public function otherwise(callable $onRejected)
     {
         return $this->result->otherwise($onRejected);
     }
-
-    public function wait($unwrap = true)
+    public function wait($unwrap = \true)
     {
         return $this->result->wait($unwrap);
     }
-
     public function getState()
     {
         return $this->result->getState();
     }
-
     public function resolve($value)
     {
         $this->result->resolve($value);
     }
-
     public function reject($reason)
     {
         $this->result->reject($reason);
     }
-
     public function cancel()
     {
         $this->currentPromise->cancel();
         $this->result->cancel();
     }
-
     private function nextCoroutine($yielded)
     {
-        $this->currentPromise = Create::promiseFor($yielded)
-            ->then([$this, '_handleSuccess'], [$this, '_handleFailure']);
+        $this->currentPromise = \PrefixedByPoP\GuzzleHttp\Promise\Create::promiseFor($yielded)->then([$this, '_handleSuccess'], [$this, '_handleFailure']);
     }
-
     /**
      * @internal
      */
@@ -143,13 +126,12 @@ final class Coroutine implements PromiseInterface
             } else {
                 $this->result->resolve($value);
             }
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             $this->result->reject($exception);
-        } catch (Throwable $throwable) {
+        } catch (\Throwable $throwable) {
             $this->result->reject($throwable);
         }
     }
-
     /**
      * @internal
      */
@@ -157,12 +139,12 @@ final class Coroutine implements PromiseInterface
     {
         unset($this->currentPromise);
         try {
-            $nextYield = $this->generator->throw(Create::exceptionFor($reason));
+            $nextYield = $this->generator->throw(\PrefixedByPoP\GuzzleHttp\Promise\Create::exceptionFor($reason));
             // The throw was caught, so keep iterating on the coroutine
             $this->nextCoroutine($nextYield);
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             $this->result->reject($exception);
-        } catch (Throwable $throwable) {
+        } catch (\Throwable $throwable) {
             $this->result->reject($throwable);
         }
     }

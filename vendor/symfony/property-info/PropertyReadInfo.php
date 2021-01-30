@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\PropertyInfo;
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
 
 /**
  * The property read info tells how a property can be read.
@@ -22,21 +21,14 @@ final class PropertyReadInfo
 {
     public const TYPE_METHOD = 'method';
     public const TYPE_PROPERTY = 'property';
-
     public const VISIBILITY_PUBLIC = 'public';
     public const VISIBILITY_PROTECTED = 'protected';
     public const VISIBILITY_PRIVATE = 'private';
-
     private $type;
-
     private $name;
-
     private $visibility;
-
     private $static;
-
     private $byRef;
-
     public function __construct(string $type, string $name, string $visibility, bool $static, bool $byRef)
     {
         $this->type = $type;
@@ -45,37 +37,32 @@ final class PropertyReadInfo
         $this->static = $static;
         $this->byRef = $byRef;
     }
-
     /**
      * Get type of access.
      */
-    public function getType(): string
+    public function getType() : string
     {
         return $this->type;
     }
-
     /**
      * Get name of the access, which can be a method name or a property name, depending on the type.
      */
-    public function getName(): string
+    public function getName() : string
     {
         return $this->name;
     }
-
-    public function getVisibility(): string
+    public function getVisibility() : string
     {
         return $this->visibility;
     }
-
-    public function isStatic(): bool
+    public function isStatic() : bool
     {
         return $this->static;
     }
-
     /**
      * Whether this accessor can be accessed by reference.
      */
-    public function canBeReference(): bool
+    public function canBeReference() : bool
     {
         return $this->byRef;
     }

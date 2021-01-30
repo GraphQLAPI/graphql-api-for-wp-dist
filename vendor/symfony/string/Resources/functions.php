@@ -8,25 +8,21 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\String;
 
-namespace Symfony\Component\String;
-
-function u(?string $string = ''): UnicodeString
+function u(?string $string = '') : \PrefixedByPoP\Symfony\Component\String\UnicodeString
 {
-    return new UnicodeString($string ?? '');
+    return new \PrefixedByPoP\Symfony\Component\String\UnicodeString($string ?? '');
 }
-
-function b(?string $string = ''): ByteString
+function b(?string $string = '') : \PrefixedByPoP\Symfony\Component\String\ByteString
 {
-    return new ByteString($string ?? '');
+    return new \PrefixedByPoP\Symfony\Component\String\ByteString($string ?? '');
 }
-
 /**
  * @return UnicodeString|ByteString
  */
-function s(?string $string = ''): AbstractString
+function s(?string $string = '') : \PrefixedByPoP\Symfony\Component\String\AbstractString
 {
     $string = $string ?? '';
-
-    return preg_match('//u', $string) ? new UnicodeString($string) : new ByteString($string);
+    return \preg_match('//u', $string) ? new \PrefixedByPoP\Symfony\Component\String\UnicodeString($string) : new \PrefixedByPoP\Symfony\Component\String\ByteString($string);
 }

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserRolesAccessControl\Hooks;
 
 use PoPSchema\UserRolesAccessControl\Helpers\UserRoleHelper;
@@ -12,8 +11,7 @@ use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
 use PoP\AccessControl\ConfigurationEntries\AccessControlConfigurableMandatoryDirectivesForFieldsTrait;
 use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForFieldsTrait;
 use PoPSchema\UserStateAccessControl\Hooks\AbstractDisableFieldsIfUserIsNotLoggedInAccessControlForFieldsInPrivateSchemaHookSet;
-
-class MaybeDisableFieldsIfLoggedInUserDoesNotHaveRolePrivateSchemaHookSet extends AbstractDisableFieldsIfUserIsNotLoggedInAccessControlForFieldsInPrivateSchemaHookSet
+class MaybeDisableFieldsIfLoggedInUserDoesNotHaveRolePrivateSchemaHookSet extends \PoPSchema\UserStateAccessControl\Hooks\AbstractDisableFieldsIfUserIsNotLoggedInAccessControlForFieldsInPrivateSchemaHookSet
 {
     use ConfigurableMandatoryDirectivesForFieldsTrait, AccessControlConfigurableMandatoryDirectivesForFieldsTrait {
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getMatchingEntries insteadof ConfigurableMandatoryDirectivesForFieldsTrait;
@@ -24,23 +22,20 @@ class MaybeDisableFieldsIfLoggedInUserDoesNotHaveRolePrivateSchemaHookSet extend
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getEntries insteadof ConfigurableMandatoryDirectivesForFieldsTrait;
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getFieldNames insteadof ConfigurableMandatoryDirectivesForFieldsTrait;
     }
-
-    protected function enabled(): bool
+    protected function enabled() : bool
     {
         return parent::enabled() && !empty(static::getConfigurationEntries());
     }
-
     /**
      * Configuration entries
      *
      * @return array
      */
-    protected static function getConfigurationEntries(): array
+    protected static function getConfigurationEntries() : array
     {
-        $accessControlManager = AccessControlManagerFacade::getInstance();
-        return $accessControlManager->getEntriesForFields(AccessControlGroups::ROLES);
+        $accessControlManager = \PoP\AccessControl\Facades\AccessControlManagerFacade::getInstance();
+        return $accessControlManager->getEntriesForFields(\PoPSchema\UserRolesAccessControl\Services\AccessControlGroups::ROLES);
     }
-
     /**
      * Decide if to remove the fieldNames
      *
@@ -49,30 +44,23 @@ class MaybeDisableFieldsIfLoggedInUserDoesNotHaveRolePrivateSchemaHookSet extend
      * @param string $fieldName
      * @return boolean
      */
-    protected function removeFieldName(
-        TypeResolverInterface $typeResolver,
-        FieldResolverInterface $fieldResolver,
-        array $fieldInterfaceResolverClasses,
-        string $fieldName
-    ): bool {
+    protected function removeFieldName(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, \PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, array $fieldInterfaceResolverClasses, string $fieldName) : bool
+    {
         // If the user is not logged in, then remove the field
         $isUserLoggedIn = $this->isUserLoggedIn();
         if (!$isUserLoggedIn) {
-            return true;
+            return \true;
         }
-
         // Obtain all roles allowed for the current combination of typeResolver/fieldName
-        if (
-            $matchingEntries = $this->getEntries($typeResolver, $fieldInterfaceResolverClasses, $fieldName)
-        ) {
+        if ($matchingEntries = $this->getEntries($typeResolver, $fieldInterfaceResolverClasses, $fieldName)) {
             foreach ($matchingEntries as $entry) {
                 // Check if the current user has any of the required roles, then access is granted, otherwise reject it
                 $roles = $entry[2] ?? [];
-                if (!UserRoleHelper::doesCurrentUserHaveAnyRole($roles)) {
-                    return true;
+                if (!\PoPSchema\UserRolesAccessControl\Helpers\UserRoleHelper::doesCurrentUserHaveAnyRole($roles)) {
+                    return \true;
                 }
             }
         }
-        return false;
+        return \false;
     }
 }

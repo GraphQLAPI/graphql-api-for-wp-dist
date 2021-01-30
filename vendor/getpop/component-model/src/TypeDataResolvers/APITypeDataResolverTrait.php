@@ -1,11 +1,9 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\TypeDataResolvers;
 
 use PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade;
-
 trait APITypeDataResolverTrait
 {
     public function maybeFilterDataloadQueryArgs(array &$query, array $options = [])
@@ -14,7 +12,7 @@ trait APITypeDataResolverTrait
             $filterDataloadQueryArgsSource = $filterDataloadQueryArgsParams['source'];
             $filterDataloadingModule = $filterDataloadQueryArgsParams['module'];
             if ($filterDataloadQueryArgsSource && $filterDataloadingModule) {
-                $moduleprocessor_manager = ModuleProcessorManagerFacade::getInstance();
+                $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
                 $moduleprocessor_manager->getProcessor($filterDataloadingModule)->filterHeadmoduleDataloadQueryArgs($filterDataloadingModule, $query, $filterDataloadQueryArgsSource);
             }
         }

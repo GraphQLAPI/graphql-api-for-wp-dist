@@ -1,10 +1,14 @@
 {
-    "name": "symfony/dotenv",
+    "name": "symfony\/dotenv",
     "type": "library",
     "description": "Registers environment variables from a .env file",
-    "keywords": ["environment", "env", "dotenv"],
-    "homepage": "https://symfony.com",
-    "license" : "MIT",
+    "keywords": [
+        "environment",
+        "env",
+        "dotenv"
+    ],
+    "homepage": "https:\/\/symfony.com",
+    "license": "MIT",
     "authors": [
         {
             "name": "Fabien Potencier",
@@ -12,20 +16,22 @@
         },
         {
             "name": "Symfony Community",
-            "homepage": "https://symfony.com/contributors"
+            "homepage": "https:\/\/symfony.com\/contributors"
         }
     ],
     "require": {
         "php": ">=7.2.5",
-        "symfony/deprecation-contracts": "^2.1"
+        "symfony\/deprecation-contracts": "^2.1"
     },
     "require-dev": {
-        "symfony/process": "^4.4|^5.0"
+        "symfony\/process": "^4.4|^5.0"
     },
     "autoload": {
-        "psr-4": { "Symfony\\Component\\Dotenv\\": "" },
+        "psr-4": {
+            "PrefixedByPoP\\Symfony\\Component\\Dotenv\\": ""
+        },
         "exclude-from-classmap": [
-            "/Tests/"
+            "\/Tests\/"
         ]
     },
     "minimum-stability": "dev"

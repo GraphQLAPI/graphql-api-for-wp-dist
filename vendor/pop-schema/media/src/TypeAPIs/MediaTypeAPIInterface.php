@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Media\TypeAPIs;
 
 /**
@@ -15,5 +14,5 @@ interface MediaTypeAPIInterface
      * @param [type] $object
      * @return boolean
      */
-    public function isInstanceOfMediaType($object): bool;
+    public function isInstanceOfMediaType($object) : bool;
 }

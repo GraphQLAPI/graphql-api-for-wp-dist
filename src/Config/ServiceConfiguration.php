@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Config;
 
+use GraphQLByPoP\GraphQLClientsForWP\Clients\GraphiQLClient;
+use GraphQLByPoP\GraphQLClientsForWP\Clients\GraphiQLWithExplorerClient;
 use PoP\Engine\TypeResolvers\RootTypeResolver;
 use GraphQLAPI\GraphQLAPI\Blocks\PersistedQueryGraphiQLBlock;
 use PoP\Root\Component\PHPServiceConfigurationTrait;
@@ -71,7 +73,7 @@ class ServiceConfiguration
      */
     protected static function overrideServiceClasses(): void
     {
-        ContainerBuilderUtils::injectValuesIntoService(InstanceManagerInterface::class, 'overrideClass', \GraphQLByPoP\GraphQLClientsForWP\Clients\GraphiQLClient::class, \GraphQLAPI\GraphQLAPI\Clients\Overrides\GraphiQLClient::class);
-        ContainerBuilderUtils::injectValuesIntoService(InstanceManagerInterface::class, 'overrideClass', \GraphQLByPoP\GraphQLClientsForWP\Clients\GraphiQLWithExplorerClient::class, \GraphQLAPI\GraphQLAPI\Clients\Overrides\GraphiQLWithExplorerClient::class);
+        ContainerBuilderUtils::injectValuesIntoService(InstanceManagerInterface::class, 'overrideClass', GraphiQLClient::class, \GraphQLAPI\GraphQLAPI\Clients\Overrides\GraphiQLClient::class);
+        ContainerBuilderUtils::injectValuesIntoService(InstanceManagerInterface::class, 'overrideClass', GraphiQLWithExplorerClient::class, \GraphQLAPI\GraphQLAPI\Clients\Overrides\GraphiQLWithExplorerClient::class);
     }
 }

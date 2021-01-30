@@ -5,37 +5,30 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FragmentInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class TypedFragmentReference extends AbstractAst implements FragmentInterface
+class TypedFragmentReference extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FragmentInterface
 {
     use AstDirectivesTrait;
-
     /** @var Field[]|Query[] */
     protected $fields;
-
     /** @var string */
     protected $typeName;
-
     /**
      * @param string          $typeName
      * @param Field[]|Query[] $fields
      * @param Directive[]     $directives
      * @param Location        $location
      */
-    public function __construct($typeName, array $fields, array $directives, Location $location)
+    public function __construct($typeName, array $fields, array $directives, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
         $this->typeName = $typeName;
-        $this->fields   = $fields;
+        $this->fields = $fields;
         $this->setDirectives($directives);
     }
-
     /**
      * @return Field[]|Query[]
      */
@@ -43,7 +36,6 @@ class TypedFragmentReference extends AbstractAst implements FragmentInterface
     {
         return $this->fields;
     }
-
     /**
      * @param Field[]|Query[] $fields
      */
@@ -51,7 +43,6 @@ class TypedFragmentReference extends AbstractAst implements FragmentInterface
     {
         $this->fields = $fields;
     }
-
     /**
      * @return string
      */
@@ -59,7 +50,6 @@ class TypedFragmentReference extends AbstractAst implements FragmentInterface
     {
         return $this->typeName;
     }
-
     /**
      * @param string $typeName
      */

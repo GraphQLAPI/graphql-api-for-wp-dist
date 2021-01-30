@@ -1,25 +1,19 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\API\Enums;
 
 use PoP\API\Schema\SchemaDefinition;
 use PoP\ComponentModel\Enums\AbstractEnum;
-
-class SchemaFieldShapeEnum extends AbstractEnum
+class SchemaFieldShapeEnum extends \PoP\ComponentModel\Enums\AbstractEnum
 {
     public const NAME = 'SchemaOutputShape';
-
-    protected function getEnumName(): string
+    protected function getEnumName() : string
     {
         return self::NAME;
     }
-    public function getValues(): array
+    public function getValues() : array
     {
-        return [
-            SchemaDefinition::ARGVALUE_SCHEMA_SHAPE_FLAT,
-            SchemaDefinition::ARGVALUE_SCHEMA_SHAPE_NESTED,
-        ];
+        return [\PoP\API\Schema\SchemaDefinition::ARGVALUE_SCHEMA_SHAPE_FLAT, \PoP\API\Schema\SchemaDefinition::ARGVALUE_SCHEMA_SHAPE_NESTED];
     }
 }

@@ -5,53 +5,42 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class VariableReference extends AbstractAst implements ValueInterface
+class VariableReference extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface
 {
-
     /** @var  string */
     private $name;
-
     /** @var  Variable */
     private $variable;
-
     /** @var  mixed */
     private $value;
-
     /**
      * @param string        $name
      * @param Variable|null $variable
      * @param Location      $location
      */
-    public function __construct($name, Variable $variable = null, Location $location)
+    public function __construct($name, \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Variable $variable = null, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
-        $this->name     = $name;
+        $this->name = $name;
         $this->variable = $variable;
     }
-
     public function getVariable()
     {
         return $this->variable;
     }
-
     public function getValue()
     {
         return $this->value;
     }
-
     public function setValue($value)
     {
         $this->value = $value;
     }
-
     /**
      * @return string
      */

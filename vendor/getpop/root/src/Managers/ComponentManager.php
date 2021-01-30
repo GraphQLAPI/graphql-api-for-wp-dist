@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Root\Managers;
 
 /**
@@ -13,45 +12,41 @@ class ComponentManager
      * @var string[]
      */
     private static $components = [];
-
     /**
      * Register a component
      */
-    public static function register(string $component): void
+    public static function register(string $component) : void
     {
         self::$components[] = $component;
     }
-
     /**
      * Boot all components
      *
      * @return void
      */
-    public static function beforeBoot(): void
+    public static function beforeBoot() : void
     {
         foreach (self::$components as $component) {
             $component::beforeBoot();
         }
     }
-
     /**
      * Boot all components
      *
      * @return void
      */
-    public static function boot(): void
+    public static function boot() : void
     {
         foreach (self::$components as $component) {
             $component::boot();
         }
     }
-
     /**
      * Boot all components
      *
      * @return void
      */
-    public static function afterBoot(): void
+    public static function afterBoot() : void
     {
         foreach (self::$components as $component) {
             $component::afterBoot();

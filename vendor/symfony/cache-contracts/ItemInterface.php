@@ -8,40 +8,34 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Contracts\Cache;
 
-namespace Symfony\Contracts\Cache;
-
-use Psr\Cache\CacheException;
-use Psr\Cache\CacheItemInterface;
-use Psr\Cache\InvalidArgumentException;
-
+use PrefixedByPoP\Psr\Cache\CacheException;
+use PrefixedByPoP\Psr\Cache\CacheItemInterface;
+use PrefixedByPoP\Psr\Cache\InvalidArgumentException;
 /**
  * Augments PSR-6's CacheItemInterface with support for tags and metadata.
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-interface ItemInterface extends CacheItemInterface
+interface ItemInterface extends \PrefixedByPoP\Psr\Cache\CacheItemInterface
 {
     /**
      * References the Unix timestamp stating when the item will expire.
      */
     const METADATA_EXPIRY = 'expiry';
-
     /**
      * References the time the item took to be created, in milliseconds.
      */
     const METADATA_CTIME = 'ctime';
-
     /**
      * References the list of tags that were assigned to the item, as string[].
      */
     const METADATA_TAGS = 'tags';
-
     /**
      * Reserved characters that cannot be used in a key or tag.
      */
-    const RESERVED_CHARACTERS = '{}()/\@:';
-
+    const RESERVED_CHARACTERS = '{}()/\\@:';
     /**
      * Adds a tag to a cache item.
      *
@@ -55,11 +49,10 @@ interface ItemInterface extends CacheItemInterface
      * @throws CacheException           When the item comes from a pool that is not tag-aware
      */
     public function tag($tags);
-
     /**
      * Returns a list of metadata info that were saved alongside with the cached value.
      *
      * See ItemInterface::METADATA_* consts for keys potentially found in the returned array.
      */
-    public function getMetadata(): array;
+    public function getMetadata() : array;
 }

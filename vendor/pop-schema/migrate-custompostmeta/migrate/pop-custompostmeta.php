@@ -1,4 +1,5 @@
 <?php
+
 /*
 Plugin Name: PoP Post Meta
 Version: 0.1
@@ -7,45 +8,42 @@ Plugin URI: https://getpop.org/
 Author: Leonardo Losoviz
 */
 namespace PoPSchema\CustomPostMeta;
-use PoP\Hooks\Facades\HooksAPIFacade;
 
+use PoP\Hooks\Facades\HooksAPIFacade;
 //-------------------------------------------------------------------------------------
 // Constants Definition
 //-------------------------------------------------------------------------------------
-define('POP_POSTMETA_VERSION', 0.106);
-define('POP_POSTMETA_DIR', dirname(__FILE__));
-
+\define('POP_POSTMETA_VERSION', 0.106);
+\define('POP_POSTMETA_DIR', \dirname(__FILE__));
 class Plugins
 {
     public function __construct()
     {
-
         // Priority: new section, after PoP CMS Model
-        HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 205);
+        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 205);
     }
     public function init()
     {
         if ($this->validate()) {
             $this->initialize();
-            define('POP_POSTMETA_INITIALIZED', true);
+            \define('POP_POSTMETA_INITIALIZED', \true);
         }
     }
     public function validate()
     {
-        return true;
+        return \true;
         include_once 'validation.php';
-        $validation = new Validation();
+        $validation = new \PoPSchema\CustomPostMeta\Validation();
         return $validation->validate();
     }
     public function initialize()
     {
         include_once 'initialization.php';
-        $initialization = new Initialization();
+        $initialization = new \PoPSchema\CustomPostMeta\Initialization();
         return $initialization->initialize();
     }
 }
-
 /**
  * Initialization
  */
-new Plugins();
+new \PoPSchema\CustomPostMeta\Plugins();

@@ -1,16 +1,15 @@
 <?php
+
 namespace PoPSchema\Tags;
 
 class ObjectPropertyResolverFactory
 {
     protected static $instance;
-
-    public static function setInstance(ObjectPropertyResolver $instance)
+    public static function setInstance(\PoPSchema\Tags\ObjectPropertyResolver $instance)
     {
         self::$instance = $instance;
     }
-
-    public static function getInstance(): ObjectPropertyResolver
+    public static function getInstance() : \PoPSchema\Tags\ObjectPropertyResolver
     {
         return self::$instance;
     }

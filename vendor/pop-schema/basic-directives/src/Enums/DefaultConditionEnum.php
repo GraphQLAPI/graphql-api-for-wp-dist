@@ -1,27 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\BasicDirectives\Enums;
 
 use PoP\ComponentModel\Enums\AbstractEnum;
-
-class DefaultConditionEnum extends AbstractEnum
+class DefaultConditionEnum extends \PoP\ComponentModel\Enums\AbstractEnum
 {
     public const NAME = 'DefaultCondition';
-
     public const IS_NULL = 'IS_NULL';
     public const IS_EMPTY = 'IS_EMPTY';
-
-    protected function getEnumName(): string
+    protected function getEnumName() : string
     {
         return self::NAME;
     }
-    public function getValues(): array
+    public function getValues() : array
     {
-        return [
-            self::IS_NULL,
-            self::IS_EMPTY,
-        ];
+        return [self::IS_NULL, self::IS_EMPTY];
     }
 }

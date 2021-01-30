@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\PropertyInfo;
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
 
 /**
  * Default {@see PropertyInfoExtractorInterface} implementation.
@@ -18,14 +17,13 @@ namespace Symfony\Component\PropertyInfo;
  *
  * @final
  */
-class PropertyInfoExtractor implements PropertyInfoExtractorInterface, PropertyInitializableExtractorInterface
+class PropertyInfoExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInitializableExtractorInterface
 {
     private $listExtractors;
     private $typeExtractors;
     private $descriptionExtractors;
     private $accessExtractors;
     private $initializableExtractors;
-
     /**
      * @param iterable|PropertyListExtractorInterface[]          $listExtractors
      * @param iterable|PropertyTypeExtractorInterface[]          $typeExtractors
@@ -41,65 +39,57 @@ class PropertyInfoExtractor implements PropertyInfoExtractorInterface, PropertyI
         $this->accessExtractors = $accessExtractors;
         $this->initializableExtractors = $initializableExtractors;
     }
-
     /**
      * {@inheritdoc}
      */
-    public function getProperties(string $class, array $context = []): ?array
+    public function getProperties(string $class, array $context = []) : ?array
     {
         return $this->extract($this->listExtractors, 'getProperties', [$class, $context]);
     }
-
     /**
      * {@inheritdoc}
      */
-    public function getShortDescription(string $class, string $property, array $context = []): ?string
+    public function getShortDescription(string $class, string $property, array $context = []) : ?string
     {
         return $this->extract($this->descriptionExtractors, 'getShortDescription', [$class, $property, $context]);
     }
-
     /**
      * {@inheritdoc}
      */
-    public function getLongDescription(string $class, string $property, array $context = []): ?string
+    public function getLongDescription(string $class, string $property, array $context = []) : ?string
     {
         return $this->extract($this->descriptionExtractors, 'getLongDescription', [$class, $property, $context]);
     }
-
     /**
      * {@inheritdoc}
      * @param string $class
      * @param string $property
      */
-    public function getTypes($class, $property, array $context = []): ?array
+    public function getTypes($class, $property, array $context = []) : ?array
     {
         return $this->extract($this->typeExtractors, 'getTypes', [$class, $property, $context]);
     }
-
     /**
      * {@inheritdoc}
      */
-    public function isReadable(string $class, string $property, array $context = []): ?bool
+    public function isReadable(string $class, string $property, array $context = []) : ?bool
     {
         return $this->extract($this->accessExtractors, 'isReadable', [$class, $property, $context]);
     }
-
     /**
      * {@inheritdoc}
      */
-    public function isWritable(string $class, string $property, array $context = []): ?bool
+    public function isWritable(string $class, string $property, array $context = []) : ?bool
     {
         return $this->extract($this->accessExtractors, 'isWritable', [$class, $property, $context]);
     }
-
     /**
      * {@inheritdoc}
      */
-    public function isInitializable(string $class, string $property, array $context = []): ?bool
+    public function isInitializable(string $class, string $property, array $context = []) : ?bool
     {
         return $this->extract($this->initializableExtractors, 'isInitializable', [$class, $property, $context]);
     }
-
     /**
      * Iterates over registered extractors and return the first value found.
      *
@@ -108,11 +98,10 @@ class PropertyInfoExtractor implements PropertyInfoExtractorInterface, PropertyI
     private function extract(iterable $extractors, string $method, array $arguments)
     {
         foreach ($extractors as $extractor) {
-            if (null !== $value = $extractor->{$method}(...$arguments)) {
+            if (null !== ($value = $extractor->{$method}(...$arguments))) {
                 return $value;
             }
         }
-
         return null;
     }
 }

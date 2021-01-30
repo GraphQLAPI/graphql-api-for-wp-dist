@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\Users;
 
-abstract class ObjectPropertyResolver_Base implements ObjectPropertyResolver
+abstract class ObjectPropertyResolver_Base implements \PoPSchema\Users\ObjectPropertyResolver
 {
     public function __construct()
     {
-        ObjectPropertyResolverFactory::setInstance($this);
+        \PoPSchema\Users\ObjectPropertyResolverFactory::setInstance($this);
     }
 }

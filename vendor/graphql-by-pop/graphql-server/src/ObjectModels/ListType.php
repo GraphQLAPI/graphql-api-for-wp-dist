@@ -1,23 +1,19 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\NonDocumentableTypeTrait;
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNestableType;
-
-class ListType extends AbstractNestableType
+class ListType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNestableType
 {
     use NonDocumentableTypeTrait;
-
-    public function getName(): string
+    public function getName() : string
     {
-        return sprintf('[%s]', $this->nestedType->getName());
+        return \sprintf('[%s]', $this->nestedType->getName());
     }
-
-    public function getKind(): string
+    public function getKind() : string
     {
-        return TypeKinds::LIST;
+        return \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::LIST;
     }
 }

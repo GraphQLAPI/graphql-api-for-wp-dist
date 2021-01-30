@@ -1,7 +1,7 @@
 <?php
-declare(strict_types=1);
 
-namespace League\Pipeline;
+declare (strict_types=1);
+namespace PrefixedByPoP\League\Pipeline;
 
 interface PipelineBuilderInterface
 {
@@ -10,10 +10,9 @@ interface PipelineBuilderInterface
      *
      * @return self
      */
-    public function add(callable $stage): PipelineBuilderInterface;
-
+    public function add(callable $stage) : \PrefixedByPoP\League\Pipeline\PipelineBuilderInterface;
     /**
      * Build a new Pipeline object.
      */
-    public function build(ProcessorInterface $processor = null): PipelineInterface;
+    public function build(\PrefixedByPoP\League\Pipeline\ProcessorInterface $processor = null) : \PrefixedByPoP\League\Pipeline\PipelineInterface;
 }

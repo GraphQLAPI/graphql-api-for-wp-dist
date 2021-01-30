@@ -1,18 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ModuleRouting;
 
-abstract class AbstractEntryRouteModuleProcessor extends AbstractRouteModuleProcessor
+abstract class AbstractEntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractRouteModuleProcessor
 {
     /**
      * @return string[]
      */
-    public function getGroups(): array
+    public function getGroups() : array
     {
-        return [
-            ModuleRoutingGroups::ENTRYMODULE,
-        ];
+        return [\PoP\ModuleRouting\ModuleRoutingGroups::ENTRYMODULE];
     }
 }

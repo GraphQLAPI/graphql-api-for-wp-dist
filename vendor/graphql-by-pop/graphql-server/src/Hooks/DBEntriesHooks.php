@@ -1,18 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Hooks;
 
 use PoP\Hooks\AbstractHookSet;
-
-class DBEntriesHooks extends AbstractHookSet
+class DBEntriesHooks extends \PoP\Hooks\AbstractHookSet
 {
     protected function init()
     {
-        $this->hooksAPI->addFilter('PoP\API\DataloaderHooks:metaFields', array($this, 'moveEntriesUnderDBName'));
+        $this->hooksAPI->addFilter('PoP\\API\\DataloaderHooks:metaFields', array($this, 'moveEntriesUnderDBName'));
     }
-
     public function moveEntriesUnderDBName($metaFields)
     {
         $metaFields[] = '__schema';

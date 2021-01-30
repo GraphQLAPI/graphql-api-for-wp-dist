@@ -12,6 +12,7 @@
 
 namespace Composer;
 
+use Composer\Autoload\ClassLoader;
 use Composer\Semver\VersionParser;
 
 
@@ -70,7 +71,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '3e8aa028ed799a9008bedf325c3226e209a9d09e',
+      'reference' => '0686aad783d5803498da968cb73cfe4f8a2191e1',
     ),
     'getpop/api' => 
     array (
@@ -80,7 +81,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '10930a4ff09cecb27479356856c04603ff84f067',
+      'reference' => 'dfac3deeec1dfe8b579e72dd384be1a817e1ca92',
     ),
     'getpop/api-clients' => 
     array (
@@ -90,7 +91,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '386114faff98e4a6269e20bece68d89d52adbe24',
+      'reference' => '0ecc86659474b4e0b93ee124f404187ea7657629',
     ),
     'getpop/api-endpoints' => 
     array (
@@ -100,7 +101,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '0a524d222bd9d536a830090a8d3f20c4f3197410',
+      'reference' => '81d17ec95d7b31dba5a86457927304ce0f3c0abe',
     ),
     'getpop/api-endpoints-for-wp' => 
     array (
@@ -110,7 +111,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '53d164c85516c0ff36d5359cce633abe6210c615',
+      'reference' => 'b34a36cb620595d968ec10255177f8060274a66b',
     ),
     'getpop/api-graphql' => 
     array (
@@ -120,7 +121,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e9bb712c868228089775ad0474e6fb4156a1aa98',
+      'reference' => 'c0c9949e16b3cdc6a68aadb4e118dc8a3ccae200',
     ),
     'getpop/api-mirrorquery' => 
     array (
@@ -130,7 +131,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9db01b5ab35b9fcc82ac53ff7464f33b9634e632',
+      'reference' => '8deafc8e7ee703e3fbc7bcdfa2a2f4369570af86',
     ),
     'getpop/cache-control' => 
     array (
@@ -140,7 +141,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'fd71d577083361ee1b090b26d814cbdab2eeebe8',
+      'reference' => '76f16246324c4ada41fe1e8f67c2faf314a97bb8',
     ),
     'getpop/component-model' => 
     array (
@@ -150,7 +151,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '6202225bb1c57f4555026dd23f5d490749172406',
+      'reference' => 'fab394f1c106f32ce053e9cb309be11707b774bb',
     ),
     'getpop/definitions' => 
     array (
@@ -160,7 +161,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'd6230ecb6a33dd29b2dce54cb6eef5091acba6d5',
+      'reference' => 'cd2df654efb68070f0c5f36dd16ecaf12cbcc28e',
     ),
     'getpop/engine' => 
     array (
@@ -170,7 +171,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '70eebb199d4e167a1981834f7192eb9ccf8a1610',
+      'reference' => 'd0111bbb27e29803dd955410ea88ed19062b0872',
     ),
     'getpop/engine-wp' => 
     array (
@@ -180,7 +181,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '21167ba910689e82c5b3dff3bd9f40705ab02dfd',
+      'reference' => '64be943429e4af74204ed12af58ec4e254f7d597',
     ),
     'getpop/field-query' => 
     array (
@@ -190,7 +191,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'd7080141707dd62eb7b49dc6875fd2fa803ff1f6',
+      'reference' => 'f93d46320a4fcc8a917c685b74a5eb4a7751b417',
     ),
     'getpop/guzzle-helpers' => 
     array (
@@ -200,7 +201,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'd220083a82fa6959a4ac7f2721b8b5d99ccdce3e',
+      'reference' => '9ca0495580455e81edaf116e4b2b33c1a1e32d6e',
     ),
     'getpop/hooks' => 
     array (
@@ -210,7 +211,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '348d91232182414aaf44629badc0455b567569a1',
+      'reference' => '9950289f61474368e4f103eb9088b64cf9dc56f0',
     ),
     'getpop/hooks-wp' => 
     array (
@@ -220,7 +221,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'b73e75970d778343d48d0c4b1f69ab6bfa88b98e',
+      'reference' => '5887fec2d0c7530a12f978787fe945597209da06',
     ),
     'getpop/loosecontracts' => 
     array (
@@ -230,7 +231,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '8eeae44c7c3103aad0cf653fa4d38cc3d93311f5',
+      'reference' => '08cb01a156be0acab4ba5c92fb05c8f8b29c2c0d',
     ),
     'getpop/mandatory-directives-by-configuration' => 
     array (
@@ -240,7 +241,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'ef3d2960abe97717552df977ebf2e29b9539bfa9',
+      'reference' => 'e6578cc0e68395bafb9435914718b969a3462716',
     ),
     'getpop/migrate-api' => 
     array (
@@ -250,7 +251,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a6dd256985206fcf645fcc2a5eb0f17102bc118c',
+      'reference' => '9555dc0789ff8d95746e321fe163dc1cd6ad4de7',
     ),
     'getpop/migrate-api-graphql' => 
     array (
@@ -258,9 +259,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '259d1af383ea5670355964c688f3c9f6691267d5',
+      'reference' => '46b3b090ba260324c2bfd3469bf7c7da9e4abf8f',
     ),
     'getpop/migrate-component-model' => 
     array (
@@ -268,9 +269,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '9a4ae258a4f9a97d39e3f08c8e8a1ba4013e895c',
+      'reference' => '99e86f2901542607021170f3171e2252fb8f2b25',
     ),
     'getpop/migrate-engine' => 
     array (
@@ -280,7 +281,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '25f35364fd7d773aa6b4ec47374d0aea7989084f',
+      'reference' => '9d014c511db9f076220d618ea964780a5bf4e82f',
     ),
     'getpop/migrate-engine-wp' => 
     array (
@@ -288,9 +289,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'dd00d163807fe905851fb21094a1c8e981225c9c',
+      'reference' => '3667eb56f11bfb851d243d77deaabf8a5cbc2af6',
     ),
     'getpop/modulerouting' => 
     array (
@@ -300,7 +301,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '79ce5538a160bc22932e0c5a205ef8964a376238',
+      'reference' => '90280818212ef2d33269a497fd4ae7506a441257',
     ),
     'getpop/query-parsing' => 
     array (
@@ -310,7 +311,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '7197ad0c832e322e50d75bf08b1d2c1438e5e6e9',
+      'reference' => '137868286a3e5e01841c6c9c27ed1e0ba22ebdb4',
     ),
     'getpop/root' => 
     array (
@@ -320,7 +321,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '6c60e995aea194e3f429a964359b1c853ca1ddbb',
+      'reference' => '9ce9b4771b9559ad75974c440a592098f79ae38f',
     ),
     'getpop/routing' => 
     array (
@@ -330,7 +331,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '983f710db1b28e21514d4b6f176f2a9164aef23e',
+      'reference' => 'be1171ff87f961b7e588974cd86c46947ac6b72e',
     ),
     'getpop/routing-wp' => 
     array (
@@ -340,7 +341,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '4b4be4cf0a53fadf824ada79c82f9ff1a612f25a',
+      'reference' => 'efb32cc662bac6d9600b4ae8ee54063059ae5853',
     ),
     'getpop/translation' => 
     array (
@@ -350,7 +351,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '1b06cf0051e6f1ae435903c1bc80a94e6cdf065f',
+      'reference' => '02035d0582c6719bcffa205f667d3f07871ada4d',
     ),
     'getpop/translation-wp' => 
     array (
@@ -360,7 +361,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '1e8664842b2197a066f51dc378d631d9e44c0c4f',
+      'reference' => 'e724de3bec2fb806e1c80e6ed882dd9c2d047740',
     ),
     'graphql-api/graphql-api-for-wp' => 
     array (
@@ -372,6 +373,16 @@ private static $installed = array (
       ),
       'reference' => NULL,
     ),
+    'graphql-api/markdown-convertor' => 
+    array (
+      'pretty_version' => 'dev-master',
+      'version' => 'dev-master',
+      'aliases' => 
+      array (
+        0 => '0.8.x-dev',
+      ),
+      'reference' => '6478c93ae16502adb6a4de3d0dfe7885be5e46c5',
+    ),
     'graphql-by-pop/graphql-clients-for-wp' => 
     array (
       'pretty_version' => 'dev-master',
@@ -380,7 +391,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '1f15300c70110cea9bb1e465e9c8790d7302a686',
+      'reference' => '627cb5d62aacf737603c8e97e497ceb843a45a3f',
     ),
     'graphql-by-pop/graphql-endpoint-for-wp' => 
     array (
@@ -390,7 +401,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '05cb1a3d0080a8900bd1f12f1c18dd33dfccf2e2',
+      'reference' => 'dc9e73ac2496898300f1550486d04f5c25860592',
     ),
     'graphql-by-pop/graphql-parser' => 
     array (
@@ -400,7 +411,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9c6c7770284ec66fe2fa7df478e0562385d05942',
+      'reference' => '5f671c05c7c37ff44b50a5c297a90eb748e4746c',
     ),
     'graphql-by-pop/graphql-query' => 
     array (
@@ -410,7 +421,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'afa9dc33139e557ca7fac325d8ab8d0e66bf6362',
+      'reference' => '79ef1b4295ad41780443292e0535c1baff79e654',
     ),
     'graphql-by-pop/graphql-request' => 
     array (
@@ -420,7 +431,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '17ca38d80d8272f5f4751c65f62ed0572f1fe61f',
+      'reference' => '1dbfce45e087d953974aee6cb06dfbcf114d02d6',
     ),
     'graphql-by-pop/graphql-server' => 
     array (
@@ -430,7 +441,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'effe7de283470653153c64c16ae053ac24bffdc9',
+      'reference' => '7977e3dd235efbb47a5c7aba2e99654f06174ed8',
     ),
     'guzzlehttp/guzzle' => 
     array (
@@ -494,7 +505,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e4a159780d6070113675b19142091d7b9ff23595',
+      'reference' => '8ee7663cfacca64a03c1d142becc78770400ddf2',
     ),
     'pop-schema/comment-mutations' => 
     array (
@@ -504,7 +515,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'ce8d9325bf0f6ceb9348a893be0ce4b3f9717a00',
+      'reference' => '67fb32adce0c48194b82e2f8b66567509cbfdf95',
     ),
     'pop-schema/comment-mutations-wp' => 
     array (
@@ -514,7 +525,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '1b88136090837bd627d997ca153d307d056bc302',
+      'reference' => '758bc37796372e4a719bf6f3b996a8f2b7d6447c',
     ),
     'pop-schema/commentmeta' => 
     array (
@@ -524,7 +535,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '85d3a978a5e5d15c0c76f2c2927ec30ee467193b',
+      'reference' => 'c2364f0055df72f3f8a5bf606936083e56b241c4',
     ),
     'pop-schema/commentmeta-wp' => 
     array (
@@ -534,7 +545,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'b865ac844809493a96464c63e650b7a5b2d28eee',
+      'reference' => '0960cc586cb7c02a4ab39ae15efd64b8619b356a',
     ),
     'pop-schema/comments' => 
     array (
@@ -544,7 +555,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '4da1c20260b2f6346b346763c9d32762150bded2',
+      'reference' => 'caa13716ec59079b036f299482e6dbbf5a5a4562',
     ),
     'pop-schema/comments-wp' => 
     array (
@@ -554,7 +565,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'ec528244c9162f06dc88c0367063a1e818616751',
+      'reference' => '2ad2f4e2ee8247c631b57a19378d1fa6bb30357e',
     ),
     'pop-schema/custompost-mutations' => 
     array (
@@ -564,7 +575,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c0a327d862355ac84c2e13adfb07900edecc3c91',
+      'reference' => 'a7581ddc8ee900f9cd968923245353ada3a5be3b',
     ),
     'pop-schema/custompost-mutations-wp' => 
     array (
@@ -574,7 +585,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '8ba153f583945ed7ca2ef5b851134227ae73c3fc',
+      'reference' => '041568df101ac6f176705af5497146da79c847e3',
     ),
     'pop-schema/custompostmedia' => 
     array (
@@ -584,7 +595,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c84eff4cff96b07eca222cd3cf07ba8e068775ca',
+      'reference' => '930725ec2b13c0f24ebf9ce7e50771f5fe2b8f3e',
     ),
     'pop-schema/custompostmedia-mutations' => 
     array (
@@ -594,7 +605,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '930be391b9c8d48d81b84cefd829f08d75d47b6a',
+      'reference' => 'bab510f8d5140582621698f99c2410c84dd0ad1a',
     ),
     'pop-schema/custompostmedia-mutations-wp' => 
     array (
@@ -604,7 +615,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '96293b9b7e5d620883abe87f6a086157e5a88084',
+      'reference' => '8f25086ccfa7aba8cd0755266f632c66c20421d5',
     ),
     'pop-schema/custompostmedia-wp' => 
     array (
@@ -614,7 +625,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'dddc37ee2291a3011297b217af37a4cdc1d9b649',
+      'reference' => 'c052c44d5bbdaece70e221fb0b3d515f7a4a47dd',
     ),
     'pop-schema/custompostmeta' => 
     array (
@@ -624,7 +635,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '37306374625fff88c8cec2d5ca6920b76e1a2af6',
+      'reference' => '4623892421edb7df54e3a297d42d7ef225070124',
     ),
     'pop-schema/custompostmeta-wp' => 
     array (
@@ -634,7 +645,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '39114e3dde4a7e350ef955f85a3bfa0d230dc36e',
+      'reference' => '498d8b0e08b1f2c2a7e8f8b865c23d60df42da95',
     ),
     'pop-schema/customposts' => 
     array (
@@ -644,7 +655,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'bf51f6e07faad5da6145e0ebe1d76c8d7cdfd2a2',
+      'reference' => 'c0af8227e46a6e82c5cccaf40b6286e53f998906',
     ),
     'pop-schema/customposts-wp' => 
     array (
@@ -654,7 +665,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c231ccce03fc5b13b336fa1469bba71009348a39',
+      'reference' => '2dcc7b2c37182f9df9b0c17b6de5a3b2137f40da',
     ),
     'pop-schema/generic-customposts' => 
     array (
@@ -664,7 +675,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'd4ade66e5936acf03c4198788c5739995ad7d251',
+      'reference' => '3bb9b4a5a21e82b28054855b6bd4bce10210985c',
     ),
     'pop-schema/media' => 
     array (
@@ -674,7 +685,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e3b67999b2910f50941d23071dfaf356f4480a9a',
+      'reference' => '7ae28c51dd34a7308684f05fef59dea1f688f7dd',
     ),
     'pop-schema/media-wp' => 
     array (
@@ -684,7 +695,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '393bf1c4c7b2d14735fedc883e3cc23dc2041177',
+      'reference' => '469601f6714139ca89a65aa3f9a2fe4deec3ea86',
     ),
     'pop-schema/meta' => 
     array (
@@ -694,7 +705,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '604d7af2da85c123120f654833dbe249f680796a',
+      'reference' => 'f59106c9834d96b60c2eb97650abbf14b15186b5',
     ),
     'pop-schema/metaquery' => 
     array (
@@ -704,7 +715,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'ae72163dc9c5d757a2fe133b0697cdb76625983d',
+      'reference' => '6c3491fd5f8a7cf71cdc31109914cd219680ca75',
     ),
     'pop-schema/metaquery-wp' => 
     array (
@@ -714,7 +725,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9bf61802df81388d9296f4d2254efab59e1e4891',
+      'reference' => 'f392750dd53fa6134477cf4d4b5089ab50d0427b',
     ),
     'pop-schema/migrate-commentmeta' => 
     array (
@@ -722,9 +733,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'e9150ff6ed3958a92882e8506081bff2fa58320a',
+      'reference' => '7514420e26f1d03b23a8ed2feb2cce84286be76a',
     ),
     'pop-schema/migrate-commentmeta-wp' => 
     array (
@@ -732,9 +743,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '6c67bed6887057821ef518d57aa1375d75dee750',
+      'reference' => 'fda046a60319fcb90a08bb5aaf191f026beeaa41',
     ),
     'pop-schema/migrate-comments' => 
     array (
@@ -742,9 +753,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '026718cb9f83d338c72da562ee19a4c8ef5baadc',
+      'reference' => '79b07d55d21a9851245dd8611bc9880a7ff0a5d5',
     ),
     'pop-schema/migrate-comments-wp' => 
     array (
@@ -752,9 +763,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '6284aaa4838ff5e4e94c8e696dbdf1001f5c3435',
+      'reference' => '214a0654b15835158c595d32628b9bf1332900c6',
     ),
     'pop-schema/migrate-custompostmedia' => 
     array (
@@ -762,9 +773,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'd80e7b50bc92fdc3113def008f0874ca92ac38ad',
+      'reference' => '75c2afa18e47d7cd9efcf1dbeb783bf51eed12e2',
     ),
     'pop-schema/migrate-custompostmedia-wp' => 
     array (
@@ -772,9 +783,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '19ed84d8eb53e28042297c0612bbaf95c964c44e',
+      'reference' => 'b9eefa4d4ef93b4c9959a587662683e07e7c854c',
     ),
     'pop-schema/migrate-custompostmeta' => 
     array (
@@ -782,9 +793,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '73e733097a99832de8781f9b936f69777d2b5125',
+      'reference' => 'ba67954ac79326b44c7673388dd1e519da2778ad',
     ),
     'pop-schema/migrate-custompostmeta-wp' => 
     array (
@@ -792,9 +803,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '6e79cec29a8c8afc467c7bb2850ed3bab550d29c',
+      'reference' => '8194c095613e41a1331adc86f105d96d3233c663',
     ),
     'pop-schema/migrate-customposts' => 
     array (
@@ -802,9 +813,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '7160f412c1685a534a9bfb65f467593b3153b6e3',
+      'reference' => 'e6208799bc91c9f6c544e08bf40bf28b199138d2',
     ),
     'pop-schema/migrate-customposts-wp' => 
     array (
@@ -812,9 +823,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '87ed7f51e8fee0e617325b6f56511b9f20ea7e65',
+      'reference' => '625b7e525a6c9edaf020b5656f5b6bd9698742bc',
     ),
     'pop-schema/migrate-media' => 
     array (
@@ -822,9 +833,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '668d089d3da5ea9d93c9df83572a12d44a458dcb',
+      'reference' => '6a231342a01393b5198071093718dceb26b094b1',
     ),
     'pop-schema/migrate-media-wp' => 
     array (
@@ -832,9 +843,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '9232f074dbe9d2b78a0cc49e736a83d6fa68e8f2',
+      'reference' => '1580dd1629097fe4affcbabff210d55b675e9664',
     ),
     'pop-schema/migrate-meta' => 
     array (
@@ -842,9 +853,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'cbb81c3cf075c55ef75c01e037f446afcefe9ed4',
+      'reference' => '51d4bd957b83faa1613e440f578d89edb99f2238',
     ),
     'pop-schema/migrate-metaquery' => 
     array (
@@ -852,9 +863,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '8996f8dd7fc73d71a66c4182445948f558e0d84e',
+      'reference' => 'ecc351b3b67072c9309af1279046139214ceb12f',
     ),
     'pop-schema/migrate-metaquery-wp' => 
     array (
@@ -862,9 +873,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '70b566d01508c7a8879389c140e998b37197c0c9',
+      'reference' => '04a659f3a6e88cbe83998ed8452f773c398a5e9a',
     ),
     'pop-schema/migrate-pages' => 
     array (
@@ -872,9 +883,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '4d25c3d2a3a666777a856ca1fb91a4ab1a5b7637',
+      'reference' => '2f0e179f03a27eb7226f536412a9dde7cfdfbb31',
     ),
     'pop-schema/migrate-pages-wp' => 
     array (
@@ -882,9 +893,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '6d860872a0fccefcfbb0564fc4cbd8103998d1ee',
+      'reference' => '15ca73e6f9f0d4b370ae9541b30d30d19c563c14',
     ),
     'pop-schema/migrate-post-tags' => 
     array (
@@ -892,9 +903,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'f29aadbef974461cb56195736db52d7dd95a00c7',
+      'reference' => 'c408350a05e6cb85c087b88c9b6325bc98830654',
     ),
     'pop-schema/migrate-post-tags-wp' => 
     array (
@@ -902,9 +913,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '49d861b3213547b8c095a05ee32c685a74d734c4',
+      'reference' => 'b0cc8f8d52825a774cdaa5a434b39fb64179821b',
     ),
     'pop-schema/migrate-posts' => 
     array (
@@ -912,9 +923,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '844745f5f680f8275cd881631ec2dd590fa6d551',
+      'reference' => '425fdf1be00dcc91c643900245aa86352caf81e5',
     ),
     'pop-schema/migrate-posts-wp' => 
     array (
@@ -922,9 +933,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '431b1d1397e5542b33365e9290f93c658a0aae7b',
+      'reference' => '7ce8d10c7e6425d5984bb0a1a81ad87af8e8e103',
     ),
     'pop-schema/migrate-queriedobject' => 
     array (
@@ -932,9 +943,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '39e657fa1b721e8f669a274cc44ad4248232308a',
+      'reference' => '615972951fff1f153f64bf13dff0977fab705c28',
     ),
     'pop-schema/migrate-queriedobject-wp' => 
     array (
@@ -942,9 +953,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '057337cb84ea6a07761018486d09c4457ba2d4a4',
+      'reference' => '558c0ba687fc120df869178d6c7235ba3a6c0560',
     ),
     'pop-schema/migrate-tags' => 
     array (
@@ -952,9 +963,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '01a022dacda35a75646495f95f887c7a389b2fdf',
+      'reference' => '69cf87cfa2c020718fa3017abe75ac0eedf1ad0b',
     ),
     'pop-schema/migrate-tags-wp' => 
     array (
@@ -962,9 +973,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '7868559cc0e1b7b6bce631d2ac73c47e0397429c',
+      'reference' => 'bae2b46f10839946e47b3626bd14b0c4b5b007ad',
     ),
     'pop-schema/migrate-taxonomies' => 
     array (
@@ -972,9 +983,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'b5873dc6fc43f2913e569d31fb026fa2229b3077',
+      'reference' => '73d77d255da8faee06689209ffe14a73463d3c10',
     ),
     'pop-schema/migrate-taxonomies-wp' => 
     array (
@@ -982,9 +993,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '591577894d387034e68c431e17514142ab1e135a',
+      'reference' => '651e5c82e63ae27b0852adeaabb485b481714ccb',
     ),
     'pop-schema/migrate-taxonomymeta' => 
     array (
@@ -992,9 +1003,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '810e7de0922e1ae06f9a15f6a4ae4028904d73fa',
+      'reference' => 'aba2992cf2d11f73bbda56cf7fc57b575b68095e',
     ),
     'pop-schema/migrate-taxonomymeta-wp' => 
     array (
@@ -1002,9 +1013,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'f90b1e466f1ee1d54205a7f0238973a1e44a5d5f',
+      'reference' => '23c3676ee4b39861bd2d0dc64a280fc080fc19bd',
     ),
     'pop-schema/migrate-taxonomyquery' => 
     array (
@@ -1012,9 +1023,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '9a6780700ecc4270f3425b1e147a5d6cdaa60f4f',
+      'reference' => 'a607e5824bffe3b49ca07a4d1c6dca12010de302',
     ),
     'pop-schema/migrate-taxonomyquery-wp' => 
     array (
@@ -1022,9 +1033,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'bdf1628b1e49b7775380f9cc434558ef7ac7be94',
+      'reference' => 'd9226ada418ffc7251f42908042273da3fc669d0',
     ),
     'pop-schema/migrate-usermeta' => 
     array (
@@ -1032,9 +1043,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '35118ded6d0994a39f00eb2b850b28a92d142c93',
+      'reference' => '45422c8e386bae1ea342357a4d19bdc44e89b017',
     ),
     'pop-schema/migrate-usermeta-wp' => 
     array (
@@ -1042,9 +1053,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '92dd9ce18123a3e365aa8dc82537f150be42c35c',
+      'reference' => 'fccb40e9a74addc92ff145cb5a5689b591c7f7f7',
     ),
     'pop-schema/migrate-users' => 
     array (
@@ -1052,9 +1063,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => 'de35d80d66b970a21e1a7ad5b7123cf8b271a1ea',
+      'reference' => 'c8142d13609120b11e9e33ff9e578eebc5f40939',
     ),
     'pop-schema/migrate-users-wp' => 
     array (
@@ -1062,9 +1073,9 @@ private static $installed = array (
       'version' => 'dev-master',
       'aliases' => 
       array (
-        0 => '1.0.x-dev',
+        0 => '0.8.x-dev',
       ),
-      'reference' => '798763353aa6ac52ba0c694721525403af2a5d86',
+      'reference' => 'd32c3e648c67ad060571ed407752727cd2039e20',
     ),
     'pop-schema/pages' => 
     array (
@@ -1074,7 +1085,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '4e00e74b1c088529f0c0fc10068c6526f324c349',
+      'reference' => '5777c3a2e6e53633eca7a22bbad4c1ccf10f47a9',
     ),
     'pop-schema/pages-wp' => 
     array (
@@ -1084,7 +1095,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '3e27782f92b9a61024d06d2831f6f8eb72bbd3ff',
+      'reference' => '2c312a78874464144eeae93bba45d42597fa3a04',
     ),
     'pop-schema/post-mutations' => 
     array (
@@ -1094,7 +1105,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '9d639bce223e9717d656c9f36c009c7d3c930cd8',
+      'reference' => '1efb3fceb9cde04239059e02de4f49ce319bcb95',
     ),
     'pop-schema/post-tags' => 
     array (
@@ -1104,7 +1115,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '4d9932006e7bf4663b413791e9788b610d89bbb1',
+      'reference' => '262953485c617d307619890373996bf8ec47b7e5',
     ),
     'pop-schema/post-tags-wp' => 
     array (
@@ -1114,7 +1125,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'd7fded7331935349c37307bf31361943fdc888a1',
+      'reference' => '6d74d3652043230b7ce0dba6b303b9f6183ee346',
     ),
     'pop-schema/posts' => 
     array (
@@ -1124,7 +1135,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e079555231484aa027311b184def705910feac67',
+      'reference' => '1600712333bef6cef1a913dbba6a3482b486ffd2',
     ),
     'pop-schema/posts-wp' => 
     array (
@@ -1134,7 +1145,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'bc8b8078be61a2bf417e1cb728df96d5efc02547',
+      'reference' => '54beb5b33bde98b351c43d4b002730c32770d097',
     ),
     'pop-schema/queriedobject' => 
     array (
@@ -1144,7 +1155,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'dfe97aa001c29b4c37c26104ea330d78538aba29',
+      'reference' => 'e57d735140e6a3e21a7b4a23b7ac456be08e3490',
     ),
     'pop-schema/queriedobject-wp' => 
     array (
@@ -1154,7 +1165,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '7fbdf1dec20bb094427a1be462808a34671f7f88',
+      'reference' => '3dc263da633d8ad841b0367945c57876e6fabd75',
     ),
     'pop-schema/schema-commons' => 
     array (
@@ -1164,7 +1175,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '21316d42fc916c00173226ec61291e923c2068ea',
+      'reference' => 'fc6167a24193f069507e7ec88916e302cdaca206',
     ),
     'pop-schema/tags' => 
     array (
@@ -1174,7 +1185,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e49366db6bab0a5ae7f2a57ae3be01412c792719',
+      'reference' => '8e2fcfef3f74d9c6db76815b6d114476e9b3c7fb',
     ),
     'pop-schema/tags-wp' => 
     array (
@@ -1184,7 +1195,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '67110c42a5ac704a0781ba2113464092b899c016',
+      'reference' => '83b364097901ede80f3dc217d6083452a4cbc9ef',
     ),
     'pop-schema/taxonomies' => 
     array (
@@ -1194,7 +1205,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a98d9fcf77eb4b4f5ebc1e0dfccd16139ddf21da',
+      'reference' => 'f1f3481a2827ef4ef246ba674cc85cf4f15fea0b',
     ),
     'pop-schema/taxonomies-wp' => 
     array (
@@ -1204,7 +1215,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a86ae85f9e5077438736a837286bf88c411b4c4a',
+      'reference' => 'f820b65915c197a2a804f0dbf1475bbe95626ea4',
     ),
     'pop-schema/taxonomymeta' => 
     array (
@@ -1214,7 +1225,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '8cf00bed28ade9c92b62b970a3d471cc33fe0db5',
+      'reference' => '44c0312af2dd13fc1c2a885be7cf78b130590fba',
     ),
     'pop-schema/taxonomymeta-wp' => 
     array (
@@ -1224,7 +1235,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'fb8811586a77c245fffed787309801dee5fe0c77',
+      'reference' => 'f4f60ee4a84cb155a6f22c36805e690340f27cbb',
     ),
     'pop-schema/taxonomyquery' => 
     array (
@@ -1234,7 +1245,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '840ac82c5b39d9411b10b6909d8b216b7e683168',
+      'reference' => 'e30fc725d6b8ddd421b36c43db2946a09bd9d215',
     ),
     'pop-schema/taxonomyquery-wp' => 
     array (
@@ -1244,7 +1255,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '68a14365c095e720a2caf27ede1d5c7b6bbf619e',
+      'reference' => '487ffc8761260919decce4e6575d87a7f7272203',
     ),
     'pop-schema/user-roles' => 
     array (
@@ -1254,7 +1265,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'a0f1a805275f741118940cea3c22380c8cc402b6',
+      'reference' => '06525448a2c148a63775d33b048cdf8d9207fbc6',
     ),
     'pop-schema/user-roles-access-control' => 
     array (
@@ -1264,7 +1275,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'e5c7a894f73b8658626ba0683602fbfde2d4c08f',
+      'reference' => '87947f15040dd3fdf98c86151983fa4ece3e6e36',
     ),
     'pop-schema/user-roles-wp' => 
     array (
@@ -1274,7 +1285,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '291c0ef03062da3c126c3f984259a2d6eeffc139',
+      'reference' => 'b7ca89d6c8b3eac2fad8b347d7cc5a430ee6a308',
     ),
     'pop-schema/user-state' => 
     array (
@@ -1284,7 +1295,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c984901bbd3cf7b5a372b66634ece431ef3876dd',
+      'reference' => 'c0585c5ac6e7ca6b71392370bcb7d9252e466077',
     ),
     'pop-schema/user-state-access-control' => 
     array (
@@ -1294,7 +1305,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'c109777b1a17230d67dee290f3db297455c22af1',
+      'reference' => '02bb0aa0fc8cc272bcaad8122f9398a17b611323',
     ),
     'pop-schema/user-state-mutations' => 
     array (
@@ -1304,7 +1315,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'b1fd84953618eb92cb30ccc2d8251a7ece7c3a71',
+      'reference' => '74183558d88c917d3ca91006943d487cc9a1167b',
     ),
     'pop-schema/user-state-mutations-wp' => 
     array (
@@ -1314,7 +1325,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '5f1621008f3c2b56a599c429d73763cb16438695',
+      'reference' => 'abf2d909c5e86d4a2f5ca0fc1f648521ab103504',
     ),
     'pop-schema/user-state-wp' => 
     array (
@@ -1324,7 +1335,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '7db975d0382c48dca5efa78e7469fa0d04b7be61',
+      'reference' => '76eaf81df85fba37ddba25b752a38f4e5dcbec63',
     ),
     'pop-schema/usermeta' => 
     array (
@@ -1334,7 +1345,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '30acb971d8dd5d77cddbb25f63650f7e295743cb',
+      'reference' => '85b858d89ac06191ce6b67231a334575498d7e5e',
     ),
     'pop-schema/usermeta-wp' => 
     array (
@@ -1344,7 +1355,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'b38b22d4e872d024038d46d116290999d8d71496',
+      'reference' => '04718a69aa38b01fea9cc5acec1a1b8762bd10c0',
     ),
     'pop-schema/users' => 
     array (
@@ -1354,7 +1365,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => 'df3c6b4710eabf56fc63d8a44c88b632ba98352a',
+      'reference' => 'ea933d2a195af8fc577378b08564fd0b74da314b',
     ),
     'pop-schema/users-wp' => 
     array (
@@ -1364,7 +1375,7 @@ private static $installed = array (
       array (
         0 => '0.8.x-dev',
       ),
-      'reference' => '6a7287b47bef848cd0a341a9e586b3e63dec6f17',
+      'reference' => '50e4cd70e7c35c3a58b0fd0bfe798718c42b620a',
     ),
     'psr/cache' => 
     array (
@@ -1441,12 +1452,12 @@ private static $installed = array (
     ),
     'symfony/cache' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => '5e61d63b1ef4fb4852994038267ad45e12f3ec52',
+      'reference' => 'd6aed6c1bbf6f59e521f46437475a0ff4878d388',
     ),
     'symfony/cache-contracts' => 
     array (
@@ -1466,21 +1477,21 @@ private static $installed = array (
     ),
     'symfony/config' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => 'd0a82d965296083fe463d655a3644cbe49cbaa80',
+      'reference' => '50e0e1314a3b2609d32b6a5a0d0fb5342494c4ab',
     ),
     'symfony/dependency-injection' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => '7f8a9e9eff0581a33e20f6c5d41096fe22832d25',
+      'reference' => '62f72187be689540385dce6c68a5d4c16f034139',
     ),
     'symfony/deprecation-contracts' => 
     array (
@@ -1493,30 +1504,30 @@ private static $installed = array (
     ),
     'symfony/dotenv' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => '204a9dc6f70a13d9d24ebbf2c5ce51be235f3d7b',
+      'reference' => '783f12027c6b40ab0e93d6136d9f642d1d67cd6b',
     ),
     'symfony/expression-language' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => 'f9a7c7eb461df6d5d99738346039de71685de6af',
+      'reference' => '7bf30a4e29887110f8bd1882ccc82ee63c8a5133',
     ),
     'symfony/filesystem' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => 'fa8f8cab6b65e2d99a118e082935344c5ba8c60d',
+      'reference' => '262d033b57c73e8b59cd6e68a45c528318b15038',
     ),
     'symfony/polyfill-ctype' => 
     array (
@@ -1601,21 +1612,21 @@ private static $installed = array (
     ),
     'symfony/property-access' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => '243dcdda2f276cb31efa31a015d0fdb5076931ce',
+      'reference' => '3af8ed262bd3217512a13b023981fe68f36ad5f3',
     ),
     'symfony/property-info' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => 'f65694a05eb7742c5f2951f20676de367ffaaaea',
+      'reference' => '4e4f368c3737b1c175d66f4fc0b99a5bcd161a77',
     ),
     'symfony/service-contracts' => 
     array (
@@ -1635,33 +1646,35 @@ private static $installed = array (
     ),
     'symfony/string' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => '5bd67751d2e3f7d6f770c9154b8fbcb2aa05f7ed',
+      'reference' => 'c95468897f408dd0aca2ff582074423dd0455122',
     ),
     'symfony/var-exporter' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => 'fbc3507f23d263d75417e09a12d77c009f39676c',
+      'reference' => '5aed4875ab514c8cb9b6ff4772baa25fa4c10307',
     ),
     'symfony/yaml' => 
     array (
-      'pretty_version' => 'v5.2.1',
-      'version' => '5.2.1.0',
+      'pretty_version' => 'v5.2.2',
+      'version' => '5.2.2.0',
       'aliases' => 
       array (
       ),
-      'reference' => '290ea5e03b8cf9b42c783163123f54441fb06939',
+      'reference' => '6bb8b36c6dea8100268512bf46e858c8eb5c545e',
     ),
   ),
 );
+private static $canGetVendors;
+private static $installedByVendor = array();
 
 
 
@@ -1671,7 +1684,17 @@ private static $installed = array (
 
 public static function getInstalledPackages()
 {
-return array_keys(self::$installed['versions']);
+$packages = array();
+foreach (self::getInstalled() as $installed) {
+$packages[] = array_keys($installed['versions']);
+}
+
+
+if (1 === \count($packages)) {
+return $packages[0];
+}
+
+return array_keys(array_flip(\call_user_func_array('array_merge', $packages)));
 }
 
 
@@ -1684,7 +1707,13 @@ return array_keys(self::$installed['versions']);
 
 public static function isInstalled($packageName)
 {
-return isset(self::$installed['versions'][$packageName]);
+foreach (self::getInstalled() as $installed) {
+if (isset($installed['versions'][$packageName])) {
+return true;
+}
+}
+
+return false;
 }
 
 
@@ -1719,25 +1748,29 @@ return $provided->matches($constraint);
 
 public static function getVersionRanges($packageName)
 {
-if (!isset(self::$installed['versions'][$packageName])) {
-throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
+foreach (self::getInstalled() as $installed) {
+if (!isset($installed['versions'][$packageName])) {
+continue;
 }
 
 $ranges = array();
-if (isset(self::$installed['versions'][$packageName]['pretty_version'])) {
-$ranges[] = self::$installed['versions'][$packageName]['pretty_version'];
+if (isset($installed['versions'][$packageName]['pretty_version'])) {
+$ranges[] = $installed['versions'][$packageName]['pretty_version'];
 }
-if (array_key_exists('aliases', self::$installed['versions'][$packageName])) {
-$ranges = array_merge($ranges, self::$installed['versions'][$packageName]['aliases']);
+if (array_key_exists('aliases', $installed['versions'][$packageName])) {
+$ranges = array_merge($ranges, $installed['versions'][$packageName]['aliases']);
 }
-if (array_key_exists('replaced', self::$installed['versions'][$packageName])) {
-$ranges = array_merge($ranges, self::$installed['versions'][$packageName]['replaced']);
+if (array_key_exists('replaced', $installed['versions'][$packageName])) {
+$ranges = array_merge($ranges, $installed['versions'][$packageName]['replaced']);
 }
-if (array_key_exists('provided', self::$installed['versions'][$packageName])) {
-$ranges = array_merge($ranges, self::$installed['versions'][$packageName]['provided']);
+if (array_key_exists('provided', $installed['versions'][$packageName])) {
+$ranges = array_merge($ranges, $installed['versions'][$packageName]['provided']);
 }
 
 return implode(' || ', $ranges);
+}
+
+throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
 }
 
 
@@ -1746,15 +1779,19 @@ return implode(' || ', $ranges);
 
 public static function getVersion($packageName)
 {
-if (!isset(self::$installed['versions'][$packageName])) {
-throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
+foreach (self::getInstalled() as $installed) {
+if (!isset($installed['versions'][$packageName])) {
+continue;
 }
 
-if (!isset(self::$installed['versions'][$packageName]['version'])) {
+if (!isset($installed['versions'][$packageName]['version'])) {
 return null;
 }
 
-return self::$installed['versions'][$packageName]['version'];
+return $installed['versions'][$packageName]['version'];
+}
+
+throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
 }
 
 
@@ -1763,15 +1800,19 @@ return self::$installed['versions'][$packageName]['version'];
 
 public static function getPrettyVersion($packageName)
 {
-if (!isset(self::$installed['versions'][$packageName])) {
-throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
+foreach (self::getInstalled() as $installed) {
+if (!isset($installed['versions'][$packageName])) {
+continue;
 }
 
-if (!isset(self::$installed['versions'][$packageName]['pretty_version'])) {
+if (!isset($installed['versions'][$packageName]['pretty_version'])) {
 return null;
 }
 
-return self::$installed['versions'][$packageName]['pretty_version'];
+return $installed['versions'][$packageName]['pretty_version'];
+}
+
+throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
 }
 
 
@@ -1780,15 +1821,19 @@ return self::$installed['versions'][$packageName]['pretty_version'];
 
 public static function getReference($packageName)
 {
-if (!isset(self::$installed['versions'][$packageName])) {
-throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
+foreach (self::getInstalled() as $installed) {
+if (!isset($installed['versions'][$packageName])) {
+continue;
 }
 
-if (!isset(self::$installed['versions'][$packageName]['reference'])) {
+if (!isset($installed['versions'][$packageName]['reference'])) {
 return null;
 }
 
-return self::$installed['versions'][$packageName]['reference'];
+return $installed['versions'][$packageName]['reference'];
+}
+
+throw new \OutOfBoundsException('Package "' . $packageName . '" is not installed');
 }
 
 
@@ -1797,7 +1842,9 @@ return self::$installed['versions'][$packageName]['reference'];
 
 public static function getRootPackage()
 {
-return self::$installed['root'];
+$installed = self::getInstalled();
+
+return $installed[0]['root'];
 }
 
 
@@ -1832,5 +1879,33 @@ return self::$installed;
 public static function reload($data)
 {
 self::$installed = $data;
+self::$installedByVendor = array();
+}
+
+
+
+
+private static function getInstalled()
+{
+if (null === self::$canGetVendors) {
+self::$canGetVendors = method_exists('Composer\Autoload\ClassLoader', 'getRegisteredLoaders');
+}
+
+$installed = array();
+
+if (self::$canGetVendors) {
+
+foreach (ClassLoader::getRegisteredLoaders() as $vendorDir => $loader) {
+if (isset(self::$installedByVendor[$vendorDir])) {
+$installed[] = self::$installedByVendor[$vendorDir];
+} elseif (is_file($vendorDir.'/composer/installed.php')) {
+$installed[] = self::$installedByVendor[$vendorDir] = require $vendorDir.'/composer/installed.php';
+}
+}
+}
+
+$installed[] = self::$installed;
+
+return $installed;
 }
 }

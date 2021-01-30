@@ -1,28 +1,23 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Pages\TypeResolvers;
 
 use PoPSchema\Pages\TypeDataLoaders\PageTypeDataLoader;
 use PoP\Translation\Facades\TranslationAPIFacade;
 use PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver;
-
-class PageTypeResolver extends AbstractCustomPostTypeResolver
+class PageTypeResolver extends \PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver
 {
     public const NAME = 'Page';
-
-    public function getTypeName(): string
+    public function getTypeName() : string
     {
         return self::NAME;
     }
-
-    public function getSchemaTypeDescription(): ?string
+    public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Representation of a page', 'pages');
     }
-
     /**
      * @param object $resultItem
      */
@@ -32,9 +27,8 @@ class PageTypeResolver extends AbstractCustomPostTypeResolver
         $page = $resultItem;
         return $cmspagesresolver->getPageId($page);
     }
-
-    public function getTypeDataLoaderClass(): string
+    public function getTypeDataLoaderClass() : string
     {
-        return PageTypeDataLoader::class;
+        return \PoPSchema\Pages\TypeDataLoaders\PageTypeDataLoader::class;
     }
 }

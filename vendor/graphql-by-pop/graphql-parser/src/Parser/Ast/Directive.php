@@ -5,32 +5,25 @@
  *
  * @author Volodymyr Rashchepkin <rashepkin@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class Directive extends AbstractAst
+class Directive extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst
 {
     use AstArgumentsTrait;
-
     /** @var string */
     private $name;
-
-
     /**
      * @param string   $name
      * @param array    $arguments
      * @param Location $location
      */
-    public function __construct($name, array $arguments, Location $location)
+    public function __construct($name, array $arguments, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
         $this->name = $name;
         $this->setArguments($arguments);
     }
-
     /**
      * @return mixed
      */
@@ -38,7 +31,6 @@ class Directive extends AbstractAst
     {
         return $this->name;
     }
-
     /**
      * @param mixed $name
      */

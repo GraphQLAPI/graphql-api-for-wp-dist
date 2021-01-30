@@ -1,4 +1,5 @@
 <?php
+
 /*
 Plugin Name: PoP Tags
 Version: 0.1
@@ -7,44 +8,42 @@ Plugin URI: https://getpop.org/
 Author: Leonardo Losoviz
 */
 namespace PoPSchema\Tags;
-use PoP\Hooks\Facades\HooksAPIFacade;
 
+use PoP\Hooks\Facades\HooksAPIFacade;
 //-------------------------------------------------------------------------------------
 // Constants Definition
 //-------------------------------------------------------------------------------------
-define('POP_TAGS_VERSION', 0.106);
-define('POP_TAGS_DIR', dirname(__FILE__));
-
+\define('POP_TAGS_VERSION', 0.106);
+\define('POP_TAGS_DIR', \dirname(__FILE__));
 class Plugins
 {
     public function __construct()
     {
         // Priority: new section, after PoP Posts
-        HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 205);
+        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 205);
     }
     public function init()
     {
         if ($this->validate()) {
             $this->initialize();
-            define('POP_TAGS_INITIALIZED', true);
+            \define('POP_TAGS_INITIALIZED', \true);
         }
     }
     public function validate()
     {
-        return true;
+        return \true;
         include_once 'validation.php';
-        $validation = new Validation();
+        $validation = new \PoPSchema\Tags\Validation();
         return $validation->validate();
     }
     public function initialize()
     {
         include_once 'initialization.php';
-        $initialization = new Initialization();
+        $initialization = new \PoPSchema\Tags\Initialization();
         return $initialization->initialize();
     }
 }
-
 /**
  * Initialization
  */
-new Plugins();
+new \PoPSchema\Tags\Plugins();

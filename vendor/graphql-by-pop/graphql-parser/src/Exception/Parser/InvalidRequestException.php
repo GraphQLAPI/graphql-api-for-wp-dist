@@ -5,10 +5,8 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Exception\Parser;
 
-class InvalidRequestException extends AbstractParserError
+class InvalidRequestException extends \GraphQLByPoP\GraphQLParser\Exception\Parser\AbstractParserError
 {
-
 }

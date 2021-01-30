@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\CacheControl\TypeResolverDecorators;
 
 use PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-
 trait ConfigurableCacheControlTypeResolverDecoratorTrait
 {
     /**
@@ -16,16 +14,12 @@ trait ConfigurableCacheControlTypeResolverDecoratorTrait
      * @param TypeResolverInterface $typeResolver
      * @return array
      */
-    protected function getMandatoryDirectives($entryValue = null): array
+    protected function getMandatoryDirectives($entryValue = null) : array
     {
         $maxAge = $entryValue;
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
-        $directiveName = AbstractCacheControlDirectiveResolver::getDirectiveName();
-        $cacheControlDirective = $fieldQueryInterpreter->getDirective($directiveName, [
-            'maxAge' => $maxAge,
-        ]);
-        return [
-            $cacheControlDirective,
-        ];
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $directiveName = \PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver::getDirectiveName();
+        $cacheControlDirective = $fieldQueryInterpreter->getDirective($directiveName, ['maxAge' => $maxAge]);
+        return [$cacheControlDirective];
     }
 }

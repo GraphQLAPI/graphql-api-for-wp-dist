@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\TypeDataLoaders;
 
 use PoP\Engine\ObjectFacades\RootObjectFacade;
 use PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader;
-
-class RootTypeDataLoader extends AbstractTypeDataLoader
+class RootTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader
 {
-    public function getObjects(array $ids): array
+    public function getObjects(array $ids) : array
     {
-        return [RootObjectFacade::getInstance()];
+        return [\PoP\Engine\ObjectFacades\RootObjectFacade::getInstance()];
     }
 }

@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\AccessControl\ConfigurationEntries;
 
 use PoP\AccessControl\ComponentConfiguration;
 use PoP\AccessControl\Schema\SchemaModes;
-
 trait AccessControlConfigurableMandatoryDirectivesForItemsTrait
 {
     /**
@@ -16,13 +14,10 @@ trait AccessControlConfigurableMandatoryDirectivesForItemsTrait
      *
      * @return bool
      */
-    protected function doesSchemaModeProcessNullControlEntry(): bool
+    protected function doesSchemaModeProcessNullControlEntry() : bool
     {
         $individualControlSchemaMode = $this->getSchemaMode();
-        return
-            (ComponentConfiguration::usePrivateSchemaMode() && $individualControlSchemaMode == SchemaModes::PRIVATE_SCHEMA_MODE) ||
-            (!ComponentConfiguration::usePrivateSchemaMode() && $individualControlSchemaMode == SchemaModes::PUBLIC_SCHEMA_MODE);
+        return \PoP\AccessControl\ComponentConfiguration::usePrivateSchemaMode() && $individualControlSchemaMode == \PoP\AccessControl\Schema\SchemaModes::PRIVATE_SCHEMA_MODE || !\PoP\AccessControl\ComponentConfiguration::usePrivateSchemaMode() && $individualControlSchemaMode == \PoP\AccessControl\Schema\SchemaModes::PUBLIC_SCHEMA_MODE;
     }
-
-    abstract protected function getSchemaMode(): string;
+    protected abstract function getSchemaMode() : string;
 }

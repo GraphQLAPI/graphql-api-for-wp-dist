@@ -1,52 +1,49 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\DirectiveResolvers;
 
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Resolvers\WithVersionConstraintFieldOrDirectiveResolverTrait;
-
-abstract class AbstractSchemaDirectiveResolver extends AbstractDirectiveResolver implements SchemaDirectiveResolverInterface
+abstract class AbstractSchemaDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractDirectiveResolver implements \PoP\ComponentModel\DirectiveResolvers\SchemaDirectiveResolverInterface
 {
     use WithVersionConstraintFieldOrDirectiveResolverTrait;
-
-    public function getSchemaDefinitionResolver(TypeResolverInterface $typeResolver): ?SchemaDirectiveResolverInterface
+    public function getSchemaDefinitionResolver(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?\PoP\ComponentModel\DirectiveResolvers\SchemaDirectiveResolverInterface
     {
         return $this;
     }
-    public function getSchemaDirectiveDescription(TypeResolverInterface $typeResolver): ?string
+    public function getSchemaDirectiveDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
     {
         return null;
     }
-    public function getSchemaDirectiveWarningDescription(TypeResolverInterface $typeResolver): ?string
+    public function getSchemaDirectiveWarningDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
     {
         return null;
     }
-    public function getSchemaDirectiveDeprecationDescription(TypeResolverInterface $typeResolver): ?string
+    public function getSchemaDirectiveDeprecationDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
     {
         return null;
     }
-    public function getSchemaDirectiveExpressions(TypeResolverInterface $typeResolver): array
+    public function getSchemaDirectiveExpressions(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
     {
         return [];
     }
-    public function getSchemaDirectiveArgs(TypeResolverInterface $typeResolver): array
+    public function getSchemaDirectiveArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
     {
         return [];
     }
-    public function getFilteredSchemaDirectiveArgs(TypeResolverInterface $typeResolver): array
+    public function getFilteredSchemaDirectiveArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
     {
         $schemaDirectiveArgs = $this->getSchemaDirectiveArgs($typeResolver);
         $this->maybeAddVersionConstraintSchemaFieldOrDirectiveArg($schemaDirectiveArgs, !empty($this->getSchemaDirectiveVersion($typeResolver)));
         return $schemaDirectiveArgs;
     }
-    public function enableOrderedSchemaDirectiveArgs(TypeResolverInterface $typeResolver): bool
+    public function enableOrderedSchemaDirectiveArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : bool
     {
-        return true;
+        return \true;
     }
-    public function isGlobal(TypeResolverInterface $typeResolver): bool
+    public function isGlobal(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : bool
     {
-        return false;
+        return \false;
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Users\Conditional\CustomPosts\FieldResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
@@ -12,41 +11,30 @@ use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
 use PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver;
 use PoPSchema\Users\Conditional\CustomPosts\Facades\CustomPostUserTypeAPIFacade;
 use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface;
-
-class CustomPostFieldResolver extends AbstractDBDataFieldResolver
+class CustomPostFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return [
-            IsCustomPostFieldInterfaceResolver::class,
-        ];
+        return [\PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver::class];
     }
-
-    public static function getImplementedInterfaceClasses(): array
+    public static function getImplementedInterfaceClasses() : array
     {
-        return [
-            WithAuthorFieldInterfaceResolver::class,
-        ];
+        return [\PoPSchema\Users\FieldInterfaceResolvers\WithAuthorFieldInterfaceResolver::class];
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        return [
-            'author',
-        ];
+        return ['author'];
     }
-
-    protected function getWithAuthorFieldInterfaceResolverInstance(): FieldInterfaceResolverInterface
+    protected function getWithAuthorFieldInterfaceResolverInstance() : \PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
+        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         /**
          * @var WithAuthorFieldInterfaceResolver
          */
-        $resolver = $instanceManager->getInstance(WithAuthorFieldInterfaceResolver::class);
+        $resolver = $instanceManager->getInstance(\PoPSchema\Users\FieldInterfaceResolvers\WithAuthorFieldInterfaceResolver::class);
         return $resolver;
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'author':
@@ -55,17 +43,13 @@ class CustomPostFieldResolver extends AbstractDBDataFieldResolver
         }
         return parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'author' => $translationAPI->__('The post\'s author', ''),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['author' => $translationAPI->__('The post\'s author', '')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function isSchemaFieldResponseNonNullable(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
         switch ($fieldName) {
             case 'author':
@@ -74,7 +58,6 @@ class CustomPostFieldResolver extends AbstractDBDataFieldResolver
         }
         return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @param array<string, mixed>|null $variables
@@ -83,32 +66,22 @@ class CustomPostFieldResolver extends AbstractDBDataFieldResolver
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = [],
-        ?array $variables = null,
-        ?array $expressions = null,
-        array $options = []
-    ) {
-        $customPostUserTypeAPI = CustomPostUserTypeAPIFacade::getInstance();
+    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    {
+        $customPostUserTypeAPI = \PoPSchema\Users\Conditional\CustomPosts\Facades\CustomPostUserTypeAPIFacade::getInstance();
         switch ($fieldName) {
             case 'author':
                 return $customPostUserTypeAPI->getAuthorID($resultItem);
         }
-
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-
-    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'author':
                 $fieldInterfaceResolver = $this->getWithAuthorFieldInterfaceResolverInstance();
                 return $fieldInterfaceResolver->getFieldTypeResolverClass($fieldName);
         }
-
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }
 }

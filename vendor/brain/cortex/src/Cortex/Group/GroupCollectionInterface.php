@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,11 +8,9 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Brain\Cortex\Group;
 
-namespace Brain\Cortex\Group;
-
-use Brain\Cortex\Route\RouteInterface;
-
+use PrefixedByPoP\Brain\Cortex\Route\RouteInterface;
 /**
  * Interface for GroupCollection objects.
  * Groups objects are the way to share common settings among different routes.
@@ -26,13 +25,12 @@ interface GroupCollectionInterface
      * @param  \Brain\Cortex\Group\GroupInterface $group
      * @return \Brain\Cortex\Group\GroupCollectionInterface
      */
-    public function addGroup(GroupInterface $group);
-
+    public function addGroup(\PrefixedByPoP\Brain\Cortex\Group\GroupInterface $group);
     /**
      * Merge group settings into a given route
      *
      * @param  \Brain\Cortex\Route\RouteInterface $route
      * @return \Brain\Cortex\Route\RouteInterface Edited route
      */
-    public function mergeGroup(RouteInterface $route);
+    public function mergeGroup(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route);
 }

@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserStateAccessControl\TypeResolverDecorators;
 
 use PoPSchema\UserStateAccessControl\TypeResolverDecorators\ValidateUserLoggedInForDirectivesTypeResolverDecoratorTrait;
-
-class ValidateUserLoggedInForDirectivesPublicSchemaTypeResolverDecorator extends AbstractUserStateConfigurableAccessControlForDirectivesInPublicSchemaTypeResolverDecorator
+class ValidateUserLoggedInForDirectivesPublicSchemaTypeResolverDecorator extends \PoPSchema\UserStateAccessControl\TypeResolverDecorators\AbstractUserStateConfigurableAccessControlForDirectivesInPublicSchemaTypeResolverDecorator
 {
     use ValidateUserLoggedInForDirectivesTypeResolverDecoratorTrait;
 }

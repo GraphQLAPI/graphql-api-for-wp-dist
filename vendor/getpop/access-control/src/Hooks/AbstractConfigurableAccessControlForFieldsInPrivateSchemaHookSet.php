@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\AccessControl\Hooks;
 
 use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForFieldsTrait;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
 use PoP\AccessControl\ConfigurationEntries\AccessControlConfigurableMandatoryDirectivesForFieldsTrait;
-
-abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaHookSet extends AbstractAccessControlForFieldsInPrivateSchemaHookSet
+abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractAccessControlForFieldsInPrivateSchemaHookSet
 {
     use ConfigurableMandatoryDirectivesForFieldsTrait, AccessControlConfigurableMandatoryDirectivesForFieldsTrait {
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getMatchingEntries insteadof ConfigurableMandatoryDirectivesForFieldsTrait;
@@ -20,12 +18,10 @@ abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaHookSet 
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getConfigurationEntries insteadof ConfigurableMandatoryDirectivesForFieldsTrait;
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getFieldNames insteadof ConfigurableMandatoryDirectivesForFieldsTrait;
     }
-
-    protected function enabled(): bool
+    protected function enabled() : bool
     {
         return parent::enabled() && !empty(static::getConfigurationEntries());
     }
-
     /**
      * Remove fieldName "roles" if the user is not logged in
      *
@@ -35,12 +31,8 @@ abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaHookSet 
      * @param string $fieldName
      * @return boolean
      */
-    protected function removeFieldName(
-        TypeResolverInterface $typeResolver,
-        FieldResolverInterface $fieldResolver,
-        array $fieldInterfaceResolverClasses,
-        string $fieldName
-    ): bool {
+    protected function removeFieldName(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, \PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, array $fieldInterfaceResolverClasses, string $fieldName) : bool
+    {
         // Obtain all entries for the current combination of [typeResolver or $fieldInterfaceClass]/fieldName
         foreach ($this->getEntries($typeResolver, $fieldInterfaceResolverClasses, $fieldName) as $entry) {
             // Obtain the 3rd value on each entry: if the validation is "in" or "out"
@@ -48,11 +40,10 @@ abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaHookSet 
             // Let the implementation class decide if to remove the field or not
             return $this->removeFieldNameBasedOnMatchingEntryValue($entryValue);
         }
-        return false;
+        return \false;
     }
-
-    protected function removeFieldNameBasedOnMatchingEntryValue($entryValue = null): bool
+    protected function removeFieldNameBasedOnMatchingEntryValue($entryValue = null) : bool
     {
-        return true;
+        return \true;
     }
 }

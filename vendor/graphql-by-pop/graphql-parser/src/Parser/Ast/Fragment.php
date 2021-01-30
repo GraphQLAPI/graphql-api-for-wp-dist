@@ -5,25 +5,18 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class Fragment extends AbstractAst
+class Fragment extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst
 {
     use AstDirectivesTrait;
-
     protected $name;
-
     protected $model;
-
     /** @var Field[]|Query[] */
     protected $fields;
-
     /** @var bool */
-    private $used = false;
-
+    private $used = \false;
     /**
      * @param string          $name
      * @param string          $model
@@ -31,16 +24,14 @@ class Fragment extends AbstractAst
      * @param Field[]|Query[] $fields
      * @param Location        $location
      */
-    public function __construct($name, $model, array $directives, array $fields, Location $location)
+    public function __construct($name, $model, array $directives, array $fields, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
-        $this->name   = $name;
-        $this->model  = $model;
+        $this->name = $name;
+        $this->model = $model;
         $this->fields = $fields;
         $this->setDirectives($directives);
     }
-
     /**
      * @return boolean
      */
@@ -48,7 +39,6 @@ class Fragment extends AbstractAst
     {
         return $this->used;
     }
-
     /**
      * @param boolean $used
      */
@@ -56,7 +46,6 @@ class Fragment extends AbstractAst
     {
         $this->used = $used;
     }
-
     /**
      * @return mixed
      */
@@ -64,7 +53,6 @@ class Fragment extends AbstractAst
     {
         return $this->name;
     }
-
     /**
      * @param mixed $name
      */
@@ -72,7 +60,6 @@ class Fragment extends AbstractAst
     {
         $this->name = $name;
     }
-
     /**
      * @return mixed
      */
@@ -80,7 +67,6 @@ class Fragment extends AbstractAst
     {
         return $this->model;
     }
-
     /**
      * @param mixed $model
      */
@@ -88,7 +74,6 @@ class Fragment extends AbstractAst
     {
         $this->model = $model;
     }
-
     /**
      * @return Field[]|Query[]
      */
@@ -96,7 +81,6 @@ class Fragment extends AbstractAst
     {
         return $this->fields;
     }
-
     /**
      * @param Field[]|Query[] $fields
      */

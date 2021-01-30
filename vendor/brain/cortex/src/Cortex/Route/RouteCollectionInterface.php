@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Brain\Cortex\Route;
+namespace PrefixedByPoP\Brain\Cortex\Route;
 
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
@@ -21,5 +21,5 @@ interface RouteCollectionInterface extends \Iterator, \Countable
      * @param  \Brain\Cortex\Route\RouteInterface $route
      * @return \Brain\Cortex\Route\RouteCollectionInterface
      */
-    public function addRoute(RouteInterface $route);
+    public function addRoute(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route);
 }

@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\Media;
 
-abstract class PostsFunctionAPI_Base implements PostsFunctionAPI
+abstract class PostsFunctionAPI_Base implements \PoPSchema\Media\PostsFunctionAPI
 {
     public function __construct()
     {
-        PostsFunctionAPIFactory::setInstance($this);
+        \PoPSchema\Media\PostsFunctionAPIFactory::setInstance($this);
     }
 }

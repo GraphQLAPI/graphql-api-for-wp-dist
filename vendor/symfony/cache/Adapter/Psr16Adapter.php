@@ -8,38 +8,31 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 
-namespace Symfony\Component\Cache\Adapter;
-
-use Psr\SimpleCache\CacheInterface;
-use Symfony\Component\Cache\PruneableInterface;
-use Symfony\Component\Cache\ResettableInterface;
-use Symfony\Component\Cache\Traits\ProxyTrait;
-
+use PrefixedByPoP\Psr\SimpleCache\CacheInterface;
+use PrefixedByPoP\Symfony\Component\Cache\PruneableInterface;
+use PrefixedByPoP\Symfony\Component\Cache\ResettableInterface;
+use PrefixedByPoP\Symfony\Component\Cache\Traits\ProxyTrait;
 /**
  * Turns a PSR-16 cache into a PSR-6 one.
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class Psr16Adapter extends AbstractAdapter implements PruneableInterface, ResettableInterface
+class Psr16Adapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\AbstractAdapter implements \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
 {
     /**
      * @internal
      */
     protected const NS_SEPARATOR = '_';
-
     use ProxyTrait;
-
     private $miss;
-
-    public function __construct(CacheInterface $pool, string $namespace = '', int $defaultLifetime = 0)
+    public function __construct(\PrefixedByPoP\Psr\SimpleCache\CacheInterface $pool, string $namespace = '', int $defaultLifetime = 0)
     {
         parent::__construct($namespace, $defaultLifetime);
-
         $this->pool = $pool;
         $this->miss = new \stdClass();
     }
-
     /**
      * {@inheritdoc}
      */
@@ -47,11 +40,10 @@ class Psr16Adapter extends AbstractAdapter implements PruneableInterface, Resett
     {
         foreach ($this->pool->getMultiple($ids, $this->miss) as $key => $value) {
             if ($this->miss !== $value) {
-                yield $key => $value;
+                (yield $key => $value);
             }
         }
     }
-
     /**
      * {@inheritdoc}
      */
@@ -59,7 +51,6 @@ class Psr16Adapter extends AbstractAdapter implements PruneableInterface, Resett
     {
         return $this->pool->has($id);
     }
-
     /**
      * {@inheritdoc}
      */
@@ -67,7 +58,6 @@ class Psr16Adapter extends AbstractAdapter implements PruneableInterface, Resett
     {
         return $this->pool->clear();
     }
-
     /**
      * {@inheritdoc}
      */
@@ -75,7 +65,6 @@ class Psr16Adapter extends AbstractAdapter implements PruneableInterface, Resett
     {
         return $this->pool->deleteMultiple($ids);
     }
-
     /**
      * {@inheritdoc}
      */

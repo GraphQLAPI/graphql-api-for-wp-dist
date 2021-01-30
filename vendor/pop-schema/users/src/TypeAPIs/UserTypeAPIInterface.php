@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Users\TypeAPIs;
 
 /**
@@ -15,5 +14,5 @@ interface UserTypeAPIInterface
      * @param [type] $object
      * @return boolean
      */
-    public function isInstanceOfUserType($object): bool;
+    public function isInstanceOfUserType($object) : bool;
 }

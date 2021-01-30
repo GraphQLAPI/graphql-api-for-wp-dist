@@ -1,18 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
-
-abstract class AbstractDynamicType extends AbstractType
+abstract class AbstractDynamicType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
 {
-    public function isDynamicType(): bool
+    public function isDynamicType() : bool
     {
-        return true;
+        return \true;
     }
-
     /**
      * Change the name for the dynamic type, since it comes from a different
      * field in the schema or, if not provided, it is dynamically generated.
@@ -21,11 +18,10 @@ abstract class AbstractDynamicType extends AbstractType
      *
      * @return string
      */
-    public function getNamespacedName(): string
+    public function getNamespacedName() : string
     {
         return $this->getName();
     }
-
     /**
      * Change the name for the dynamic type, since it comes from a different
      * field in the schema or, if not provided, it is dynamically generated
@@ -34,11 +30,10 @@ abstract class AbstractDynamicType extends AbstractType
      *
      * @return string
      */
-    public function getElementName(): string
+    public function getElementName() : string
     {
         return $this->getName();
     }
-
     /**
      * Dynamic types (Enum and InputObject) can't retrieve their name
      * from the usual property in the schema, since that belongs to the
@@ -52,25 +47,24 @@ abstract class AbstractDynamicType extends AbstractType
      * Otherwise, field of type "enum" with name "status" but under
      * types "User" and "Post" would have the same name and collide
      */
-    public function getName(): string
+    public function getName() : string
     {
         // If they have provided a name, use it
         if ($dynamicName = $this->schemaDefinition[$this->getDynamicTypeNamePropertyInSchema()] ?? null) {
             return $dynamicName;
         }
         // Otherwise, generate a unique name
-        return implode(
+        return \implode(
             '__',
             // Can't use '_', because it's reserved for the type/interface namespaces instead
-            array_map('ucfirst', $this->schemaDefinitionPath)
+            \array_map('ucfirst', $this->schemaDefinitionPath)
         );
     }
-
     /**
      * Indicate under what property in the schema definition
      * is the Dynamic Type's name provided
      *
      * @return string
      */
-    abstract protected function getDynamicTypeNamePropertyInSchema(): string;
+    protected abstract function getDynamicTypeNamePropertyInSchema() : string;
 }

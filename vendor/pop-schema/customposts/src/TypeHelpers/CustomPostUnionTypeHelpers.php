@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPosts\TypeHelpers;
 
 use PoPSchema\CustomPosts\ComponentConfiguration;
 use PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver;
 use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoPSchema\CustomPosts\TypeResolverPickers\CustomPostTypeResolverPickerInterface;
-
 /**
  * In the context of WordPress, "Custom Posts" are all posts (eg: posts, pages, attachments, events, etc)
  * Hence, this class can simply inherit from the Post dataloader, and add the post-types for all required types
@@ -20,21 +18,20 @@ class CustomPostUnionTypeHelpers
      *
      * @return void
      */
-    public static function getTargetTypeResolverCustomPostTypes(string $unionTypeResolverClass): array
+    public static function getTargetTypeResolverCustomPostTypes(string $unionTypeResolverClass) : array
     {
         $customPostTypes = [];
-        $instanceManager = InstanceManagerFacade::getInstance();
+        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         $unionTypeResolver = $instanceManager->getInstance($unionTypeResolverClass);
         $typeResolverPickers = $unionTypeResolver->getTypeResolverPickers();
         foreach ($typeResolverPickers as $typeResolverPicker) {
             // The picker should implement interface CustomPostTypeResolverPickerInterface
-            if ($typeResolverPicker instanceof CustomPostTypeResolverPickerInterface) {
+            if ($typeResolverPicker instanceof \PoPSchema\CustomPosts\TypeResolverPickers\CustomPostTypeResolverPickerInterface) {
                 $customPostTypes[] = $typeResolverPicker->getCustomPostType();
             }
         }
         return $customPostTypes;
     }
-
     /**
      * Based on `getUnionOrTargetTypeResolverClass` from class
      * \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers, but applied
@@ -51,18 +48,15 @@ class CustomPostUnionTypeHelpers
      * @param string $unionTypeResolverClass
      * @return string|null
      */
-    public static function getCustomPostUnionOrTargetTypeResolverClass(
-        string $unionTypeResolverClass = CustomPostUnionTypeResolver::class
-    ): ?string {
-        $instanceManager = InstanceManagerFacade::getInstance();
+    public static function getCustomPostUnionOrTargetTypeResolverClass(string $unionTypeResolverClass = \PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class) : ?string
+    {
+        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         $unionTypeResolver = $instanceManager->getInstance($unionTypeResolverClass);
         $targetTypeResolverClasses = $unionTypeResolver->getTargetTypeResolverClasses();
         if ($targetTypeResolverClasses) {
             // By configuration: If there is only 1 item, return only that one
-            if (ComponentConfiguration::useSingleTypeInsteadOfCustomPostUnionType()) {
-                return count($targetTypeResolverClasses) == 1 ?
-                    $targetTypeResolverClasses[0] :
-                    $unionTypeResolverClass;
+            if (\PoPSchema\CustomPosts\ComponentConfiguration::useSingleTypeInsteadOfCustomPostUnionType()) {
+                return \count($targetTypeResolverClasses) == 1 ? $targetTypeResolverClasses[0] : $unionTypeResolverClass;
             }
             return $unionTypeResolverClass;
         }

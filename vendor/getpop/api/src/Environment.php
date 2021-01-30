@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\API;
 
 class Environment
@@ -11,14 +10,12 @@ class Environment
     public const ENABLE_EMBEDDABLE_FIELDS = 'ENABLE_EMBEDDABLE_FIELDS';
     public const ENABLE_MUTATIONS = 'ENABLE_MUTATIONS';
     public const OVERRIDE_REQUEST_URI = 'OVERRIDE_REQUEST_URI';
-
-    public static function disableAPI(): bool
+    public static function disableAPI() : bool
     {
-        return getenv('DISABLE_API') !== false ? strtolower(getenv('DISABLE_API')) == "true" : false;
+        return \getenv('DISABLE_API') !== \false ? \strtolower(\getenv('DISABLE_API')) == "true" : \false;
     }
-
-    public static function enableSettingNamespacingByURLParam(): bool
+    public static function enableSettingNamespacingByURLParam() : bool
     {
-        return getenv('ENABLE_SETTING_NAMESPACING_BY_URL_PARAM') !== false ? strtolower(getenv('ENABLE_SETTING_NAMESPACING_BY_URL_PARAM')) == "true" : false;
+        return \getenv('ENABLE_SETTING_NAMESPACING_BY_URL_PARAM') !== \false ? \strtolower(\getenv('ENABLE_SETTING_NAMESPACING_BY_URL_PARAM')) == "true" : \false;
     }
 }

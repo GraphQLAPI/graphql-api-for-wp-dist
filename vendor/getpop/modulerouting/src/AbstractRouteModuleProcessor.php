@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ModuleRouting;
 
 abstract class AbstractRouteModuleProcessor
@@ -9,31 +8,28 @@ abstract class AbstractRouteModuleProcessor
     /**
      * @return string[]
      */
-    public function getGroups(): array
+    public function getGroups() : array
     {
         return array();
     }
-
     /**
      * @return array<string, array<string, array<array>>>
      */
-    public function getModulesVarsPropertiesByNatureAndRoute(): array
+    public function getModulesVarsPropertiesByNatureAndRoute() : array
     {
         return array();
     }
-
     /**
      * @return array<string, array<array>>
      */
-    public function getModulesVarsPropertiesByNature(): array
+    public function getModulesVarsPropertiesByNature() : array
     {
         return array();
     }
-
     /**
      * @return array<string, string[]>
      */
-    public function getModulesVarsProperties(): array
+    public function getModulesVarsProperties() : array
     {
         return array();
     }

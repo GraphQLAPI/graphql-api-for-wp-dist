@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\DirectiveResolvers\ConditionalOnEnvironment;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
@@ -9,7 +8,6 @@ use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
 use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTrait;
-
 /**
  * If a field is `null`, then remove it from the response
  *
@@ -117,7 +115,7 @@ use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTr
  *
  * To fix it, we add an alias to any of those 2 fields (in this case, alias `featuredImageOrNothing` to the first one):
  *
-  * ```graphql
+ * ```graphql
  * query {
  *   posts(limit:2) {
  *     title
@@ -177,39 +175,17 @@ use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTr
  * }
  * ```
  */
-class RemoveIfNullDirectiveResolver extends AbstractGlobalDirectiveResolver
+class RemoveIfNullDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
 {
     use RemoveIDsDataFieldsDirectiveResolverTrait;
-
     const DIRECTIVE_NAME = 'removeIfNull';
-    public static function getDirectiveName(): string
+    public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;
     }
-
-    public function resolveDirective(
-        TypeResolverInterface $typeResolver,
-        array &$idsDataFields,
-        array &$succeedingPipelineIDsDataFields,
-        array &$succeedingPipelineDirectiveResolverInstances,
-        array &$resultIDItems,
-        array &$unionDBKeyIDs,
-        array &$dbItems,
-        array &$previousDBItems,
-        array &$variables,
-        array &$messages,
-        array &$dbErrors,
-        array &$dbWarnings,
-        array &$dbDeprecations,
-        array &$dbNotices,
-        array &$dbTraces,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations,
-        array &$schemaNotices,
-        array &$schemaTraces
-    ): void {
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    {
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         $idsDataFieldsToRemove = [];
         foreach ($idsDataFields as $id => $dataFields) {
             foreach ($dataFields['direct'] as $field) {
@@ -217,9 +193,9 @@ class RemoveIfNullDirectiveResolver extends AbstractGlobalDirectiveResolver
                 // If the value is null, then remove it from the dbItems object, which contains the data for all retrieved objects
                 // Please notice that this object contains the data for all fields for all types in the query!
                 // Then, make sure that the affected field has a unique alias to avoid side-effects
-                if (is_null($dbItems[(string)$id][$fieldOutputKey])) {
-                    $idsDataFieldsToRemove[(string)$id]['direct'][] = $field;
-                    unset($dbItems[(string)$id][$fieldOutputKey]);
+                if (\is_null($dbItems[(string) $id][$fieldOutputKey])) {
+                    $idsDataFieldsToRemove[(string) $id]['direct'][] = $field;
+                    unset($dbItems[(string) $id][$fieldOutputKey]);
                 }
             }
         }
@@ -232,10 +208,9 @@ class RemoveIfNullDirectiveResolver extends AbstractGlobalDirectiveResolver
             $this->removeIDsDataFields($idsDataFieldsToRemove, $succeedingPipelineIDsDataFields);
         }
     }
-
-    public function getSchemaDirectiveDescription(TypeResolverInterface $typeResolver): ?string
+    public function getSchemaDirectiveDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Remove the field from the response if it is `null`', 'engine');
     }
 }

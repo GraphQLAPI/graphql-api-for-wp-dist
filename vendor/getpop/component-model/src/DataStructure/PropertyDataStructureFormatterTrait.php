@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\DataStructure;
 
 trait PropertyDataStructureFormatterTrait
@@ -10,7 +9,6 @@ trait PropertyDataStructureFormatterTrait
     {
         return 'text/plain';
     }
-
     /**
      * Iterate the array and print all the entries as a properties file
      *
@@ -21,7 +19,6 @@ trait PropertyDataStructureFormatterTrait
     {
         $this->iterativelyPrintDataEntries($data, '');
     }
-
     /**
      * Iterate all the way down the data entries until it's not an array anymore, and then print the entry in a `property=value` format
      *
@@ -31,15 +28,15 @@ trait PropertyDataStructureFormatterTrait
      */
     protected function iterativelyPrintDataEntries(&$data, string $property)
     {
-        if (is_array($data)) {
+        if (\is_array($data)) {
             foreach ($data as $key => &$value) {
                 if ($property) {
                     // For 1-dimension arrays, spread the array as "property[index]"
-                    if (is_int($key)) {
-                        $nextLevelProperty = sprintf('%s[%s]', $property, $key);
+                    if (\is_int($key)) {
+                        $nextLevelProperty = \sprintf('%s[%s]', $property, $key);
                     } else {
                         // For 2-dimension arrays, spread the array as "property.subproperty"
-                        $nextLevelProperty = sprintf('%s.%s', $property, $key);
+                        $nextLevelProperty = \sprintf('%s.%s', $property, $key);
                     }
                 } else {
                     $nextLevelProperty = $key;
@@ -50,9 +47,8 @@ trait PropertyDataStructureFormatterTrait
             $this->printDataEntry($property, $data);
         }
     }
-
     protected function printDataEntry(string $property, $value)
     {
-        echo $property . '=' . $value . PHP_EOL;
+        echo $property . '=' . $value . \PHP_EOL;
     }
 }

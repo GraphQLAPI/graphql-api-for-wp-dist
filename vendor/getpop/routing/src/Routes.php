@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Routing;
 
 class Routes
 {
     use RoutesTrait;
-
     /**
      * @var string
      */
@@ -15,10 +13,8 @@ class Routes
     /**
      * @return array<string, string>
      */
-    protected static function getRouteNameAndVariableRefs(): array
+    protected static function getRouteNameAndVariableRefs() : array
     {
-        return [
-            'main' => &self::$MAIN,
-        ];
+        return ['main' => &self::$MAIN];
     }
 }

@@ -1,22 +1,22 @@
 <?php
 
-namespace FastRoute;
+namespace PrefixedByPoP\FastRoute;
 
-class RouteCollector {
+class RouteCollector
+{
     private $routeParser;
     private $dataGenerator;
-
     /**
      * Constructs a route collector.
      *
      * @param RouteParser   $routeParser
      * @param DataGenerator $dataGenerator
      */
-    public function __construct(RouteParser $routeParser, DataGenerator $dataGenerator) {
+    public function __construct(\PrefixedByPoP\FastRoute\RouteParser $routeParser, \PrefixedByPoP\FastRoute\DataGenerator $dataGenerator)
+    {
         $this->routeParser = $routeParser;
         $this->dataGenerator = $dataGenerator;
     }
-
     /**
      * Adds a route to the collection.
      *
@@ -26,7 +26,8 @@ class RouteCollector {
      * @param string $route
      * @param mixed  $handler
      */
-    public function addRoute($httpMethod, $route, $handler) {
+    public function addRoute($httpMethod, $route, $handler)
+    {
         $routeDatas = $this->routeParser->parse($route);
         foreach ((array) $httpMethod as $method) {
             foreach ($routeDatas as $routeData) {
@@ -34,13 +35,13 @@ class RouteCollector {
             }
         }
     }
-
     /**
      * Returns the collected route data, as provided by the data generator.
      *
      * @return array
      */
-    public function getData() {
+    public function getData()
+    {
         return $this->dataGenerator->getData();
     }
 }

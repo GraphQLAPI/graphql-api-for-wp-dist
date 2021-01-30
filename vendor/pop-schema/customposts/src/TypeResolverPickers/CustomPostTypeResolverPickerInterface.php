@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPosts\TypeResolverPickers;
 
 interface CustomPostTypeResolverPickerInterface
@@ -11,5 +10,5 @@ interface CustomPostTypeResolverPickerInterface
      *
      * @return string
      */
-    public function getCustomPostType(): string;
+    public function getCustomPostType() : string;
 }

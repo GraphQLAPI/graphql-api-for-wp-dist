@@ -1,21 +1,19 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\DirectiveResolvers;
 
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-
 interface DirectiveResolverInterface
 {
-    public static function getDirectiveName(): string;
+    public static function getDirectiveName() : string;
     /**
      * Indicate to what fieldNames this directive can be applied.
      * Returning an empty array means all of them
      *
      * @return array
      */
-    public static function getFieldNamesToApplyTo(): array;
+    public static function getFieldNamesToApplyTo() : array;
     /**
      * Directives can be either of type "Schema" or "Query" and,
      * depending on one case or the other, might be exposed to the user.
@@ -23,7 +21,7 @@ interface DirectiveResolverInterface
      *
      * @return string
      */
-    public function getDirectiveType(): string;
+    public function getDirectiveType() : string;
     /**
      * Extract and validate the directive arguments
      *
@@ -33,17 +31,7 @@ interface DirectiveResolverInterface
      * @param array $schemaDeprecations
      * @return array
      */
-    public function dissectAndValidateDirectiveForSchema(
-        TypeResolverInterface $typeResolver,
-        array &$fieldDirectiveFields,
-        array &$variables,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations,
-        array &$schemaNotices,
-        array &$schemaTraces
-    ): array;
-
+    public function dissectAndValidateDirectiveForSchema(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$fieldDirectiveFields, array &$variables, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : array;
     /**
      * Enable the directiveResolver to validate the directive arguments in a custom way
      *
@@ -54,14 +42,7 @@ interface DirectiveResolverInterface
      * @param array $schemaDeprecations
      * @return array
      */
-    public function validateDirectiveArgumentsForSchema(
-        TypeResolverInterface $typeResolver,
-        string $directiveName,
-        array $directiveArgs,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations
-    ): array;
+    public function validateDirectiveArgumentsForSchema(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $directiveName, array $directiveArgs, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations) : array;
     /**
      * Define where to place the directive in the directive execution pipeline
      * 2 directives are mandatory: Validate and ResolveAndMerge, which are executed in this order.
@@ -73,7 +54,7 @@ interface DirectiveResolverInterface
      *
      * @return string
      */
-    public function getPipelinePosition(): string;
+    public function getPipelinePosition() : string;
     /**
      * Indicate if the directiveResolver can process the directive with the given name and args
      *
@@ -83,25 +64,19 @@ interface DirectiveResolverInterface
      * @param string $field
      * @return boolean
      */
-    public function resolveCanProcess(
-        TypeResolverInterface $typeResolver,
-        string $directiveName,
-        array $directiveArgs,
-        string $field,
-        array &$variables
-    ): bool;
+    public function resolveCanProcess(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $directiveName, array $directiveArgs, string $field, array &$variables) : bool;
     /**
      * Indicates if the directive can be added several times to the pipeline, or only once
      *
      * @return boolean
      */
-    public function isRepeatable(): bool;
+    public function isRepeatable() : bool;
     /**
      * Indicate if the directive needs to be passed $idsDataFields filled with data to be able to execute
      *
      * @return void
      */
-    public function needsIDsDataFieldsToExecute(): bool;
+    public function needsIDsDataFieldsToExecute() : bool;
     /**
      * Execute the directive
      *
@@ -123,28 +98,7 @@ interface DirectiveResolverInterface
      * @param array $schemaDeprecations
      * @return void
      */
-    public function resolveDirective(
-        TypeResolverInterface $typeResolver,
-        array &$idsDataFields,
-        array &$succeedingPipelineIDsDataFields,
-        array &$succeedingPipelineDirectiveResolverInstances,
-        array &$resultIDItems,
-        array &$unionDBKeyIDs,
-        array &$dbItems,
-        array &$previousDBItems,
-        array &$variables,
-        array &$messages,
-        array &$dbErrors,
-        array &$dbWarnings,
-        array &$dbDeprecations,
-        array &$dbNotices,
-        array &$dbTraces,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations,
-        array &$schemaNotices,
-        array &$schemaTraces
-    ): void;
+    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void;
     /**
      * Get an instance of the object defining the schema for this fieldResolver
      *
@@ -153,26 +107,26 @@ interface DirectiveResolverInterface
      * @param array<string, mixed> $fieldArgs
      * @return void
      */
-    public function getSchemaDefinitionResolver(TypeResolverInterface $typeResolver): ?SchemaDirectiveResolverInterface;
+    public function getSchemaDefinitionResolver(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?\PoP\ComponentModel\DirectiveResolvers\SchemaDirectiveResolverInterface;
     /**
      * A directive can decide to not be added to the schema, eg: when it is repeated/implemented several times
      *
      * @return void
      */
-    public function skipAddingToSchemaDefinition(): bool;
-    public function getSchemaDefinitionForDirective(TypeResolverInterface $typeResolver): array;
+    public function skipAddingToSchemaDefinition() : bool;
+    public function getSchemaDefinitionForDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array;
     /**
      * Define if to use the version to decide if to process the directive or not
      *
      * @param TypeResolverInterface $typeResolver
      * @return boolean
      */
-    public function decideCanProcessBasedOnVersionConstraint(TypeResolverInterface $typeResolver): bool;
+    public function decideCanProcessBasedOnVersionConstraint(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : bool;
     /**
      * The version of the directive, using semantic versioning
      *
      * @param TypeResolverInterface $typeResolver
      * @return string|null
      */
-    public function getSchemaDirectiveVersion(TypeResolverInterface $typeResolver): ?string;
+    public function getSchemaDirectiveVersion(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string;
 }

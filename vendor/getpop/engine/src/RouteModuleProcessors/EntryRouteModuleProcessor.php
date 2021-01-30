@@ -1,24 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\RouteModuleProcessors;
 
 use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
-
-class EntryRouteModuleProcessor extends AbstractEntryRouteModuleProcessor
+class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
 {
     /**
      * @return array<string, string[]>
      */
-    public function getModulesVarsProperties(): array
+    public function getModulesVarsProperties() : array
     {
         $ret = array();
-
-        $ret[] = [
-            'module' => [\PoP_Engine_Module_Processor_Elements::class, \PoP_Engine_Module_Processor_Elements::MODULE_EMPTY],
-        ];
-
+        $ret[] = ['module' => [\PrefixedByPoP\PoP_Engine_Module_Processor_Elements::class, \PrefixedByPoP\PoP_Engine_Module_Processor_Elements::MODULE_EMPTY]];
         return $ret;
     }
 }

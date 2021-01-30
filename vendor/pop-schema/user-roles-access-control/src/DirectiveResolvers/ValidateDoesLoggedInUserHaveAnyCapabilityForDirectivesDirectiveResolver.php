@@ -1,19 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserRolesAccessControl\DirectiveResolvers;
 
-class ValidateDoesLoggedInUserHaveAnyCapabilityForDirectivesDirectiveResolver extends ValidateDoesLoggedInUserHaveAnyCapabilityDirectiveResolver
+class ValidateDoesLoggedInUserHaveAnyCapabilityForDirectivesDirectiveResolver extends \PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyCapabilityDirectiveResolver
 {
     const DIRECTIVE_NAME = 'validateDoesLoggedInUserHaveAnyCapabilityForDirectives';
-    public static function getDirectiveName(): string
+    public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;
     }
-
-    protected function isValidatingDirective(): bool
+    protected function isValidatingDirective() : bool
     {
-        return true;
+        return \true;
     }
 }

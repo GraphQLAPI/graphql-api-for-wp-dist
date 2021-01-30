@@ -1,78 +1,51 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\DirectiveResolvers;
 
 use PoP\ComponentModel\Directives\DirectiveTypes;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTrait;
-
-abstract class AbstractValidateDirectiveResolver extends AbstractGlobalDirectiveResolver
+abstract class AbstractValidateDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
 {
     use RemoveIDsDataFieldsDirectiveResolverTrait;
-
     /**
      * Validations are by default a "Schema" type directive
      *
      * @return string
      */
-    public function getDirectiveType(): string
+    public function getDirectiveType() : string
     {
-        return DirectiveTypes::SCHEMA;
+        return \PoP\ComponentModel\Directives\DirectiveTypes::SCHEMA;
     }
-
     /**
      * Each validate can execute multiple times (eg: an added @validateIsUserLoggedIn)
      *
      * @return boolean
      */
-    public function isRepeatable(): bool
+    public function isRepeatable() : bool
     {
-        return true;
+        return \true;
     }
-
-    public function resolveDirective(
-        TypeResolverInterface $typeResolver,
-        array &$idsDataFields,
-        array &$succeedingPipelineIDsDataFields,
-        array &$succeedingPipelineDirectiveResolverInstances,
-        array &$resultIDItems,
-        array &$unionDBKeyIDs,
-        array &$dbItems,
-        array &$previousDBItems,
-        array &$variables,
-        array &$messages,
-        array &$dbErrors,
-        array &$dbWarnings,
-        array &$dbDeprecations,
-        array &$dbNotices,
-        array &$dbTraces,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations,
-        array &$schemaNotices,
-        array &$schemaTraces
-    ): void {
+    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    {
         $this->validateAndFilterFields($typeResolver, $idsDataFields, $succeedingPipelineIDsDataFields, $variables, $schemaErrors, $schemaWarnings, $schemaDeprecations);
     }
-
-    protected function validateAndFilterFields(TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$variables, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations)
+    protected function validateAndFilterFields(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$variables, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations)
     {
         // Validate that the schema and the provided data match, eg: passing mandatory values
         // (Such as fieldArg "status" for field "isStatus")
         // Combine all the datafields under all IDs
         $dataFields = $failedDataFields = [];
         foreach ($idsDataFields as $id => $data_fields) {
-            $dataFields = array_values(array_unique(array_merge($dataFields, $data_fields['direct'])));
+            $dataFields = \array_values(\array_unique(\array_merge($dataFields, $data_fields['direct'])));
         }
         $this->validateFields($typeResolver, $dataFields, $schemaErrors, $schemaWarnings, $schemaDeprecations, $variables, $failedDataFields);
-
         // Remove from the data_fields list to execute on the resultItem for the next stages of the pipeline
         if ($failedDataFields) {
             $idsDataFieldsToRemove = [];
             foreach ($idsDataFields as $id => $dataFields) {
-                $idsDataFieldsToRemove[(string)$id]['direct'] = array_intersect($dataFields['direct'], $failedDataFields);
+                $idsDataFieldsToRemove[(string) $id]['direct'] = \array_intersect($dataFields['direct'], $failedDataFields);
             }
             $this->removeIDsDataFields($idsDataFieldsToRemove, $succeedingPipelineIDsDataFields);
         }
@@ -87,6 +60,5 @@ abstract class AbstractValidateDirectiveResolver extends AbstractGlobalDirective
         //     }
         // }
     }
-
-    abstract protected function validateFields(TypeResolverInterface $typeResolver, array $dataFields, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$variables, array &$failedDataFields): void;
+    protected abstract function validateFields(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array $dataFields, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$variables, array &$failedDataFields) : void;
 }

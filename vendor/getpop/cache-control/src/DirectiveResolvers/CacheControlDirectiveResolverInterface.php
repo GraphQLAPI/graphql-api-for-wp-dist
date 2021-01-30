@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\CacheControl\DirectiveResolvers;
 
 interface CacheControlDirectiveResolverInterface
@@ -11,11 +10,11 @@ interface CacheControlDirectiveResolverInterface
      *
      * @return void
      */
-    public function resolveCacheControlDirective(): void;
+    public function resolveCacheControlDirective() : void;
     /**
      * Cache control max age for this directive, possibly applied to certain fields
      *
      * @return integer|null
      */
-    public function getMaxAge(): ?int;
+    public function getMaxAge() : ?int;
 }

@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\DependencyInjection\Argument;
+namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Argument;
 
 /**
  * Represents an abstract service argument, which have to be set by a compiler pass or a DI extension.
@@ -18,24 +17,20 @@ final class AbstractArgument
 {
     private $text;
     private $context;
-
     public function __construct(string $text = '')
     {
-        $this->text = trim($text, '. ');
+        $this->text = \trim($text, '. ');
     }
-
-    public function setContext(string $context): void
+    public function setContext(string $context) : void
     {
-        $this->context = $context.' is abstract'.('' === $this->text ? '' : ': ');
+        $this->context = $context . ' is abstract' . ('' === $this->text ? '' : ': ');
     }
-
-    public function getText(): string
+    public function getText() : string
     {
         return $this->text;
     }
-
-    public function getTextWithContext(): string
+    public function getTextWithContext() : string
     {
-        return $this->context.$this->text.'.';
+        return $this->context . $this->text . '.';
     }
 }

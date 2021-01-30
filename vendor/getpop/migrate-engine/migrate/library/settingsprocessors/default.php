@@ -1,4 +1,5 @@
 <?php
+
 namespace PoP\Engine\Settings\Impl;
 
 class DefaultSettingsProcessor extends \PoP\ComponentModel\Settings\DefaultSettingsProcessorBase
@@ -8,8 +9,7 @@ class DefaultSettingsProcessor extends \PoP\ComponentModel\Settings\DefaultSetti
         return array();
     }
 }
-
 /**
  * Initialization
  */
-new DefaultSettingsProcessor();
+new \PoP\Engine\Settings\Impl\DefaultSettingsProcessor();

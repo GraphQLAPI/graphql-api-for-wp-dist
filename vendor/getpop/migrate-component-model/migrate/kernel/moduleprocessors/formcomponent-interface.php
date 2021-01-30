@@ -1,5 +1,7 @@
 <?php
+
 namespace PoP\ComponentModel;
+
 interface FormComponent
 {
     public function getValue(array $module, ?array $source = null);

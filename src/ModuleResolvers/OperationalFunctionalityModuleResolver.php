@@ -37,7 +37,7 @@ class OperationalFunctionalityModuleResolver extends AbstractFunctionalityModule
             self::REMOVE_IF_NULL_DIRECTIVE,
             self::PROACTIVE_FEEDBACK,
             self::EMBEDDABLE_FIELDS,
-            // Temporarily commented
+            // Temporarily disabled
             // self::COMPOSABLE_DIRECTIVES,
             self::MUTATIONS,
             self::NESTED_MUTATIONS,

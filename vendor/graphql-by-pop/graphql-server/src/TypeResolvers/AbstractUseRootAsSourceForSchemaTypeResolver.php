@@ -1,26 +1,22 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\TypeResolvers;
 
 use PoP\Engine\TypeResolvers\RootTypeResolver;
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
 use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
-
-abstract class AbstractUseRootAsSourceForSchemaTypeResolver extends AbstractTypeResolver
+abstract class AbstractUseRootAsSourceForSchemaTypeResolver extends \PoP\ComponentModel\TypeResolvers\AbstractTypeResolver
 {
-    protected function getTypeResolverClassToCalculateSchema(): string
+    protected function getTypeResolverClassToCalculateSchema() : string
     {
-        return RootTypeResolver::class;
+        return \PoP\Engine\TypeResolvers\RootTypeResolver::class;
     }
-
-    abstract protected function isFieldNameConditionSatisfiedForSchema(FieldResolverInterface $fieldResolver, string $fieldName): bool;
-
-    protected function isFieldNameResolvedByFieldResolver(FieldResolverInterface $fieldResolver, string $fieldName, array $fieldInterfaceResolverClasses): bool
+    protected abstract function isFieldNameConditionSatisfiedForSchema(\PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, string $fieldName) : bool;
+    protected function isFieldNameResolvedByFieldResolver(\PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, string $fieldName, array $fieldInterfaceResolverClasses) : bool
     {
         if (!$this->isFieldNameConditionSatisfiedForSchema($fieldResolver, $fieldName)) {
-            return false;
+            return \false;
         }
         return parent::isFieldNameResolvedByFieldResolver($fieldResolver, $fieldName, $fieldInterfaceResolverClasses);
     }

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Cache;
 
 interface CacheInterface
@@ -15,16 +14,15 @@ interface CacheInterface
      * @param [type] $type
      * @return mixed
      */
-    public function deleteCache($id, $type): void;
+    public function deleteCache($id, $type) : void;
     /**
      * Remove all entries in the cache
      *
      * @return void
      */
-    public function clear(): void;
+    public function clear() : void;
     public function getCache($id, $type);
     public function getComponentModelCache($id, $type);
-
     /**
      * Store the cache
      *

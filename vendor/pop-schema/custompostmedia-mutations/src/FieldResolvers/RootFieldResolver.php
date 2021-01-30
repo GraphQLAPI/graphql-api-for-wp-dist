@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPostMediaMutations\FieldResolvers;
 
 use PoP\Engine\TypeResolvers\RootTypeResolver;
@@ -15,91 +14,59 @@ use PoPSchema\CustomPostMediaMutations\MutationResolvers\MutationInputProperties
 use PoPSchema\CustomPostMediaMutations\MutationResolvers\SetFeaturedImageOnCustomPostMutationResolver;
 use PoPSchema\CustomPostMediaMutations\MutationResolvers\RemoveFeaturedImageOnCustomPostMutationResolver;
 use PoP\Engine\ComponentConfiguration as EngineComponentConfiguration;
-
-class RootFieldResolver extends AbstractQueryableFieldResolver
+class RootFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver
 {
-    public static function getClassesToAttachTo(): array
+    public static function getClassesToAttachTo() : array
     {
-        return array(RootTypeResolver::class);
+        return array(\PoP\Engine\TypeResolvers\RootTypeResolver::class);
     }
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        if (EngineComponentConfiguration::disableRedundantRootTypeMutationFields()) {
+        if (\PoP\Engine\ComponentConfiguration::disableRedundantRootTypeMutationFields()) {
             return [];
         }
-        return [
-            'setFeaturedImageOnCustomPost',
-            'removeFeaturedImageFromCustomPost',
-        ];
+        return ['setFeaturedImageOnCustomPost', 'removeFeaturedImageFromCustomPost'];
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'setFeaturedImageOnCustomPost' => $translationAPI->__('Set the featured image on a custom post', 'custompostmedia-mutations'),
-            'removeFeaturedImageFromCustomPost' => $translationAPI->__('Remove the featured image from a custom post', 'custompostmedia-mutations'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['setFeaturedImageOnCustomPost' => $translationAPI->__('Set the featured image on a custom post', 'custompostmedia-mutations'), 'removeFeaturedImageFromCustomPost' => $translationAPI->__('Remove the featured image from a custom post', 'custompostmedia-mutations')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $types = [
-            'setFeaturedImageOnCustomPost' => SchemaDefinition::TYPE_ID,
-            'removeFeaturedImageFromCustomPost' => SchemaDefinition::TYPE_ID,
-        ];
+        $types = ['setFeaturedImageOnCustomPost' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'removeFeaturedImageFromCustomPost' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): array
+    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $setRemoveFeaturedImageSchemaFieldArgs = [
-            [
-                SchemaDefinition::ARGNAME_NAME => MutationInputProperties::CUSTOMPOST_ID,
-                SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_ID,
-                SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('The ID of the custom post', 'custompostmedia-mutations'),
-                SchemaDefinition::ARGNAME_MANDATORY => true,
-            ],
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $setRemoveFeaturedImageSchemaFieldArgs = [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => \PoPSchema\CustomPostMediaMutations\MutationResolvers\MutationInputProperties::CUSTOMPOST_ID, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('The ID of the custom post', 'custompostmedia-mutations'), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true]];
         switch ($fieldName) {
             case 'setFeaturedImageOnCustomPost':
-                return array_merge($setRemoveFeaturedImageSchemaFieldArgs, [
-                    [
-                        SchemaDefinition::ARGNAME_NAME => MutationInputProperties::MEDIA_ITEM_ID,
-                        SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_ID,
-                        SchemaDefinition::ARGNAME_DESCRIPTION => sprintf($translationAPI->__('The ID of the featured image, of type \'%s\'', 'custompostmedia-mutations'), MediaTypeResolver::NAME),
-                        SchemaDefinition::ARGNAME_MANDATORY => true,
-                    ],
-                ]);
+                return \array_merge($setRemoveFeaturedImageSchemaFieldArgs, [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => \PoPSchema\CustomPostMediaMutations\MutationResolvers\MutationInputProperties::MEDIA_ITEM_ID, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($translationAPI->__('The ID of the featured image, of type \'%s\'', 'custompostmedia-mutations'), \PoPSchema\Media\TypeResolvers\MediaTypeResolver::NAME), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true]]);
             case 'removeFeaturedImageFromCustomPost':
                 return $setRemoveFeaturedImageSchemaFieldArgs;
         }
         return parent::getSchemaFieldArgs($typeResolver, $fieldName);
     }
-
-    public function resolveFieldMutationResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldMutationResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'setFeaturedImageOnCustomPost':
-                return SetFeaturedImageOnCustomPostMutationResolver::class;
+                return \PoPSchema\CustomPostMediaMutations\MutationResolvers\SetFeaturedImageOnCustomPostMutationResolver::class;
             case 'removeFeaturedImageFromCustomPost':
-                return RemoveFeaturedImageOnCustomPostMutationResolver::class;
+                return \PoPSchema\CustomPostMediaMutations\MutationResolvers\RemoveFeaturedImageOnCustomPostMutationResolver::class;
         }
-
         return parent::resolveFieldMutationResolverClass($typeResolver, $fieldName);
     }
-
-    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'setFeaturedImageOnCustomPost':
             case 'removeFeaturedImageFromCustomPost':
-                return CustomPostUnionTypeResolver::class;
+                return \PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class;
         }
-
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }
 }

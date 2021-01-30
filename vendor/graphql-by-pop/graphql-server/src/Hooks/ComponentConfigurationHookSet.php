@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Hooks;
 
 use GraphQLByPoP\GraphQLQuery\Environment as GraphQLQueryEnvironment;
@@ -11,25 +10,24 @@ use GraphQLByPoP\GraphQLRequest\ComponentConfiguration as GraphQLRequestComponen
 use PoP\API\ComponentConfiguration as APIComponentConfiguration;
 use PoP\Hooks\AbstractHookSet;
 use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers;
-
-class ComponentConfigurationHookSet extends AbstractHookSet
+class ComponentConfigurationHookSet extends \PoP\Hooks\AbstractHookSet
 {
     protected function init()
     {
-        if (GraphQLRequestComponentConfiguration::enableMultipleQueryExecution()) {
+        if (\GraphQLByPoP\GraphQLRequest\ComponentConfiguration::enableMultipleQueryExecution()) {
             /**
              * Set environment variable to true because it's needed by @export
              */
-            $hookName = ComponentConfigurationHelpers::getHookName(GraphQLQueryComponentConfiguration::class, GraphQLQueryEnvironment::ENABLE_VARIABLES_AS_EXPRESSIONS);
+            $hookName = \PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers::getHookName(\GraphQLByPoP\GraphQLQuery\ComponentConfiguration::class, \GraphQLByPoP\GraphQLQuery\Environment::ENABLE_VARIABLES_AS_EXPRESSIONS);
             $this->hooksAPI->addFilter($hookName, function () {
-                return true;
+                return \true;
             });
             /**
              * @export requires the queries to be executed in order
              */
-            $hookName = ComponentConfigurationHelpers::getHookName(APIComponentConfiguration::class, APIEnvironment::EXECUTE_QUERY_BATCH_IN_STRICT_ORDER);
+            $hookName = \PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers::getHookName(\PoP\API\ComponentConfiguration::class, \PoP\API\Environment::EXECUTE_QUERY_BATCH_IN_STRICT_ORDER);
             $this->hooksAPI->addFilter($hookName, function () {
-                return true;
+                return \true;
             });
         }
     }

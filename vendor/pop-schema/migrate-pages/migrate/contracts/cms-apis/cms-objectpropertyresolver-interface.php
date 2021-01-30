@@ -1,4 +1,5 @@
 <?php
+
 namespace PoPSchema\Pages;
 
 interface ObjectPropertyResolver

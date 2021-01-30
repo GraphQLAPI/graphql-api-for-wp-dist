@@ -1,8 +1,9 @@
 <?php
 
-namespace FastRoute;
+namespace PrefixedByPoP\FastRoute;
 
-interface RouteParser {
+interface RouteParser
+{
     /**
      * Parses a route string into multiple route data arrays.
      *

@@ -1,17 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Cache;
 
-use Psr\Cache\CacheItemPoolInterface;
-use Psr\Cache\CacheItemInterface;
+use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
+use PrefixedByPoP\Psr\Cache\CacheItemInterface;
 use PoP\ComponentModel\ModelInstance\ModelInstanceInterface;
-
-class Cache implements CacheInterface
+class Cache implements \PoP\ComponentModel\Cache\CacheInterface
 {
     use ReplaceCurrentExecutionDataWithPlaceholdersTrait;
-
     /**
      * @var \Psr\Cache\CacheItemPoolInterface
      */
@@ -20,42 +17,32 @@ class Cache implements CacheInterface
      * @var \PoP\ComponentModel\ModelInstance\ModelInstanceInterface
      */
     protected $modelInstance;
-
-    public function __construct(
-        CacheItemPoolInterface $cacheItemPool,
-        ModelInstanceInterface $modelInstance
-    ) {
+    public function __construct(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $cacheItemPool, \PoP\ComponentModel\ModelInstance\ModelInstanceInterface $modelInstance)
+    {
         $this->cacheItemPool = $cacheItemPool;
         $this->modelInstance = $modelInstance;
     }
-
     protected function getKey($id, $type)
     {
         return $type . '.' . $id;
     }
-
-    protected function getCacheItem($id, $type): CacheItemInterface
+    protected function getCacheItem($id, $type) : \PrefixedByPoP\Psr\Cache\CacheItemInterface
     {
         return $this->cacheItemPool->getItem($this->getKey($id, $type));
     }
-
     public function hasCache($id, $type)
     {
         $cacheItem = $this->getCacheItem($id, $type);
         return $cacheItem->isHit();
     }
-
-    public function deleteCache($id, $type): void
+    public function deleteCache($id, $type) : void
     {
         $this->cacheItemPool->deleteItem($this->getKey($id, $type));
     }
-
-    public function clear(): void
+    public function clear() : void
     {
         $this->cacheItemPool->clear();
     }
-
-
     /**
      * If the item is not cached, it will return `null`
      * @see https://www.php-fig.org/psr/psr-6/
@@ -69,15 +56,12 @@ class Cache implements CacheInterface
         $cacheItem = $this->getCacheItem($id, $type);
         return $cacheItem->get();
     }
-
     public function getComponentModelCache($id, $type)
     {
         $content = $this->getCache($id, $type);
-
         // Inject the current request data in place of the placeholders (pun not intended!)
         return $this->replacePlaceholdersWithCurrentExecutionData($content);
     }
-
     /**
      * Store the cache
      *
@@ -94,7 +78,6 @@ class Cache implements CacheInterface
         $cacheItem->expiresAfter($time);
         $this->saveCache($cacheItem);
     }
-
     /**
      * Store the cache
      *
@@ -110,23 +93,20 @@ class Cache implements CacheInterface
         $content = $this->replaceCurrentExecutionDataWithPlaceholders($content);
         $this->storeCache($id, $type, $content, $time);
     }
-
     /**
      * Save immediately. Can override to save as deferred
      *
      * @param CacheItemInterface $cacheItem
      * @return void
      */
-    protected function saveCache(CacheItemInterface $cacheItem)
+    protected function saveCache(\PrefixedByPoP\Psr\Cache\CacheItemInterface $cacheItem)
     {
         $this->cacheItemPool->save($cacheItem);
     }
-
     public function getCacheByModelInstance($type)
     {
         return $this->getComponentModelCache($this->modelInstance->getModelInstanceId(), $type);
     }
-
     public function storeCacheByModelInstance($type, $content)
     {
         return $this->storeCache($this->modelInstance->getModelInstanceId(), $type, $content);

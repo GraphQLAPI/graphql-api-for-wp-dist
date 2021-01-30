@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,42 +8,23 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Brain\Cortex\Route;
+namespace PrefixedByPoP\Brain\Cortex\Route;
 
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class Route implements RouteInterface
+final class Route implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterface
 {
     /**
      * @var array
      */
-    private static $defaults = [
-        'vars'               => null,
-        'default_vars'       => null,
-        'host'               => null,
-        'priority'           => null,
-        'group'              => null,
-        'merge_query_string' => null,
-        'paged'              => null,
-        'method'             => null,
-        'scheme'             => null,
-        'before'             => null,
-        'after'              => null,
-        'template'           => null,
-        'no_template'        => null,
-        'path'               => null,
-        'handler'            => null,
-    ];
-
+    private static $defaults = ['vars' => null, 'default_vars' => null, 'host' => null, 'priority' => null, 'group' => null, 'merge_query_string' => null, 'paged' => null, 'method' => null, 'scheme' => null, 'before' => null, 'after' => null, 'template' => null, 'no_template' => null, 'path' => null, 'handler' => null];
     /**
      * @var array
      */
     private $storage = [];
-
     /**
      * Route constructor.
      *
@@ -50,15 +32,12 @@ final class Route implements RouteInterface
      */
     public function __construct(array $data)
     {
-        array_change_key_case($data, CASE_LOWER);
-        $id = ! empty($data['id']) && is_string($data['id'])
-            ? $data['id']
-            : 'route_'.spl_object_hash($this);
-        $storage = array_merge(self::$defaults, $data);
+        \array_change_key_case($data, \CASE_LOWER);
+        $id = !empty($data['id']) && \is_string($data['id']) ? $data['id'] : 'route_' . \spl_object_hash($this);
+        $storage = \array_merge(self::$defaults, $data);
         $storage['id'] = $id;
         $this->storage = $storage;
     }
-
     /**
      * @inheritdoc
      */
@@ -66,7 +45,6 @@ final class Route implements RouteInterface
     {
         return $this->storage['id'];
     }
-
     /**
      * @inheritdoc
      */
@@ -74,20 +52,17 @@ final class Route implements RouteInterface
     {
         $result = [];
         foreach ($this->storage as $key => $value) {
-            (is_string($key) && $key && ! is_null($value)) and $result[$key] = $value;
+            \is_string($key) && $key && !\is_null($value) and $result[$key] = $value;
         }
-
         return $result;
     }
-
     /**
      * @inheritdoc
      */
     public function offsetExists($offset)
     {
-        return array_key_exists($offset, $this->storage);
+        return \array_key_exists($offset, $this->storage);
     }
-
     /**
      * @inheritdoc
      */
@@ -95,7 +70,6 @@ final class Route implements RouteInterface
     {
         return $this->offsetExists($offset) ? $this->storage[$offset] : null;
     }
-
     /**
      * @inheritdoc
      */
@@ -103,7 +77,6 @@ final class Route implements RouteInterface
     {
         $this->storage[$offset] = $value;
     }
-
     /**
      * @inheritdoc
      */

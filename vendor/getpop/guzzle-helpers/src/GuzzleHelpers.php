@@ -1,17 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\GuzzleHelpers;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Promise;
+use function PrefixedByPoP\GuzzleHttp\Promise\unwrap;
+use function PrefixedByPoP\GuzzleHttp\Promise\settle;
+use PrefixedByPoP\GuzzleHttp\Client;
+use PrefixedByPoP\GuzzleHttp\Promise;
 use PoP\ComponentModel\ErrorHandling\Error;
-use GuzzleHttp\RequestOptions;
-use Psr\Http\Message\ResponseInterface;
-use GuzzleHttp\Exception\RequestException;
+use PrefixedByPoP\GuzzleHttp\RequestOptions;
+use PrefixedByPoP\Psr\Http\Message\ResponseInterface;
+use PrefixedByPoP\GuzzleHttp\Exception\RequestException;
 use PoP\Translation\Facades\TranslationAPIFacade;
-
 class GuzzleHelpers
 {
     /**
@@ -24,61 +24,40 @@ class GuzzleHelpers
      */
     public static function requestJSON(string $url, array $bodyJSONQuery = [], string $method = 'POST')
     {
-        $client = new Client();
+        $client = new \PrefixedByPoP\GuzzleHttp\Client();
         try {
-            $options = [
-                RequestOptions::JSON => $bodyJSONQuery,
-            ];
+            $options = [\PrefixedByPoP\GuzzleHttp\RequestOptions::JSON => $bodyJSONQuery];
             $response = $client->request($method, $url, $options);
             return self::validateAndDecodeJSONResponse($response);
-        } catch (RequestException $exception) {
-            return new Error(
-                'request-failed',
-                $exception->getMessage()
-            );
+        } catch (\PrefixedByPoP\GuzzleHttp\Exception\RequestException $exception) {
+            return new \PoP\ComponentModel\ErrorHandling\Error('request-failed', $exception->getMessage());
         }
         return [];
     }
-
-    protected static function validateAndDecodeJSONResponse(ResponseInterface $response)
+    protected static function validateAndDecodeJSONResponse(\PrefixedByPoP\Psr\Http\Message\ResponseInterface $response)
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         if ($response->getStatusCode() != 200) {
             // Throw an error
-            return new Error(
-                'request-failed',
-                sprintf($translationAPI->__('The response status code is \'%s\' instead of the expected \'%s\'', 'guzzle-helpers'), $response->getStatusCode(), 200)
-            );
+            return new \PoP\ComponentModel\ErrorHandling\Error('request-failed', \sprintf($translationAPI->__('The response status code is \'%s\' instead of the expected \'%s\'', 'guzzle-helpers'), $response->getStatusCode(), 200));
         }
         $contentType = $response->getHeaderLine('content-type');
         // It must be a JSON content type, for which it's either
         // application/json or one of its opinionated variants,
         // which all contain +json, such as
         // application/ld+json or application/geo+json
-        $isJSONContentType =
-            substr($contentType, 0, strlen('application/json')) == 'application/json'
-            || (
-                substr($contentType, 0, strlen('application/')) == 'application/'
-                && strpos($contentType, '+json') !== false
-            );
+        $isJSONContentType = \substr($contentType, 0, \strlen('application/json')) == 'application/json' || \substr($contentType, 0, \strlen('application/')) == 'application/' && \strpos($contentType, '+json') !== \false;
         if (!$isJSONContentType) {
             // Throw an error
-            return new Error(
-                'request-failed',
-                sprintf($translationAPI->__('The response content type \'%s\' is unsupported', 'guzzle-helpers'), $contentType)
-            );
+            return new \PoP\ComponentModel\ErrorHandling\Error('request-failed', \sprintf($translationAPI->__('The response content type \'%s\' is unsupported', 'guzzle-helpers'), $contentType));
         }
         $body = $response->getBody();
         if (!$body) {
             // Throw an error
-            return new Error(
-                'request-failed',
-                $translationAPI->__('The body of the response is empty', 'guzzle-helpers')
-            );
+            return new \PoP\ComponentModel\ErrorHandling\Error('request-failed', $translationAPI->__('The body of the response is empty', 'guzzle-helpers'));
         }
-        return json_decode($body->__toString(), true);
+        return \json_decode($body->__toString(), \true);
     }
-
     /**
      * Execute several JSON requests asynchronously using the same endpoint URL and different queries
      *
@@ -90,12 +69,11 @@ class GuzzleHelpers
     public static function requestSingleURLMultipleQueriesAsyncJSON(string $url, array $bodyJSONQueries = [], string $method = 'POST')
     {
         $urls = [];
-        for ($i = 0; $i < count($bodyJSONQueries); $i++) {
+        for ($i = 0; $i < \count($bodyJSONQueries); $i++) {
             $urls[] = $url;
         }
         return self::requestAsyncJSON($urls, $bodyJSONQueries, $method);
     }
-
     /**
      * Execute several JSON requests asynchronously
      *
@@ -109,8 +87,7 @@ class GuzzleHelpers
         if (!$urls) {
             return [];
         }
-
-        $client = new Client();
+        $client = new \PrefixedByPoP\GuzzleHttp\Client();
         try {
             // Build the list of promises from the URLs and the body JSON queries
             $promises = [];
@@ -118,29 +95,21 @@ class GuzzleHelpers
                 // If there is a body JSON query, attach it to the request
                 $options = [];
                 if ($bodyJSONQuery = $bodyJSONQueries[$key] ?? null) {
-                    $options[RequestOptions::JSON] = $bodyJSONQuery;
+                    $options[\PrefixedByPoP\GuzzleHttp\RequestOptions::JSON] = $bodyJSONQuery;
                 }
                 $promises[$key] = $client->requestAsync($method, $url, $options);
             }
-
             // Wait on all of the requests to complete. Throws a ConnectException
             // if any of the requests fail
-            $results = Promise\unwrap($promises);
-
+            $results = \PrefixedByPoP\GuzzleHttp\Promise\unwrap($promises);
             // Wait for the requests to complete, even if some of them fail
-            $results = Promise\settle($promises)->wait();
-
+            $results = \PrefixedByPoP\GuzzleHttp\Promise\settle($promises)->wait();
             // You can access each result using the key provided to the unwrap function.
-            return array_map(function ($result) {
+            return \array_map(function ($result) {
                 return self::validateAndDecodeJSONResponse($result['value']);
             }, $results);
-        } catch (RequestException $exception) {
-            return [
-                new Error(
-                    'request-failed',
-                    $exception->getMessage()
-                )
-            ];
+        } catch (\PrefixedByPoP\GuzzleHttp\Exception\RequestException $exception) {
+            return [new \PoP\ComponentModel\ErrorHandling\Error('request-failed', $exception->getMessage())];
         }
         return [];
     }

@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\Facades\Schema;
 
 use PoP\Engine\Schema\SchemaDefinitionServiceInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
-
 class SchemaDefinitionServiceFacade
 {
-    public static function getInstance(): SchemaDefinitionServiceInterface
+    public static function getInstance() : \PoP\Engine\Schema\SchemaDefinitionServiceInterface
     {
         /**
          * @var SchemaDefinitionServiceInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(SchemaDefinitionServiceInterface::class);
+        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\Engine\Schema\SchemaDefinitionServiceInterface::class);
         return $service;
     }
 }

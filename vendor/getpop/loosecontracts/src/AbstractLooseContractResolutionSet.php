@@ -1,13 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\LooseContracts;
 
 use PoP\Hooks\HooksAPIInterface;
 use PoP\LooseContracts\NameResolverInterface;
 use PoP\LooseContracts\LooseContractManagerInterface;
-
 abstract class AbstractLooseContractResolutionSet
 {
     /**
@@ -22,16 +20,11 @@ abstract class AbstractLooseContractResolutionSet
      * @var \PoP\Hooks\HooksAPIInterface
      */
     protected $hooksAPI;
-
-    public function __construct(
-        LooseContractManagerInterface $looseContractManager,
-        NameResolverInterface $nameResolver,
-        HooksAPIInterface $hooksAPI
-    ) {
+    public function __construct(\PoP\LooseContracts\LooseContractManagerInterface $looseContractManager, \PoP\LooseContracts\NameResolverInterface $nameResolver, \PoP\Hooks\HooksAPIInterface $hooksAPI)
+    {
         $this->looseContractManager = $looseContractManager;
         $this->nameResolver = $nameResolver;
         $this->hooksAPI = $hooksAPI;
-
         $this->resolveContracts();
     }
     /**
@@ -39,5 +32,5 @@ abstract class AbstractLooseContractResolutionSet
      *
      * @return void
      */
-    abstract protected function resolveContracts();
+    protected abstract function resolveContracts();
 }

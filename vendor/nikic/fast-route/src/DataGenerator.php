@@ -1,8 +1,9 @@
 <?php
 
-namespace FastRoute;
+namespace PrefixedByPoP\FastRoute;
 
-interface DataGenerator {
+interface DataGenerator
+{
     /**
      * Adds a route to the data generator. The route data uses the
      * same format that is returned by RouterParser::parser().
@@ -16,7 +17,6 @@ interface DataGenerator {
      * @param mixed $handler
      */
     public function addRoute($httpMethod, $routeData, $handler);
-
     /**
      * Returns dispatcher data in some unspecified format, which
      * depends on the used method of dispatch.

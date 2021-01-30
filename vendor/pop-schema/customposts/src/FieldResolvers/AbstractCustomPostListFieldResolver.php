@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPosts\FieldResolvers;
 
 use PoPSchema\CustomPosts\ComponentConfiguration;
@@ -16,110 +15,74 @@ use PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver;
 use PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor;
 use PoPSchema\CustomPosts\Types\Status;
 use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
-
-abstract class AbstractCustomPostListFieldResolver extends AbstractQueryableFieldResolver
+abstract class AbstractCustomPostListFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver
 {
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
-        return [
-            'customPosts',
-            'customPostCount',
-        ];
+        return ['customPosts', 'customPostCount'];
     }
-
-    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $types = [
-            'customPosts' => TypeCastingHelpers::makeArray(SchemaDefinition::TYPE_ID),
-            'customPostCount' => SchemaDefinition::TYPE_INT,
-        ];
+        $types = ['customPosts' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID), 'customPostCount' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_INT];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-
-    public function isSchemaFieldResponseNonNullable(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
         switch ($fieldName) {
             case 'customPosts':
             case 'customPostCount':
-                return true;
+                return \true;
         }
         return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        $descriptions = [
-            'customPosts' => $translationAPI->__('Custom posts', 'pop-posts'),
-            'customPostCount' => $translationAPI->__('Number of custom posts', 'pop-posts'),
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $descriptions = ['customPosts' => $translationAPI->__('Custom posts', 'pop-posts'), 'customPostCount' => $translationAPI->__('Number of custom posts', 'pop-posts')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-
-    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): array
+    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         $schemaFieldArgs = parent::getSchemaFieldArgs($typeResolver, $fieldName);
         switch ($fieldName) {
             case 'customPosts':
             case 'customPostCount':
-                return array_merge($schemaFieldArgs, $this->getFieldArgumentsSchemaDefinitions($typeResolver, $fieldName));
+                return \array_merge($schemaFieldArgs, $this->getFieldArgumentsSchemaDefinitions($typeResolver, $fieldName));
         }
         return $schemaFieldArgs;
     }
-
-    public function enableOrderedSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName): bool
+    public function enableOrderedSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
         switch ($fieldName) {
             case 'customPosts':
             case 'customPostCount':
-                return false;
+                return \false;
         }
         return parent::enableOrderedSchemaFieldArgs($typeResolver, $fieldName);
     }
-
-    protected function getFieldDefaultFilterDataloadingModule(TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []): ?array
+    protected function getFieldDefaultFilterDataloadingModule(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []) : ?array
     {
         switch ($fieldName) {
             case 'customPostCount':
-                return [
-                    CustomPostRelationalFieldDataloadModuleProcessor::class,
-                    CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_UNIONCUSTOMPOSTCOUNT
-                ];
+                return [\PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor::class, \PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_UNIONCUSTOMPOSTCOUNT];
         }
         return parent::getFieldDefaultFilterDataloadingModule($typeResolver, $fieldName, $fieldArgs);
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @return array<string, mixed>
      * @param object $resultItem
      */
-    protected function getQuery(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = []
-    ): array {
+    protected function getQuery(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : array
+    {
         switch ($fieldName) {
             case 'customPosts':
-                return [
-                    'limit' => ComponentConfiguration::getCustomPostListDefaultLimit(),
-                    'types-from-union-resolver-class' => CustomPostUnionTypeResolver::class,
-                    'status' => [
-                        Status::PUBLISHED,
-                    ],
-                ];
+                return ['limit' => \PoPSchema\CustomPosts\ComponentConfiguration::getCustomPostListDefaultLimit(), 'types-from-union-resolver-class' => \PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class, 'status' => [\PoPSchema\CustomPosts\Types\Status::PUBLISHED]];
             case 'customPostCount':
-                return [
-                    'types-from-union-resolver-class' => CustomPostUnionTypeResolver::class,
-                    'status' => [
-                        Status::PUBLISHED,
-                    ],
-                ];
+                return ['types-from-union-resolver-class' => \PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class, 'status' => [\PoPSchema\CustomPosts\Types\Status::PUBLISHED]];
         }
         return [];
     }
-
     /**
      * @param array<string, mixed> $fieldArgs
      * @param array<string, mixed>|null $variables
@@ -128,22 +91,13 @@ abstract class AbstractCustomPostListFieldResolver extends AbstractQueryableFiel
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(
-        TypeResolverInterface $typeResolver,
-        $resultItem,
-        string $fieldName,
-        array $fieldArgs = [],
-        ?array $variables = null,
-        ?array $expressions = null,
-        array $options = []
-    ) {
-        $customPostTypeAPI = CustomPostTypeAPIFacade::getInstance();
+    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    {
+        $customPostTypeAPI = \PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade::getInstance();
         switch ($fieldName) {
             case 'customPosts':
                 $query = $this->getQuery($typeResolver, $resultItem, $fieldName, $fieldArgs);
-                $options = [
-                    'return-type' => ReturnTypes::IDS,
-                ];
+                $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
                 $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
                 return $customPostTypeAPI->getCustomPosts($query, $options);
             case 'customPostCount':
@@ -152,17 +106,14 @@ abstract class AbstractCustomPostListFieldResolver extends AbstractQueryableFiel
                 $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
                 return $customPostTypeAPI->getCustomPostCount($query, $options);
         }
-
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-
-    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName): ?string
+    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'customPosts':
-                return CustomPostUnionTypeHelpers::getCustomPostUnionOrTargetTypeResolverClass(CustomPostUnionTypeResolver::class);
+                return \PoPSchema\CustomPosts\TypeHelpers\CustomPostUnionTypeHelpers::getCustomPostUnionOrTargetTypeResolverClass(\PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class);
         }
-
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }
 }

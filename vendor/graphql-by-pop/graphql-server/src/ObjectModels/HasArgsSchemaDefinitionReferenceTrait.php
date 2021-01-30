@@ -1,36 +1,27 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use PoP\API\Schema\SchemaDefinition;
 use GraphQLByPoP\GraphQLServer\ObjectModels\InputValue;
-
 trait HasArgsSchemaDefinitionReferenceTrait
 {
     /**
      * @var InputValue[]
      */
     protected $args;
-
-    protected function initArgs(array &$fullSchemaDefinition, array $schemaDefinitionPath): void
+    protected function initArgs(array &$fullSchemaDefinition, array $schemaDefinitionPath) : void
     {
         $this->args = [];
-        if ($args = $this->schemaDefinition[SchemaDefinition::ARGNAME_ARGS] ?? null) {
-            foreach (array_keys($args) as $fieldArgName) {
-                $fieldArgSchemaDefinitionPath = array_merge($schemaDefinitionPath, [
-                    SchemaDefinition::ARGNAME_ARGS,
-                    $fieldArgName,
-                ]);
-                $this->args[] = new InputValue(
-                    $fullSchemaDefinition,
-                    $fieldArgSchemaDefinitionPath
-                );
+        if ($args = $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_ARGS] ?? null) {
+            foreach (\array_keys($args) as $fieldArgName) {
+                $fieldArgSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [\PoP\API\Schema\SchemaDefinition::ARGNAME_ARGS, $fieldArgName]);
+                $this->args[] = new \GraphQLByPoP\GraphQLServer\ObjectModels\InputValue($fullSchemaDefinition, $fieldArgSchemaDefinitionPath);
             }
         }
     }
-    public function initializeArgsTypeDependencies(): void
+    public function initializeArgsTypeDependencies() : void
     {
         foreach ($this->args as $arg) {
             $arg->initializeTypeDependencies();
@@ -41,13 +32,13 @@ trait HasArgsSchemaDefinitionReferenceTrait
      *
      * @return array of InputValue type
      */
-    public function getArgs(): array
+    public function getArgs() : array
     {
         return $this->args;
     }
-    public function getArgIDs(): array
+    public function getArgIDs() : array
     {
-        return array_map(function (InputValue $inputValue) {
+        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\InputValue $inputValue) {
             return $inputValue->getID();
         }, $this->getArgs());
     }

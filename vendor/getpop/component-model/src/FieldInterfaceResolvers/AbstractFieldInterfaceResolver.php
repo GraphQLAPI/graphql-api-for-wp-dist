@@ -1,50 +1,39 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\FieldInterfaceResolvers;
 
 use PoP\ComponentModel\Schema\SchemaHelpers;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceSchemaDefinitionResolverTrait;
-
-abstract class AbstractFieldInterfaceResolver implements FieldInterfaceResolverInterface
+abstract class AbstractFieldInterfaceResolver implements \PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface
 {
     use FieldInterfaceSchemaDefinitionResolverTrait;
-
-    public static function getFieldNamesToResolve(): array
+    public static function getFieldNamesToResolve() : array
     {
         return self::getFieldNamesToImplement();
     }
-
-    public static function getImplementedInterfaceClasses(): array
+    public static function getImplementedInterfaceClasses() : array
     {
         return [];
     }
-
-    public function getNamespace(): string
+    public function getNamespace() : string
     {
-        return SchemaHelpers::getSchemaNamespace(get_called_class());
+        return \PoP\ComponentModel\Schema\SchemaHelpers::getSchemaNamespace(\get_called_class());
     }
-
-    final public function getNamespacedInterfaceName(): string
+    public final function getNamespacedInterfaceName() : string
     {
-        return SchemaHelpers::getSchemaNamespacedName($this->getNamespace(), $this->getInterfaceName());
+        return \PoP\ComponentModel\Schema\SchemaHelpers::getSchemaNamespacedName($this->getNamespace(), $this->getInterfaceName());
     }
-
-    final public function getMaybeNamespacedInterfaceName(): string
+    public final function getMaybeNamespacedInterfaceName() : string
     {
-        $vars = ApplicationState::getVars();
-        return $vars['namespace-types-and-interfaces'] ?
-            $this->getNamespacedInterfaceName() :
-            $this->getInterfaceName();
+        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        return $vars['namespace-types-and-interfaces'] ? $this->getNamespacedInterfaceName() : $this->getInterfaceName();
     }
-
-    public function getSchemaInterfaceDescription(): ?string
+    public function getSchemaInterfaceDescription() : ?string
     {
         return null;
     }
-
     /**
      * The fieldResolver will determine if it has a version or not, however the signature
      * of the fields comes from the interface. Only if there's a version will fieldArg "versionConstraint"
@@ -56,16 +45,14 @@ abstract class AbstractFieldInterfaceResolver implements FieldInterfaceResolverI
      * @param string $fieldName
      * @return boolean
      */
-    protected function hasSchemaFieldVersion(string $fieldName): bool
+    protected function hasSchemaFieldVersion(string $fieldName) : bool
     {
-        return true;
+        return \true;
     }
-
     // public function getSchemaInterfaceVersion(string $fieldName): ?string
     // {
     //     return null;
     // }
-
     /**
      * This function is not called by the engine, to generate the schema.
      * Instead, the resolver is obtained from the fieldResolver.
@@ -73,7 +60,7 @@ abstract class AbstractFieldInterfaceResolver implements FieldInterfaceResolverI
      * return the expected type for the field, they can obtain it from the
      * interface through this function.
      */
-    public function getFieldTypeResolverClass(string $fieldName): ?string
+    public function getFieldTypeResolverClass(string $fieldName) : ?string
     {
         return null;
     }

@@ -5,27 +5,21 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FragmentInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-
-class Query extends AbstractAst implements FieldInterface
+class Query extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface
 {
     use AstArgumentsTrait;
     use AstDirectivesTrait;
-
     /** @var string */
     protected $name;
-
     /** @var string */
     protected $alias;
-
     /** @var Field[]|Query[] */
     protected $fields = [];
-
     /**
      * Query constructor.
      *
@@ -36,38 +30,33 @@ class Query extends AbstractAst implements FieldInterface
      * @param array    $directives
      * @param Location $location
      */
-    public function __construct($name, $alias, array $arguments, array $fields, array $directives, Location $location)
+    public function __construct($name, $alias, array $arguments, array $fields, array $directives, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
     {
         parent::__construct($location);
-
-        $this->name      = $name;
-        $this->alias     = $alias;
+        $this->name = $name;
+        $this->alias = $alias;
         $this->setFields($fields);
         $this->setArguments($arguments);
         $this->setDirectives($directives);
     }
-
     public function getName()
     {
         return $this->name;
     }
-
     /**
      * @return Field[]|Query[]|FragmentInterface[]
      */
     public function getFields()
     {
-        return array_values($this->fields);
+        return \array_values($this->fields);
     }
-
     /**
      * @return bool
      */
     public function hasFields()
     {
-        return (bool)count($this->fields);
+        return (bool) \count($this->fields);
     }
-
     /**
      * @param Field[]|Query[] $fields
      */
@@ -78,26 +67,22 @@ class Query extends AbstractAst implements FieldInterface
          */
         $this->fields = $fields;
     }
-
     public function getAlias()
     {
         return $this->alias;
     }
-
-    public function hasField($name, $deep = false)
+    public function hasField($name, $deep = \false)
     {
         foreach ($this->getFields() as $field) {
             if ($field->getName() == $name) {
-                return true;
+                return \true;
             }
-
-            if ($deep && $field instanceof Query) {
+            if ($deep && $field instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\Query) {
                 if ($field->hasField($name)) {
-                    return true;
+                    return \true;
                 }
             }
         }
-
-        return false;
+        return \false;
     }
 }

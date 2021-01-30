@@ -1,4 +1,5 @@
 <?php
+
 namespace PoPSchema\Users;
 
 interface FunctionAPI
@@ -8,8 +9,8 @@ interface FunctionAPI
     public function getUserByEmail($value);
     public function getUserBySlug($value);
     public function getUserByLogin($value);
-    public function getUsers($query = array(), array $options = []): array;
-    public function getUserCount(array $query = [], array $options = []): int;
+    public function getUsers($query = array(), array $options = []) : array;
+    public function getUserCount(array $query = [], array $options = []) : int;
     public function getUserDisplayName($user_id);
     public function getUserEmail($user_id);
     public function getUserFirstname($user_id);

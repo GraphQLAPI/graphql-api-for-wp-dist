@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\PropertyInfo;
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
 
 /**
  * Guesses the property's human readable description.
@@ -24,7 +23,6 @@ interface PropertyDescriptionExtractorInterface
      * @return string|null
      */
     public function getShortDescription(string $class, string $property, array $context = []);
-
     /**
      * Gets the long description of the property.
      *

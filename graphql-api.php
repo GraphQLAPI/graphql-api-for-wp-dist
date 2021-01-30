@@ -1,9 +1,10 @@
 <?php
+use GraphQLAPI\GraphQLAPI\Plugin;
 /*
 Plugin Name: GraphQL API for WordPress
 Plugin URI: https://graphql-api.com
 Description: Transform your WordPress site into a GraphQL server.
-Version: 0.7.7
+Version: 0.7.9
 Requires at least: 5.4
 Requires PHP: 7.1
 Author: Leonardo Losoviz
@@ -35,13 +36,13 @@ if (defined('GRAPHQL_API_VERSION')) {
             sprintf(
                 __('Plugin <strong>GraphQL API for WordPress</strong> is already installed with version <code>%s</code>, so version <code>%s</code> has not been loaded. Please deactivate all versions, remove the older version, and activate again the latest version of the plugin.', 'graphql-api'),
                 \GRAPHQL_API_VERSION,
-                '0.7.7'
+                '0.7.9'
             )
         ));
     });
     return;
 }
-define('GRAPHQL_API_VERSION', '0.7.7');
+define('GRAPHQL_API_VERSION', '0.7.9');
 define('GRAPHQL_API_PLUGIN_FILE', __FILE__);
 define('GRAPHQL_API_DIR', dirname(__FILE__));
 define('GRAPHQL_API_URL', plugin_dir_url(__FILE__));
@@ -49,7 +50,7 @@ define('GRAPHQL_API_BASE_NAME', plugin_basename(__FILE__)); // "graphql-api/grap
 define('GRAPHQL_API_PLUGIN_NAME', dirname(plugin_basename(__FILE__))); // "graphql-api"
 
 // Check Composer's autoload has been generated
-$autoloadFile = __DIR__ . '/vendor/autoload.php';
+$autoloadFile = __DIR__ . '/vendor/scoper-autoload.php';
 if (!file_exists($autoloadFile)) {
     \add_action('admin_notices', function () {
         _e(sprintf(
@@ -66,4 +67,4 @@ if (!file_exists($autoloadFile)) {
 require_once($autoloadFile);
 
 // Create and set-up the plugin instance
-(new \GraphQLAPI\GraphQLAPI\Plugin())->setup();
+(new Plugin())->setup();

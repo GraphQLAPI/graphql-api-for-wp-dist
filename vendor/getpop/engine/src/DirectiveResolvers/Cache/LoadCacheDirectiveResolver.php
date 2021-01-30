@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Engine\DirectiveResolvers\Cache;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
@@ -14,44 +13,39 @@ use PoP\Engine\DirectiveResolvers\Cache\CacheDirectiveResolverTrait;
 use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
 use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTrait;
 use PoP\Engine\Cache\CacheTypes;
-
 /**
  * Load the field value from the cache. This directive is executed before `@resolveAndMerge`,
  * and it works together with "@saveCache" (called @cache) which is executed after `@resolveAndMerge`.
  * If @loadCache finds there's a cached value already, then the idsDataFields for directives
  * @resolveAndMerge and @saveCache will be removed, so they have nothing to do
  */
-class LoadCacheDirectiveResolver extends AbstractGlobalDirectiveResolver
+class LoadCacheDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
 {
     use CacheDirectiveResolverTrait;
     use RemoveIDsDataFieldsDirectiveResolverTrait;
-
     const DIRECTIVE_NAME = 'loadCache';
-    public static function getDirectiveName(): string
+    public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;
     }
-
     /**
      * Place it after the validation and before it's added to $dbItems in the resolveAndMerge directive
      *
      * @return void
      */
-    public function getPipelinePosition(): string
+    public function getPipelinePosition() : string
     {
-        return PipelinePositions::AFTER_VALIDATE_BEFORE_RESOLVE;
+        return \PoP\ComponentModel\TypeResolvers\PipelinePositions::AFTER_VALIDATE_BEFORE_RESOLVE;
     }
-
     /**
      * This directive is added automatically by @cache, it's not added by the user
      *
      * @return boolean
      */
-    public function skipAddingToSchemaDefinition(): bool
+    public function skipAddingToSchemaDefinition() : bool
     {
-        return true;
+        return \true;
     }
-
     /**
      * Save all the field values into the cache
      *
@@ -72,39 +66,19 @@ class LoadCacheDirectiveResolver extends AbstractGlobalDirectiveResolver
      * @param array $schemaDeprecations
      * @return void
      */
-    public function resolveDirective(
-        TypeResolverInterface $typeResolver,
-        array &$idsDataFields,
-        array &$succeedingPipelineIDsDataFields,
-        array &$succeedingPipelineDirectiveResolverInstances,
-        array &$resultIDItems,
-        array &$unionDBKeyIDs,
-        array &$dbItems,
-        array &$previousDBItems,
-        array &$variables,
-        array &$messages,
-        array &$dbErrors,
-        array &$dbWarnings,
-        array &$dbDeprecations,
-        array &$dbNotices,
-        array &$dbTraces,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations,
-        array &$schemaNotices,
-        array &$schemaTraces
-    ): void {
-        $persistentCache = PersistentCacheFacade::getInstance();
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    {
+        $persistentCache = \PoP\ComponentModel\Facades\Cache\PersistentCacheFacade::getInstance();
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         $idsDataFieldsToRemove = [];
-        $cacheType = CacheTypes::CACHE_DIRECTIVE;
+        $cacheType = \PoP\Engine\Cache\CacheTypes::CACHE_DIRECTIVE;
         foreach ($idsDataFields as $id => $dataFields) {
             foreach ($dataFields['direct'] as $field) {
                 $cacheID = $this->getCacheID($typeResolver, $id, $field);
                 $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
                 if ($persistentCache->hasCache($cacheID, $cacheType)) {
-                    $dbItems[(string)$id][$fieldOutputKey] = $persistentCache->getCache($cacheID, $cacheType);
-                    $idsDataFieldsToRemove[(string)$id]['direct'][] = $field;
+                    $dbItems[(string) $id][$fieldOutputKey] = $persistentCache->getCache($cacheID, $cacheType);
+                    $idsDataFieldsToRemove[(string) $id]['direct'][] = $field;
                 }
             }
         }
@@ -117,11 +91,11 @@ class LoadCacheDirectiveResolver extends AbstractGlobalDirectiveResolver
         if ($idsDataFieldsToRemove) {
             // Find the position of the @cache directive. Compare by name and not by class, just in case the directive class was overriden
             $pos = 0;
-            $found = false;
-            while (!$found && $pos < count($succeedingPipelineDirectiveResolverInstances)) {
+            $found = \false;
+            while (!$found && $pos < \count($succeedingPipelineDirectiveResolverInstances)) {
                 $directiveResolverInstance = $succeedingPipelineDirectiveResolverInstances[$pos];
-                if ($directiveResolverInstance->getDirectiveName() == SaveCacheDirectiveResolver::getDirectiveName()) {
-                    $found = true;
+                if ($directiveResolverInstance->getDirectiveName() == \PoP\Engine\DirectiveResolvers\Cache\SaveCacheDirectiveResolver::getDirectiveName()) {
+                    $found = \true;
                 } else {
                     $pos++;
                 }
@@ -131,26 +105,24 @@ class LoadCacheDirectiveResolver extends AbstractGlobalDirectiveResolver
                 // (so the changes applied to this array are also applied on the original one)
                 $pipelineIDsDataFieldsToRemove = [];
                 for ($i = 0; $i <= $pos; $i++) {
-                    $pipelineIDsDataFieldsToRemove[] = &$succeedingPipelineIDsDataFields[$i];
+                    $pipelineIDsDataFieldsToRemove[] =& $succeedingPipelineIDsDataFields[$i];
                 }
-
                 // Remove the $idsDataFields for them
                 $this->removeIDsDataFields($idsDataFieldsToRemove, $pipelineIDsDataFieldsToRemove);
             }
-
             // Log the cached items
-            $feedbackMessageStore = FeedbackMessageStoreFacade::getInstance();
-            $translationAPI = TranslationAPIFacade::getInstance();
+            $feedbackMessageStore = \PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance();
+            $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
             $logCachedIDFields = [];
             foreach ($idsDataFieldsToRemove as $id => $dataFieldsToRemove) {
-                $logCachedIDFields[] = sprintf($translationAPI->__('ID: %s, Field(s): \'%s\'', 'engine'), $id, implode('\', \'', $dataFieldsToRemove['direct']));
+                $logCachedIDFields[] = \sprintf($translationAPI->__('ID: %s, Field(s): \'%s\'', 'engine'), $id, \implode('\', \'', $dataFieldsToRemove['direct']));
             }
-            $feedbackMessageStore->addLogEntry(sprintf($translationAPI->__('The following fields of type \'%s\' were resolved from the cache - %s', 'engine'), $typeResolver->getTypeName(), implode($translationAPI->__('; ', 'engine'), $logCachedIDFields)));
+            $feedbackMessageStore->addLogEntry(\sprintf($translationAPI->__('The following fields of type \'%s\' were resolved from the cache - %s', 'engine'), $typeResolver->getTypeName(), \implode($translationAPI->__('; ', 'engine'), $logCachedIDFields)));
         }
     }
-    public function getSchemaDirectiveDescription(TypeResolverInterface $typeResolver): ?string
+    public function getSchemaDirectiveDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Load the cached value for a field', 'engine');
     }
 }

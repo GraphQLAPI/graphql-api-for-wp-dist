@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\TypeResolvers;
 
 use PoP\Translation\Facades\TranslationAPIFacade;
@@ -9,24 +8,19 @@ use GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot;
 use PoP\Engine\TypeResolvers\ReservedNameTypeResolverTrait;
 use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
 use GraphQLByPoP\GraphQLServer\TypeDataLoaders\QueryRootTypeDataLoader;
-
-class QueryRootTypeResolver extends AbstractUseRootAsSourceForSchemaTypeResolver
+class QueryRootTypeResolver extends \GraphQLByPoP\GraphQLServer\TypeResolvers\AbstractUseRootAsSourceForSchemaTypeResolver
 {
     use ReservedNameTypeResolverTrait;
-
     public const NAME = 'QueryRoot';
-
-    public function getTypeName(): string
+    public function getTypeName() : string
     {
         return self::NAME;
     }
-
-    public function getSchemaTypeDescription(): ?string
+    public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Query type, starting from which the query is executed', 'graphql-server');
     }
-
     /**
      * @param object $resultItem
      */
@@ -36,17 +30,12 @@ class QueryRootTypeResolver extends AbstractUseRootAsSourceForSchemaTypeResolver
         $queryRoot = $resultItem;
         return $queryRoot->getID();
     }
-
-    public function getTypeDataLoaderClass(): string
+    public function getTypeDataLoaderClass() : string
     {
-        return QueryRootTypeDataLoader::class;
+        return \GraphQLByPoP\GraphQLServer\TypeDataLoaders\QueryRootTypeDataLoader::class;
     }
-
-    protected function isFieldNameConditionSatisfiedForSchema(FieldResolverInterface $fieldResolver, string $fieldName): bool
+    protected function isFieldNameConditionSatisfiedForSchema(\PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, string $fieldName) : bool
     {
-        return
-            // Field "mutationRoot" is a helper, must not be ported to QueryRoot
-            !in_array($fieldName, ['mutationRoot'])
-            && $fieldResolver->resolveFieldMutationResolverClass($this, $fieldName) === null;
+        return !\in_array($fieldName, ['mutationRoot']) && $fieldResolver->resolveFieldMutationResolverClass($this, $fieldName) === null;
     }
 }

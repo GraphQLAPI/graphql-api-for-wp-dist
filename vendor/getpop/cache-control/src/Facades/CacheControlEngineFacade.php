@@ -1,20 +1,18 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\CacheControl\Facades;
 
 use PoP\CacheControl\Managers\CacheControlEngineInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
-
 class CacheControlEngineFacade
 {
-    public static function getInstance(): CacheControlEngineInterface
+    public static function getInstance() : \PoP\CacheControl\Managers\CacheControlEngineInterface
     {
         /**
          * @var CacheControlEngineInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(CacheControlEngineInterface::class);
+        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\CacheControl\Managers\CacheControlEngineInterface::class);
         return $service;
     }
 }

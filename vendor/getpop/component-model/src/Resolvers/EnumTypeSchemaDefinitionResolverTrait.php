@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Resolvers;
 
 use PoP\ComponentModel\Schema\SchemaDefinition;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-
 trait EnumTypeSchemaDefinitionResolverTrait
 {
     /**
@@ -17,31 +15,24 @@ trait EnumTypeSchemaDefinitionResolverTrait
      * @param string $fieldName
      * @return void
      */
-    protected function doAddSchemaDefinitionEnumValuesForField(
-        array &$schemaDefinition,
-        array $enumValues,
-        array $enumValueDeprecationDescriptions,
-        array $enumValueDescriptions,
-        ?string $enumName
-    ): void {
+    protected function doAddSchemaDefinitionEnumValuesForField(array &$schemaDefinition, array $enumValues, array $enumValueDeprecationDescriptions, array $enumValueDescriptions, ?string $enumName) : void
+    {
         $enums = [];
         foreach ($enumValues as $enumValue) {
-            $enum = [
-                SchemaDefinition::ARGNAME_NAME => $enumValue,
-            ];
+            $enum = [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => $enumValue];
             if ($description = $enumValueDescriptions[$enumValue] ?? null) {
-                $enum[SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+                $enum[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
             }
             if ($deprecationDescription = $enumValueDeprecationDescriptions[$enumValue] ?? null) {
-                $enum[SchemaDefinition::ARGNAME_DEPRECATED] = true;
-                $enum[SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] = $deprecationDescription;
+                $enum[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATED] = \true;
+                $enum[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] = $deprecationDescription;
             }
             $enums[$enumValue] = $enum;
         }
-        $schemaDefinition[SchemaDefinition::ARGNAME_ENUM_VALUES] = $enums;
+        $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ENUM_VALUES] = $enums;
         // Indicate the unique name, to unify all types to the same Enum
         if ($enumName) {
-            $schemaDefinition[SchemaDefinition::ARGNAME_ENUM_NAME] = $enumName;
+            $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ENUM_NAME] = $enumName;
         }
     }
 }

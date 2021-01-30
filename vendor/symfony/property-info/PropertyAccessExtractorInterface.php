@@ -8,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Symfony\Component\PropertyInfo;
+namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
 
 /**
  * Guesses if the property can be accessed or mutated.
@@ -24,7 +23,6 @@ interface PropertyAccessExtractorInterface
      * @return bool|null
      */
     public function isReadable(string $class, string $property, array $context = []);
-
     /**
      * Is the property writable?
      *

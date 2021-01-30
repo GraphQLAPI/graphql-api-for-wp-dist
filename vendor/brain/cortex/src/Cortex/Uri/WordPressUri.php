@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,33 +8,29 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+namespace PrefixedByPoP\Brain\Cortex\Uri;
 
-namespace Brain\Cortex\Uri;
-
-use Psr\Http\Message\UriInterface as PsrUriInterface;
-
+use PrefixedByPoP\Psr\Http\Message\UriInterface as PsrUriInterface;
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class WordPressUri implements UriInterface
+final class WordPressUri implements \PrefixedByPoP\Brain\Cortex\Uri\UriInterface
 {
     /**
      * @var \Psr\Http\Message\UriInterface
      */
     private $uri;
-
     /**
      * WordPressUri constructor.
      *
      * @param \Psr\Http\Message\UriInterface $uri
      */
-    public function __construct(PsrUriInterface $uri)
+    public function __construct(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri)
     {
         $this->uri = $uri;
     }
-
     /**
      * @inheritdoc
      */
@@ -41,7 +38,6 @@ final class WordPressUri implements UriInterface
     {
         return $this->uri->getScheme();
     }
-
     /**
      * @inheritdoc
      */
@@ -49,17 +45,14 @@ final class WordPressUri implements UriInterface
     {
         return $this->uri->getHost();
     }
-
     /**
      * @inheritdoc
      */
     public function chunks()
     {
         $path = $this->path();
-
-        return $path === '/' ? [] : explode('/', $path);
+        return $path === '/' ? [] : \explode('/', $path);
     }
-
     /**
      * @inheritdoc
      */
@@ -70,23 +63,20 @@ final class WordPressUri implements UriInterface
          * `example.com/subfolder` we need to strip down `/subfolder` from path and build a path
          * for route matching that is relative to home url.
          */
-        $homePath = trim(parse_url(home_url(), PHP_URL_PATH), '/');
-        $path = trim($this->uri->getPath(), '/');
-        if ($homePath && strpos($path, $homePath) === 0) {
-            $path = trim(substr($path, strlen($homePath)), '/');
+        $homePath = \trim(\parse_url(home_url(), \PHP_URL_PATH), '/');
+        $path = \trim($this->uri->getPath(), '/');
+        if ($homePath && \strpos($path, $homePath) === 0) {
+            $path = \trim(\substr($path, \strlen($homePath)), '/');
         }
-
-        return $path ? : '/';
+        return $path ?: '/';
     }
-
     /**
      * @inheritdoc
      */
     public function vars()
     {
         $vars = [];
-        parse_str($this->uri->getQuery(), $vars);
-
+        \parse_str($this->uri->getQuery(), $vars);
         return $vars;
     }
 }

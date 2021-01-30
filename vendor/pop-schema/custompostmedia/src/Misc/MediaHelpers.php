@@ -1,11 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPostMedia\Misc;
 
 use PoP\Hooks\Facades\HooksAPIFacade;
-
+use PoPSchema\CustomPostMedia\Environment;
 class MediaHelpers
 {
     public static function getThumbId($post_id)
@@ -14,8 +13,7 @@ class MediaHelpers
         if ($thumb_id = $cmsmediapostsapi->getCustomPostThumbnailID($post_id)) {
             return $thumb_id;
         }
-
         // Default
-        return HooksAPIFacade::getInstance()->applyFilters('getThumbId:default', POP_MEDIA_IMAGE_NOFEATUREDIMAGEPOST, $post_id);
+        return \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('getThumbId:default', \PoPSchema\CustomPostMedia\Environment::getDefaultFeaturedImageID(), $post_id);
     }
 }

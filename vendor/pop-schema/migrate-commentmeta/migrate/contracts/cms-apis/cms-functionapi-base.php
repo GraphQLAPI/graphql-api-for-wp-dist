@@ -1,11 +1,12 @@
 <?php
+
 namespace PoPSchema\CommentMeta;
 
-abstract class FunctionAPI_Base implements FunctionAPI
+abstract class FunctionAPI_Base implements \PoPSchema\CommentMeta\FunctionAPI
 {
     public function __construct()
     {
-        FunctionAPIFactory::setInstance($this);
+        \PoPSchema\CommentMeta\FunctionAPIFactory::setInstance($this);
     }
     public function getMetaKey($meta_key)
     {

@@ -5,24 +5,19 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser;
 
 class Location
 {
-
     /** @var  integer */
     private $line;
-
     /** @var  integer */
     private $column;
-
     public function __construct($line, $column)
     {
-        $this->line   = $line;
+        $this->line = $line;
         $this->column = $column;
     }
-
     /**
      * @return int
      */
@@ -30,7 +25,6 @@ class Location
     {
         return $this->line;
     }
-
     /**
      * @return int
      */
@@ -38,13 +32,8 @@ class Location
     {
         return $this->column;
     }
-
-
     public function toArray()
     {
-        return [
-            'line'   => $this->getLine(),
-            'column' => $this->getColumn()
-        ];
+        return ['line' => $this->getLine(), 'column' => $this->getColumn()];
     }
 }

@@ -1,10 +1,11 @@
 <?php
+
 namespace PoPSchema\QueriedObject;
 
-abstract class AbstractCMSRoutingState implements CMSRoutingStateInterface
+abstract class AbstractCMSRoutingState implements \PoPSchema\QueriedObject\CMSRoutingStateInterface
 {
     public function __construct()
     {
-        CMSRoutingStateFactory::setInstance($this);
+        \PoPSchema\QueriedObject\CMSRoutingStateFactory::setInstance($this);
     }
 }

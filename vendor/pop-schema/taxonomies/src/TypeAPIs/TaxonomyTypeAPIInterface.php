@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\Taxonomies\TypeAPIs;
 
 /**
@@ -15,5 +14,5 @@ interface TaxonomyTypeAPIInterface
      * @param [type] $object
      * @return string
      */
-    public function getTermTaxonomyName($termObjectOrID): string;
+    public function getTermTaxonomyName($termObjectOrID) : string;
 }

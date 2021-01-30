@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\CustomPostMutations\TypeAPIs;
 
 /**
@@ -19,5 +18,5 @@ interface CustomPostTypeAPIInterface
      * @return mixed the ID of the updated custom post
      */
     public function updateCustomPost(array $data);
-    public function canUserEditCustomPost($userID, $customPostID): bool;
+    public function canUserEditCustomPost($userID, $customPostID) : bool;
 }

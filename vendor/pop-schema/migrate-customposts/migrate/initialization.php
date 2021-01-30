@@ -1,4 +1,5 @@
 <?php
+
 namespace PoPSchema\CustomPosts;
 
 class Initialization

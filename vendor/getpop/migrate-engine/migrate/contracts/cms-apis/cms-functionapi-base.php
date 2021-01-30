@@ -1,23 +1,23 @@
 <?php
+
 namespace PoP\Engine;
 
-abstract class FunctionAPI_Base implements FunctionAPI
+abstract class FunctionAPI_Base implements \PoP\Engine\FunctionAPI
 {
     public function __construct()
     {
-        FunctionAPIFactory::setInstance($this);
+        \PoP\Engine\FunctionAPIFactory::setInstance($this);
     }
     public function getVersion()
     {
-    	return '';
+        return '';
     }
-
-    public function getHost(): string
+    public function getHost() : string
     {
         return removeScheme($this->getHomeURL());
     }
-
-    public function getDate($format, $date) {
-        return date($format, strtotime($date));
+    public function getDate($format, $date)
+    {
+        return \date($format, \strtotime($date));
     }
 }

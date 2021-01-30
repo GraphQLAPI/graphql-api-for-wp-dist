@@ -1,40 +1,33 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLQuery;
 
 use PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers;
 use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
-
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
-
     private static $enableVariablesAsExpressions;
     private static $enableComposableDirectives;
-
-    public static function enableVariablesAsExpressions(): bool
+    public static function enableVariablesAsExpressions() : bool
     {
         // Define properties
-        $envVariable = Environment::ENABLE_VARIABLES_AS_EXPRESSIONS;
-        $selfProperty = &self::$enableVariablesAsExpressions;
-        $defaultValue = false;
-        $callback = [EnvironmentValueHelpers::class, 'toBool'];
-
+        $envVariable = \GraphQLByPoP\GraphQLQuery\Environment::ENABLE_VARIABLES_AS_EXPRESSIONS;
+        $selfProperty =& self::$enableVariablesAsExpressions;
+        $defaultValue = \false;
+        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
     }
-
-    public static function enableComposableDirectives(): bool
+    public static function enableComposableDirectives() : bool
     {
         // Define properties
-        $envVariable = Environment::ENABLE_COMPOSABLE_DIRECTIVES;
-        $selfProperty = &self::$enableComposableDirectives;
-        $defaultValue = false;
-        $callback = [EnvironmentValueHelpers::class, 'toBool'];
-
+        $envVariable = \GraphQLByPoP\GraphQLQuery\Environment::ENABLE_COMPOSABLE_DIRECTIVES;
+        $selfProperty =& self::$enableComposableDirectives;
+        $defaultValue = \false;
+        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

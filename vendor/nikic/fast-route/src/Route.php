@@ -1,13 +1,13 @@
 <?php
 
-namespace FastRoute;
+namespace PrefixedByPoP\FastRoute;
 
-class Route {
+class Route
+{
     public $httpMethod;
     public $regex;
     public $variables;
     public $handler;
-
     /**
      * Constructs a route (value object).
      *
@@ -16,13 +16,13 @@ class Route {
      * @param string $regex
      * @param array  $variables
      */
-    public function __construct($httpMethod, $handler, $regex, $variables) {
+    public function __construct($httpMethod, $handler, $regex, $variables)
+    {
         $this->httpMethod = $httpMethod;
         $this->handler = $handler;
         $this->regex = $regex;
         $this->variables = $variables;
     }
-
     /**
      * Tests whether this route matches the given string.
      *
@@ -30,9 +30,9 @@ class Route {
      *
      * @return bool
      */
-    public function matches($str) {
+    public function matches($str)
+    {
         $regex = '~^' . $this->regex . '$~';
-        return (bool) preg_match($regex, $str);
+        return (bool) \preg_match($regex, $str);
     }
 }
-

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\Cache;
 
 /**
@@ -20,5 +19,5 @@ interface CacheConfigurationManagerInterface
      *
      * @return string
      */
-    public function getNamespace(): string;
+    public function getNamespace() : string;
 }

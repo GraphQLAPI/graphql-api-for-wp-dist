@@ -1,16 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\Root\Component;
 
 use PoP\Root\Managers\ComponentManager;
 use PoP\Root\Component\ComponentInterface;
-
 /**
  * Initialize component
  */
-abstract class AbstractComponent implements ComponentInterface
+abstract class AbstractComponent implements \PoP\Root\Component\ComponentInterface
 {
     /**
      * Enable each component to set default configuration for
@@ -18,11 +16,9 @@ abstract class AbstractComponent implements ComponentInterface
      *
      * @param array<string, mixed> $componentClassConfiguration
      */
-    public static function customizeComponentClassConfiguration(
-        array &$componentClassConfiguration
-    ): void {
+    public static function customizeComponentClassConfiguration(array &$componentClassConfiguration) : void
+    {
     }
-
     /**
      * Initialize the component
      *
@@ -30,81 +26,76 @@ abstract class AbstractComponent implements ComponentInterface
      * @param boolean $skipSchema Indicate if to skip initializing the schema
      * @param string[] $skipSchemaComponentClasses
      */
-    public static function initialize(
-        array $configuration = [],
-        bool $skipSchema = false,
-        array $skipSchemaComponentClasses = []
-    ): void {
+    public static function initialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    {
         // Initialize the self component
         static::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+        // Allow the component to define runtime constants
+        static::defineRuntimeConstants($configuration, $skipSchema, $skipSchemaComponentClasses);
     }
-
     /**
      * All component classes that this component depends upon, to initialize them
      *
      * @return string[]
      */
-    abstract public static function getDependedComponentClasses(): array;
-
+    public static abstract function getDependedComponentClasses() : array;
     /**
      * All conditional component classes that this component depends upon, to initialize them
      *
      * @return string[]
      */
-    public static function getDependedConditionalComponentClasses(): array
+    public static function getDependedConditionalComponentClasses() : array
     {
         return [];
     }
-
     /**
      * All migration plugins that this component depends upon, to initialize them
      *
      * @return string[]
      */
-    public static function getDependedMigrationPlugins(): array
+    public static function getDependedMigrationPlugins() : array
     {
         return [];
     }
-
     /**
      * Initialize services
      *
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(
-        array $configuration = [],
-        bool $skipSchema = false,
-        array $skipSchemaComponentClasses = []
-    ): void {
+    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    {
         // Register itself in the Manager
-        ComponentManager::register(get_called_class());
+        \PoP\Root\Managers\ComponentManager::register(\get_called_class());
     }
-
+    /**
+     * Define runtime constants
+     */
+    protected static function defineRuntimeConstants(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    {
+    }
     /**
      * Function called by the Bootloader after all components have been loaded
      *
      * @return void
      */
-    public static function beforeBoot(): void
+    public static function beforeBoot() : void
     {
     }
-
     /**
      * Function called by the Bootloader when booting the system
      *
      * @return void
      */
-    public static function boot(): void
+    public static function boot() : void
     {
     }
-
     /**
      * Function called by the Bootloader when booting the system
      *
      * @return void
      */
-    public static function afterBoot(): void
+    public static function afterBoot() : void
     {
     }
 }

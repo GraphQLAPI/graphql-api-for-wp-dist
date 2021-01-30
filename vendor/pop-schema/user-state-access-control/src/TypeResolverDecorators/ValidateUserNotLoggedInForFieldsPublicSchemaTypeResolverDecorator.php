@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserStateAccessControl\TypeResolverDecorators;
 
 use PoPSchema\UserStateAccessControl\TypeResolverDecorators\ValidateUserNotLoggedInForFieldsTypeResolverDecoratorTrait;
-
-class ValidateUserNotLoggedInForFieldsPublicSchemaTypeResolverDecorator extends AbstractUserStateConfigurableAccessControlForFieldsInPublicSchemaTypeResolverDecorator
+class ValidateUserNotLoggedInForFieldsPublicSchemaTypeResolverDecorator extends \PoPSchema\UserStateAccessControl\TypeResolverDecorators\AbstractUserStateConfigurableAccessControlForFieldsInPublicSchemaTypeResolverDecorator
 {
     use ValidateUserNotLoggedInForFieldsTypeResolverDecoratorTrait;
 }

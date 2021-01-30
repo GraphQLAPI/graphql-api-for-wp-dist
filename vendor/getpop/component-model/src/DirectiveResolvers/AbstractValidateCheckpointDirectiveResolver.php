@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\ComponentModel\DirectiveResolvers;
 
 use PoP\ComponentModel\Facades\Engine\EngineFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\DirectiveResolvers\AbstractValidateConditionDirectiveResolver;
 use PoP\ComponentModel\Misc\GeneralUtils;
-
-abstract class AbstractValidateCheckpointDirectiveResolver extends AbstractValidateConditionDirectiveResolver
+abstract class AbstractValidateCheckpointDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractValidateConditionDirectiveResolver
 {
     /**
      * Validate checkpoints
@@ -17,19 +15,18 @@ abstract class AbstractValidateCheckpointDirectiveResolver extends AbstractValid
      * @param TypeResolverInterface $typeResolver
      * @return boolean
      */
-    protected function validateCondition(TypeResolverInterface $typeResolver): bool
+    protected function validateCondition(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : bool
     {
         $checkpointSet = $this->getValidationCheckpointSet($typeResolver);
-        $engine = EngineFacade::getInstance();
+        $engine = \PoP\ComponentModel\Facades\Engine\EngineFacade::getInstance();
         $validation = $engine->validateCheckpoints($checkpointSet);
-        return !GeneralUtils::isError($validation);
+        return !\PoP\ComponentModel\Misc\GeneralUtils::isError($validation);
     }
-
     /**
      * Provide the checkpoint to validate
      *
      * @param TypeResolverInterface $typeResolver
      * @return array
      */
-    abstract protected function getValidationCheckpointSet(TypeResolverInterface $typeResolver): array;
+    protected abstract function getValidationCheckpointSet(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array;
 }

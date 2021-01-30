@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoPSchema\UserStateMutations\TypeAPIs;
 
 /**
@@ -13,5 +12,5 @@ interface UserStateTypeAPIInterface
      * @return mixed Result or Error
      */
     public function login(array $credentials);
-    public function logout(): void;
+    public function logout() : void;
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the Cortex package.
  *
@@ -7,8 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-namespace Brain\Cortex\Route;
+namespace PrefixedByPoP\Brain\Cortex\Route;
 
 /**
  * @author  Giuseppe Mazzapica <giuseppe.mazzapica@gmail.com>
@@ -26,7 +26,6 @@ trait DerivativeRouteTrait
     {
         return $this->route->id();
     }
-
     /**
      * @see RouteInterface::toArray()
      */
@@ -34,7 +33,6 @@ trait DerivativeRouteTrait
     {
         return $this->route->toArray();
     }
-
     /**
      * @see RouteInterface::offsetExists()
      * @param  string $offset
@@ -44,7 +42,6 @@ trait DerivativeRouteTrait
     {
         return $this->route->offsetExists($offset);
     }
-
     /**
      * @see RouteInterface::offsetGet()
      * @param  string $offset
@@ -54,7 +51,6 @@ trait DerivativeRouteTrait
     {
         return $this->route->offsetGet($offset);
     }
-
     /**
      * @see RouteInterface::offsetSet()
      * @param string $offset
@@ -64,7 +60,6 @@ trait DerivativeRouteTrait
     {
         $this->route->offsetSet($offset, $value);
     }
-
     /**
      * @see RouteInterface::offsetUnset()
      * @param string $offset

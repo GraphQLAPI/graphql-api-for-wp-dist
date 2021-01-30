@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\API\PersistedQueries;
 
-class PersistedQueryManager extends AbstractPersistedQueryManager
+class PersistedQueryManager extends \PoP\API\PersistedQueries\AbstractPersistedQueryManager
 {
-    protected function addQueryResolutionToSchema(): bool
+    protected function addQueryResolutionToSchema() : bool
     {
-        return true;
+        return \true;
     }
 }

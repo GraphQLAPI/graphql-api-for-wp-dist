@@ -1,12 +1,12 @@
 <?php
+
 namespace PoP\ComponentModel\Settings;
 
-abstract class DefaultSettingsProcessorBase extends SettingsProcessorBase
+abstract class DefaultSettingsProcessorBase extends \PoP\ComponentModel\Settings\SettingsProcessorBase
 {
     public function init()
     {
         parent::init();
-
-        SettingsProcessorManagerFactory::getInstance()->setDefault($this);
+        \PoP\ComponentModel\Settings\SettingsProcessorManagerFactory::getInstance()->setDefault($this);
     }
 }

@@ -5,41 +5,33 @@
  *
  * @author Portey Vasil <portey@gmail.com>
  */
-
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Argument;
-
-interface FieldInterface extends LocatableInterface
+interface FieldInterface extends \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\LocatableInterface
 {
-
     /**
      * @return string
      */
     public function getName();
-
     /**
      * @return string
      */
     public function getAlias();
-
     /**
      * @return Argument[]
      */
     public function getArguments();
-
     /**
      * @param string $name
      *
      * @return Argument
      */
     public function getArgument($name);
-
     /**
      * @return bool
      */
     public function hasFields();
-
     /**
      * @return array
      */

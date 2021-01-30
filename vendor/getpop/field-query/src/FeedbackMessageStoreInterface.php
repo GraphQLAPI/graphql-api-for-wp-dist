@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace PoP\FieldQuery;
 
 interface FeedbackMessageStoreInterface
@@ -11,19 +10,19 @@ interface FeedbackMessageStoreInterface
      *
      * @param mixed[] $extensions Adding extra information (eg: location error for GraphQL)
      */
-    public function addQueryError(string $error, array $extensions = []): void;
+    public function addQueryError(string $error, array $extensions = []) : void;
     /**
      * @return array<string, array>
      */
-    public function getQueryErrors(): array;
+    public function getQueryErrors() : array;
     /**
      * $extensions is optional
      *
      * @param mixed[] $extensions Adding extra information
      */
-    public function addQueryWarning(string $warning, array $extensions = []): void;
+    public function addQueryWarning(string $warning, array $extensions = []) : void;
     /**
      * @return array<string, array>
      */
-    public function getQueryWarnings(): array;
+    public function getQueryWarnings() : array;
 }

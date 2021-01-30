@@ -1,5 +1,7 @@
 <?php
 
+namespace PrefixedByPoP;
+
 require_once 'select.php';
 require_once 'multiselect.php';
 require_once 'multipleinputs.php';

@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\DirectiveResolvers\ConditionalOnEnvironment;
 
 use PoP\ComponentModel\Misc\GeneralUtils;
@@ -12,7 +11,6 @@ use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
-
 /**
  * @export directive, to make the value of a leaf field available through a variable.
  *
@@ -61,14 +59,13 @@ use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
  * }
  * ```
  */
-class ExportDirectiveResolver extends AbstractGlobalDirectiveResolver
+class ExportDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
 {
     const DIRECTIVE_NAME = 'export';
-    public static function getDirectiveName(): string
+    public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;
     }
-
     /**
      * Export the value of a field, assigning it to a variable.
      *
@@ -140,40 +137,19 @@ class ExportDirectiveResolver extends AbstractGlobalDirectiveResolver
      * @param array $schemaDeprecations
      * @return void
      */
-    public function resolveDirective(
-        TypeResolverInterface $typeResolver,
-        array &$idsDataFields,
-        array &$succeedingPipelineIDsDataFields,
-        array &$succeedingPipelineDirectiveResolverInstances,
-        array &$resultIDItems,
-        array &$unionDBKeyIDs,
-        array &$dbItems,
-        array &$previousDBItems,
-        array &$variables,
-        array &$messages,
-        array &$dbErrors,
-        array &$dbWarnings,
-        array &$dbDeprecations,
-        array &$dbNotices,
-        array &$dbTraces,
-        array &$schemaErrors,
-        array &$schemaWarnings,
-        array &$schemaDeprecations,
-        array &$schemaNotices,
-        array &$schemaTraces
-    ): void {
-        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
-        $ids = array_keys($idsDataFields);
-
+    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    {
+        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $ids = \array_keys($idsDataFields);
         /**
          * Single object. 2 cases:
          *
          * 1. Single value: when there is a single field
          * 2. Dictionary: otherwise
          */
-        if (count($ids) == 1) {
+        if (\count($ids) == 1) {
             $id = $ids[0];
-            $fields = $idsDataFields[(string)$id]['direct'];
+            $fields = $idsDataFields[(string) $id]['direct'];
             /**
              * Case 1: Single field => single value:
              *
@@ -185,14 +161,13 @@ class ExportDirectiveResolver extends AbstractGlobalDirectiveResolver
              * }
              * ```
              */
-            if (count($fields) == 1) {
+            if (\count($fields) == 1) {
                 $field = $fields[0];
                 $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
-                $value = $dbItems[(string)$id][$fieldOutputKey];
+                $value = $dbItems[(string) $id][$fieldOutputKey];
                 $this->setVariable($variables, $value, $schemaWarnings);
                 return;
             }
-
             /**
              * Case 2: Multiple fields => dictionary:
              *
@@ -208,12 +183,11 @@ class ExportDirectiveResolver extends AbstractGlobalDirectiveResolver
             $value = [];
             foreach ($fields as $field) {
                 $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
-                $value[$fieldOutputKey] = $dbItems[(string)$id][$fieldOutputKey];
+                $value[$fieldOutputKey] = $dbItems[(string) $id][$fieldOutputKey];
             }
             $this->setVariable($variables, $value, $schemaWarnings);
             return;
         }
-
         /**
          * Multiple objects. 2 cases:
          *
@@ -221,10 +195,9 @@ class ExportDirectiveResolver extends AbstractGlobalDirectiveResolver
          * 2. Array of dictionaries: Otherwise
          */
         $value = [];
-        $allFields = array_unique(GeneralUtils::arrayFlatten(array_map(function ($idDataFields) {
+        $allFields = \array_unique(\PoP\ComponentModel\Misc\GeneralUtils::arrayFlatten(\array_map(function ($idDataFields) {
             return $idDataFields['direct'];
         }, $idsDataFields)));
-
         /**
          * Case 1: Array of values
          *
@@ -236,16 +209,15 @@ class ExportDirectiveResolver extends AbstractGlobalDirectiveResolver
          * }
          * ```
          */
-        if (count($allFields) == 1) {
+        if (\count($allFields) == 1) {
             $field = $allFields[0];
             $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
             foreach ($ids as $id) {
-                $value[] = $dbItems[(string)$id][$fieldOutputKey];
+                $value[] = $dbItems[(string) $id][$fieldOutputKey];
             }
             $this->setVariable($variables, $value, $schemaWarnings);
             return;
         }
-
         /**
          * Case 2: Array of dictionaries:
          *
@@ -262,44 +234,32 @@ class ExportDirectiveResolver extends AbstractGlobalDirectiveResolver
             $dictionary = [];
             foreach ($dataFields['direct'] as $field) {
                 $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
-                $dictionary[$fieldOutputKey] = $dbItems[(string)$id][$fieldOutputKey];
+                $dictionary[$fieldOutputKey] = $dbItems[(string) $id][$fieldOutputKey];
             }
             $value[] = $dictionary;
         }
         $this->setVariable($variables, $value, $schemaWarnings);
         return;
     }
-
-    protected function setVariable(array &$variables, $value, array &$schemaWarnings): void
+    protected function setVariable(array &$variables, $value, array &$schemaWarnings) : void
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         $variableName = $this->directiveArgsForSchema['as'];
         // If the variable already exists, then throw a warning and do nothing
         if (isset($variables[$variableName])) {
-            $schemaWarnings[] = [
-                Tokens::PATH => [$this->directive],
-                Tokens::MESSAGE => sprintf($translationAPI->__('Cannot export variable with name \'%s\' because this variable has already been set', 'component-model'), $variableName),
-            ];
+            $schemaWarnings[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Cannot export variable with name \'%s\' because this variable has already been set', 'component-model'), $variableName)];
             return;
         }
         $variables[$variableName] = $value;
     }
-
-    public function getSchemaDirectiveDescription(TypeResolverInterface $typeResolver): ?string
+    public function getSchemaDirectiveDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         return $translationAPI->__('Exports a field value as a variable', 'graphql-server');
     }
-    public function getSchemaDirectiveArgs(TypeResolverInterface $typeResolver): array
+    public function getSchemaDirectiveArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
     {
-        $translationAPI = TranslationAPIFacade::getInstance();
-        return [
-            [
-                SchemaDefinition::ARGNAME_NAME => 'as',
-                SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_STRING,
-                SchemaDefinition::ARGNAME_DESCRIPTION => sprintf($translationAPI->__('Name of the variable. It must start with \'%s\', or the directive will not work', 'graphql-server'), QuerySymbols::VARIABLE_AS_EXPRESSION_NAME_PREFIX),
-                SchemaDefinition::ARGNAME_MANDATORY => true,
-            ],
-        ];
+        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        return [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'as', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($translationAPI->__('Name of the variable. It must start with \'%s\', or the directive will not work', 'graphql-server'), \GraphQLByPoP\GraphQLQuery\Schema\QuerySymbols::VARIABLE_AS_EXPRESSION_NAME_PREFIX), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true]];
     }
 }
