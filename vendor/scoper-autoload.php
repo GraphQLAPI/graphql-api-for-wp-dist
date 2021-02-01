@@ -9,8 +9,8 @@ $loader = require_once __DIR__.'/autoload.php';
 if (!class_exists('CastToType', false) && !interface_exists('CastToType', false) && !trait_exists('CastToType', false)) {
     spl_autoload_call('PrefixedByPoP\CastToType');
 }
-if (!class_exists('ComposerAutoloaderInit8d2fac8c38bee2efdd4739ab797c428c', false) && !interface_exists('ComposerAutoloaderInit8d2fac8c38bee2efdd4739ab797c428c', false) && !trait_exists('ComposerAutoloaderInit8d2fac8c38bee2efdd4739ab797c428c', false)) {
-    spl_autoload_call('PrefixedByPoP\ComposerAutoloaderInit8d2fac8c38bee2efdd4739ab797c428c');
+if (!class_exists('ComposerAutoloaderInit875958b849a621dbaec62a450d7bf602', false) && !interface_exists('ComposerAutoloaderInit875958b849a621dbaec62a450d7bf602', false) && !trait_exists('ComposerAutoloaderInit875958b849a621dbaec62a450d7bf602', false)) {
+    spl_autoload_call('PrefixedByPoP\ComposerAutoloaderInit875958b849a621dbaec62a450d7bf602');
 }
 if (!class_exists('PoP_Pages_Module_Processor_FieldDataloads', false) && !interface_exists('PoP_Pages_Module_Processor_FieldDataloads', false) && !trait_exists('PoP_Pages_Module_Processor_FieldDataloads', false)) {
     spl_autoload_call('PrefixedByPoP\PoP_Pages_Module_Processor_FieldDataloads');
@@ -84,9 +84,9 @@ if (!class_exists('Parsedown', false) && !interface_exists('Parsedown', false) &
 
 // Functions whitelisting. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/README.md#functions-whitelisting
-if (!function_exists('composerRequire8d2fac8c38bee2efdd4739ab797c428c')) {
-    function composerRequire8d2fac8c38bee2efdd4739ab797c428c() {
-        return \PrefixedByPoP\composerRequire8d2fac8c38bee2efdd4739ab797c428c(...func_get_args());
+if (!function_exists('composerRequire875958b849a621dbaec62a450d7bf602')) {
+    function composerRequire875958b849a621dbaec62a450d7bf602() {
+        return \PrefixedByPoP\composerRequire875958b849a621dbaec62a450d7bf602(...func_get_args());
     }
 }
 if (!function_exists('includeIfExists')) {
