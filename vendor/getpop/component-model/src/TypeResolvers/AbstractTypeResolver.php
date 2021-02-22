@@ -153,11 +153,9 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     {
         $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         $dataloadingEngine = \PoP\ComponentModel\Facades\Engine\DataloadingEngineFacade::getInstance();
-        return \array_merge(\array_map(function ($directiveClass) use($fieldQueryInterpreter) {
-            return $fieldQueryInterpreter->listFieldDirective($directiveClass::getDirectiveName());
-        }, $dataloadingEngine->getMandatoryDirectiveClasses()), \array_map(function ($directive) use($fieldQueryInterpreter) {
-            return $fieldQueryInterpreter->listFieldDirective($directive);
-        }, $dataloadingEngine->getMandatoryDirectives()));
+        return \array_map(function ($directiveResolver) use($fieldQueryInterpreter) {
+            return $fieldQueryInterpreter->listFieldDirective($directiveResolver::getDirectiveName());
+        }, $dataloadingEngine->getMandatoryDirectiveResolvers());
     }
     /**
      * Validate and resolve the fieldDirectives into an array, each item containing:

@@ -20,7 +20,7 @@ class Plugins
     public function __construct()
     {
         // Priority: new section, after PoP Posts
-        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 201);
+        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->addAction('plugins_loaded', array($this, 'init'), 888201);
     }
     public function init()
     {

@@ -4,7 +4,7 @@
     "description": "Convert Markdown to HTML",
     "keywords": ["PoP", "markdown-convertor"],
     "homepage": "https://github.com/GraphQLAPI/markdown-convertor",
-    "license": "MIT",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Leonardo Losoviz",
@@ -16,7 +16,7 @@
     "prefer-stable": true,
     "require": {
         "php": "^7.4|^8.0",
-        "erusev/parsedown": "^1.7",
+        "michelf/php-markdown": "^1.9",
         "getpop/engine": "dev-master"
     },
     "require-dev": {

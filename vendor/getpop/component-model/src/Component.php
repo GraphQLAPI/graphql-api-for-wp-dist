@@ -3,19 +3,16 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel;
 
-use PoP\Root\Component\AbstractComponent;
-use PoP\Root\Component\YAMLServicesTrait;
-use PoP\ComponentModel\Config\ServiceConfiguration;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
-use PoP\ComponentModel\Misc\GeneralUtils;
+use PoP\ComponentModel\Component\ApplicationEvents;
 use PoP\ComponentModel\Environment;
+use PoP\ComponentModel\Facades\AttachableExtensions\AttachExtensionServiceFacade;
+use PoP\ComponentModel\Misc\GeneralUtils;
+use PoP\Root\Component\AbstractComponent;
 /**
  * Initialize component
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -37,13 +34,22 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
         \PoP\ComponentModel\ComponentConfiguration::setConfiguration($configuration);
         self::initYAMLServices(\dirname(__DIR__));
         self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
-        \PoP\ComponentModel\Config\ServiceConfiguration::initialize();
+    }
+    /**
+     * Initialize services for the system container
+     *
+     * @param array<string, mixed> $configuration
+     */
+    protected static function initializeSystemContainerServices(array $configuration = []) : void
+    {
+        parent::initializeSystemContainerServices($configuration);
+        self::initYAMLSystemContainerServices(\dirname(__DIR__));
     }
     /**
      * Boot component
@@ -55,10 +61,19 @@ class Component extends \PoP\Root\Component\AbstractComponent
         parent::beforeBoot();
         // Initialize the Component Configuration
         \PoP\ComponentModel\ComponentConfiguration::init();
-        // Initialize classes
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachFieldResolversFromNamespace(__NAMESPACE__ . '\\FieldResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachAndRegisterDirectiveResolversFromNamespace(__NAMESPACE__ . '\\DirectiveResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::registerFieldInterfaceResolversFromNamespace(__NAMESPACE__ . '\\FieldInterfaceResolvers');
+        // Attach class extensions
+        \PoP\ComponentModel\Facades\AttachableExtensions\AttachExtensionServiceFacade::getInstance()->attachExtensions(\PoP\ComponentModel\Component\ApplicationEvents::BEFORE_BOOT);
+    }
+    /**
+     * Boot component
+     *
+     * @return void
+     */
+    public static function afterBoot() : void
+    {
+        parent::afterBoot();
+        // Attach class extensions
+        \PoP\ComponentModel\Facades\AttachableExtensions\AttachExtensionServiceFacade::getInstance()->attachExtensions(\PoP\ComponentModel\Component\ApplicationEvents::AFTER_BOOT);
     }
     /**
      * Define runtime constants

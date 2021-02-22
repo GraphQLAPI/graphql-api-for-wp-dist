@@ -3,14 +3,15 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DirectiveResolvers;
 
+use PoP\ComponentModel\Container\ServiceTags\MandatoryDirectiveServiceTagInterface;
+use PoP\ComponentModel\DirectiveResolvers\AbstractValidateDirectiveResolver;
 use PoP\ComponentModel\Directives\DirectiveTypes;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\PipelinePositions;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\DirectiveResolvers\AbstractValidateDirectiveResolver;
-class ValidateDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractValidateDirectiveResolver
+use PoP\Translation\Facades\TranslationAPIFacade;
+final class ValidateDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractValidateDirectiveResolver implements \PoP\ComponentModel\Container\ServiceTags\MandatoryDirectiveServiceTagInterface
 {
-    const DIRECTIVE_NAME = 'validate';
+    public const DIRECTIVE_NAME = 'validate';
     public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;

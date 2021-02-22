@@ -4,9 +4,10 @@ declare (strict_types=1);
 namespace PoP\LooseContracts;
 
 use PoP\Hooks\HooksAPIInterface;
-use PoP\LooseContracts\NameResolverInterface;
 use PoP\LooseContracts\LooseContractManagerInterface;
-abstract class AbstractLooseContractResolutionSet
+use PoP\LooseContracts\NameResolverInterface;
+use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
+abstract class AbstractLooseContractResolutionSet extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var \PoP\LooseContracts\LooseContractManagerInterface
@@ -25,6 +26,9 @@ abstract class AbstractLooseContractResolutionSet
         $this->looseContractManager = $looseContractManager;
         $this->nameResolver = $nameResolver;
         $this->hooksAPI = $hooksAPI;
+    }
+    public final function initialize() : void
+    {
         $this->resolveContracts();
     }
     /**

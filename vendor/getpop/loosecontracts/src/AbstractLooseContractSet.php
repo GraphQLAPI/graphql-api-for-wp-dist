@@ -3,7 +3,8 @@
 declare (strict_types=1);
 namespace PoP\LooseContracts;
 
-abstract class AbstractLooseContractSet
+use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
+abstract class AbstractLooseContractSet extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var \PoP\LooseContracts\LooseContractManagerInterface
@@ -12,6 +13,9 @@ abstract class AbstractLooseContractSet
     public function __construct(\PoP\LooseContracts\LooseContractManagerInterface $looseContractManager)
     {
         $this->looseContractManager = $looseContractManager;
+    }
+    public final function initialize() : void
+    {
         // Require the configured hooks and names
         $this->looseContractManager->requireHooks($this->getRequiredHooks());
         $this->looseContractManager->requireNames($this->getRequiredNames());

@@ -9,7 +9,7 @@ abstract class AbstractRouteModuleProcessorManager implements \PoP\ModuleRouting
      * @var array<string, AbstractRouteModuleProcessor[]>
      */
     protected $processors = [];
-    public function add(\PoP\ModuleRouting\AbstractRouteModuleProcessor $processor) : void
+    public function addRouteModuleProcessor(\PoP\ModuleRouting\AbstractRouteModuleProcessor $processor) : void
     {
         foreach ($processor->getGroups() as $group) {
             $this->processors[$group] = $this->processors[$group] ?? [];

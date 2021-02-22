@@ -3,7 +3,12 @@
 declare (strict_types=1);
 namespace GraphQLAPI\MarkdownConvertor;
 
-use PrefixedByPoP\Parsedown;
+use PrefixedByPoP\Michelf\MarkdownExtra;
+/**
+ * Markdown formatter provided by `michelf/php-markdown`
+ *
+ * @see https://michelf.ca/projects/php-markdown/extra/
+ */
 class MarkdownConvertor implements \GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface
 {
     /**
@@ -11,6 +16,6 @@ class MarkdownConvertor implements \GraphQLAPI\MarkdownConvertor\MarkdownConvert
      */
     public function convertMarkdownToHTML(string $markdownContent) : string
     {
-        return (new \PrefixedByPoP\Parsedown())->text($markdownContent);
+        return \PrefixedByPoP\Michelf\MarkdownExtra::defaultTransform($markdownContent);
     }
 }

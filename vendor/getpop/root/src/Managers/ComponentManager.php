@@ -13,6 +13,13 @@ class ComponentManager
      */
     private static $components = [];
     /**
+     * @return string[]
+     */
+    public static function getComponentClasses() : array
+    {
+        return self::$components;
+    }
+    /**
      * Register a component
      */
     public static function register(string $component) : void

@@ -10,13 +10,12 @@ class ApplicationInfo implements \PoP\ComponentModel\Info\ApplicationInfoInterfa
      * @var string
      */
     private $version;
-    public function __construct(string $version)
+    /**
+     * Inject the version from the environment
+     */
+    public function __construct()
     {
-        $this->version = $version;
-        // If the version is provided by environment var, then use that one
-        if ($version = \PoP\Root\Environment::getApplicationVersion()) {
-            $this->version = $version;
-        }
+        $this->version = \PoP\Root\Environment::getApplicationVersion() ?? '';
     }
     public function getVersion() : string
     {

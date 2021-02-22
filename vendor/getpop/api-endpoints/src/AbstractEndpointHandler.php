@@ -4,7 +4,8 @@ declare (strict_types=1);
 namespace PoP\APIEndpoints;
 
 use PoP\APIEndpoints\EndpointUtils;
-abstract class AbstractEndpointHandler
+use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
+abstract class AbstractEndpointHandler extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var string|null

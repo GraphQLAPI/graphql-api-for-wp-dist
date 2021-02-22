@@ -3,18 +3,12 @@
 declare (strict_types=1);
 namespace PoPSchema\Comments;
 
-use PoPSchema\Comments\Conditional\RESTAPI\ConditionalComponent;
 use PoP\Root\Component\AbstractComponent;
-use PoP\Root\Component\YAMLServicesTrait;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
 /**
  * Initialize component
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
-    public static $COMPONENT_DIR;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -45,37 +39,16 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
-        self::$COMPONENT_DIR = \dirname(__DIR__);
-        self::initYAMLServices(self::$COMPONENT_DIR);
-        self::maybeInitYAMLSchemaServices(self::$COMPONENT_DIR, $skipSchema);
+        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
+        self::initYAMLServices(\dirname(__DIR__));
+        self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
         if (\class_exists('\\PoP\\RESTAPI\\Component') && !\in_array(\PoP\RESTAPI\Component::class, $skipSchemaComponentClasses)) {
-            \PoPSchema\Comments\Conditional\RESTAPI\ConditionalComponent::initialize($configuration, $skipSchema);
+            self::initYAMLServices(\dirname(__DIR__), '/Conditional/RESTAPI');
         }
         if (\class_exists('\\PoPSchema\\Users\\Component') && !\in_array(\PoPSchema\Users\Component::class, $skipSchemaComponentClasses)) {
-            \PoPSchema\Comments\Conditional\Users\ConditionalComponent::initialize($configuration, $skipSchema);
-        }
-    }
-    /**
-     * Boot component
-     *
-     * @return void
-     */
-    public static function beforeBoot() : void
-    {
-        parent::beforeBoot();
-        // Initialize all hooks
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::registerTypeResolversFromNamespace(__NAMESPACE__ . '\\TypeResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachFieldResolversFromNamespace(__NAMESPACE__ . '\\FieldResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::registerFieldInterfaceResolversFromNamespace(__NAMESPACE__ . '\\FieldInterfaceResolvers');
-        if (\class_exists('\\PoP\\RESTAPI\\Component')) {
-            \PoPSchema\Comments\Conditional\RESTAPI\ConditionalComponent::beforeBoot();
-        }
-        if (\class_exists('\\PoPSchema\\Users\\Component')) {
-            \PoPSchema\Comments\Conditional\Users\ConditionalComponent::beforeBoot();
+            self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema, '/Conditional/Users');
         }
     }
 }

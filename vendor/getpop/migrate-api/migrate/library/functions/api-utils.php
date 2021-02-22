@@ -4,7 +4,7 @@ namespace PoP\API;
 
 use PoP\ComponentModel\Misc\GeneralUtils;
 use PoP\ComponentModel\State\ApplicationState;
-use PoP\ComponentModel\Configuration\Request;
+use PoP\Definitions\Configuration\Request;
 use PoP\API\Response\Schemes as APISchemes;
 class APIUtils
 {
@@ -20,7 +20,7 @@ class APIUtils
         ], $url);
         $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
         if ($mangled = $vars['mangled']) {
-            $endpoint = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\ComponentModel\Configuration\Request::URLPARAM_MANGLED => $mangled], $endpoint);
+            $endpoint = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\Definitions\Configuration\Request::URLPARAM_MANGLED => $mangled], $endpoint);
         }
         return $endpoint;
     }

@@ -12,7 +12,7 @@ use PoP\Hooks\Facades\HooksAPIFacade;
 use PoP\ComponentModel\Misc\GeneralUtils;
 use PoP\ComponentModel\Misc\RequestUtils;
 use PoP\ComponentModel\Modules\ModuleUtils;
-use PoP\ComponentModel\Configuration\Request;
+use PoP\Definitions\Configuration\Request;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\ComponentModel\ModuleFilters\ModulePaths;
 use PoP\ComponentModel\Settings\SettingsManagerFactory;
@@ -832,7 +832,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         }
         // If mangled, make it mandle
         if ($mangled = $vars['mangled']) {
-            $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\ComponentModel\Configuration\Request::URLPARAM_MANGLED => $mangled], $ret);
+            $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\Definitions\Configuration\Request::URLPARAM_MANGLED => $mangled], $ret);
         }
         return $ret;
     }

@@ -3,12 +3,12 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Engine;
 
+use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 interface DataloadingEngineInterface
 {
-    public function getMandatoryDirectiveClasses() : array;
-    public function getMandatoryDirectives() : array;
-    public function addMandatoryDirective(string $directive) : void;
-    public function addMandatoryDirectiveClass(string $directiveClass) : void;
-    public function addMandatoryDirectives(array $directives) : void;
-    public function addMandatoryDirectiveClasses(array $directiveClasses) : void;
+    public function addMandatoryDirectiveResolver(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver) : void;
+    /**
+     * @return DirectiveResolverInterface[]
+     */
+    public function getMandatoryDirectiveResolvers() : array;
 }

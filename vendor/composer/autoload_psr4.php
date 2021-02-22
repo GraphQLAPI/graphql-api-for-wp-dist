@@ -32,7 +32,7 @@ return array(
     'PrefixedByPoP\\Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
     'PrefixedByPoP\\Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'PrefixedByPoP\\Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
-    'PrefixedByPoP\\Parsedown\\' => array($vendorDir . '/erusev/parsedown/Parsedown'),
+    'PrefixedByPoP\\Michelf\\' => array($vendorDir . '/michelf/php-markdown/Michelf'),
     'PrefixedByPoP\\League\\Pipeline\\' => array($vendorDir . '/league/pipeline/src'),
     'PrefixedByPoP\\GuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
     'PrefixedByPoP\\GuzzleHttp\\Promise\\' => array($vendorDir . '/guzzlehttp/promises/src'),

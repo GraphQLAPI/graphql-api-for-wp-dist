@@ -9,10 +9,9 @@ use PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter;
 use PoP\ComponentModel\State\ApplicationState;
 class DBItemListDataStructureFormatter extends \PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter
 {
-    public const NAME = 'dbitemlist';
-    public static function getName() : string
+    public function getName() : string
     {
-        return self::NAME;
+        return 'dbitemlist';
     }
     protected function getJsonEncodeType() : ?int
     {

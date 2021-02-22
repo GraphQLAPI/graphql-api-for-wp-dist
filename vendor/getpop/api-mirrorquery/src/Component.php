@@ -4,15 +4,11 @@ declare (strict_types=1);
 namespace PoP\APIMirrorQuery;
 
 use PoP\Root\Component\AbstractComponent;
-use PoP\APIMirrorQuery\Config\ServiceConfiguration;
-use PoP\Root\Component\YAMLServicesTrait;
 /**
  * Initialize component
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -28,10 +24,9 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
         self::initYAMLServices(\dirname(__DIR__));
-        \PoP\APIMirrorQuery\Config\ServiceConfiguration::initialize();
     }
 }

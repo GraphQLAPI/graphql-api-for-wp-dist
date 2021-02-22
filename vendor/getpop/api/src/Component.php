@@ -3,22 +3,16 @@
 declare (strict_types=1);
 namespace PoP\API;
 
-use PoP\API\Conditional\AccessControl\ConditionalComponent;
 use PoP\API\Configuration\Request;
-use PoP\API\Config\ServiceConfiguration;
 use PoP\Root\Component\AbstractComponent;
-use PoP\Root\Component\YAMLServicesTrait;
 use PoP\Root\Component\CanDisableComponentTrait;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
+use PoP\AccessControl\ComponentConfiguration as AccessControlComponentConfiguration;
 /**
  * Initialize component
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
     use CanDisableComponentTrait;
-    public static $COMPONENT_DIR;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -35,7 +29,7 @@ class Component extends \PoP\Root\Component\AbstractComponent
      */
     public static function getDependedConditionalComponentClasses() : array
     {
-        return [\PoP\AccessControl\Component::class];
+        return [\PoP\AccessControl\Component::class, \PoP\CacheControl\Component::class];
     }
     public static function getDependedMigrationPlugins() : array
     {
@@ -64,39 +58,24 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
         if (self::isEnabled()) {
-            parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+            parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
             \PoP\API\ComponentConfiguration::setConfiguration($configuration);
-            self::$COMPONENT_DIR = \dirname(__DIR__);
-            self::initYAMLServices(self::$COMPONENT_DIR);
-            self::maybeInitYAMLSchemaServices(self::$COMPONENT_DIR, $skipSchema);
-            \PoP\API\Config\ServiceConfiguration::initialize();
-            if (\class_exists('\\PoP\\AccessControl\\Component') && !\in_array(\PoP\AccessControl\Component::class, $skipSchemaComponentClasses)) {
-                \PoP\API\Conditional\AccessControl\ConditionalComponent::initialize($configuration, $skipSchema);
+            self::initYAMLServices(\dirname(__DIR__));
+            self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
+            // Conditional packages
+            if (\class_exists('\\PoP\\AccessControl\\Component')) {
+                self::initYAMLServices(\dirname(__DIR__), '/Conditional/AccessControl');
+            }
+            if (\class_exists('\\PoP\\CacheControl\\Component') && !\in_array(\PoP\CacheControl\Component::class, $skipSchemaComponentClasses) && \class_exists('\\PoP\\AccessControl\\Component') && !\in_array(\PoP\AccessControl\Component::class, $skipSchemaComponentClasses) && \PoP\AccessControl\ComponentConfiguration::canSchemaBePrivate()) {
+                self::maybeInitPHPSchemaServices(\dirname(__DIR__), $skipSchema, '/Conditional/CacheControl/Conditional/AccessControl/ConditionalOnEnvironment/PrivateSchema');
             }
         }
     }
     protected static function resolveEnabled()
     {
         return !\PoP\API\Environment::disableAPI();
-    }
-    /**
-     * Boot component
-     *
-     * @return void
-     */
-    public static function beforeBoot() : void
-    {
-        parent::beforeBoot();
-        // Initialize classes
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachFieldResolversFromNamespace(__NAMESPACE__ . '\\FieldResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachAndRegisterDirectiveResolversFromNamespace(__NAMESPACE__ . '\\DirectiveResolvers', \false);
-        // Boot conditional on API package being installed
-        if (\class_exists('\\PoP\\AccessControl\\Component')) {
-            \PoP\API\Conditional\AccessControl\ConditionalComponent::beforeBoot();
-        }
     }
 }

@@ -4,18 +4,14 @@ declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLRequest;
 
 use PoP\Root\Component\AbstractComponent;
-use PoP\Root\Component\YAMLServicesTrait;
 use PoP\Root\Component\CanDisableComponentTrait;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
 use GraphQLByPoP\GraphQLQuery\Component as GraphQLQueryComponent;
 /**
  * Initialize component
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
     use CanDisableComponentTrait;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -31,10 +27,10 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
         if (self::isEnabled()) {
-            parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+            parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
             \GraphQLByPoP\GraphQLRequest\ComponentConfiguration::setConfiguration($configuration);
             self::initYAMLServices(\dirname(__DIR__));
         }
@@ -42,16 +38,5 @@ class Component extends \PoP\Root\Component\AbstractComponent
     protected static function resolveEnabled()
     {
         return \GraphQLByPoP\GraphQLQuery\Component::isEnabled();
-    }
-    /**
-     * Boot component
-     *
-     * @return void
-     */
-    public static function beforeBoot() : void
-    {
-        parent::beforeBoot();
-        // Initialize classes
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
     }
 }

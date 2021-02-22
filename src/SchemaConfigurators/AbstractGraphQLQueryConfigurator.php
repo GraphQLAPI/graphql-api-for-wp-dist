@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\SchemaConfigurators;
 
 use GraphQLAPI\GraphQLAPI\General\BlockConstants;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Registries\TypeRegistryFacade;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\Facades\Registries\DirectiveRegistryFacade;
-use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 use PoP\ComponentModel\Facades\Registries\FieldInterfaceRegistryFacade;
-use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface;
 
 /**
  * Base class for configuring the persisted GraphQL query before its execution
@@ -65,18 +61,13 @@ abstract class AbstractGraphQLQueryConfigurator implements SchemaConfiguratorInt
      */
     protected function initNamespacedTypeNameClasses(): void
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
         $typeRegistry = TypeRegistryFacade::getInstance();
         // For each class, obtain its namespacedTypeName
-        $typeResolverClasses = $typeRegistry->getTypeResolverClasses();
+        $typeResolvers = $typeRegistry->getTypeResolvers();
         $this->namespacedTypeNameClasses = [];
-        foreach ($typeResolverClasses as $typeResolverClass) {
-            /**
-             * @var TypeResolverInterface
-             */
-            $typeResolver = $instanceManager->getInstance($typeResolverClass);
+        foreach ($typeResolvers as $typeResolver) {
             $typeResolverNamespacedName = $typeResolver->getNamespacedTypeName();
-            $this->namespacedTypeNameClasses[$typeResolverNamespacedName] = $typeResolverClass;
+            $this->namespacedTypeNameClasses[$typeResolverNamespacedName] = get_class($typeResolver);
         }
     }
 
@@ -85,18 +76,13 @@ abstract class AbstractGraphQLQueryConfigurator implements SchemaConfiguratorInt
      */
     protected function initNamespacedFieldInterfaceNameClasses(): void
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
         $fieldInterfaceRegistry = FieldInterfaceRegistryFacade::getInstance();
         // For each interface, obtain its namespacedInterfaceName
-        $fieldInterfaceResolverClasses = $fieldInterfaceRegistry->getFieldInterfaceResolverClasses();
+        $fieldInterfaceResolvers = $fieldInterfaceRegistry->getFieldInterfaceResolvers();
         $this->namespacedFieldInterfaceNameClasses = [];
-        foreach ($fieldInterfaceResolverClasses as $fieldInterfaceResolverClass) {
-            /**
-             * @var FieldInterfaceResolverInterface
-             */
-            $fieldInterfaceResolver = $instanceManager->getInstance($fieldInterfaceResolverClass);
+        foreach ($fieldInterfaceResolvers as $fieldInterfaceResolver) {
             $fieldInterfaceResolverNamespacedName = $fieldInterfaceResolver->getNamespacedInterfaceName();
-            $this->namespacedFieldInterfaceNameClasses[$fieldInterfaceResolverNamespacedName] = $fieldInterfaceResolverClass;
+            $this->namespacedFieldInterfaceNameClasses[$fieldInterfaceResolverNamespacedName] = get_class($fieldInterfaceResolver);
         }
     }
 
@@ -117,20 +103,15 @@ abstract class AbstractGraphQLQueryConfigurator implements SchemaConfiguratorInt
      */
     protected function initDirectiveNameClasses(): void
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
         $directiveRegistry = DirectiveRegistryFacade::getInstance();
-        $directiveResolverClasses = $directiveRegistry->getDirectiveResolverClasses();
+        $directiveResolvers = $directiveRegistry->getDirectiveResolvers();
         // For each class, obtain its directive name. Notice that different directives
         // can have the same name (eg: @translate as implemented for Google and Azure),
         // then the mapping goes from name to list of resolvers
         $this->directiveNameClasses = [];
-        foreach ($directiveResolverClasses as $directiveResolverClass) {
-            /**
-             * @var DirectiveResolverInterface
-             */
-            $directiveResolver = $instanceManager->getInstance($directiveResolverClass);
+        foreach ($directiveResolvers as $directiveResolver) {
             $directiveResolverName = $directiveResolver->getDirectiveName();
-            $this->directiveNameClasses[$directiveResolverName][] = $directiveResolverClass;
+            $this->directiveNameClasses[$directiveResolverName][] = get_class($directiveResolver);
         }
     }
 

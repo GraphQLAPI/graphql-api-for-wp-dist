@@ -5,6 +5,7 @@ namespace PoP\ComponentModel\DataStructure;
 
 interface DataStructureManagerInterface
 {
-    public function add(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void;
+    public function addDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void;
+    public function setDefaultDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void;
     public function getDataStructureFormatter(string $name = null) : \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface;
 }

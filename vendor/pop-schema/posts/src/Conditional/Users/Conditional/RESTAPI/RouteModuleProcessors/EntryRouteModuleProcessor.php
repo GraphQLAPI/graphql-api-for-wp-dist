@@ -3,16 +3,15 @@
 declare (strict_types=1);
 namespace PoPSchema\Posts\Conditional\Users\Conditional\RESTAPI\RouteModuleProcessors;
 
-use PoPSchema\Users\Conditional\CustomPosts\Conditional\RESTAPI\Hooks\CustomPostHooks;
-use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
+use PoP\API\Facades\FieldQueryConvertorFacade;
+use PoP\API\Response\Schemes as APISchemes;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\Hooks\Facades\HooksAPIFacade;
-use PoP\API\Facades\FieldQueryConvertorFacade;
-use PoPSchema\Users\Routing\RouteNatures;
-use PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter;
+use PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor;
 use PoPSchema\CustomPosts\Conditional\RESTAPI\RouteModuleProcessorHelpers\EntryRouteModuleProcessorHelpers;
-use PoP\API\Response\Schemes as APISchemes;
-class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
+use PoPSchema\Users\Conditional\CustomPosts\Conditional\RESTAPI\Hooks\CustomPostHooks;
+use PoPSchema\Users\Routing\RouteNatures;
+class EntryRouteModuleProcessor extends \PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor
 {
     private static $restFieldsQuery;
     private static $restFields;
@@ -46,7 +45,7 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
         // Author's posts
         $routemodules = array(POP_POSTS_ROUTE_POSTS => [\PrefixedByPoP\PoP_Users_Posts_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Users_Posts_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_AUTHORPOSTLIST, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]]);
         foreach ($routemodules as $route => $module) {
-            $ret[\PoPSchema\Users\Routing\RouteNatures::USER][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => \PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter::getName()]];
+            $ret[\PoPSchema\Users\Routing\RouteNatures::USER][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => $this->restDataStructureFormatter->getName()]];
         }
         return $ret;
     }

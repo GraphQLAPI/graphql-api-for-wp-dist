@@ -3,17 +3,18 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DirectiveResolvers;
 
-use PoP\ComponentModel\Feedback\Tokens;
-use PoP\ComponentModel\Misc\GeneralUtils;
+use PoP\ComponentModel\Container\ServiceTags\MandatoryDirectiveServiceTagInterface;
 use PoP\ComponentModel\Directives\DirectiveTypes;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\ComponentModel\TypeResolvers\PipelinePositions;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-class ResolveValueAndMergeDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
+use PoP\ComponentModel\Feedback\Tokens;
+use PoP\ComponentModel\Misc\GeneralUtils;
+use PoP\ComponentModel\TypeResolvers\PipelinePositions;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Translation\Facades\TranslationAPIFacade;
+final class ResolveValueAndMergeDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver implements \PoP\ComponentModel\Container\ServiceTags\MandatoryDirectiveServiceTagInterface
 {
-    const DIRECTIVE_NAME = 'resolveValueAndMerge';
+    public const DIRECTIVE_NAME = 'resolveValueAndMerge';
     public static function getDirectiveName() : string
     {
         return self::DIRECTIVE_NAME;

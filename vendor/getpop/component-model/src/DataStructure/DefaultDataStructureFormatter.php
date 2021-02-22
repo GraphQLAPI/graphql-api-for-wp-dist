@@ -5,9 +5,8 @@ namespace PoP\ComponentModel\DataStructure;
 
 class DefaultDataStructureFormatter extends \PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter
 {
-    public const NAME = 'default';
-    public static function getName() : string
+    public function getName() : string
     {
-        return self::NAME;
+        return 'default';
     }
 }

@@ -16,6 +16,11 @@ class NamespacedTypeFieldResolver extends \PoP\ComponentModel\FieldResolvers\Abs
     {
         return array(\GraphQLByPoP\GraphQLServer\TypeResolvers\TypeTypeResolver::class);
     }
+    public static function getPriorityToAttachClasses() : ?int
+    {
+        // Higher priority => Process first
+        return 100;
+    }
     public static function getFieldNamesToResolve() : array
     {
         return ['name'];

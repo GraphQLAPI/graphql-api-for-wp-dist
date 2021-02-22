@@ -5,12 +5,13 @@ namespace GraphQLByPoP\GraphQLServer\Hooks;
 
 use GraphQLByPoP\GraphQLServer\ComponentConfiguration;
 use GraphQLByPoP\GraphQLServer\Configuration\Request;
-use PoP\Hooks\AbstractHookSet;
-use PoP\ComponentModel\State\ApplicationState;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\ComponentModel\ModelInstance\ModelInstance;
-use PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter;
 use PoP\API\Response\Schemes as APISchemes;
+use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
+use PoP\ComponentModel\ModelInstance\ModelInstance;
+use PoP\ComponentModel\State\ApplicationState;
+use PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter;
+use PoP\Hooks\AbstractHookSet;
+use PoP\Translation\Facades\TranslationAPIFacade;
 class VarsHooks extends \PoP\Hooks\AbstractHookSet
 {
     protected function init()
@@ -39,7 +40,10 @@ class VarsHooks extends \PoP\Hooks\AbstractHookSet
     public function addVars(array $vars_in_array) : void
     {
         $vars =& $vars_in_array[0];
-        if ($vars['scheme'] == \PoP\API\Response\Schemes::API && $vars['datastructure'] == \PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter::getName()) {
+        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+        /** @var GraphQLDataStructureFormatter */
+        $graphQLDataStructureFormatter = $instanceManager->getInstance(\PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter::class);
+        if ($vars['scheme'] == \PoP\API\Response\Schemes::API && $vars['datastructure'] == $graphQLDataStructureFormatter->getName()) {
             $vars['edit-schema'] = \GraphQLByPoP\GraphQLServer\Configuration\Request::editSchema();
         }
     }

@@ -3,15 +3,14 @@
 declare (strict_types=1);
 namespace PoPSchema\Users\Conditional\RESTAPI\RouteModuleProcessors;
 
-use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
+use PoP\API\Facades\FieldQueryConvertorFacade;
+use PoP\API\Response\Schemes as APISchemes;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\Hooks\Facades\HooksAPIFacade;
-use PoP\API\Facades\FieldQueryConvertorFacade;
+use PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor;
 use PoP\Routing\RouteNatures;
 use PoPSchema\Users\Routing\RouteNatures as UserRouteNatures;
-use PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter;
-use PoP\API\Response\Schemes as APISchemes;
-class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
+class EntryRouteModuleProcessor extends \PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor
 {
     public const HOOK_REST_FIELDS = __CLASS__ . ':RESTFields';
     private static $restFieldsQuery;
@@ -43,7 +42,7 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
     {
         $ret = array();
         $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
-        $ret[\PoPSchema\Users\Routing\RouteNatures::USER][] = ['module' => [\PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_SINGLEUSER, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => \PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter::getName()]];
+        $ret[\PoPSchema\Users\Routing\RouteNatures::USER][] = ['module' => [\PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_SINGLEUSER, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => $this->restDataStructureFormatter->getName()]];
         return $ret;
     }
     /**
@@ -55,7 +54,7 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
         $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
         $routemodules = array(POP_USERS_ROUTE_USERS => [\PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_USERLIST, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]]);
         foreach ($routemodules as $route => $module) {
-            $ret[\PoP\Routing\RouteNatures::STANDARD][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => \PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter::getName()]];
+            $ret[\PoP\Routing\RouteNatures::STANDARD][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => $this->restDataStructureFormatter->getName()]];
         }
         return $ret;
     }

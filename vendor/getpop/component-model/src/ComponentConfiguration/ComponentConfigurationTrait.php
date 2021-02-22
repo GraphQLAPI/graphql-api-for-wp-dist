@@ -3,7 +3,7 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\ComponentConfiguration;
 
-use PoP\Hooks\Facades\HooksAPIFacade;
+use PoP\Hooks\Facades\SystemHooksAPIFacade;
 /**
  * Make the ComponentConfiguration be configurable
  */
@@ -43,7 +43,13 @@ trait ComponentConfigurationTrait
                 }
                 // Allow to override the value with a hook
                 if ($useHook) {
-                    $hooksAPI = \PoP\Hooks\Facades\HooksAPIFacade::getInstance();
+                    /**
+                     * Important: it must use the Hooks service from the System Container,
+                     * and not the (Application) Container, because ComponentConfiguration::foo()
+                     * may be accessed when initializing (Application) container services
+                     * in `Component.initialize()`, so it must already be available by then
+                     */
+                    $hooksAPI = \PoP\Hooks\Facades\SystemHooksAPIFacade::getInstance();
                     $class = \get_called_class();
                     $hookName = \PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers::getHookName($class, $envVariable);
                     $selfProperty = $hooksAPI->applyFilters($hookName, $selfProperty, $class, $envVariable);

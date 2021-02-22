@@ -3,38 +3,22 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Engine;
 
+use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 class DataloadingEngine implements \PoP\ComponentModel\Engine\DataloadingEngineInterface
 {
     /**
-     * @var string[]
+     * @var DirectiveResolverInterface[]
      */
-    protected $mandatoryRootDirectiveClasses = [];
+    protected $mandatoryDirectiveResolvers = [];
+    public function addMandatoryDirectiveResolver(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver) : void
+    {
+        $this->mandatoryDirectiveResolvers[] = $directiveResolver;
+    }
     /**
-     * @var string[]
+     * @return DirectiveResolverInterface[]
      */
-    protected $mandatoryRootDirectives = [];
-    public function getMandatoryDirectiveClasses() : array
+    public function getMandatoryDirectiveResolvers() : array
     {
-        return $this->mandatoryRootDirectiveClasses;
-    }
-    public function getMandatoryDirectives() : array
-    {
-        return $this->mandatoryRootDirectives;
-    }
-    public function addMandatoryDirectiveClass(string $directiveClass) : void
-    {
-        $this->mandatoryRootDirectiveClasses[] = $directiveClass;
-    }
-    public function addMandatoryDirective(string $directive) : void
-    {
-        $this->mandatoryRootDirectives[] = $directive;
-    }
-    public function addMandatoryDirectiveClasses(array $directiveClasses) : void
-    {
-        $this->mandatoryRootDirectiveClasses = \array_merge($this->mandatoryRootDirectiveClasses, $directiveClasses);
-    }
-    public function addMandatoryDirectives(array $directives) : void
-    {
-        $this->mandatoryRootDirectives = \array_merge($this->mandatoryRootDirectives, $directives);
+        return $this->mandatoryDirectiveResolvers;
     }
 }

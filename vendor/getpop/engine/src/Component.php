@@ -4,17 +4,12 @@ declare (strict_types=1);
 namespace PoP\Engine;
 
 use PoP\Root\Component\AbstractComponent;
-use PoP\Root\Component\YAMLServicesTrait;
-use PoP\Engine\Config\ServiceConfiguration;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
 use PoP\ComponentModel\ComponentConfiguration as ComponentModelComponentConfiguration;
 /**
  * Initialize component
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -36,34 +31,18 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
         \PoP\Engine\ComponentConfiguration::setConfiguration($configuration);
         self::initYAMLServices(\dirname(__DIR__));
+        self::initYAMLServices(\dirname(__DIR__), '/Overrides');
         self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
-        \PoP\Engine\Config\ServiceConfiguration::initialize();
-    }
-    /**
-     * Boot component
-     *
-     * @return void
-     */
-    public static function beforeBoot() : void
-    {
-        parent::beforeBoot();
-        // Initialize classes
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::registerTypeResolversFromNamespace(__NAMESPACE__ . '\\TypeResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::instantiateNamespaceServices(__NAMESPACE__ . '\\Hooks');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachFieldResolversFromNamespace(__NAMESPACE__ . '\\FieldResolvers', \false);
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachAndRegisterDirectiveResolversFromNamespace(__NAMESPACE__ . '\\DirectiveResolvers', \false);
         if (!\PoP\Engine\Environment::disableGuzzleOperators()) {
-            \PoP\ComponentModel\Container\ContainerBuilderUtils::attachFieldResolversFromNamespace(__NAMESPACE__ . '\\FieldResolvers\\Guzzle', \false);
-            \PoP\ComponentModel\Container\ContainerBuilderUtils::attachAndRegisterDirectiveResolversFromNamespace(__NAMESPACE__ . '\\DirectiveResolvers\\Guzzle');
+            self::maybeInitPHPSchemaServices(\dirname(__DIR__), $skipSchema, '/ConditionalOnEnvironment/Guzzle');
         }
         if (\PoP\ComponentModel\ComponentConfiguration::useComponentModelCache()) {
-            \PoP\ComponentModel\Container\ContainerBuilderUtils::attachAndRegisterDirectiveResolversFromNamespace(__NAMESPACE__ . '\\DirectiveResolvers\\Cache');
-            \PoP\ComponentModel\Container\ContainerBuilderUtils::attachTypeResolverDecoratorsFromNamespace(__NAMESPACE__ . '\\TypeResolverDecorators\\Cache');
+            self::maybeInitPHPSchemaServices(\dirname(__DIR__), $skipSchema, '/ConditionalOnEnvironment/UseComponentModelCache');
         }
     }
 }

@@ -108,7 +108,7 @@ trait QueryDataModuleProcessorTrait
         if ($datasource == \PoP\ComponentModel\Constants\DataSources::MUTABLEONREQUEST && !$data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::IGNOREREQUESTPARAMS]) {
             // Merge with $_REQUEST, so that params passed through the URL can be used for the query (eg: ?limit=5)
             // But whitelist the params that can be taken, to avoid hackers peering inside the system and getting custom data (eg: params "include", "post-status" => "draft", etc)
-            $whitelisted_params = (array) \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters(\PoP\ComponentModel\ModuleProcessors\Constants::HOOK_QUERYDATA_WHITELISTEDPARAMS, array(GD_URLPARAM_REDIRECTTO, \PoP\ComponentModel\Constants\Params::PAGE_NUMBER, \PoP\ComponentModel\Constants\Params::LIMIT));
+            $whitelisted_params = (array) \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters(\PoP\ComponentModel\ModuleProcessors\Constants::HOOK_QUERYDATA_WHITELISTEDPARAMS, array(\PoP\ComponentModel\Constants\Params::PAGE_NUMBER, \PoP\ComponentModel\Constants\Params::LIMIT));
             $params_from_request = \array_filter($_REQUEST, function ($param) use($whitelisted_params) {
                 return \in_array($param, $whitelisted_params);
             }, \ARRAY_FILTER_USE_KEY);

@@ -8,20 +8,7 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
-    private static $addMandatoryCacheControlDirective;
     private static $disableRedundantRootTypeMutationFields;
-    public static function addMandatoryCacheControlDirective() : bool
-    {
-        // Define properties
-        $envVariable = \PoP\Engine\Environment::ADD_MANDATORY_CACHE_CONTROL_DIRECTIVE;
-        $selfProperty =& self::$addMandatoryCacheControlDirective;
-        $defaultValue = \true;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
-        $useHook = \false;
-        // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback, $useHook);
-        return $selfProperty;
-    }
     public static function disableRedundantRootTypeMutationFields() : bool
     {
         // Define properties

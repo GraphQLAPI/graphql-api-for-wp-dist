@@ -4,41 +4,40 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI;
 
-use PoP\Engine\ComponentLoader;
-use GraphQLAPI\GraphQLAPI\PluginConfiguration;
-use GraphQLAPI\GraphQLAPI\Blocks\AbstractBlock;
-use GraphQLAPI\GraphQLAPI\General\RequestParams;
-use GraphQLAPI\GraphQLAPI\Admin\Menus\AbstractMenu;
-use GraphQLAPI\GraphQLAPI\PostTypes\AbstractPostType;
-use GraphQLAPI\GraphQLAPI\Taxonomies\AbstractTaxonomy;
-use GraphQLAPI\GraphQLAPI\Facades\ModuleRegistryFacade;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
-use GraphQLAPI\GraphQLAPI\Admin\MenuPages\AboutMenuPage;
-use GraphQLAPI\GraphQLAPI\Admin\MenuPages\ModulesMenuPage;
-use GraphQLAPI\GraphQLAPI\Admin\MenuPages\SettingsMenuPage;
-use GraphQLAPI\GraphQLAPI\Facades\UserSettingsManagerFacade;
-use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLEndpointPostType;
-use GraphQLAPI\GraphQLAPI\EditorScripts\AbstractEditorScript;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use GraphQLAPI\GraphQLAPI\BlockCategories\AbstractBlockCategory;
-use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLPersistedQueryPostType;
 use GraphQLAPI\GraphQLAPI\Admin\TableActions\ModuleListTableAction;
-use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLCacheControlListPostType;
-use GraphQLAPI\GraphQLAPI\EndpointResolvers\AbstractEndpointResolver;
-use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLAccessControlListPostType;
-use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLSchemaConfigurationPostType;
-use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLFieldDeprecationListPostType;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\VersioningFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\PerformanceFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\AccessControlFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\UserInterfaceFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\BlockCategories\AbstractBlockCategory;
+use GraphQLAPI\GraphQLAPI\Blocks\AbstractBlock;
+use GraphQLAPI\GraphQLAPI\Blocks\AccessControlRuleBlocks\AccessControlDisableAccessBlock;
+use GraphQLAPI\GraphQLAPI\Blocks\AccessControlRuleBlocks\AccessControlUserCapabilitiesBlock;
 use GraphQLAPI\GraphQLAPI\Blocks\AccessControlRuleBlocks\AccessControlUserRolesBlock;
 use GraphQLAPI\GraphQLAPI\Blocks\AccessControlRuleBlocks\AccessControlUserStateBlock;
+use GraphQLAPI\GraphQLAPI\ConditionalOnEnvironment\Admin\Services\Helpers\MenuPageHelper;
+use GraphQLAPI\GraphQLAPI\ConditionalOnEnvironment\Admin\Services\MenuPages\AboutMenuPage;
+use GraphQLAPI\GraphQLAPI\ConditionalOnEnvironment\Admin\Services\MenuPages\ModulesMenuPage;
+use GraphQLAPI\GraphQLAPI\ConditionalOnEnvironment\Admin\Services\MenuPages\SettingsMenuPage;
+use GraphQLAPI\GraphQLAPI\EditorScripts\AbstractEditorScript;
+use GraphQLAPI\GraphQLAPI\Facades\ModuleRegistryFacade;
+use GraphQLAPI\GraphQLAPI\Facades\UserSettingsManagerFacade;
+use GraphQLAPI\GraphQLAPI\General\RequestParams;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\AccessControlFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\PerformanceFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\PluginManagementFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Blocks\AccessControlRuleBlocks\AccessControlDisableAccessBlock;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Blocks\AccessControlRuleBlocks\AccessControlUserCapabilitiesBlock;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\UserInterfaceFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\VersioningFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\PluginConfiguration;
+use GraphQLAPI\GraphQLAPI\PostTypes\AbstractPostType;
+use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLAccessControlListPostType;
+use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLCacheControlListPostType;
+use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLEndpointPostType;
+use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLFieldDeprecationListPostType;
+use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLPersistedQueryPostType;
+use GraphQLAPI\GraphQLAPI\PostTypes\GraphQLSchemaConfigurationPostType;
+use GraphQLAPI\GraphQLAPI\Taxonomies\AbstractTaxonomy;
+use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
+use PoP\Engine\AppLoader;
+use PoP\Root\Container\ContainerBuilderUtils;
 
 class Plugin
 {
@@ -76,10 +75,11 @@ class Plugin
      *
      * 1. GraphQL API => setup(): immediately
      * 2. GraphQL API extensions => setup(): priority 0
-     * 3. GraphQL API => initialize(): priority 5
-     * 4. GraphQL API extensions => initialize(): priority 10
-     * 5. GraphQL API => boot(): priority 15
-     * 6. GraphQL API extensions => boot(): priority 20
+     * 3. GraphQL API => initialize(): priority 10
+     * 4. GraphQL API extensions => initialize(): priority 20
+     * 5. GraphQL API => bootApplication(): priority 30
+     * 6. GraphQL API => boot(): priority 40
+     * 7. GraphQL API extensions => boot(): priority 50
      *
      * @return void
      */
@@ -158,18 +158,15 @@ class Plugin
          * - ModuleListTableAction requires `wp_verify_nonce`, loaded in pluggable.php
          * - Allow other plugins to inject their own functionality
          */
-        \add_action('plugins_loaded', [$this, 'initialize'], 5);
-        \add_action('plugins_loaded', [$this, 'boot'], 15);
-        /**
-         * Hooks to initialize/boot extension plugins, triggered
-         * after this main plugin is initialized/booted
-         */
+        \add_action('plugins_loaded', [$this, 'initialize'], 10);
         \add_action('plugins_loaded', function () {
             \do_action(self::HOOK_INITIALIZE_EXTENSION_PLUGIN);
-        }, 10);
+        }, 20);
+        \add_action('plugins_loaded', [$this, 'bootApplication'], 30);
+        \add_action('plugins_loaded', [$this, 'boot'], 40);
         \add_action('plugins_loaded', function () {
             \do_action(self::HOOK_BOOT_EXTENSION_PLUGIN);
-        }, 20);
+        }, 50);
     }
 
     /**
@@ -241,10 +238,15 @@ class Plugin
         if (\is_admin()) {
             // We can't use the InstanceManager, since at this stage it hasn't
             // been initialized yet
-            // We can create a new instances of ModulesMenuPage because
-            // its instantiation produces no side-effects
-            $modulesMenuPage = new ModulesMenuPage();
-            if (isset($_GET['page']) && $_GET['page'] == $modulesMenuPage->getScreenID()) {
+            // We can create a new instance of MenuPageHelper and ModulesMenuPage
+            // because their instantiation produces no side-effects
+            // (maybe that happens under `initialize`)
+            $menuPageHelper = new MenuPageHelper();
+            $modulesMenuPage = new ModulesMenuPage($menuPageHelper);
+            if (
+                (isset($_GET['page']) && $_GET['page'] == $modulesMenuPage->getScreenID())
+                && !$menuPageHelper->isDocumentationScreen()
+            ) {
                 // Instantiating ModuleListTableAction DOES have side-effects,
                 // but they are needed, and won't be repeated when instantiating
                 // the class through the Container Builder
@@ -263,11 +265,19 @@ class Plugin
         $componentClassConfiguration = PluginConfiguration::getComponentClassConfiguration();
         $skipSchemaComponentClasses = PluginConfiguration::getSkippingSchemaComponentClasses();
 
-        // Initialize the plugin's Component and, with it,
-        // all its dependencies from PoP
-        ComponentLoader::initializeComponents([
+        // Initialize the containers
+        AppLoader::addComponentClassesToInitialize([
             Component::class,
         ], $componentClassConfiguration, $skipSchemaComponentClasses);
+    }
+
+    /**
+     * Boot the application
+     */
+    public function bootApplication(): void
+    {
+        // Boot all PoP components, from this plugin and all extensions
+        AppLoader::bootApplication(...PluginConfiguration::getContainerCacheConfiguration());
     }
 
     /**
@@ -276,35 +286,8 @@ class Plugin
      */
     public function boot(): void
     {
-        // Boot all PoP components, from this plugin and all extensions
-        ComponentLoader::bootComponents();
-
         $instanceManager = InstanceManagerFacade::getInstance();
         $moduleRegistry = ModuleRegistryFacade::getInstance();
-        /**
-         * Initialize classes for the admin panel
-         */
-        if (\is_admin()) {
-            /**
-             * Initialize all the services
-             */
-            $menuServiceClasses = ContainerBuilderUtils::getServiceClassesUnderNamespace(__NAMESPACE__ . '\\Admin\\Menus');
-            foreach ($menuServiceClasses as $serviceClass) {
-                /**
-                 * @var AbstractMenu
-                 */
-                $service = $instanceManager->getInstance($serviceClass);
-                $service->initialize();
-            }
-            $endpointResolverServiceClasses = ContainerBuilderUtils::getServiceClassesUnderNamespace(__NAMESPACE__ . '\\Admin\\EndpointResolvers');
-            foreach ($endpointResolverServiceClasses as $serviceClass) {
-                /**
-                 * @var AbstractEndpointResolver
-                 */
-                $service = $instanceManager->getInstance($serviceClass);
-                $service->initialize();
-            }
-        }
 
         /**
          * Taxonomies must be initialized before Post Types

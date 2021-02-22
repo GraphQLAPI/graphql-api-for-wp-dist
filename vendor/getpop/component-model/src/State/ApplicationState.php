@@ -14,6 +14,7 @@ use PoP\ComponentModel\Constants\Targets;
 use PoP\ComponentModel\Constants\Values;
 use PoP\Routing\RouteNatures;
 use PoP\Hooks\Facades\HooksAPIFacade;
+use PoP\Definitions\Configuration\Request as DefinitionsRequest;
 use PoP\ComponentModel\Configuration\Request;
 use PoP\Routing\Facades\RoutingManagerFacade;
 use PoP\ComponentModel\Facades\Info\ApplicationInfoFacade;
@@ -48,11 +49,12 @@ class ApplicationState
         $dataoutputmode = \strtolower($_REQUEST[\PoP\ComponentModel\Constants\Params::DATAOUTPUTMODE] ?? '');
         $dboutputmode = \strtolower($_REQUEST[\PoP\ComponentModel\Constants\Params::DATABASESOUTPUTMODE] ?? '');
         $target = \strtolower($_REQUEST[\PoP\ComponentModel\Constants\Params::TARGET] ?? '');
-        $mangled = \PoP\ComponentModel\Configuration\Request::isMangled() ? '' : \PoP\ComponentModel\Configuration\Request::URLPARAMVALUE_MANGLED_NONE;
+        $mangled = \PoP\Definitions\Configuration\Request::isMangled() ? '' : \PoP\Definitions\Configuration\Request::URLPARAMVALUE_MANGLED_NONE;
         $actions = isset($_REQUEST[\PoP\ComponentModel\Constants\Params::ACTIONS]) ? \array_map('strtolower', $_REQUEST[\PoP\ComponentModel\Constants\Params::ACTIONS]) : [];
         $scheme = \strtolower($_REQUEST[\PoP\ComponentModel\Constants\Params::SCHEME] ?? '');
         // The version could possibly be set from outside
-        $version = \PoP\ComponentModel\Environment::enableVersionByParams() ? $_REQUEST[\PoP\ComponentModel\Constants\Params::VERSION] ?? \PoP\ComponentModel\Facades\Info\ApplicationInfoFacade::getInstance()->getVersion() : \PoP\ComponentModel\Facades\Info\ApplicationInfoFacade::getInstance()->getVersion();
+        $appVersion = \PoP\ComponentModel\Facades\Info\ApplicationInfoFacade::getInstance()->getVersion();
+        $version = \PoP\ComponentModel\Environment::enableVersionByParams() ? $_REQUEST[\PoP\ComponentModel\Constants\Params::VERSION] ?? $appVersion : $appVersion;
         $outputs = (array) \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('ApplicationState:outputs', array(\PoP\ComponentModel\Constants\Outputs::HTML, \PoP\ComponentModel\Constants\Outputs::JSON));
         if (!\in_array($output, $outputs)) {
             $output = \PoP\ComponentModel\Constants\Outputs::HTML;

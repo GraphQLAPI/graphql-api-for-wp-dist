@@ -45,15 +45,14 @@ class ContainerBuilderUtils
         $containerBuilder->get($serviceClass);
     }
     /**
-     * Initialize all services located under the specified namespace
+     * Initialize service classes
      *
-     * @param string $namespace
-     * @return void
+     * @param string[] $serviceClasses
      */
-    public static function instantiateNamespaceServices(string $namespace, bool $includeSubfolders = \true) : void
+    public static function instantiateServices(array $serviceClasses) : void
     {
         $containerBuilder = \PoP\Root\Container\ContainerBuilderFactory::getInstance();
-        foreach (self::getServiceClassesUnderNamespace($namespace, $includeSubfolders) as $serviceClass) {
+        foreach ($serviceClasses as $serviceClass) {
             $containerBuilder->get($serviceClass);
         }
     }

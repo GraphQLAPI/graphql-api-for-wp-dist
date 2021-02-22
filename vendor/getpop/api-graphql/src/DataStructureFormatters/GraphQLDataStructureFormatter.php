@@ -7,10 +7,9 @@ use PoP\APIMirrorQuery\DataStructureFormatters\MirrorQueryDataStructureFormatter
 use PoP\ComponentModel\Feedback\Tokens;
 class GraphQLDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFormatters\MirrorQueryDataStructureFormatter
 {
-    public const NAME = 'graphql';
-    public static function getName() : string
+    public function getName() : string
     {
-        return self::NAME;
+        return 'graphql';
     }
     public function getFormattedData($data)
     {

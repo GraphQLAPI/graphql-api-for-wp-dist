@@ -7,7 +7,7 @@
         "translation"
     ],
     "homepage": "https:\/\/github.com\/getpop\/translation",
-    "license": "MIT",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Leonardo Losoviz",

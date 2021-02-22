@@ -79,9 +79,13 @@ trait EndpointResolverTrait
          */
         unset($_REQUEST[QueryInputs::QUERY]);
 
+        $instanceManager = InstanceManagerFacade::getInstance();
+        /** @var GraphQLDataStructureFormatter */
+        $graphQLDataStructureFormatter = $instanceManager->getInstance(GraphQLDataStructureFormatter::class);
+
         $vars =& $vars_in_array[0];
         $vars['scheme'] = APISchemes::API;
-        $vars['datastructure'] = GraphQLDataStructureFormatter::getName();
+        $vars['datastructure'] = $graphQLDataStructureFormatter->getName();
 
         /**
          * Get the query and variables from the implementing class

@@ -7,7 +7,7 @@
         "MandatoryDirectivesByConfiguration"
     ],
     "homepage": "https:\/\/github.com\/getpop\/mandatory-directives-by-configuration",
-    "license": "MIT",
+    "license": "GPL-2.0-or-later",
     "authors": [
         {
             "name": "Leonardo Losoviz",

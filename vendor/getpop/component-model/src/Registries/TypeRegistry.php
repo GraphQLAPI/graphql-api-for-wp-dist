@@ -3,18 +3,22 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Registries;
 
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 class TypeRegistry implements \PoP\ComponentModel\Registries\TypeRegistryInterface
 {
     /**
-     * @var string[]
+     * @var TypeResolverInterface[]
      */
-    protected $typeResolverClasses = [];
-    public function addTypeResolverClass(string $typeResolverClass) : void
+    protected $typeResolvers = [];
+    public function addTypeResolver(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : void
     {
-        $this->typeResolverClasses[] = $typeResolverClass;
+        $this->typeResolvers[] = $typeResolver;
     }
-    public function getTypeResolverClasses() : array
+    /**
+     * @return TypeResolverInterface[]
+     */
+    public function getTypeResolvers() : array
     {
-        return $this->typeResolverClasses;
+        return $this->typeResolvers;
     }
 }

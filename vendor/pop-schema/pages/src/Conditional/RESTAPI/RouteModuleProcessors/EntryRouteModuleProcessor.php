@@ -3,14 +3,13 @@
 declare (strict_types=1);
 namespace PoPSchema\Pages\Conditional\RESTAPI\RouteModuleProcessors;
 
-use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
+use PoP\API\Facades\FieldQueryConvertorFacade;
+use PoP\API\Response\Schemes as APISchemes;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\Hooks\Facades\HooksAPIFacade;
-use PoP\API\Facades\FieldQueryConvertorFacade;
+use PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor;
 use PoPSchema\Pages\Routing\RouteNatures;
-use PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter;
-use PoP\API\Response\Schemes as APISchemes;
-class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
+class EntryRouteModuleProcessor extends \PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor
 {
     private static $restFieldsQuery;
     private static $restFields;
@@ -41,7 +40,7 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
     {
         $ret = array();
         $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
-        $ret[\PoPSchema\Pages\Routing\RouteNatures::PAGE][] = ['module' => [\PrefixedByPoP\PoP_Pages_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Pages_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_PAGE, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => \PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter::getName()]];
+        $ret[\PoPSchema\Pages\Routing\RouteNatures::PAGE][] = ['module' => [\PrefixedByPoP\PoP_Pages_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Pages_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_PAGE, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => $this->restDataStructureFormatter->getName()]];
         return $ret;
     }
 }

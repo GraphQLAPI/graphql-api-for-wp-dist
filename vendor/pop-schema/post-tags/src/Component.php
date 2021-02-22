@@ -3,11 +3,7 @@
 declare (strict_types=1);
 namespace PoPSchema\PostTags;
 
-use PoPSchema\PostTags\Conditional\RESTAPI\ConditionalComponent;
 use PoP\Root\Component\AbstractComponent;
-use PoP\Root\Component\YAMLServicesTrait;
-use PoPSchema\PostTags\Config\ServiceConfiguration;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
 use PoP\Routing\DefinitionGroups;
 use PoP\Definitions\Facades\DefinitionManagerFacade;
 /**
@@ -15,9 +11,6 @@ use PoP\Definitions\Facades\DefinitionManagerFacade;
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
-    public static $COMPONENT_DIR;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -48,32 +41,16 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
         \PoPSchema\PostTags\ComponentConfiguration::setConfiguration($configuration);
-        self::$COMPONENT_DIR = \dirname(__DIR__);
-        self::initYAMLServices(self::$COMPONENT_DIR);
-        self::maybeInitYAMLSchemaServices(self::$COMPONENT_DIR, $skipSchema);
-        \PoPSchema\PostTags\Config\ServiceConfiguration::initialize();
-        if (!\in_array(\PoP\RESTAPI\Component::class, $skipSchemaComponentClasses)) {
-            \PoPSchema\PostTags\Conditional\RESTAPI\ConditionalComponent::initialize($configuration, $skipSchema);
+        self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
+        if (\class_exists('\\PoP\\API\\Component') && \PoP\API\Component::isEnabled()) {
+            self::initYAMLServices(\dirname(__DIR__), '/Conditional/API');
         }
-    }
-    /**
-     * Boot component
-     *
-     * @return void
-     */
-    public static function beforeBoot() : void
-    {
-        parent::beforeBoot();
-        // Initialize all hooks
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::registerTypeResolversFromNamespace(__NAMESPACE__ . '\\TypeResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachFieldResolversFromNamespace(__NAMESPACE__ . '\\FieldResolvers');
-        // If $skipSchema for `Condition` is `true`, then services are not registered
-        if (!empty(\PoP\ComponentModel\Container\ContainerBuilderUtils::getServiceClassesUnderNamespace(__NAMESPACE__ . '\\Conditional\\RESTAPI\\Hooks'))) {
-            \PoPSchema\PostTags\Conditional\RESTAPI\ConditionalComponent::beforeBoot();
+        if (\class_exists('\\PoP\\RESTAPI\\Component') && \PoP\RESTAPI\Component::isEnabled()) {
+            self::initYAMLServices(\dirname(__DIR__), '/Conditional/RESTAPI');
         }
     }
     /**

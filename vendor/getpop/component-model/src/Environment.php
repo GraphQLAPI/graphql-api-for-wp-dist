@@ -3,7 +3,7 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel;
 
-use PoP\ComponentModel\Configuration\Request;
+use PoP\Definitions\Configuration\Request as DefinitionsRequest;
 class Environment
 {
     public const ENABLE_SCHEMA_ENTITY_REGISTRIES = 'ENABLE_SCHEMA_ENTITY_REGISTRIES';
@@ -66,7 +66,7 @@ class Environment
     public static function compactResponseJsonKeys()
     {
         // Do not compact if not mangled
-        if (!\PoP\ComponentModel\Configuration\Request::isMangled()) {
+        if (!\PoP\Definitions\Configuration\Request::isMangled()) {
             return \false;
         }
         return \getenv('COMPACT_RESPONSE_JSON_KEYS') !== \false ? \strtolower(\getenv('COMPACT_RESPONSE_JSON_KEYS')) == "true" : \false;

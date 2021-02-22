@@ -3,16 +3,15 @@
 declare (strict_types=1);
 namespace PoPSchema\PostTags\Conditional\RESTAPI\RouteModuleProcessors;
 
-use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
+use PoP\API\Facades\FieldQueryConvertorFacade;
+use PoP\API\Response\Schemes as APISchemes;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\Hooks\Facades\HooksAPIFacade;
-use PoP\API\Facades\FieldQueryConvertorFacade;
-use PoPSchema\PostTags\Facades\PostTagTypeAPIFacade;
+use PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor;
 use PoP\Routing\RouteNatures;
+use PoPSchema\PostTags\Facades\PostTagTypeAPIFacade;
 use PoPSchema\Tags\Routing\RouteNatures as TagRouteNatures;
-use PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter;
-use PoP\API\Response\Schemes as APISchemes;
-class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
+class EntryRouteModuleProcessor extends \PoP\RESTAPI\RouteModuleProcessors\AbstractRESTEntryRouteModuleProcessor
 {
     public const HOOK_REST_FIELDS = __CLASS__ . ':RESTFields';
     private static $restFieldsQuery;
@@ -45,7 +44,7 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
         $ret = array();
         $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
         $postTagTypeAPI = \PoPSchema\PostTags\Facades\PostTagTypeAPIFacade::getInstance();
-        $ret[\PoPSchema\Tags\Routing\RouteNatures::TAG][] = ['module' => [\PrefixedByPoP\PoP_PostTags_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_PostTags_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_TAG, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => \PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter::getName(), 'routing-state' => ['taxonomy-name' => $postTagTypeAPI->getPostTagTaxonomyName()]]];
+        $ret[\PoPSchema\Tags\Routing\RouteNatures::TAG][] = ['module' => [\PrefixedByPoP\PoP_PostTags_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_PostTags_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_TAG, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => $this->restDataStructureFormatter->getName(), 'routing-state' => ['taxonomy-name' => $postTagTypeAPI->getPostTagTaxonomyName()]]];
         return $ret;
     }
     /**
@@ -58,11 +57,11 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
         $postTagTypeAPI = \PoPSchema\PostTags\Facades\PostTagTypeAPIFacade::getInstance();
         $routemodules = array(POP_POSTTAGS_ROUTE_POSTTAGS => [\PrefixedByPoP\PoP_PostTags_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_PostTags_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_TAGLIST, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]]);
         foreach ($routemodules as $route => $module) {
-            $ret[\PoP\Routing\RouteNatures::STANDARD][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => \PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter::getName()]];
+            $ret[\PoP\Routing\RouteNatures::STANDARD][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => $this->restDataStructureFormatter->getName()]];
         }
         $routemodules = array(POP_POSTS_ROUTE_POSTS => [\PrefixedByPoP\PoP_Taxonomies_Posts_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Taxonomies_Posts_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_TAGPOSTLIST, ['fields' => isset($vars['query']) ? $vars['query'] : self::getRESTFields()]]);
         foreach ($routemodules as $route => $module) {
-            $ret[\PoPSchema\Tags\Routing\RouteNatures::TAG][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => \PoP\RESTAPI\DataStructureFormatters\RESTDataStructureFormatter::getName(), 'routing-state' => ['taxonomy-name' => $postTagTypeAPI->getPostTagTaxonomyName()]]];
+            $ret[\PoPSchema\Tags\Routing\RouteNatures::TAG][$route][] = ['module' => $module, 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'datastructure' => $this->restDataStructureFormatter->getName(), 'routing-state' => ['taxonomy-name' => $postTagTypeAPI->getPostTagTaxonomyName()]]];
         }
         return $ret;
     }

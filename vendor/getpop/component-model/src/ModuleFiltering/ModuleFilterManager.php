@@ -57,6 +57,10 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
         $this->modulePathManager = $modulePathManager;
         $this->modulePathHelpers = $modulePathHelpers;
     }
+    public function addModuleFilter(\PoP\ComponentModel\ModuleFilters\ModuleFilterInterface $moduleFilter) : void
+    {
+        $this->modulefilters[$moduleFilter->getName()] = $moduleFilter;
+    }
     protected function init()
     {
         // Lazy initialize so that we can inject all the moduleFilters before checking the selected one
@@ -67,12 +71,6 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
             $this->not_excluded_module_sets = $this->not_excluded_module_sets_as_string = array();
         }
         $this->initialized = \true;
-    }
-    public function add(\PoP\ComponentModel\ModuleFilters\ModuleFilterInterface ...$moduleFilters)
-    {
-        foreach ($moduleFilters as $moduleFilter) {
-            $this->modulefilters[$moduleFilter->getName()] = $moduleFilter;
-        }
     }
     /**
      * The selected filter can be set from outside by the engine

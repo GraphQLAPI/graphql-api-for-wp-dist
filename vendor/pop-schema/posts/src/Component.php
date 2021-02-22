@@ -3,13 +3,7 @@
 declare (strict_types=1);
 namespace PoPSchema\Posts;
 
-use PoPSchema\Posts\Conditional\Users\ConditionalComponent;
 use PoP\Root\Component\AbstractComponent;
-use PoP\Root\Component\YAMLServicesTrait;
-use PoPSchema\Posts\Config\ServiceConfiguration;
-use PoP\ComponentModel\Container\ContainerBuilderUtils;
-use PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups;
-use PoPSchema\Posts\TypeResolverPickers\Optional\PostCustomPostTypeResolverPicker;
 use PoP\Routing\DefinitionGroups;
 use PoP\Definitions\Facades\DefinitionManagerFacade;
 /**
@@ -17,9 +11,6 @@ use PoP\Definitions\Facades\DefinitionManagerFacade;
  */
 class Component extends \PoP\Root\Component\AbstractComponent
 {
-    use YAMLServicesTrait;
-    public static $COMPONENT_DIR;
-    // const VERSION = '0.1.0';
     /**
      * Classes from PoP components that must be initialized before this component
      *
@@ -50,44 +41,30 @@ class Component extends \PoP\Root\Component\AbstractComponent
      * @param array<string, mixed> $configuration
      * @param string[] $skipSchemaComponentClasses
      */
-    protected static function doInitialize(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::doInitialize($configuration, $skipSchema, $skipSchemaComponentClasses);
+        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
         \PoPSchema\Posts\ComponentConfiguration::setConfiguration($configuration);
-        self::$COMPONENT_DIR = \dirname(__DIR__);
-        self::initYAMLServices(self::$COMPONENT_DIR);
-        self::maybeInitYAMLSchemaServices(self::$COMPONENT_DIR, $skipSchema);
-        if (\class_exists('\\PoPSchema\\Users\\Component') && !\in_array(\PoPSchema\Users\Component::class, $skipSchemaComponentClasses)) {
-            \PoPSchema\Posts\Conditional\Users\ConditionalComponent::initialize($configuration, $skipSchema);
+        self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
+        if (\class_exists('\\PoP\\API\\Component') && \PoP\API\Component::isEnabled()) {
+            self::initYAMLServices(\dirname(__DIR__), '/Conditional/API');
         }
-        // Initialize at the end
-        \PoPSchema\Posts\Config\ServiceConfiguration::initialize();
-    }
-    /**
-     * Boot component
-     *
-     * @return void
-     */
-    public static function beforeBoot() : void
-    {
-        parent::beforeBoot();
-        // Initialize classes
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::registerTypeResolversFromNamespace(__NAMESPACE__ . '\\TypeResolvers');
-        \PoP\ComponentModel\Container\ContainerBuilderUtils::attachFieldResolversFromNamespace(__NAMESPACE__ . '\\FieldResolvers');
-        self::attachTypeResolverPickers();
+        if (\class_exists('\\PoP\\RESTAPI\\Component') && \PoP\RESTAPI\Component::isEnabled()) {
+            self::initYAMLServices(\dirname(__DIR__), '/Conditional/RESTAPI');
+        }
         if (\class_exists('\\PoPSchema\\Users\\Component')) {
-            \PoPSchema\Posts\Conditional\Users\ConditionalComponent::beforeBoot();
+            if (!\in_array(\PoPSchema\Users\Component::class, $skipSchemaComponentClasses)) {
+                self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema, '/Conditional/Users');
+            }
+            if (\class_exists('\\PoP\\API\\Component') && \PoP\API\Component::isEnabled()) {
+                self::initYAMLServices(\dirname(__DIR__), '/Conditional/Users/Conditional/API');
+            }
+            if (\class_exists('\\PoP\\RESTAPI\\Component') && \PoP\RESTAPI\Component::isEnabled()) {
+                self::initYAMLServices(\dirname(__DIR__), '/Conditional/Users/Conditional/RESTAPI');
+            }
         }
-    }
-    /**
-     * If enabled, load the TypeResolverPickers
-     *
-     * @return void
-     */
-    protected static function attachTypeResolverPickers()
-    {
-        if (\PoPSchema\Posts\ComponentConfiguration::addPostTypeToCustomPostUnionTypes() && !empty(\PoP\ComponentModel\Container\ContainerBuilderUtils::getServiceClassesUnderNamespace(__NAMESPACE__ . '\\TypeResolverPickers'))) {
-            \PoPSchema\Posts\TypeResolverPickers\Optional\PostCustomPostTypeResolverPicker::attach(\PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::TYPERESOLVERPICKERS);
+        if (\PoPSchema\Posts\ComponentConfiguration::addPostTypeToCustomPostUnionTypes()) {
+            self::maybeInitPHPSchemaServices(\dirname(__DIR__), $skipSchema, '/ConditionalOnEnvironment/AddPostTypeToCustomPostUnionTypes');
         }
     }
     /**

@@ -15,7 +15,7 @@ class ComponentConfigurationHookSet extends \PoP\Hooks\AbstractHookSet
         /**
          * Do not enable caching when doing a private schema mode
          */
-        if (\PoP\AccessControl\ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode() || \PoP\AccessControl\ComponentConfiguration::usePrivateSchemaMode()) {
+        if (\PoP\AccessControl\ComponentConfiguration::canSchemaBePrivate()) {
             $hookName = \PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers::getHookName(\PoP\API\ComponentConfiguration::class, \PoP\API\Environment::USE_SCHEMA_DEFINITION_CACHE);
             $this->hooksAPI->addFilter($hookName, function () {
                 return \false;

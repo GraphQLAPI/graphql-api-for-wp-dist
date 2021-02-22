@@ -3,17 +3,29 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DataStructure;
 
+use PoP\ComponentModel\DataStructure\DataStructureFormatterInterface;
 use PoP\ComponentModel\State\ApplicationState;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 class DataStructureManager implements \PoP\ComponentModel\DataStructure\DataStructureManagerInterface
 {
     /**
      * @var array<string, DataStructureFormatterInterface>
      */
     public $formatters = [];
-    public function add(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void
+    /**
+     * @var \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface
+     */
+    protected $defaultFormatter;
+    function __construct(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $defaultFormatter)
     {
-        $this->formatters[$formatter::getName()] = $formatter;
+        $this->defaultFormatter = $defaultFormatter;
+    }
+    public function addDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void
+    {
+        $this->formatters[$formatter->getName()] = $formatter;
+    }
+    public function setDefaultDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $defaultFormatter) : void
+    {
+        $this->defaultFormatter = $defaultFormatter;
     }
     public function getDataStructureFormatter(string $name = null) : \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface
     {
@@ -27,12 +39,6 @@ class DataStructureManager implements \PoP\ComponentModel\DataStructure\DataStru
         if ($name && isset($this->formatters[$name])) {
             return $this->formatters[$name];
         }
-        // Return the default one
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        /**
-         * @var DefaultDataStructureFormatter
-         */
-        $formatter = $instanceManager->getInstance(\PoP\ComponentModel\DataStructure\DefaultDataStructureFormatter::class);
-        return $formatter;
+        return $this->defaultFormatter;
     }
 }

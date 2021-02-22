@@ -20,7 +20,7 @@ use PoP\ComponentModel\Misc\GeneralUtils;
 use PoP\ComponentModel\DataloadUtils;
 use PoP\Hooks\Facades\HooksAPIFacade;
 use PoP\ComponentModel\Modules\ModuleUtils;
-use PoP\ComponentModel\Configuration\Request;
+use PoP\Definitions\Configuration\Request;
 use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\Environment;
 use PoP\ComponentModel\CheckpointProcessorManagerFactory;
@@ -416,7 +416,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
                 $meta[\PoP\ComponentModel\Constants\Params::SETTINGSFORMAT] = $vars['format'];
             }
             if ($vars['mangled'] ?? null) {
-                $meta[\PoP\ComponentModel\Configuration\Request::URLPARAM_MANGLED] = $vars['mangled'];
+                $meta[\PoP\Definitions\Configuration\Request::URLPARAM_MANGLED] = $vars['mangled'];
             }
             if (\PoP\ComponentModel\ComponentConfiguration::enableConfigByParams() && $vars['config']) {
                 $meta[\PoP\ComponentModel\Constants\Params::CONFIG] = $vars['config'];

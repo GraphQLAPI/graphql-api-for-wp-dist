@@ -7,9 +7,8 @@ use PoP\ComponentModel\DataStructure\PropertyDataStructureFormatterTrait;
 class PropertyMirrorQueryDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFormatters\MirrorQueryDataStructureFormatter
 {
     use PropertyDataStructureFormatterTrait;
-    public const NAME = 'props';
-    public static function getName() : string
+    public function getName() : string
     {
-        return self::NAME;
+        return 'props';
     }
 }

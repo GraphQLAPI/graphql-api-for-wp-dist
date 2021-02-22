@@ -3,18 +3,22 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Registries;
 
+use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 class DirectiveRegistry implements \PoP\ComponentModel\Registries\DirectiveRegistryInterface
 {
     /**
-     * @var string[]
+     * @var DirectiveResolverInterface[]
      */
-    protected $directiveResolverClasses = [];
-    public function addDirectiveResolverClass(string $directiveResolverClass) : void
+    protected $directiveResolvers = [];
+    public function addDirectiveResolver(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver) : void
     {
-        $this->directiveResolverClasses[] = $directiveResolverClass;
+        $this->directiveResolvers[] = $directiveResolver;
     }
-    public function getDirectiveResolverClasses() : array
+    /**
+     * @return DirectiveResolverInterface[]
+     */
+    public function getDirectiveResolvers() : array
     {
-        return $this->directiveResolverClasses;
+        return $this->directiveResolvers;
     }
 }

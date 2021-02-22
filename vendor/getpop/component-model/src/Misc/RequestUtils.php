@@ -8,7 +8,7 @@ use PoP\Hooks\Facades\HooksAPIFacade;
 use PoP\ComponentModel\ModuleFiltering\ModuleFilterManager;
 use PoP\ComponentModel\ModuleFilters\ModulePaths;
 use PoP\ComponentModel\Misc\GeneralUtils;
-use PoP\ComponentModel\Configuration\Request;
+use PoP\Definitions\Configuration\Request;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\Routing\URLParams;
 class RequestUtils
@@ -66,7 +66,7 @@ class RequestUtils
             \PoP\ComponentModel\Constants\Params::DATABASESOUTPUTMODE,
             \PoP\ComponentModel\Constants\Params::OUTPUT,
             \PoP\ComponentModel\Constants\Params::DATASTRUCTURE,
-            \PoP\ComponentModel\Configuration\Request::URLPARAM_MANGLED,
+            \PoP\Definitions\Configuration\Request::URLPARAM_MANGLED,
             \PoP\ComponentModel\Constants\Params::EXTRA_ROUTES,
             \PoP\ComponentModel\Constants\Params::ACTIONS,
             // Needed to remove ?actions[]=preload, ?actions[]=loaduserstate, ?actions[]=loadlazy
@@ -120,7 +120,7 @@ class RequestUtils
         /**
          * The default ports (80 for HTTP and 443 for HTTPS) must be ignored
          */
-        $isDefaultPort = $s ? $_SERVER["SERVER_PORT"] == "443" : $_SERVER["SERVER_PORT"] == "80";
+        $isDefaultPort = $s ? \in_array($_SERVER["SERVER_PORT"], ["443", "80"]) : $_SERVER["SERVER_PORT"] == "80";
         $port = $isDefaultPort ? "" : ":" . $_SERVER["SERVER_PORT"];
         /**
          * If accessing from Nginx, the server_name might point to localhost

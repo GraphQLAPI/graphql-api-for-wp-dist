@@ -4,8 +4,9 @@ declare (strict_types=1);
 namespace PoP\Hooks;
 
 use PoP\Hooks\HooksAPIInterface;
+use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 use PoP\Translation\TranslationAPIInterface;
-abstract class AbstractHookSet
+abstract class AbstractHookSet extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var \PoP\Hooks\HooksAPIInterface
@@ -19,6 +20,9 @@ abstract class AbstractHookSet
     {
         $this->hooksAPI = $hooksAPI;
         $this->translationAPI = $translationAPI;
+    }
+    public final function initialize() : void
+    {
         // Initialize the hooks
         $this->init();
     }

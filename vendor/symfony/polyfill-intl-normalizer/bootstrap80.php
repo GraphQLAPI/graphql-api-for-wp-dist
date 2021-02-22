@@ -12,14 +12,14 @@
  */
 use PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer as p;
 if (!\function_exists('normalizer_is_normalized')) {
-    function normalizer_is_normalized(string $string, int $form = \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::FORM_C) : bool
+    function normalizer_is_normalized(?string $string, ?int $form = \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::FORM_C) : bool
     {
-        return \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::isNormalized($string, $form);
+        return \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::isNormalized((string) $string, (int) $form);
     }
 }
 if (!\function_exists('normalizer_normalize')) {
-    function normalizer_normalize(string $string, int $form = \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::FORM_C) : string|false
+    function normalizer_normalize(?string $string, ?int $form = \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::FORM_C) : string|false
     {
-        return \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::normalize($string, $form);
+        return \PrefixedByPoP\Symfony\Polyfill\Intl\Normalizer\Normalizer::normalize((string) $string, (int) $form);
     }
 }

@@ -45,7 +45,7 @@ abstract class AbstractPersistedQueryManager implements \PoP\API\PersistedQuerie
     {
         return \substr($query, \strlen(\PoP\API\Schema\QuerySymbols::PERSISTED_QUERY));
     }
-    public function add(string $queryName, string $queryResolution, ?string $description = null) : void
+    public function addPersistedQuery(string $queryName, string $queryResolution, ?string $description = null) : void
     {
         $this->persistedQueries[$queryName] = $queryResolution;
         $this->persistedQueriesForSchema[$queryName] = [\PoP\API\Schema\SchemaDefinition::ARGNAME_NAME => $queryName];

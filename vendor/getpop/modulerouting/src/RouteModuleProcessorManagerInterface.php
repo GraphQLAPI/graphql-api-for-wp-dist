@@ -6,7 +6,7 @@ namespace PoP\ModuleRouting;
 use PoP\ModuleRouting\AbstractRouteModuleProcessor;
 interface RouteModuleProcessorManagerInterface
 {
-    public function add(\PoP\ModuleRouting\AbstractRouteModuleProcessor $processor) : void;
+    public function addRouteModuleProcessor(\PoP\ModuleRouting\AbstractRouteModuleProcessor $processor) : void;
     /**
      * @return AbstractRouteModuleProcessor[]
      */

@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace PoP\Definitions;
 
+use PoP\Definitions\Configuration\Request;
 use PoP\Definitions\Environment;
 class DefinitionManager implements \PoP\Definitions\DefinitionManagerInterface
 {
@@ -26,27 +27,9 @@ class DefinitionManager implements \PoP\Definitions\DefinitionManagerInterface
      * @var \PoP\Definitions\DefinitionPersistenceInterface|null
      */
     protected $definition_persistence = null;
-    /**
-     * Allow ComponentModel to disable it when not mangling the response
-     *
-     * @var bool
-     */
-    protected $enabled;
-    public function __construct()
-    {
-        /**
-         * By default, enable/disable from the Environment value
-         * This can be overriden through `setEnabled`
-         */
-        $this->enabled = !\PoP\Definitions\Environment::disableDefinitions();
-    }
-    public function setEnabled(bool $enabled) : void
-    {
-        $this->enabled = $enabled;
-    }
     public function isEnabled() : bool
     {
-        return $this->enabled;
+        return !\PoP\Definitions\Environment::disableDefinitions() && \PoP\Definitions\Configuration\Request::isMangled();
     }
     /**
      * @return array<string, DefinitionResolverInterface>

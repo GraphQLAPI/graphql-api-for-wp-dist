@@ -7,9 +7,8 @@ use PoP\ComponentModel\DataStructure\XMLDataStructureFormatterTrait;
 class XMLMirrorQueryDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFormatters\MirrorQueryDataStructureFormatter
 {
     use XMLDataStructureFormatterTrait;
-    public const NAME = 'xml';
-    public static function getName() : string
+    public function getName() : string
     {
-        return self::NAME;
+        return 'xml';
     }
 }

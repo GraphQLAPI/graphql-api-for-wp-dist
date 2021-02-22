@@ -25,6 +25,11 @@ class FilterSystemDirectiveSchemaFieldResolver extends \GraphQLByPoP\GraphQLServ
     {
         return ['directives'];
     }
+    public static function getPriorityToAttachClasses() : ?int
+    {
+        // Higher priority => Process first
+        return 100;
+    }
     // /**
     //  * Only use this fieldResolver when parameter `ofTypes` is provided.
     //  * Otherwise, use the default implementation
@@ -94,11 +99,7 @@ class FilterSystemDirectiveSchemaFieldResolver extends \GraphQLByPoP\GraphQLServ
                     // Convert the enum from uppercase (as exposed in the API) to lowercase (as is its real value)
                     $ofTypes = \array_map([$directiveTypeEnum, 'getCoreValue'], $ofTypes);
                     $directiveRegistry = \PoP\ComponentModel\Facades\Registries\DirectiveRegistryFacade::getInstance();
-                    $ofTypeDirectiveResolverClasses = \array_filter($directiveRegistry->getDirectiveResolverClasses(), function ($directiveResolverClass) use($instanceManager, $ofTypes) {
-                        /**
-                         * @var DirectiveResolverInterface
-                         */
-                        $directiveResolver = $instanceManager->getInstance($directiveResolverClass);
+                    $ofTypeDirectiveResolverClasses = \array_filter($directiveRegistry->getDirectiveResolvers(), function ($directiveResolver) use($ofTypes) {
                         return \in_array($directiveResolver->getDirectiveType(), $ofTypes);
                     });
                     // Calculate the directive IDs

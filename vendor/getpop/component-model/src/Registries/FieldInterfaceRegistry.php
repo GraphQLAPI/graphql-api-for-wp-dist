@@ -3,18 +3,22 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Registries;
 
+use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface;
 class FieldInterfaceRegistry implements \PoP\ComponentModel\Registries\FieldInterfaceRegistryInterface
 {
     /**
-     * @var string[]
+     * @var FieldInterfaceResolverInterface[]
      */
-    protected $fieldInterfaceResolverClasses = [];
-    public function addFieldInterfaceResolverClass(string $fieldInterfaceResolverClass) : void
+    protected $fieldInterfaceResolvers = [];
+    public function addFieldInterfaceResolver(\PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface $fieldInterfaceResolver) : void
     {
-        $this->fieldInterfaceResolverClasses[] = $fieldInterfaceResolverClass;
+        $this->fieldInterfaceResolvers[] = $fieldInterfaceResolver;
     }
-    public function getFieldInterfaceResolverClasses() : array
+    /**
+     * @return FieldInterfaceResolverInterface[]
+     */
+    public function getFieldInterfaceResolvers() : array
     {
-        return $this->fieldInterfaceResolverClasses;
+        return $this->fieldInterfaceResolvers;
     }
 }
