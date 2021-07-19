@@ -10,7 +10,7 @@ namespace GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-class Variable extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface
+class Variable extends AbstractAst implements ValueInterface
 {
     /** @var  string */
     private $name;
@@ -36,9 +36,8 @@ class Variable extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implem
      * @param bool     $nullable
      * @param bool     $isArray
      * @param bool     $arrayElementNullable
-     * @param Location $location
      */
-    public function __construct($name, $type, $nullable, $isArray, $arrayElementNullable, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function __construct($name, $type, $nullable, $isArray, $arrayElementNullable, Location $location)
     {
         parent::__construct($location);
         $this->name = $name;

@@ -5,10 +5,10 @@ namespace PoP\Engine\TypeDataLoaders;
 
 use PoP\Engine\ObjectFacades\RootObjectFacade;
 use PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader;
-class RootTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader
+class RootTypeDataLoader extends AbstractTypeDataLoader
 {
     public function getObjects(array $ids) : array
     {
-        return [\PoP\Engine\ObjectFacades\RootObjectFacade::getInstance()];
+        return [RootObjectFacade::getInstance()];
     }
 }

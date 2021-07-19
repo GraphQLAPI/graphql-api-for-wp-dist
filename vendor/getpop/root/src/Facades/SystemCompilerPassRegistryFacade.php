@@ -7,13 +7,13 @@ use PoP\Root\Container\SystemContainerBuilderFactory;
 use PoP\Root\Registries\CompilerPassRegistryInterface;
 class SystemCompilerPassRegistryFacade
 {
-    public static function getInstance() : \PoP\Root\Registries\CompilerPassRegistryInterface
+    public static function getInstance() : CompilerPassRegistryInterface
     {
-        $systemContainerBuilder = \PoP\Root\Container\SystemContainerBuilderFactory::getInstance();
+        $systemContainerBuilder = SystemContainerBuilderFactory::getInstance();
         /**
          * @var CompilerPassRegistryInterface
          */
-        $service = $systemContainerBuilder->get(\PoP\Root\Registries\CompilerPassRegistryInterface::class);
+        $service = $systemContainerBuilder->get(CompilerPassRegistryInterface::class);
         return $service;
     }
 }

@@ -8,16 +8,29 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
+    /**
+     * @var int|null
+     */
     private static $getPostListDefaultLimit;
+    /**
+     * @var int|null
+     */
     private static $getPostListMaxLimit;
-    private static $addPostTypeToCustomPostUnionTypes;
+    /**
+     * @var bool
+     */
+    private static $addPostTypeToCustomPostUnionTypes = \true;
+    /**
+     * @var string
+     */
+    private static $getPostsRoute = '';
     public static function getPostListDefaultLimit() : ?int
     {
         // Define properties
         $envVariable = \PoPSchema\Posts\Environment::POST_LIST_DEFAULT_LIMIT;
         $selfProperty =& self::$getPostListDefaultLimit;
         $defaultValue = 10;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -29,7 +42,7 @@ class ComponentConfiguration
         $selfProperty =& self::$getPostListMaxLimit;
         $defaultValue = -1;
         // Unlimited
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -40,9 +53,19 @@ class ComponentConfiguration
         $envVariable = \PoPSchema\Posts\Environment::ADD_POST_TYPE_TO_CUSTOMPOST_UNION_TYPES;
         $selfProperty =& self::$addPostTypeToCustomPostUnionTypes;
         $defaultValue = \true;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        return $selfProperty;
+    }
+    public static function getPostsRoute() : string
+    {
+        // Define properties
+        $envVariable = \PoPSchema\Posts\Environment::POSTS_ROUTE;
+        $selfProperty =& self::$getPostsRoute;
+        $defaultValue = 'posts';
+        // Initialize property from the environment/hook
+        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue);
         return $selfProperty;
     }
 }

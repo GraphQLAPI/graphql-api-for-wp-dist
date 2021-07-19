@@ -572,6 +572,8 @@ Fragments enable to re-use query sections. Similar to variables, their resolutio
 
 The fragment name must be prepended with `--`, and the query they resolve to can be defined either directly under the fragment name, or under entry `fragments` and then the fragment name. 
 
+While a fragment can contain `|` (to split fields), it cannot contain `;` (to split operations) or `,` (to split queries), to avoid confusion (since these are computed from the root of the query, not the fragment).
+
 _**In GraphQL**:_
 
 ```graphql
@@ -911,7 +913,7 @@ _**In PoP** ([View query in browser](https://newapi.getpop.org/api/graphql/?quer
 
 In the example below, directive `<advancePointerInArray>` communicates to directive `<translate>` the language to translate to through expression `%translateTo%`, which is defined on-the-fly.
 
-_**In PoP** ([View query in browser](https://newapi.getpop.org/api/graphql/?query=echo([[text:%20Hello%20my%20friends,translateTo:%20fr],[text:%20How%20do%20you%20like%20this%20software%20so%20far?,translateTo:%20es],])@translated%3CforEach%3CadvancePointerInArray(path:%20text,appendExpressions:%20[toLang:extract(%value%,translateTo)])%3Ctranslate(from:%20en,to:%20%toLang%,oneLanguagePerField:%20true,override:%20true)%3E%3E%3E)):_
+_**In PoP** (<a href="https://newapi.getpop.org/api/graphql/?query=echo([[text:Hello my friends,translateTo:fr],[text:How do you like this software so far?,translateTo:es]])@translated<forEach<advancePointerInArray(path:text,appendExpressions:[toLang:extract(%value%,translateTo)])<translateMultiple(from:en,to:%toLang%,oneLanguagePerField:true,override:true)>>>">View query in browser</a>):_
 
 ```php
 /?query=
@@ -923,7 +925,7 @@ _**In PoP** ([View query in browser](https://newapi.getpop.org/api/graphql/?quer
     [
       text: How do you like this software so far?,
       translateTo: es
-    ],
+    ]
   ])@translated<
     forEach<
       advancePointerInArray(
@@ -932,7 +934,7 @@ _**In PoP** ([View query in browser](https://newapi.getpop.org/api/graphql/?quer
           toLang:extract(%value%,translateTo)
         ]
       )<
-        translate(
+        translateMultiple(
           from: en,
           to: %toLang%,
           oneLanguagePerField: true,
@@ -1124,12 +1126,12 @@ Directives:
 
 Requirements:
 
-- PHP 7.4+ for development
+- PHP 8.0+ for development
 - PHP 7.1+ for production
 
 ### Supported PHP features
 
-Check the list of [Supported PHP features in `leoloso/PoP`](https://github.com/leoloso/PoP/#supported-php-features)
+Check the list of [Supported PHP features in `leoloso/PoP`](https://github.com/leoloso/PoP/blob/master/docs/supported-php-features.md)
 
 ### Preview downgrade to PHP 7.1
 

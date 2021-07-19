@@ -5,7 +5,7 @@ namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\NonDocumentableTypeTrait;
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNestableType;
-class ListType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNestableType
+class ListType extends AbstractNestableType
 {
     use NonDocumentableTypeTrait;
     public function getName() : string

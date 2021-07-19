@@ -7,9 +7,9 @@ use PoP\Engine\ObjectModels\Root;
 use PoP\Root\Container\ContainerBuilderFactory;
 class RootObjectFacade
 {
-    public static function getInstance() : \PoP\Engine\ObjectModels\Root
+    public static function getInstance() : Root
     {
-        $containerBuilderFactory = \PoP\Root\Container\ContainerBuilderFactory::getInstance();
-        return $containerBuilderFactory->get(\PoP\Engine\ObjectModels\Root::class);
+        $containerBuilderFactory = ContainerBuilderFactory::getInstance();
+        return $containerBuilderFactory->get(Root::class);
     }
 }

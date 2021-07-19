@@ -20,7 +20,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Resource;
  *
  * @final
  */
-class FileExistenceResource implements \PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceInterface
+class FileExistenceResource implements SelfCheckingResourceInterface
 {
     private $resource;
     private $exists;

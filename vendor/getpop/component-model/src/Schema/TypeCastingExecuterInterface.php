@@ -7,10 +7,8 @@ interface TypeCastingExecuterInterface
 {
     /**
      * Cast the value to the indicated type, or return null or Error (with a message) if it fails
-     *
-     * @param string $type
-     * @param string $value
-     * @return void
+     * @param mixed $value
+     * @return mixed
      */
     public function cast(string $type, $value);
 }

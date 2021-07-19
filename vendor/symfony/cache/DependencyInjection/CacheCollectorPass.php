@@ -22,13 +22,16 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  *
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
-class CacheCollectorPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+class CacheCollectorPass implements CompilerPassInterface
 {
     private $dataCollectorCacheId;
     private $cachePoolTag;
     private $cachePoolRecorderInnerSuffix;
     public function __construct(string $dataCollectorCacheId = 'data_collector.cache', string $cachePoolTag = 'cache.pool', string $cachePoolRecorderInnerSuffix = '.recorder_inner')
     {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/cache', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
         $this->dataCollectorCacheId = $dataCollectorCacheId;
         $this->cachePoolTag = $cachePoolTag;
         $this->cachePoolRecorderInnerSuffix = $cachePoolRecorderInnerSuffix;
@@ -36,7 +39,7 @@ class CacheCollectorPass implements \PrefixedByPoP\Symfony\Component\DependencyI
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         if (!$container->hasDefinition($this->dataCollectorCacheId)) {
             return;
@@ -46,25 +49,25 @@ class CacheCollectorPass implements \PrefixedByPoP\Symfony\Component\DependencyI
             $this->addToCollector($id, $poolName, $container);
         }
     }
-    private function addToCollector(string $id, string $name, \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    private function addToCollector(string $id, string $name, ContainerBuilder $container)
     {
         $definition = $container->getDefinition($id);
         if ($definition->isAbstract()) {
             return;
         }
         $collectorDefinition = $container->getDefinition($this->dataCollectorCacheId);
-        $recorder = new \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition(\is_subclass_of($definition->getClass(), \PrefixedByPoP\Symfony\Component\Cache\Adapter\TagAwareAdapterInterface::class) ? \PrefixedByPoP\Symfony\Component\Cache\Adapter\TraceableTagAwareAdapter::class : \PrefixedByPoP\Symfony\Component\Cache\Adapter\TraceableAdapter::class);
+        $recorder = new Definition(\is_subclass_of($definition->getClass(), TagAwareAdapterInterface::class) ? TraceableTagAwareAdapter::class : TraceableAdapter::class);
         $recorder->setTags($definition->getTags());
         if (!$definition->isPublic() || !$definition->isPrivate()) {
             $recorder->setPublic($definition->isPublic());
         }
-        $recorder->setArguments([new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($innerId = $id . $this->cachePoolRecorderInnerSuffix)]);
+        $recorder->setArguments([new Reference($innerId = $id . $this->cachePoolRecorderInnerSuffix)]);
         $definition->setTags([]);
         $definition->setPublic(\false);
         $container->setDefinition($innerId, $definition);
         $container->setDefinition($id, $recorder);
         // Tell the collector to add the new instance
-        $collectorDefinition->addMethodCall('addInstance', [$name, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($id)]);
+        $collectorDefinition->addMethodCall('addInstance', [$name, new Reference($id)]);
         $collectorDefinition->setPublic(\false);
     }
 }

@@ -8,7 +8,6 @@ use GraphQLAPI\GraphQLAPI\Plugin;
 use GraphQLAPI\GraphQLAPI\ModuleSettings\Properties;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleTypeResolvers\ModuleTypeResolver;
 
 /**
  * The cache modules have different behavior depending on the environment:
@@ -20,6 +19,7 @@ use GraphQLAPI\GraphQLAPI\ModuleTypeResolvers\ModuleTypeResolver;
 class PerformanceFunctionalityModuleResolver extends AbstractFunctionalityModuleResolver
 {
     use ModuleResolverTrait;
+    use PerformanceFunctionalityModuleResolverTrait;
 
     public const CACHE_CONTROL = Plugin::NAMESPACE . '\cache-control';
 
@@ -31,19 +31,11 @@ class PerformanceFunctionalityModuleResolver extends AbstractFunctionalityModule
     /**
      * @return string[]
      */
-    public static function getModulesToResolve(): array
+    public function getModulesToResolve(): array
     {
         return [
             self::CACHE_CONTROL,
         ];
-    }
-
-    /**
-     * Enable to customize a specific UI for the module
-     */
-    public function getModuleType(string $module): string
-    {
-        return ModuleTypeResolver::PERFORMANCE;
     }
 
     /**
@@ -84,10 +76,7 @@ class PerformanceFunctionalityModuleResolver extends AbstractFunctionalityModule
 
     /**
      * Default value for an option set by the module
-     *
-     * @param string $module
-     * @param string $option
-     * @return mixed Anything the setting might be: an array|string|bool|int|null
+     * @return mixed
      */
     public function getSettingsDefaultValue(string $module, string $option)
     {
@@ -96,7 +85,7 @@ class PerformanceFunctionalityModuleResolver extends AbstractFunctionalityModule
                 self::OPTION_MAX_AGE => 86400, // 1 day
             ],
         ];
-        return $defaultValues[$module][$option];
+        return $defaultValues[$module][$option] ?? null;
     }
 
     /**
@@ -112,7 +101,10 @@ class PerformanceFunctionalityModuleResolver extends AbstractFunctionalityModule
             $option = self::OPTION_MAX_AGE;
             $moduleSettings[] = [
                 Properties::INPUT => $option,
-                Properties::NAME => $this->getSettingOptionName($module, $option),
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
                 Properties::TITLE => \__('Default max-age', 'graphql-api'),
                 Properties::DESCRIPTION => \__('Default max-age value (in seconds) for the Cache-Control header, for all fields and directives in the schema', 'graphql-api'),
                 Properties::TYPE => Properties::TYPE_INT,

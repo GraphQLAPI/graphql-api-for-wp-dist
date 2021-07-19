@@ -3,63 +3,61 @@
 declare (strict_types=1);
 namespace PoPSchema\PostMutations\FieldResolvers;
 
+use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\Engine\ComponentConfiguration as EngineComponentConfiguration;
 use PoP\Engine\TypeResolvers\RootTypeResolver;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoPSchema\Posts\TypeResolvers\PostTypeResolver;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoPSchema\CustomPostMutations\Schema\SchemaDefinitionHelpers;
-use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
 use PoPSchema\PostMutations\MutationResolvers\CreatePostMutationResolver;
 use PoPSchema\PostMutations\MutationResolvers\UpdatePostMutationResolver;
-class RootFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+use PoPSchema\Posts\TypeResolvers\PostTypeResolver;
+class RootFieldResolver extends AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return array(\PoP\Engine\TypeResolvers\RootTypeResolver::class);
+        return array(RootTypeResolver::class);
     }
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
-        return \array_merge(['createPost'], !\PoP\Engine\ComponentConfiguration::disableRedundantRootTypeMutationFields() ? ['updatePost'] : []);
+        return \array_merge(['createPost'], !EngineComponentConfiguration::disableRedundantRootTypeMutationFields() ? ['updatePost'] : []);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['createPost' => $translationAPI->__('Create a post', 'post-mutations'), 'updatePost' => $translationAPI->__('Update a post', 'post-mutations')];
+        $descriptions = ['createPost' => $this->translationAPI->__('Create a post', 'post-mutations'), 'updatePost' => $this->translationAPI->__('Update a post', 'post-mutations')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
     {
-        $types = ['createPost' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'updatePost' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID];
+        $types = ['createPost' => SchemaDefinition::TYPE_ID, 'updatePost' => SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
+    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         switch ($fieldName) {
             case 'createPost':
-                return \PoPSchema\CustomPostMutations\Schema\SchemaDefinitionHelpers::getCreateUpdateCustomPostSchemaFieldArgs($typeResolver, $fieldName, \false);
             case 'updatePost':
-                return \PoPSchema\CustomPostMutations\Schema\SchemaDefinitionHelpers::getCreateUpdateCustomPostSchemaFieldArgs($typeResolver, $fieldName, \true);
+                $addCustomPostIDConfig = ['createPost' => \false, 'updatePost' => \true];
+                return SchemaDefinitionHelpers::getCreateUpdateCustomPostSchemaFieldArgs($typeResolver, $fieldName, $addCustomPostIDConfig[$fieldName], PostTypeResolver::class);
         }
         return parent::getSchemaFieldArgs($typeResolver, $fieldName);
     }
-    public function resolveFieldMutationResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldMutationResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'createPost':
-                return \PoPSchema\PostMutations\MutationResolvers\CreatePostMutationResolver::class;
+                return CreatePostMutationResolver::class;
             case 'updatePost':
-                return \PoPSchema\PostMutations\MutationResolvers\UpdatePostMutationResolver::class;
+                return UpdatePostMutationResolver::class;
         }
         return parent::resolveFieldMutationResolverClass($typeResolver, $fieldName);
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'createPost':
             case 'updatePost':
-                return \PoPSchema\Posts\TypeResolvers\PostTypeResolver::class;
+                return PostTypeResolver::class;
         }
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }

@@ -10,7 +10,7 @@
  */
 namespace PrefixedByPoP\Symfony\Component\VarExporter\Exception;
 
-class ClassNotFoundException extends \Exception implements \PrefixedByPoP\Symfony\Component\VarExporter\Exception\ExceptionInterface
+class ClassNotFoundException extends \Exception implements ExceptionInterface
 {
     public function __construct(string $class, \Throwable $previous = null)
     {

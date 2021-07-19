@@ -41,14 +41,14 @@ final class VarExporter
     public static function export($value, bool &$isStaticValue = null, array &$foundClasses = []) : string
     {
         $isStaticValue = \true;
-        if (!\is_object($value) && !(\is_array($value) && $value) && !$value instanceof \__PHP_Incomplete_Class && !\is_resource($value)) {
-            return \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Exporter::export($value);
+        if (!\is_object($value) && !(\is_array($value) && $value) && !\is_resource($value) || $value instanceof \PrefixedByPoP\UnitEnum) {
+            return Exporter::export($value);
         }
         $objectsPool = new \SplObjectStorage();
         $refsPool = [];
         $objectsCount = 0;
         try {
-            $value = \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Exporter::prepare([$value], $objectsPool, $refsPool, $objectsCount, $isStaticValue)[0];
+            $value = Exporter::prepare([$value], $objectsPool, $refsPool, $objectsCount, $isStaticValue)[0];
         } finally {
             $references = [];
             foreach ($refsPool as $i => $v) {
@@ -59,7 +59,7 @@ final class VarExporter
             }
         }
         if ($isStaticValue) {
-            return \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Exporter::export($value);
+            return Exporter::export($value);
         }
         $classes = [];
         $values = [];
@@ -95,10 +95,10 @@ final class VarExporter
             }
         }
         if ($classes || $references) {
-            $value = new \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Hydrator(new \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry($classes), $references ? new \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Values($references) : null, $properties, $value, $wakeups);
+            $value = new Hydrator(new Registry($classes), $references ? new Values($references) : null, $properties, $value, $wakeups);
         } else {
             $isStaticValue = \true;
         }
-        return \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Exporter::export($value);
+        return Exporter::export($value);
     }
 }

@@ -20,7 +20,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class ReplaceAliasByActualDefinitionPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class ReplaceAliasByActualDefinitionPass extends AbstractRecursivePass
 {
     private $replacements;
     /**
@@ -28,7 +28,7 @@ class ReplaceAliasByActualDefinitionPass extends \PrefixedByPoP\Symfony\Componen
      *
      * @throws InvalidArgumentException if the service definition does not exist
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         // First collect all alias targets that need to be replaced
         $seenAliasTargets = [];
@@ -51,9 +51,9 @@ class ReplaceAliasByActualDefinitionPass extends \PrefixedByPoP\Symfony\Componen
             $seenAliasTargets[$targetId] = \true;
             try {
                 $definition = $container->getDefinition($targetId);
-            } catch (\PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException $e) {
+            } catch (ServiceNotFoundException $e) {
                 if ('' !== $e->getId() && '@' === $e->getId()[0]) {
-                    throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException($e->getId(), $e->getSourceId(), null, [\substr($e->getId(), 1)]);
+                    throw new ServiceNotFoundException($e->getId(), $e->getSourceId(), null, [\substr($e->getId(), 1)]);
                 }
                 throw $e;
             }
@@ -72,14 +72,13 @@ class ReplaceAliasByActualDefinitionPass extends \PrefixedByPoP\Symfony\Componen
     }
     /**
      * {@inheritdoc}
-     * @param bool $isRoot
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference && isset($this->replacements[$referenceId = (string) $value])) {
+        if ($value instanceof Reference && isset($this->replacements[$referenceId = (string) $value])) {
             // Perform the replacement
             $newId = $this->replacements[$referenceId];
-            $value = new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($newId, $value->getInvalidBehavior());
+            $value = new Reference($newId, $value->getInvalidBehavior());
             $this->container->log($this, \sprintf('Changed reference of service "%s" previously pointing to "%s" to "%s".', $this->currentId, $referenceId, $newId));
         }
         return parent::processValue($value, $isRoot);

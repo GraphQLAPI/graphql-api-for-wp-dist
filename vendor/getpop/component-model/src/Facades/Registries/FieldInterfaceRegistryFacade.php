@@ -7,12 +7,12 @@ use PoP\ComponentModel\Registries\FieldInterfaceRegistryInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class FieldInterfaceRegistryFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Registries\FieldInterfaceRegistryInterface
+    public static function getInstance() : FieldInterfaceRegistryInterface
     {
         /**
          * @var FieldInterfaceRegistryInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Registries\FieldInterfaceRegistryInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(FieldInterfaceRegistryInterface::class);
         return $service;
     }
 }

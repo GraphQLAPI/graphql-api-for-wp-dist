@@ -12,13 +12,10 @@ class UnionTypeHelpers
 {
     /**
      * If the type data resolver starts with "*" then it's union
-     *
-     * @param string $type
-     * @return boolean
      */
     public static function isUnionType(string $type) : bool
     {
-        return \substr($type, 0, \strlen(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::UNION_TYPE_NAME_PREFIX)) == \PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::UNION_TYPE_NAME_PREFIX;
+        return substr($type, 0, \strlen(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::UNION_TYPE_NAME_PREFIX)) == \PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::UNION_TYPE_NAME_PREFIX;
     }
     public static function getUnionTypeCollectionName(string $type) : string
     {
@@ -26,46 +23,41 @@ class UnionTypeHelpers
     }
     /**
      * Extract the original Union type name (i.e. without "*")
-     *
-     * @param string $unionTypeCollectionName
-     * @return string
      */
     public static function removePrefixFromUnionTypeName(string $unionTypeCollectionName) : string
     {
-        return \substr($unionTypeCollectionName, \strlen(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::UNION_TYPE_NAME_PREFIX));
+        return substr($unionTypeCollectionName, \strlen(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::UNION_TYPE_NAME_PREFIX));
     }
     /**
      * Extracts the DB key and ID from the resultItem ID
-     *
-     * @param array $composedDBKeyResultItemID
-     * @return void
      */
-    public static function extractDBObjectTypeAndID(string $composedDBKeyResultItemID)
+    public static function extractDBObjectTypeAndID(string $composedDBKeyResultItemID) : array
     {
-        return \explode(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::DBOBJECT_COMPOSED_TYPE_ID_SEPARATOR, $composedDBKeyResultItemID);
+        $parts = explode(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::DBOBJECT_COMPOSED_TYPE_ID_SEPARATOR, $composedDBKeyResultItemID);
+        // If the object could not be loaded, $composedDBKeyResultItemID will be all ID, with no $dbKey
+        if (\count($parts) === 1) {
+            return ['', $parts[0]];
+        }
+        return $parts;
     }
     /**
      * Extracts the ID from the resultItem ID
-     *
-     * @param array $composedDBKeyResultItemID
-     * @return void
+     * @return string|int
      */
     public static function extractDBObjectID(string $composedDBObjectTypeAndID)
     {
-        $elements = \explode(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::DBOBJECT_COMPOSED_TYPE_ID_SEPARATOR, $composedDBObjectTypeAndID);
+        $elements = explode(\PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::DBOBJECT_COMPOSED_TYPE_ID_SEPARATOR, $composedDBObjectTypeAndID);
         // If the UnionTypeResolver didn't have a TypeResolver to process the passed object, the Type will not be added
         // In that case, the ID will be on the first position
         return \count($elements) == 1 ? $elements[0] : $elements[1];
     }
     /**
      * Creates a composed string containing the type and ID of the dbObject
-     *
-     * @param array $composedDBKeyResultItemID
-     * @return void
+     * @param int|string $id
      */
-    public static function getDBObjectComposedTypeAndID(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $id) : string
+    public static function getDBObjectComposedTypeAndID(TypeResolverInterface $typeResolver, $id) : string
     {
-        return $typeResolver->getTypeOutputName() . \PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::DBOBJECT_COMPOSED_TYPE_ID_SEPARATOR . $id;
+        return $typeResolver->getTypeOutputName() . \PoP\ComponentModel\TypeResolvers\UnionTypeSymbols::DBOBJECT_COMPOSED_TYPE_ID_SEPARATOR . (string) $id;
     }
     /**
      * Return a class or another depending on these possibilities:
@@ -75,18 +67,15 @@ class UnionTypeHelpers
      *   and not the Union (since it's more efficient)
      * - If there are none types, return `null`. As a consequence,
      *   the ID is returned as a field, not as a connection
-     *
-     * @param string $unionTypeResolverClass
-     * @return string|null
      */
     public static function getUnionOrTargetTypeResolverClass(string $unionTypeResolverClass) : ?string
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+        $instanceManager = InstanceManagerFacade::getInstance();
         $unionTypeResolver = $instanceManager->getInstance($unionTypeResolverClass);
         $targetTypeResolverClasses = $unionTypeResolver->getTargetTypeResolverClasses();
         if ($targetTypeResolverClasses) {
             // By configuration: If there is only 1 item, return only that one
-            if (\PoP\ComponentModel\ComponentConfiguration::useSingleTypeInsteadOfUnionType()) {
+            if (ComponentConfiguration::useSingleTypeInsteadOfUnionType()) {
                 return \count($targetTypeResolverClasses) == 1 ? $targetTypeResolverClasses[0] : $unionTypeResolverClass;
             }
             return $unionTypeResolverClass;

@@ -3,35 +3,49 @@
 declare (strict_types=1);
 namespace PoPSchema\Comments\FieldResolvers;
 
-use PoPSchema\Comments\Constants\Status;
-use PoP\LooseContracts\Facades\NameResolverFacade;
-use PoPSchema\Comments\TypeResolvers\CommentTypeResolver;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver;
-use PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver;
-use PoPSchema\Comments\FieldInterfaceResolvers\CommentableFieldInterfaceResolver;
 use PoP\ComponentModel\FieldResolvers\FieldSchemaDefinitionResolverInterface;
+use PoP\ComponentModel\HelperServices\SemverHelperServiceInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Engine\CMS\CMSServiceInterface;
+use PoP\Hooks\HooksAPIInterface;
+use PoP\LooseContracts\NameResolverInterface;
+use PoP\Translation\TranslationAPIInterface;
+use PoPSchema\Comments\Constants\Status;
+use PoPSchema\Comments\FieldInterfaceResolvers\CommentableFieldInterfaceResolver;
+use PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface;
+use PoPSchema\Comments\TypeResolvers\CommentTypeResolver;
+use PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver;
 use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
-class CustomPostFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver
+class CustomPostFieldResolver extends AbstractQueryableFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    /**
+     * @var \PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface
+     */
+    protected $commentTypeAPI;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FieldQueryInterpreterInterface $fieldQueryInterpreter, NameResolverInterface $nameResolver, CMSServiceInterface $cmsService, SemverHelperServiceInterface $semverHelperService, CommentTypeAPIInterface $commentTypeAPI)
     {
-        return [\PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver::class];
+        $this->commentTypeAPI = $commentTypeAPI;
+        parent::__construct($translationAPI, $hooksAPI, $instanceManager, $fieldQueryInterpreter, $nameResolver, $cmsService, $semverHelperService);
     }
-    public static function getImplementedInterfaceClasses() : array
+    public function getClassesToAttachTo() : array
     {
-        return [\PoPSchema\Comments\FieldInterfaceResolvers\CommentableFieldInterfaceResolver::class];
+        return [IsCustomPostFieldInterfaceResolver::class];
     }
-    public static function getFieldNamesToResolve() : array
+    public function getImplementedFieldInterfaceResolverClasses() : array
+    {
+        return [CommentableFieldInterfaceResolver::class];
+    }
+    public function getFieldNamesToResolve() : array
     {
         return ['areCommentsOpen', 'commentCount', 'hasComments', 'comments'];
     }
     /**
      * By returning `null`, the schema definition comes from the interface
-     *
-     * @return void
      */
-    public function getSchemaDefinitionResolver(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?\PoP\ComponentModel\FieldResolvers\FieldSchemaDefinitionResolverInterface
+    public function getSchemaDefinitionResolver(TypeResolverInterface $typeResolver) : ?FieldSchemaDefinitionResolverInterface
     {
         return null;
     }
@@ -43,37 +57,37 @@ class CustomPostFieldResolver extends \PoP\ComponentModel\FieldResolvers\Abstrac
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $cmscommentsapi = \PoPSchema\Comments\FunctionAPIFactory::getInstance();
         $post = $resultItem;
         switch ($fieldName) {
             case 'areCommentsOpen':
-                return $cmscommentsapi->areCommentsOpen($typeResolver->getID($post));
+                return $this->commentTypeAPI->areCommentsOpen($typeResolver->getID($post));
             case 'commentCount':
-                return $cmscommentsapi->getCommentNumber($typeResolver->getID($post));
+                return $this->commentTypeAPI->getCommentNumber($typeResolver->getID($post));
             case 'hasComments':
                 return $typeResolver->resolveValue($post, 'commentCount', $variables, $expressions, $options) > 0;
             case 'comments':
                 $query = array(
-                    'status' => \PoPSchema\Comments\Constants\Status::APPROVED,
+                    'status' => Status::APPROVED,
                     // 'type' => 'comment', // Only comments, no trackbacks or pingbacks
                     'customPostID' => $typeResolver->getID($post),
                     // The Order must always be date > ASC so the jQuery works in inserting sub-comments in already-created parent comments
                     'order' => 'ASC',
-                    'orderby' => \PoP\LooseContracts\Facades\NameResolverFacade::getInstance()->getName('popcms:dbcolumn:orderby:comments:date'),
+                    'orderby' => $this->nameResolver->getName('popcms:dbcolumn:orderby:comments:date'),
+                    'parentID' => 0,
                 );
-                $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
+                $options = ['return-type' => ReturnTypes::IDS];
                 $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
-                return $cmscommentsapi->getComments($query, $options);
+                return $this->commentTypeAPI->getComments($query, $options);
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'comments':
-                return \PoPSchema\Comments\TypeResolvers\CommentTypeResolver::class;
+                return CommentTypeResolver::class;
         }
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }

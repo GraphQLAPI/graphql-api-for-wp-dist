@@ -3,21 +3,22 @@
 declare (strict_types=1);
 namespace PoPSchema\Users\TypeDataLoaders;
 
-use PoP\LooseContracts\Facades\NameResolverFacade;
 use PoP\ComponentModel\TypeDataLoaders\AbstractTypeQueryableDataLoader;
 use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
-class UserTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTypeQueryableDataLoader
+use PoPSchema\Users\Facades\UserTypeAPIFacade;
+use PoPSchema\Users\ModuleProcessors\FieldDataloadModuleProcessor;
+class UserTypeDataLoader extends AbstractTypeQueryableDataLoader
 {
     public function getFilterDataloadingModule() : ?array
     {
-        return [\PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Users_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_USERLIST];
+        return [FieldDataloadModuleProcessor::class, FieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_USERLIST];
     }
     public function getObjects(array $ids) : array
     {
-        $cmsusersapi = \PoPSchema\Users\FunctionAPIFactory::getInstance();
+        $userTypeAPI = UserTypeAPIFacade::getInstance();
         $ret = array();
         foreach ($ids as $user_id) {
-            $ret[] = $cmsusersapi->getUserById($user_id);
+            $ret[] = $userTypeAPI->getUserById($user_id);
         }
         return $ret;
     }
@@ -28,7 +29,7 @@ class UserTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTyp
     }
     protected function getOrderbyDefault()
     {
-        return \PoP\LooseContracts\Facades\NameResolverFacade::getInstance()->getName('popcms:dbcolumn:orderby:users:name');
+        return $this->nameResolver->getName('popcms:dbcolumn:orderby:users:name');
     }
     protected function getOrderDefault()
     {
@@ -41,13 +42,13 @@ class UserTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTyp
     }
     public function executeQuery($query, array $options = [])
     {
-        $cmsusersapi = \PoPSchema\Users\FunctionAPIFactory::getInstance();
-        return $cmsusersapi->getUsers($query, $options);
+        $userTypeAPI = UserTypeAPIFacade::getInstance();
+        return $userTypeAPI->getUsers($query, $options);
     }
     public function executeQueryIds($query) : array
     {
         // $query['fields'] = 'ID';
-        $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
+        $options = ['return-type' => ReturnTypes::IDS];
         return (array) $this->executeQuery($query, $options);
     }
 }

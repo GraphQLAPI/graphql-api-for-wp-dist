@@ -19,7 +19,7 @@ use PrefixedByPoP\Symfony\Component\Filesystem\Filesystem;
  *
  * @author Matthias Pigulla <mp@webfactory.de>
  */
-class ResourceCheckerConfigCache implements \PrefixedByPoP\Symfony\Component\Config\ConfigCacheInterface
+class ResourceCheckerConfigCache implements ConfigCacheInterface
 {
     /**
      * @var string
@@ -103,22 +103,22 @@ class ResourceCheckerConfigCache implements \PrefixedByPoP\Symfony\Component\Con
      *
      * @throws \RuntimeException When cache file can't be written
      */
-    public function write(string $content, array $metadata = null)
+    public function write(string $content, $metadata = null)
     {
         $mode = 0666;
         $umask = \umask();
-        $filesystem = new \PrefixedByPoP\Symfony\Component\Filesystem\Filesystem();
+        $filesystem = new Filesystem();
         $filesystem->dumpFile($this->file, $content);
         try {
             $filesystem->chmod($this->file, $mode, $umask);
-        } catch (\PrefixedByPoP\Symfony\Component\Filesystem\Exception\IOException $e) {
+        } catch (IOException $e) {
             // discard chmod failure (some filesystem may not support it)
         }
         if (null !== $metadata) {
             $filesystem->dumpFile($this->getMetaFile(), \serialize($metadata));
             try {
                 $filesystem->chmod($this->getMetaFile(), $mode, $umask);
-            } catch (\PrefixedByPoP\Symfony\Component\Filesystem\Exception\IOException $e) {
+            } catch (IOException $e) {
                 // discard chmod failure (some filesystem may not support it)
             }
         }

@@ -17,7 +17,7 @@ use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
  *
  * @author Ahmed TAILOULOUTE <ahmed.tailouloute@gmail.com>
  */
-class SodiumMarshaller implements \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface
+class SodiumMarshaller implements MarshallerInterface
 {
     private $marshaller;
     private $decryptionKeys;
@@ -26,15 +26,15 @@ class SodiumMarshaller implements \PrefixedByPoP\Symfony\Component\Cache\Marshal
      *                                 more rotating keys can be provided to decrypt values;
      *                                 each key must be generated using sodium_crypto_box_keypair()
      */
-    public function __construct(array $decryptionKeys, \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface $marshaller = null)
+    public function __construct(array $decryptionKeys, MarshallerInterface $marshaller = null)
     {
         if (!self::isSupported()) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException('The "sodium" PHP extension is not loaded.');
+            throw new CacheException('The "sodium" PHP extension is not loaded.');
         }
         if (!isset($decryptionKeys[0])) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException('At least one decryption key must be provided at index "0".');
+            throw new InvalidArgumentException('At least one decryption key must be provided at index "0".');
         }
-        $this->marshaller = $marshaller ?? new \PrefixedByPoP\Symfony\Component\Cache\Marshaller\DefaultMarshaller();
+        $this->marshaller = $marshaller ?? new DefaultMarshaller();
         $this->decryptionKeys = $decryptionKeys;
     }
     public static function isSupported() : bool

@@ -16,6 +16,6 @@ namespace PrefixedByPoP\Symfony\Component\Config\Util\Exception;
  *
  * @author Ole Rößner <ole@roessner.it>
  */
-class InvalidXmlException extends \PrefixedByPoP\Symfony\Component\Config\Util\Exception\XmlParsingException
+class InvalidXmlException extends XmlParsingException
 {
 }

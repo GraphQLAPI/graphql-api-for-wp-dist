@@ -20,17 +20,7 @@ class Component extends AbstractComponent
     {
         return [
             \PoPSchema\TaxonomyQuery\Component::class,
-            \PoPSchema\MetaQueryWP\Component::class,
-            \PoPSchema\TaxonomyMetaWP\Component::class,
-        ];
-    }
-
-    public static function getDependedMigrationPlugins(): array
-    {
-        $packageName = basename(dirname(__DIR__));
-        $folder = dirname(__DIR__, 2);
-        return [
-            $folder . '/migrate-' . $packageName . '/initialize.php',
+            \PoP\EngineWP\Component::class,
         ];
     }
 }

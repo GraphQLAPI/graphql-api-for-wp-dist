@@ -17,7 +17,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Resource;
  *
  * @final
  */
-class DirectoryResource implements \PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceInterface
+class DirectoryResource implements SelfCheckingResourceInterface
 {
     private $resource;
     private $pattern;

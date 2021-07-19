@@ -18,19 +18,22 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ResolveNoPreloadPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class ResolveNoPreloadPass extends AbstractRecursivePass
 {
     private const DO_PRELOAD_TAG = '.container.do_preload';
     private $tagName;
     private $resolvedIds = [];
     public function __construct(string $tagName = 'container.no_preload')
     {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/dependency-injection', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
         $this->tagName = $tagName;
     }
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         $this->container = $container;
         try {
@@ -60,11 +63,10 @@ class ResolveNoPreloadPass extends \PrefixedByPoP\Symfony\Component\DependencyIn
     }
     /**
      * {@inheritdoc}
-     * @param bool $isRoot
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference && \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder::IGNORE_ON_UNINITIALIZED_REFERENCE !== $value->getInvalidBehavior() && $this->container->hasDefinition($id = (string) $value)) {
+        if ($value instanceof Reference && ContainerBuilder::IGNORE_ON_UNINITIALIZED_REFERENCE !== $value->getInvalidBehavior() && $this->container->hasDefinition($id = (string) $value)) {
             $definition = $this->container->getDefinition($id);
             if (!isset($this->resolvedIds[$id]) && (!$definition->isPublic() || $definition->isPrivate())) {
                 $this->resolvedIds[$id] = \true;
@@ -72,7 +74,7 @@ class ResolveNoPreloadPass extends \PrefixedByPoP\Symfony\Component\DependencyIn
             }
             return $value;
         }
-        if (!$value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+        if (!$value instanceof Definition) {
             return parent::processValue($value, $isRoot);
         }
         if ($value->hasTag($this->tagName) || $value->isDeprecated() || $value->hasErrors()) {

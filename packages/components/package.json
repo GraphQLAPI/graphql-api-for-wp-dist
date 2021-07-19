@@ -4,7 +4,7 @@
   "description": "Components used by the GraphQL API for WordPress plugin",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GraphQLAPI/graphql-api.git",
+    "url": "https://github.com/GraphQLAPI/graphql-api-for-wp.git",
     "directory": "packages/components"
   },
   "keywords": [
@@ -32,11 +32,7 @@
     "@wordpress/data": "^4.22.0",
     "@wordpress/edit-post": "^3.21.0",
     "@wordpress/scripts": "^12.1.0",
-    "react-select": "^3.0.8",
     "prettier": "npm:wp-prettier@2.0.5",
-    "puppeteer": "^2.1.1",
-    "react": "^16.13.1",
-    "react-native": "^0.62.2",
-    "typescript": "^3.9.5"
+    "react-select": "^3.0.8"
   }
 }

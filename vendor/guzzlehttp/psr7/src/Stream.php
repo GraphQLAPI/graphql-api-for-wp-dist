@@ -8,7 +8,7 @@ use PrefixedByPoP\Psr\Http\Message\StreamInterface;
  *
  * @var $stream
  */
-class Stream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
+class Stream implements StreamInterface
 {
     /**
      * Resource modes.

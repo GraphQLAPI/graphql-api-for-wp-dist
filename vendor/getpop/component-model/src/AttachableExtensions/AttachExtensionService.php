@@ -3,20 +3,28 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\AttachableExtensions;
 
+use PoP\ComponentModel\AttachableExtensions\AttachableExtensionInterface;
+use PoP\Root\Services\ServiceInterface;
 class AttachExtensionService implements \PoP\ComponentModel\AttachableExtensions\AttachExtensionServiceInterface
 {
     /**
-     * @var array<string,array<string,string>>
+     * @var array<string,array<string,AttachableExtensionInterface[]>>
      */
     protected $classGroups = [];
-    public function enqueueExtension(string $event, string $class, string $group) : void
+    public function enqueueExtension(string $event, string $group, AttachableExtensionInterface $extension) : void
     {
-        $this->classGroups[$event][$class] = $group;
+        $this->classGroups[$event][$group][] = $extension;
     }
     public function attachExtensions(string $event) : void
     {
-        foreach ($this->classGroups[$event] as $class => $group) {
-            $class::attach($group);
+        foreach ($this->classGroups[$event] ?? [] as $group => $extensions) {
+            // Only attach the enabled thervices
+            $extensions = \array_filter($extensions, function (ServiceInterface $extension) {
+                return $extension->isServiceEnabled();
+            });
+            foreach ($extensions as $extension) {
+                $extension->attach($group);
+            }
         }
     }
 }

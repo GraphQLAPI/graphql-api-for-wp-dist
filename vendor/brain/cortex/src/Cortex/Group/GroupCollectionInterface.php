@@ -25,12 +25,12 @@ interface GroupCollectionInterface
      * @param  \Brain\Cortex\Group\GroupInterface $group
      * @return \Brain\Cortex\Group\GroupCollectionInterface
      */
-    public function addGroup(\PrefixedByPoP\Brain\Cortex\Group\GroupInterface $group);
+    public function addGroup(GroupInterface $group);
     /**
      * Merge group settings into a given route
      *
      * @param  \Brain\Cortex\Route\RouteInterface $route
      * @return \Brain\Cortex\Route\RouteInterface Edited route
      */
-    public function mergeGroup(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route);
+    public function mergeGroup(RouteInterface $route);
 }

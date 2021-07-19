@@ -6,6 +6,7 @@ namespace PoP\Root\Container;
 use InvalidArgumentException;
 use PoP\Root\Environment;
 use PrefixedByPoP\Symfony\Component\Config\ConfigCache;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Container;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Dumper\PhpDumper;
@@ -34,14 +35,15 @@ trait ContainerBuilderFactoryTrait
      * @param bool|null $cacheContainerConfiguration Indicate if to cache the container configuration. If null, the default value is used
      * @param string|null $namespace subdirectory under which to store the cache. If null, it will use a system temp folder
      * @param string|null $directory directory where to store the cache. If null, the default value is used
-     * @return void
      */
     public static function init(?bool $cacheContainerConfiguration = null, ?string $namespace = null, ?string $directory = null) : void
     {
-        static::$cacheContainerConfiguration = $cacheContainerConfiguration ?? \PoP\Root\Environment::cacheContainerConfiguration();
-        $namespace = $namespace ?? \PoP\Root\Environment::getCacheContainerConfigurationNamespace();
-        $throwExceptionIfCacheSetupError = \PoP\Root\Environment::throwExceptionIfCacheSetupError();
+        static::$cacheContainerConfiguration = $cacheContainerConfiguration ?? Environment::cacheContainerConfiguration();
+        $namespace = $namespace ?? Environment::getCacheContainerConfigurationNamespace();
+        $directory = $directory ?? Environment::getCacheContainerConfigurationDirectory();
+        $throwExceptionIfCacheSetupError = Environment::throwExceptionIfCacheSetupError();
         $cacheSetupSuccess = \true;
+        $containerClass = $containerNamespace = null;
         if (static::$cacheContainerConfiguration) {
             /**
              * Code copied from Symfony FilesystemAdapter
@@ -53,7 +55,7 @@ trait ContainerBuilderFactoryTrait
             if ($namespace) {
                 if (\preg_match('#[^-+_.A-Za-z0-9]#', $namespace, $match)) {
                     if ($throwExceptionIfCacheSetupError) {
-                        throw new \InvalidArgumentException(\sprintf('Namespace contains "%s" but only characters in [-+_.A-Za-z0-9] are allowed.', $match[0]));
+                        throw new InvalidArgumentException(\sprintf('Namespace contains "%s" but only characters in [-+_.A-Za-z0-9] are allowed.', $match[0]));
                     }
                     $cacheSetupSuccess = \false;
                 }
@@ -76,7 +78,7 @@ trait ContainerBuilderFactoryTrait
             // On Windows the whole path is limited to 258 chars
             if ($cacheSetupSuccess && '\\' === \DIRECTORY_SEPARATOR && \strlen($directory) > 234) {
                 if ($throwExceptionIfCacheSetupError) {
-                    throw new \InvalidArgumentException(\sprintf('Cache directory too long (%s).', $directory));
+                    throw new InvalidArgumentException(\sprintf('Cache directory too long (%s).', $directory));
                 }
                 $cacheSetupSuccess = \false;
             }
@@ -86,7 +88,7 @@ trait ContainerBuilderFactoryTrait
             static::$cacheFile = $directory . 'container.php';
             // If not caching the container, then it's for development
             $isDebug = !static::$cacheContainerConfiguration;
-            $containerConfigCache = new \PrefixedByPoP\Symfony\Component\Config\ConfigCache(static::$cacheFile, $isDebug);
+            $containerConfigCache = new ConfigCache(static::$cacheFile, $isDebug);
             static::$cached = $containerConfigCache->isFresh();
         } else {
             static::$cached = \false;
@@ -94,14 +96,14 @@ trait ContainerBuilderFactoryTrait
         }
         // If not cached, then create the new instance
         if (!static::$cached) {
-            static::$instance = new \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder();
+            static::$instance = new ContainerBuilder();
         } else {
             require_once static::$cacheFile;
             $containerFullyQuantifiedClass = "\\{$containerNamespace}\\{$containerClass}";
             static::$instance = new $containerFullyQuantifiedClass();
         }
     }
-    public static function getInstance() : \PrefixedByPoP\Symfony\Component\DependencyInjection\Container
+    public static function getInstance() : Container
     {
         return static::$instance;
     }
@@ -143,7 +145,7 @@ trait ContainerBuilderFactoryTrait
                 }
                 if ($folderExists) {
                     // Save the container to disk
-                    $dumper = new \PrefixedByPoP\Symfony\Component\DependencyInjection\Dumper\PhpDumper($containerBuilder);
+                    $dumper = new PhpDumper($containerBuilder);
                     \file_put_contents(static::$cacheFile, $dumper->dump(
                         // Save under own namespace to avoid conflicts
                         ['namespace' => static::getContainerNamespace(), 'class' => static::getContainerClass()]

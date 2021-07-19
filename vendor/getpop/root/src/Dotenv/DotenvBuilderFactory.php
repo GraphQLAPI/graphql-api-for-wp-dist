@@ -8,8 +8,6 @@ class DotenvBuilderFactory
 {
     /**
      * Initialize the file location to the document root
-     *
-     * @return void
      */
     public static function init() : void
     {
@@ -21,7 +19,7 @@ class DotenvBuilderFactory
         }
         // If the file location has been set, then load the environment variables from .env files stored there
         if (\file_exists($envConfigFolder . '/.env')) {
-            $dotenv = new \PrefixedByPoP\Symfony\Component\Dotenv\Dotenv();
+            $dotenv = new Dotenv();
             $dotenv->loadEnv($envConfigFolder . '/.env');
         }
     }

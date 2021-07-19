@@ -16,9 +16,9 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class ArgumentsNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ArrayNode
+class ArgumentsNode extends ArrayNode
 {
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $this->compileArguments($compiler, \false);
     }

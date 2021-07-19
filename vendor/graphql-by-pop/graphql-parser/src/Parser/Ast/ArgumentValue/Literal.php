@@ -10,14 +10,13 @@ namespace GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-class Literal extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface
+class Literal extends AbstractAst implements ValueInterface
 {
     private $value;
     /**
      * @param mixed $value
-     * @param Location $location
      */
-    public function __construct($value, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function __construct($value, Location $location)
     {
         parent::__construct($location);
         $this->value = $value;

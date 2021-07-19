@@ -3,34 +3,27 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\FieldInterfaceResolvers;
 
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\FieldResolvers\FieldSchemaDefinitionResolverInterface;
+use PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade;
+use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceSchemaDefinitionResolverInterface;
 use PoP\ComponentModel\Resolvers\WithVersionConstraintFieldOrDirectiveResolverTrait;
 trait SelfFieldInterfaceSchemaDefinitionResolverTrait
 {
     use WithVersionConstraintFieldOrDirectiveResolverTrait;
     /**
      * The object resolves its own schema definition
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @param string $fieldName
-     * @param array<string, mixed> $fieldArgs
-     * @return void
      */
-    public function getSchemaDefinitionResolver() : ?\PoP\ComponentModel\FieldResolvers\FieldSchemaDefinitionResolverInterface
+    public function getSchemaDefinitionResolver() : ?FieldInterfaceSchemaDefinitionResolverInterface
     {
         return $this;
     }
-    public function getSchemaFieldType(string $fieldName) : ?string
+    public function getSchemaFieldType(string $fieldName) : string
     {
-        // By default, it can be of any type. Return this instead of null since the type is mandatory for GraphQL, so we avoid its non-implementation by the developer to throw errors
-        return \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_MIXED;
+        $schemaDefinitionService = SchemaDefinitionServiceFacade::getInstance();
+        return $schemaDefinitionService->getDefaultType();
     }
-    public function isSchemaFieldResponseNonNullable(string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(string $fieldName) : ?int
     {
-        // By default, types are nullable
-        return \false;
+        return null;
     }
     public function getSchemaFieldDescription(string $fieldName) : ?string
     {
@@ -39,16 +32,6 @@ trait SelfFieldInterfaceSchemaDefinitionResolverTrait
     public function getSchemaFieldArgs(string $fieldName) : array
     {
         return [];
-    }
-    protected abstract function hasSchemaFieldVersion(string $fieldName) : bool;
-    public function getFilteredSchemaFieldArgs(string $fieldName) : array
-    {
-        $schemaFieldArgs = $this->getSchemaFieldArgs($fieldName);
-        /**
-         * Add the "versionConstraint" param. Add it at the end, so it doesn't affect the order of params for "orderedSchemaFieldArgs"
-         */
-        $this->maybeAddVersionConstraintSchemaFieldOrDirectiveArg($schemaFieldArgs, $this->hasSchemaFieldVersion($fieldName));
-        return $schemaFieldArgs;
     }
     public function getSchemaFieldDeprecationDescription(string $fieldName, array $fieldArgs = []) : ?string
     {

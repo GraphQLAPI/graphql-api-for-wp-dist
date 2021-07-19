@@ -8,7 +8,10 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
-    private static $getDefaultCacheControlMaxAge;
+    /**
+     * @var int
+     */
+    private static $getDefaultCacheControlMaxAge = 3600;
     public static function getDefaultCacheControlMaxAge() : int
     {
         // Define properties
@@ -16,7 +19,7 @@ class ComponentConfiguration
         $selfProperty =& self::$getDefaultCacheControlMaxAge;
         $defaultValue = 3600;
         // 1 hour
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

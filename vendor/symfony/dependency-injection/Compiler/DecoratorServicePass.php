@@ -13,6 +13,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Alias;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 /**
@@ -22,14 +23,17 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Diego Saint Esteben <diego@saintesteben.me>
  */
-class DecoratorServicePass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class DecoratorServicePass extends AbstractRecursivePass
 {
     private $innerId = '.inner';
     public function __construct(?string $innerId = '.inner')
     {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/dependency-injection', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
         $this->innerId = $innerId;
     }
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         $definitions = new \SplPriorityQueue();
         $order = \PHP_INT_MAX;
@@ -43,7 +47,7 @@ class DecoratorServicePass extends \PrefixedByPoP\Symfony\Component\DependencyIn
         foreach ($definitions as [$id, $definition]) {
             $decoratedService = $definition->getDecoratedService();
             [$inner, $renamedId] = $decoratedService;
-            $invalidBehavior = $decoratedService[3] ?? \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
+            $invalidBehavior = $decoratedService[3] ?? ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
             $definition->setDecoratedService(null);
             if (!$renamedId) {
                 $renamedId = $id . '.inner';
@@ -58,7 +62,8 @@ class DecoratorServicePass extends \PrefixedByPoP\Symfony\Component\DependencyIn
                 $alias = $container->getAlias($inner);
                 $public = $alias->isPublic();
                 $private = $alias->isPrivate();
-                $container->setAlias($renamedId, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Alias((string) $alias, \false));
+                $container->setAlias($renamedId, new Alias((string) $alias, \false));
+                $decoratedDefinition = $container->findDefinition($alias);
             } elseif ($container->hasDefinition($inner)) {
                 $decoratedDefinition = $container->getDefinition($inner);
                 $public = $decoratedDefinition->isPublic();
@@ -66,23 +71,29 @@ class DecoratorServicePass extends \PrefixedByPoP\Symfony\Component\DependencyIn
                 $decoratedDefinition->setPublic(\false);
                 $container->setDefinition($renamedId, $decoratedDefinition);
                 $decoratingDefinitions[$inner] = $decoratedDefinition;
-            } elseif (\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::IGNORE_ON_INVALID_REFERENCE === $invalidBehavior) {
+            } elseif (ContainerInterface::IGNORE_ON_INVALID_REFERENCE === $invalidBehavior) {
                 $container->removeDefinition($id);
                 continue;
-            } elseif (\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::NULL_ON_INVALID_REFERENCE === $invalidBehavior) {
+            } elseif (ContainerInterface::NULL_ON_INVALID_REFERENCE === $invalidBehavior) {
                 $public = $definition->isPublic();
                 $private = $definition->isPrivate();
+                $decoratedDefinition = null;
             } else {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException($inner, $id);
+                throw new ServiceNotFoundException($inner, $id);
+            }
+            if ($decoratedDefinition && $decoratedDefinition->isSynthetic()) {
+                throw new InvalidArgumentException(\sprintf('A synthetic service cannot be decorated: service "%s" cannot decorate "%s".', $id, $inner));
             }
             if (isset($decoratingDefinitions[$inner])) {
                 $decoratingDefinition = $decoratingDefinitions[$inner];
                 $decoratingTags = $decoratingDefinition->getTags();
                 $resetTags = [];
-                if (isset($decoratingTags['container.service_locator'])) {
-                    // container.service_locator has special logic and it must not be transferred out to decorators
-                    $resetTags = ['container.service_locator' => $decoratingTags['container.service_locator']];
-                    unset($decoratingTags['container.service_locator']);
+                // container.service_locator and container.service_subscriber have special logic and they must not be transferred out to decorators
+                foreach (['container.service_locator', 'container.service_subscriber'] as $containerTag) {
+                    if (isset($decoratingTags[$containerTag])) {
+                        $resetTags[$containerTag] = $decoratingTags[$containerTag];
+                        unset($decoratingTags[$containerTag]);
+                    }
                 }
                 $definition->setTags(\array_merge($decoratingTags, $definition->getTags()));
                 $decoratingDefinition->setTags($resetTags);
@@ -91,13 +102,10 @@ class DecoratorServicePass extends \PrefixedByPoP\Symfony\Component\DependencyIn
             $container->setAlias($inner, $id)->setPublic($public);
         }
     }
-    /**
-     * @param bool $isRoot
-     */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference && $this->innerId === (string) $value) {
-            return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($this->currentId, $value->getInvalidBehavior());
+        if ($value instanceof Reference && $this->innerId === (string) $value) {
+            return new Reference($this->currentId, $value->getInvalidBehavior());
         }
         return parent::processValue($value, $isRoot);
     }

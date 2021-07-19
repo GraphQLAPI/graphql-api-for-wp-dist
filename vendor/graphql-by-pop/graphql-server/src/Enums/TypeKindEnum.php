@@ -5,15 +5,14 @@ namespace GraphQLByPoP\GraphQLServer\Enums;
 
 use PoP\ComponentModel\Enums\AbstractEnum;
 use GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds;
-class TypeKindEnum extends \PoP\ComponentModel\Enums\AbstractEnum
+class TypeKindEnum extends AbstractEnum
 {
-    public const NAME = 'TypeKind';
     protected function getEnumName() : string
     {
-        return self::NAME;
+        return 'TypeKind';
     }
     public function getValues() : array
     {
-        return [\GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::SCALAR, \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::OBJECT, \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::INTERFACE, \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::UNION, \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::ENUM, \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::INPUT_OBJECT, \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::LIST, \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::NON_NULL];
+        return [TypeKinds::SCALAR, TypeKinds::OBJECT, TypeKinds::INTERFACE, TypeKinds::UNION, TypeKinds::ENUM, TypeKinds::INPUT_OBJECT, TypeKinds::LIST, TypeKinds::NON_NULL];
     }
 }

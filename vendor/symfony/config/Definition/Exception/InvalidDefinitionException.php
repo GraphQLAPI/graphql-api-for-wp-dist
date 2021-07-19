@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\Config\Definition\Exception;
  *
  * @author Victor Berchet <victor.berchet@suumit.com>
  */
-class InvalidDefinitionException extends \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\Exception
+class InvalidDefinitionException extends Exception
 {
 }

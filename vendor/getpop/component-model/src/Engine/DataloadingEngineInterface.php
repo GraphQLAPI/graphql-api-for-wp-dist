@@ -6,7 +6,7 @@ namespace PoP\ComponentModel\Engine;
 use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 interface DataloadingEngineInterface
 {
-    public function addMandatoryDirectiveResolver(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver) : void;
+    public function addMandatoryDirectiveResolver(DirectiveResolverInterface $directiveResolver) : void;
     /**
      * @return DirectiveResolverInterface[]
      */

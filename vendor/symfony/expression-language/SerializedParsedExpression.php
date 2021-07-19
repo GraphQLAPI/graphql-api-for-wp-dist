@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\ExpressionLanguage;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class SerializedParsedExpression extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression
+class SerializedParsedExpression extends ParsedExpression
 {
     private $nodes;
     /**

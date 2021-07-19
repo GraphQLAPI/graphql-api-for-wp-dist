@@ -3,23 +3,25 @@
 declare (strict_types=1);
 namespace PoP\CacheControl\TypeResolverDecorators;
 
-use PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\CacheControl\DirectiveResolvers\CacheControlDirectiveResolver;
+use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
+use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 trait ConfigurableCacheControlTypeResolverDecoratorTrait
 {
     /**
      * By default, only the admin can see the roles from the users
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @return array
+     * @param mixed $entryValue
      */
     protected function getMandatoryDirectives($entryValue = null) : array
     {
         $maxAge = $entryValue;
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        $directiveName = \PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver::getDirectiveName();
-        $cacheControlDirective = $fieldQueryInterpreter->getDirective($directiveName, ['maxAge' => $maxAge]);
+        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+        $instanceManager = InstanceManagerFacade::getInstance();
+        /** @var DirectiveResolverInterface */
+        $cacheControlDirectiveResolver = $instanceManager->getInstance(CacheControlDirectiveResolver::class);
+        $cacheControlDirective = $fieldQueryInterpreter->getDirective($cacheControlDirectiveResolver->getDirectiveName(), ['maxAge' => $maxAge]);
         return [$cacheControlDirective];
     }
 }

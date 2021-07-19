@@ -3,22 +3,31 @@
 declare (strict_types=1);
 namespace PoPSchema\PostTags\FieldResolvers;
 
-use PoPSchema\Posts\TypeResolvers\PostTypeResolver;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoPSchema\Tags\FieldResolvers\AbstractCustomPostQueryableFieldResolver;
+use PoPSchema\Posts\TypeResolvers\PostTypeResolver;
 use PoPSchema\PostTags\ComponentContracts\PostTagAPISatisfiedContractTrait;
-class PostQueryableFieldResolver extends \PoPSchema\Tags\FieldResolvers\AbstractCustomPostQueryableFieldResolver
+use PoPSchema\PostTags\ModuleProcessors\PostTagFieldDataloadModuleProcessor;
+use PoPSchema\Tags\FieldResolvers\AbstractCustomPostQueryableFieldResolver;
+class PostQueryableFieldResolver extends AbstractCustomPostQueryableFieldResolver
 {
     use PostTagAPISatisfiedContractTrait;
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return [\PoPSchema\Posts\TypeResolvers\PostTypeResolver::class];
+        return [PostTypeResolver::class];
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['tags' => $translationAPI->__('Tags added to this post', 'pop-post-tags'), 'tagCount' => $translationAPI->__('Number of tags added to this post', 'pop-post-tags')];
+        $descriptions = ['tags' => $this->translationAPI->__('Tags added to this post', 'pop-post-tags'), 'tagCount' => $this->translationAPI->__('Number of tags added to this post', 'pop-post-tags'), 'tagNames' => $this->translationAPI->__('Names of the tags added to this post', 'pop-post-tags')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
+    }
+    protected function getFieldDefaultFilterDataloadingModule(TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []) : ?array
+    {
+        switch ($fieldName) {
+            case 'tagCount':
+                return [PostTagFieldDataloadModuleProcessor::class, PostTagFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_TAGCOUNT];
+            case 'tagNames':
+                return [PostTagFieldDataloadModuleProcessor::class, PostTagFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_TAGLIST];
+        }
+        return parent::getFieldDefaultFilterDataloadingModule($typeResolver, $fieldName, $fieldArgs);
     }
 }

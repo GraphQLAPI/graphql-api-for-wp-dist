@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
 use GraphQLAPI\GraphQLAPI\ContentProcessors\ContentParserOptions;
-use InvalidArgumentException;
-use GraphQLAPI\GraphQLAPI\Facades\ContentProcessors\MarkdownContentParserFacade;
+use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentRetrieverTrait;
 
 trait HasMarkdownDocumentationModuleResolverTrait
 {
+    use MarkdownContentRetrieverTrait;
+
     /**
      * The module slug
      */
@@ -18,9 +19,6 @@ trait HasMarkdownDocumentationModuleResolverTrait
     /**
      * The name of the Markdown filename.
      * By default, it's the same as the slug
-     *
-     * @param string $module
-     * @return string
      */
     public function getMarkdownFilename(string $module): ?string
     {
@@ -29,9 +27,6 @@ trait HasMarkdownDocumentationModuleResolverTrait
 
     /**
      * Does the module have HTML Documentation?
-     *
-     * @param string $module
-     * @return bool
      */
     public function hasDocumentation(string $module): bool
     {
@@ -40,21 +35,20 @@ trait HasMarkdownDocumentationModuleResolverTrait
 
     /**
      * HTML Documentation for the module
-     *
-     * @param string $module
-     * @return string|null
      */
     public function getDocumentation(string $module): ?string
     {
         if ($markdownFilename = $this->getMarkdownFilename($module)) {
-            $markdownContentParser = MarkdownContentParserFacade::getInstance();
-            try {
-                return $markdownContentParser->getContent('modules/' . $markdownFilename, 'modules', [
+            return $this->getMarkdownContent(
+                'modules/' . $markdownFilename,
+                'modules',
+                [
                     ContentParserOptions::TAB_CONTENT => true,
-                ]);
-            } catch (InvalidArgumentException $e) {
-                return sprintf('<p>%s</p>', \__('Oops, the documentation for this module is not available', 'graphql-api'));
-            }
+                ]
+            ) ?? sprintf(
+                '<p>%s</p>',
+                \__('Oops, the documentation for this module is not available', 'graphql-api')
+            );
         }
         return null;
     }

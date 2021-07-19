@@ -12,12 +12,12 @@ namespace PrefixedByPoP\Symfony\Component\Cache\Exception;
 
 use PrefixedByPoP\Psr\Cache\InvalidArgumentException as Psr6CacheInterface;
 use PrefixedByPoP\Psr\SimpleCache\InvalidArgumentException as SimpleCacheInterface;
-if (\interface_exists(\PrefixedByPoP\Psr\SimpleCache\InvalidArgumentException::class)) {
-    class InvalidArgumentException extends \InvalidArgumentException implements \PrefixedByPoP\Psr\Cache\InvalidArgumentException, \PrefixedByPoP\Psr\SimpleCache\InvalidArgumentException
+if (\interface_exists(SimpleCacheInterface::class)) {
+    class InvalidArgumentException extends \InvalidArgumentException implements Psr6CacheInterface, SimpleCacheInterface
     {
     }
 } else {
-    class InvalidArgumentException extends \InvalidArgumentException implements \PrefixedByPoP\Psr\Cache\InvalidArgumentException
+    class InvalidArgumentException extends \InvalidArgumentException implements Psr6CacheInterface
     {
     }
 }

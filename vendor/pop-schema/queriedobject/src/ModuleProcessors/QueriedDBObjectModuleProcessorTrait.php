@@ -8,7 +8,7 @@ trait QueriedDBObjectModuleProcessorTrait
 {
     protected function getQueriedDBObjectID(array $module, array &$props, &$data_properties)
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         return $vars['routing-state']['queried-object-id'];
     }
 }

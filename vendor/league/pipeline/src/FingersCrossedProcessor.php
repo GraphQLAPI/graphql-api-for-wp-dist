@@ -3,7 +3,7 @@
 declare (strict_types=1);
 namespace PrefixedByPoP\League\Pipeline;
 
-class FingersCrossedProcessor implements \PrefixedByPoP\League\Pipeline\ProcessorInterface
+class FingersCrossedProcessor implements ProcessorInterface
 {
     public function process($payload, callable ...$stages)
     {

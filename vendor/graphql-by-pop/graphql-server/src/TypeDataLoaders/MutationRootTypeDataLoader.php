@@ -5,10 +5,10 @@ namespace GraphQLByPoP\GraphQLServer\TypeDataLoaders;
 
 use GraphQLByPoP\GraphQLServer\ObjectFacades\MutationRootObjectFacade;
 use PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader;
-class MutationRootTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader
+class MutationRootTypeDataLoader extends AbstractTypeDataLoader
 {
     public function getObjects(array $ids) : array
     {
-        return [\GraphQLByPoP\GraphQLServer\ObjectFacades\MutationRootObjectFacade::getInstance()];
+        return [MutationRootObjectFacade::getInstance()];
     }
 }

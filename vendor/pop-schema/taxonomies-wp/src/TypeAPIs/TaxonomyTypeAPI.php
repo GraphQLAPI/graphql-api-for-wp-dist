@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PoPSchema\TaxonomiesWP\TypeAPIs;
 
+use PoP\ComponentModel\TypeDataResolvers\InjectedFilterDataloadingModuleTypeDataResolverTrait;
 use PoPSchema\Taxonomies\TypeAPIs\TaxonomyTypeAPIInterface;
 
 /**
@@ -11,15 +12,28 @@ use PoPSchema\Taxonomies\TypeAPIs\TaxonomyTypeAPIInterface;
  */
 class TaxonomyTypeAPI implements TaxonomyTypeAPIInterface
 {
+    use InjectedFilterDataloadingModuleTypeDataResolverTrait;
+
+    /**
+     * @param string|int|object $termObjectOrID
+     */
     protected function getTermObjectAndID($termObjectOrID): array
     {
-        return TaxonomyTypeAPIHelpers::getTermObjectAndID($termObjectOrID);
+        if (is_object($termObjectOrID)) {
+            $termObject = $termObjectOrID;
+            $termObjectID = $termObject->ID;
+        } else {
+            $termObjectID = $termObjectOrID;
+            $termObject = \get_term($termObjectID);
+        }
+        return [
+            $termObject,
+            $termObjectID,
+        ];
     }
     /**
      * Retrieves the taxonomy name of the object ("post_tag", "category", etc)
-     *
-     * @param [type] $object
-     * @return string
+     * @param string|int|object $termObjectOrID
      */
     public function getTermTaxonomyName($termObjectOrID): string
     {

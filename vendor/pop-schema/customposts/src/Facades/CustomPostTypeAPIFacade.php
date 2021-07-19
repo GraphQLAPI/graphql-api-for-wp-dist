@@ -7,12 +7,12 @@ use PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class CustomPostTypeAPIFacade
 {
-    public static function getInstance() : \PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface
+    public static function getInstance() : CustomPostTypeAPIInterface
     {
         /**
          * @var CustomPostTypeAPIInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(CustomPostTypeAPIInterface::class);
         return $service;
     }
 }

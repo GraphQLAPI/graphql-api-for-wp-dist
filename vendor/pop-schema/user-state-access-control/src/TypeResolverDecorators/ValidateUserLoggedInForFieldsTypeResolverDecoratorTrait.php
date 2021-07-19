@@ -9,10 +9,10 @@ trait ValidateUserLoggedInForFieldsTypeResolverDecoratorTrait
 {
     protected function removeFieldNameBasedOnMatchingEntryValue($entryValue = null) : bool
     {
-        return \PoPSchema\UserStateAccessControl\ConfigurationEntries\UserStates::IN == $entryValue;
+        return UserStates::IN == $entryValue;
     }
     protected function getValidateUserStateDirectiveResolverClass() : string
     {
-        return \PoPSchema\UserStateAccessControl\DirectiveResolvers\ValidateIsUserLoggedInDirectiveResolver::class;
+        return ValidateIsUserLoggedInDirectiveResolver::class;
     }
 }

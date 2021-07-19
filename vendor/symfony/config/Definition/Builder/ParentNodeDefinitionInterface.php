@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Definition\Builder;
  *
  * @author Victor Berchet <victor@suumit.com>
  */
-interface ParentNodeDefinitionInterface extends \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\BuilderAwareInterface
+interface ParentNodeDefinitionInterface extends BuilderAwareInterface
 {
     /**
      * Returns a builder to add children nodes.
@@ -38,7 +38,7 @@ interface ParentNodeDefinitionInterface extends \PrefixedByPoP\Symfony\Component
      *
      * @return $this
      */
-    public function append(\PrefixedByPoP\Symfony\Component\Config\Definition\Builder\NodeDefinition $node);
+    public function append(NodeDefinition $node);
     /**
      * Gets the child node definitions.
      *

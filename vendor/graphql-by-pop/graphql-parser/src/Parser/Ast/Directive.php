@@ -15,10 +15,8 @@ class Directive extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst
     private $name;
     /**
      * @param string   $name
-     * @param array    $arguments
-     * @param Location $location
      */
-    public function __construct($name, array $arguments, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function __construct($name, array $arguments, Location $location)
     {
         parent::__construct($location);
         $this->name = $name;

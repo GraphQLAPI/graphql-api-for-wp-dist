@@ -31,9 +31,9 @@ trait DataloadModuleProcessorTrait
         /**
          * Allow to add more stuff
          */
-        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->doAction(\PoP\ComponentModel\ModuleProcessors\Constants::HOOK_DATALOAD_INIT_MODEL_PROPS, array(&$props), $module, $this);
+        HooksAPIFacade::getInstance()->doAction(\PoP\ComponentModel\ModuleProcessors\Constants::HOOK_DATALOAD_INIT_MODEL_PROPS, array(&$props), $module, $this);
     }
-    public function initModelProps(array $module, array &$props)
+    public function initModelProps(array $module, array &$props) : void
     {
         $this->metaInitProps($module, $props);
         parent::initModelProps($module, $props);

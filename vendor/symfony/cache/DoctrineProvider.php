@@ -16,10 +16,10 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class DoctrineProvider extends \PrefixedByPoP\Doctrine\Common\Cache\CacheProvider implements \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class DoctrineProvider extends CacheProvider implements PruneableInterface, ResettableInterface
 {
     private $pool;
-    public function __construct(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $pool)
+    public function __construct(CacheItemPoolInterface $pool)
     {
         $this->pool = $pool;
     }
@@ -28,14 +28,14 @@ class DoctrineProvider extends \PrefixedByPoP\Doctrine\Common\Cache\CacheProvide
      */
     public function prune()
     {
-        return $this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface && $this->pool->prune();
+        return $this->pool instanceof PruneableInterface && $this->pool->prune();
     }
     /**
      * {@inheritdoc}
      */
     public function reset()
     {
-        if ($this->pool instanceof \PrefixedByPoP\Symfony\Contracts\Service\ResetInterface) {
+        if ($this->pool instanceof ResetInterface) {
             $this->pool->reset();
         }
         $this->setNamespace($this->getNamespace());

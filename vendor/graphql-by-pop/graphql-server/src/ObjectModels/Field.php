@@ -22,28 +22,28 @@ class Field extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefin
     }
     public function getName() : string
     {
-        return $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_NAME];
+        return $this->schemaDefinition[SchemaDefinition::ARGNAME_NAME];
     }
     public function getDescription() : ?string
     {
-        return $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] ?? null;
+        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] ?? null;
     }
     public function isDeprecated() : bool
     {
-        return $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_DEPRECATED] ?? \false;
+        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATED] ?? \false;
     }
     public function getDeprecationDescription() : ?string
     {
-        return $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] ?? null;
+        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] ?? null;
     }
     public function getExtensions() : array
     {
         $extensions = [];
-        if ($version = $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_VERSION] ?? null) {
-            $extensions[\PoP\API\Schema\SchemaDefinition::ARGNAME_VERSION] = $version;
+        if ($version = $this->schemaDefinition[SchemaDefinition::ARGNAME_VERSION] ?? null) {
+            $extensions[SchemaDefinition::ARGNAME_VERSION] = $version;
         }
-        if ($this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_FIELD_IS_MUTATION] ?? null) {
-            $extensions[\PoP\API\Schema\SchemaDefinition::ARGNAME_FIELD_IS_MUTATION] = \true;
+        if ($this->schemaDefinition[SchemaDefinition::ARGNAME_FIELD_IS_MUTATION] ?? null) {
+            $extensions[SchemaDefinition::ARGNAME_FIELD_IS_MUTATION] = \true;
         }
         return $extensions;
     }

@@ -42,12 +42,18 @@ class FeedbackMessageStore extends \PoP\FieldQuery\FeedbackMessageStore implemen
     {
         $this->schemaWarnings = \array_merge($this->schemaWarnings, $schemaWarnings);
     }
+    /**
+     * @param string|int $resultItemID
+     */
     public function retrieveAndClearResultItemDBWarnings($resultItemID) : ?array
     {
         $resultItemDBWarnings = $this->dbWarnings[$resultItemID] ?? null;
         unset($this->dbWarnings[$resultItemID]);
         return $resultItemDBWarnings;
     }
+    /**
+     * @param string|int $resultItemID
+     */
     public function retrieveAndClearResultItemDBDeprecations($resultItemID) : ?array
     {
         $resultItemDBDeprecations = $this->dbDeprecations[$resultItemID] ?? null;
@@ -56,7 +62,7 @@ class FeedbackMessageStore extends \PoP\FieldQuery\FeedbackMessageStore implemen
     }
     public function addSchemaError(string $dbKey, string $field, string $error)
     {
-        $this->schemaErrors[$dbKey][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $error];
+        $this->schemaErrors[$dbKey][] = [Tokens::PATH => [$field], Tokens::MESSAGE => $error];
     }
     public function retrieveAndClearSchemaErrors() : array
     {

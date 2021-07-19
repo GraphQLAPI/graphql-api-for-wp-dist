@@ -16,17 +16,20 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class CachePoolClearerPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+class CachePoolClearerPass implements CompilerPassInterface
 {
     private $cachePoolClearerTag;
     public function __construct(string $cachePoolClearerTag = 'cache.pool.clearer')
     {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/cache', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
         $this->cachePoolClearerTag = $cachePoolClearerTag;
     }
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         $container->getParameterBag()->remove('cache.prefix.seed');
         foreach ($container->findTaggedServiceIds($this->cachePoolClearerTag) as $id => $attr) {
@@ -34,7 +37,7 @@ class CachePoolClearerPass implements \PrefixedByPoP\Symfony\Component\Dependenc
             $pools = [];
             foreach ($clearer->getArgument(0) as $name => $ref) {
                 if ($container->hasDefinition($ref)) {
-                    $pools[$name] = new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($ref);
+                    $pools[$name] = new Reference($ref);
                 }
             }
             $clearer->replaceArgument(0, $pools);

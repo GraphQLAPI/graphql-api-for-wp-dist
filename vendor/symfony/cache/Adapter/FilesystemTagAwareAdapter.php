@@ -20,7 +20,7 @@ use PrefixedByPoP\Symfony\Component\Cache\Traits\FilesystemTrait;
  * @author Nicolas Grekas <p@tchwork.com>
  * @author André Rømcke <andre.romcke+symfony@gmail.com>
  */
-class FilesystemTagAwareAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface
+class FilesystemTagAwareAdapter extends AbstractTagAwareAdapter implements PruneableInterface
 {
     use FilesystemTrait {
         doClear as private doClearCache;
@@ -30,9 +30,9 @@ class FilesystemTagAwareAdapter extends \PrefixedByPoP\Symfony\Component\Cache\A
      * Folder used for tag symlinks.
      */
     private const TAG_FOLDER = 'tags';
-    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $directory = null, \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface $marshaller = null)
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $directory = null, MarshallerInterface $marshaller = null)
     {
-        $this->marshaller = new \PrefixedByPoP\Symfony\Component\Cache\Marshaller\TagAwareMarshaller($marshaller);
+        $this->marshaller = new TagAwareMarshaller($marshaller);
         parent::__construct('', $defaultLifetime);
         $this->init($namespace, $directory);
     }
@@ -128,8 +128,8 @@ class FilesystemTagAwareAdapter extends \PrefixedByPoP\Symfony\Component\Cache\A
             }
             $meta = \explode("\n", \fread($h, 4096), 3)[2] ?? '';
             // detect the compact format used in marshall() using magic numbers in the form 9D-..-..-..-..-00-..-..-..-5F
-            if (13 < \strlen($meta) && "�" === $meta[0] && "\0" === $meta[5] && "_" === $meta[9]) {
-                $meta[9] = "\0";
+            if (13 < \strlen($meta) && "\x9d" === $meta[0] && "\x00" === $meta[5] && "_" === $meta[9]) {
+                $meta[9] = "\x00";
                 $tagLen = \unpack('Nlen', $meta, 9)['len'];
                 $meta = \substr($meta, 13, $tagLen);
                 if (0 < ($tagLen -= \strlen($meta))) {

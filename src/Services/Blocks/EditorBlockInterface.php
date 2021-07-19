@@ -1,0 +1,10 @@
+<?php
+
+declare(strict_types=1);
+
+namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
+
+interface EditorBlockInterface
+{
+    public function getBlockPriority(): int;
+}

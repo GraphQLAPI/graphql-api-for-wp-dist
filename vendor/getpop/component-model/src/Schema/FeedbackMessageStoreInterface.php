@@ -8,7 +8,13 @@ interface FeedbackMessageStoreInterface extends \PoP\FieldQuery\FeedbackMessageS
     public function addDBWarnings(array $dbWarnings);
     public function addDBDeprecations(array $dbDeprecations);
     public function addSchemaWarnings(array $schemaWarnings);
+    /**
+     * @param string|int $resultItemID
+     */
     public function retrieveAndClearResultItemDBWarnings($resultItemID) : ?array;
+    /**
+     * @param string|int $resultItemID
+     */
     public function retrieveAndClearResultItemDBDeprecations($resultItemID) : ?array;
     public function addSchemaError(string $dbKey, string $field, string $error);
     public function retrieveAndClearSchemaErrors() : array;

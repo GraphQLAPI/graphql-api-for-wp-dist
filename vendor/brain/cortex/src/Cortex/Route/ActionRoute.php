@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Brain\Cortex\Route;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class ActionRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterface
+final class ActionRoute implements RouteInterface
 {
     use DerivativeRouteTrait;
     /**
@@ -33,6 +33,6 @@ final class ActionRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterf
     {
         $options['path'] = $path;
         $options['handler'] = $action;
-        $this->route = new \PrefixedByPoP\Brain\Cortex\Route\Route($options);
+        $this->route = new Route($options);
     }
 }

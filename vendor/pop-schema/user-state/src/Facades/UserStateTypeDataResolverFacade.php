@@ -7,12 +7,12 @@ use PoP\Root\Container\ContainerBuilderFactory;
 use PoPSchema\UserState\TypeDataResolvers\UserStateTypeDataResolverInterface;
 class UserStateTypeDataResolverFacade
 {
-    public static function getInstance() : \PoPSchema\UserState\TypeDataResolvers\UserStateTypeDataResolverInterface
+    public static function getInstance() : UserStateTypeDataResolverInterface
     {
         /**
          * @var UserStateTypeDataResolverInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\UserState\TypeDataResolvers\UserStateTypeDataResolverInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(UserStateTypeDataResolverInterface::class);
         return $service;
     }
 }

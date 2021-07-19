@@ -26,14 +26,14 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return RequestInterface returns the modified request.
      */
-    public function withCookieHeader(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request);
+    public function withCookieHeader(RequestInterface $request);
     /**
      * Extract cookies from an HTTP response and store them in the CookieJar.
      *
      * @param RequestInterface  $request  Request that was sent
      * @param ResponseInterface $response Response that was received
      */
-    public function extractCookies(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request, \PrefixedByPoP\Psr\Http\Message\ResponseInterface $response);
+    public function extractCookies(RequestInterface $request, ResponseInterface $response);
     /**
      * Sets a cookie in the cookie jar.
      *
@@ -41,7 +41,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return bool Returns true on success or false on failure
      */
-    public function setCookie(\PrefixedByPoP\GuzzleHttp\Cookie\SetCookie $cookie);
+    public function setCookie(SetCookie $cookie);
     /**
      * Remove cookies currently held in the cookie jar.
      *

@@ -6,7 +6,6 @@ namespace GraphQLByPoP\GraphQLServer\FieldResolvers;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\Engine\TypeResolvers\RootTypeResolver;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\QueryRootTypeResolver;
@@ -16,42 +15,41 @@ use PoP\API\ComponentConfiguration as APIComponentConfiguration;
  * Add connections to the QueryRoot and MutationRoot types,
  * so they can be accessed to generate the schema
  */
-class RegisterQueryAndMutationRootsRootFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+class RegisterQueryAndMutationRootsRootFieldResolver extends AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return array(\PoP\Engine\TypeResolvers\RootTypeResolver::class);
+        return array(RootTypeResolver::class);
     }
     /**
      * Register the fields for the Standard GraphQL server only,
      * and when nested mutations are disabled
      */
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($vars['nested-mutations-enabled']) {
             return [];
         }
-        return \array_merge(['queryRoot'], \PoP\API\ComponentConfiguration::enableMutations() ? ['mutationRoot'] : []);
+        return \array_merge(['queryRoot'], APIComponentConfiguration::enableMutations() ? ['mutationRoot'] : []);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['queryRoot' => $translationAPI->__('Get the Query Root type', 'graphql-server'), 'mutationRoot' => $translationAPI->__('Get the Mutation Root type', 'graphql-server')];
+        $descriptions = ['queryRoot' => $this->translationAPI->__('Get the Query Root type', 'graphql-server'), 'mutationRoot' => $this->translationAPI->__('Get the Mutation Root type', 'graphql-server')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
     {
-        $types = ['queryRoot' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'mutationRoot' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID];
+        $types = ['queryRoot' => SchemaDefinition::TYPE_ID, 'mutationRoot' => SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'queryRoot':
-                return \GraphQLByPoP\GraphQLServer\TypeResolvers\QueryRootTypeResolver::class;
+                return QueryRootTypeResolver::class;
             case 'mutationRoot':
-                return \GraphQLByPoP\GraphQLServer\TypeResolvers\MutationRootTypeResolver::class;
+                return MutationRootTypeResolver::class;
         }
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }

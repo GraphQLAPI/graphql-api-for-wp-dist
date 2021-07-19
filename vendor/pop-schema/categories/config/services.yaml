@@ -1,0 +1,14 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPSchema\Categories\LooseContracts\:
+        resource: '../src/LooseContracts/*'
+
+    PoPSchema\Categories\ModuleProcessors\:
+        resource: '../src/ModuleProcessors/*'
+
+    PoPSchema\Categories\Hooks\:
+        resource: '../src/Hooks/*'

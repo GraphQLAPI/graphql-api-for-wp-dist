@@ -12,7 +12,7 @@ trait RoutesTrait
      */
     public static function init() : void
     {
-        $definitionManager = \PoP\Definitions\Facades\DefinitionManagerFacade::getInstance();
+        $definitionManager = DefinitionManagerFacade::getInstance();
         foreach (self::getRouteNameAndVariableRefs() as $route => &$var) {
             $var = $definitionManager->getUniqueDefinition($route, \PoP\Routing\DefinitionGroups::ROUTES);
         }

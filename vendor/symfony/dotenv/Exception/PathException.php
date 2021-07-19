@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\Dotenv\Exception;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-final class PathException extends \RuntimeException implements \PrefixedByPoP\Symfony\Component\Dotenv\Exception\ExceptionInterface
+final class PathException extends \RuntimeException implements ExceptionInterface
 {
     public function __construct(string $path, int $code = 0, \Throwable $previous = null)
     {

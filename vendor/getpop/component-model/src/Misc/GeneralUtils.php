@@ -20,14 +20,16 @@ class GeneralUtils
     }
     /**
      * Check if the thing is of type Error
-     *
      * @param mixed $thing
      */
     public static function isError($thing) : bool
     {
-        return $thing !== null && $thing instanceof \PoP\ComponentModel\ErrorHandling\Error;
+        return $thing !== null && $thing instanceof Error;
     }
     // Taken from https://gist.github.com/SeanCannon/6585889
+    /**
+     * @param mixed $items
+     */
     public static function arrayFlatten($items, $deep = \false)
     {
         if (!\is_array($items)) {
@@ -40,10 +42,6 @@ class GeneralUtils
     /**
      * Add paramters "key" => "value" to the URL
      * Implementation based on that from https://stackoverflow.com/a/5809881
-     *
-     * @param array $keyValues
-     * @param string $url
-     * @return string
      */
     public static function addQueryArgs(array $keyValues, string $url) : string
     {
@@ -67,10 +65,6 @@ class GeneralUtils
     /**
      * Add paramters "key" => "value" to the URL
      * Implementation based on that from https://stackoverflow.com/a/5809881
-     *
-     * @param array $keyValues
-     * @param string $url
-     * @return string
      */
     public static function removeQueryArgs(array $keys, string $url) : string
     {
@@ -98,5 +92,14 @@ class GeneralUtils
     public static function maybeAddTrailingSlash(string $text) : string
     {
         return \rtrim($text, '/\\') . '/';
+    }
+    public static function getDomain(string $url) : string
+    {
+        $parse = \parse_url($url);
+        return $parse['scheme'] . '://' . $parse['host'];
+    }
+    public static function removeDomain(string $url) : string
+    {
+        return \substr($url, \strlen(self::getDomain($url)));
     }
 }

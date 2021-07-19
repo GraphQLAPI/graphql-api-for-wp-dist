@@ -12,7 +12,7 @@ class RouteCollector
      * @param RouteParser   $routeParser
      * @param DataGenerator $dataGenerator
      */
-    public function __construct(\PrefixedByPoP\FastRoute\RouteParser $routeParser, \PrefixedByPoP\FastRoute\DataGenerator $dataGenerator)
+    public function __construct(RouteParser $routeParser, DataGenerator $dataGenerator)
     {
         $this->routeParser = $routeParser;
         $this->dataGenerator = $dataGenerator;

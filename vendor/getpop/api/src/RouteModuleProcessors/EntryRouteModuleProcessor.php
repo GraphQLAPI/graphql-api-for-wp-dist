@@ -7,7 +7,7 @@ use PoP\Routing\RouteNatures;
 use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
 use PoP\API\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor;
 use PoP\API\Response\Schemes as APISchemes;
-class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
+class EntryRouteModuleProcessor extends AbstractEntryRouteModuleProcessor
 {
     /**
      * @return array<string, array<array>>
@@ -15,7 +15,7 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
     public function getModulesVarsPropertiesByNature() : array
     {
         $ret = array();
-        $ret[\PoP\Routing\RouteNatures::HOME][] = ['module' => [\PoP\API\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor::class, \PoP\API\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_ROOT], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API]];
+        $ret[RouteNatures::HOME][] = ['module' => [RootRelationalFieldDataloadModuleProcessor::class, RootRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_ROOT], 'conditions' => ['scheme' => APISchemes::API]];
         return $ret;
     }
 }

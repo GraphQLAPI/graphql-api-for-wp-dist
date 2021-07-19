@@ -20,13 +20,13 @@ final class PropertyAccess
     /**
      * Creates a property accessor with the default configuration.
      */
-    public static function createPropertyAccessor() : \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor
+    public static function createPropertyAccessor() : PropertyAccessor
     {
         return self::createPropertyAccessorBuilder()->getPropertyAccessor();
     }
-    public static function createPropertyAccessorBuilder() : \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessorBuilder
+    public static function createPropertyAccessorBuilder() : PropertyAccessorBuilder
     {
-        return new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessorBuilder();
+        return new PropertyAccessorBuilder();
     }
     /**
      * This class cannot be instantiated.

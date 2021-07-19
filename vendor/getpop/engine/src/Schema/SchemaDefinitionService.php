@@ -6,17 +6,17 @@ namespace PoP\Engine\Schema;
 use PoP\Engine\TypeResolvers\RootTypeResolver;
 use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\Schema\SchemaDefinitionService as ComponentModelSchemaDefinitionService;
-class SchemaDefinitionService extends \PoP\ComponentModel\Schema\SchemaDefinitionService implements \PoP\Engine\Schema\SchemaDefinitionServiceInterface
+class SchemaDefinitionService extends ComponentModelSchemaDefinitionService implements \PoP\Engine\Schema\SchemaDefinitionServiceInterface
 {
     public function getRootTypeSchemaKey() : string
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+        $instanceManager = InstanceManagerFacade::getInstance();
         $rootTypeResolverClass = $this->getRootTypeResolverClass();
         $rootTypeResolver = $instanceManager->getInstance($rootTypeResolverClass);
         return $this->getTypeSchemaKey($rootTypeResolver);
     }
     public function getRootTypeResolverClass() : string
     {
-        return \PoP\Engine\TypeResolvers\RootTypeResolver::class;
+        return RootTypeResolver::class;
     }
 }

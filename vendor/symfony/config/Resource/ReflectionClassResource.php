@@ -18,7 +18,7 @@ use PrefixedByPoP\Symfony\Contracts\Service\ServiceSubscriberInterface;
  *
  * @final
  */
-class ReflectionClassResource implements \PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceInterface
+class ReflectionClassResource implements SelfCheckingResourceInterface
 {
     private $files = [];
     private $className;
@@ -106,6 +106,14 @@ class ReflectionClassResource implements \PrefixedByPoP\Symfony\Component\Config
     }
     private function generateSignature(\ReflectionClass $class) : iterable
     {
+        if (\PHP_VERSION_ID >= 80000) {
+            $attributes = [];
+            foreach ($class->getAttributes() as $a) {
+                $attributes[] = [$a->getName(), $a->getArguments()];
+            }
+            (yield \print_r($attributes, \true));
+            $attributes = [];
+        }
         (yield $class->getDocComment());
         (yield (int) $class->isFinal());
         (yield (int) $class->isAbstract());
@@ -119,6 +127,13 @@ class ReflectionClassResource implements \PrefixedByPoP\Symfony\Component\Config
         if (!$class->isInterface()) {
             $defaults = $class->getDefaultProperties();
             foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED) as $p) {
+                if (\PHP_VERSION_ID >= 80000) {
+                    foreach ($p->getAttributes() as $a) {
+                        $attributes[] = [$a->getName(), $a->getArguments()];
+                    }
+                    (yield \print_r($attributes, \true));
+                    $attributes = [];
+                }
                 (yield $p->getDocComment());
                 (yield $p->isDefault() ? '<default>' : '');
                 (yield $p->isPublic() ? 'public' : 'protected');
@@ -127,15 +142,32 @@ class ReflectionClassResource implements \PrefixedByPoP\Symfony\Component\Config
                 (yield \print_r(isset($defaults[$p->name]) && !\is_object($defaults[$p->name]) ? $defaults[$p->name] : null, \true));
             }
         }
+        $defined = \Closure::bind(static function ($c) {
+            return \defined($c);
+        }, null, $class->name);
         foreach ($class->getMethods(\ReflectionMethod::IS_PUBLIC | \ReflectionMethod::IS_PROTECTED) as $m) {
+            if (\PHP_VERSION_ID >= 80000) {
+                foreach ($m->getAttributes() as $a) {
+                    $attributes[] = [$a->getName(), $a->getArguments()];
+                }
+                (yield \print_r($attributes, \true));
+                $attributes = [];
+            }
             $defaults = [];
             $parametersWithUndefinedConstants = [];
             foreach ($m->getParameters() as $p) {
+                if (\PHP_VERSION_ID >= 80000) {
+                    foreach ($p->getAttributes() as $a) {
+                        $attributes[] = [$a->getName(), $a->getArguments()];
+                    }
+                    (yield \print_r($attributes, \true));
+                    $attributes = [];
+                }
                 if (!$p->isDefaultValueAvailable()) {
                     $defaults[$p->name] = null;
                     continue;
                 }
-                if (!$p->isDefaultValueConstant() || \defined($p->getDefaultValueConstantName())) {
+                if (!$p->isDefaultValueConstant() || $defined($p->getDefaultValueConstantName())) {
                     $defaults[$p->name] = $p->getDefaultValue();
                     continue;
                 }
@@ -166,18 +198,18 @@ class ReflectionClassResource implements \PrefixedByPoP\Symfony\Component\Config
         if ($class->isAbstract() || $class->isInterface() || $class->isTrait()) {
             return;
         }
-        if (\interface_exists(\PrefixedByPoP\Symfony\Component\EventDispatcher\EventSubscriberInterface::class, \false) && $class->isSubclassOf(\PrefixedByPoP\Symfony\Component\EventDispatcher\EventSubscriberInterface::class)) {
-            (yield \PrefixedByPoP\Symfony\Component\EventDispatcher\EventSubscriberInterface::class);
+        if (\interface_exists(EventSubscriberInterface::class, \false) && $class->isSubclassOf(EventSubscriberInterface::class)) {
+            (yield EventSubscriberInterface::class);
             (yield \print_r($class->name::getSubscribedEvents(), \true));
         }
-        if (\interface_exists(\PrefixedByPoP\Symfony\Component\Messenger\Handler\MessageSubscriberInterface::class, \false) && $class->isSubclassOf(\PrefixedByPoP\Symfony\Component\Messenger\Handler\MessageSubscriberInterface::class)) {
-            (yield \PrefixedByPoP\Symfony\Component\Messenger\Handler\MessageSubscriberInterface::class);
+        if (\interface_exists(MessageSubscriberInterface::class, \false) && $class->isSubclassOf(MessageSubscriberInterface::class)) {
+            (yield MessageSubscriberInterface::class);
             foreach ($class->name::getHandledMessages() as $key => $value) {
                 (yield $key . \print_r($value, \true));
             }
         }
-        if (\interface_exists(\PrefixedByPoP\Symfony\Contracts\Service\ServiceSubscriberInterface::class, \false) && $class->isSubclassOf(\PrefixedByPoP\Symfony\Contracts\Service\ServiceSubscriberInterface::class)) {
-            (yield \PrefixedByPoP\Symfony\Contracts\Service\ServiceSubscriberInterface::class);
+        if (\interface_exists(ServiceSubscriberInterface::class, \false) && $class->isSubclassOf(ServiceSubscriberInterface::class)) {
+            (yield ServiceSubscriberInterface::class);
             (yield \print_r($class->name::getSubscribedServices(), \true));
         }
     }

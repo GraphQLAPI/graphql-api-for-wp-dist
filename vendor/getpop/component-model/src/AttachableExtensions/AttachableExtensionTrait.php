@@ -4,38 +4,33 @@ declare (strict_types=1);
 namespace PoP\ComponentModel\AttachableExtensions;
 
 use PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade;
+use PoP\Root\Services\ServiceTrait;
 trait AttachableExtensionTrait
 {
+    use ServiceTrait;
     /**
      * It is represented through a static class, because the extensions work at class level, not object level
      */
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
         return [];
     }
     /**
      * The priority with which to attach to the class. The higher the priority, the sooner it will be processed
-     *
-     * @return integer|null
      */
-    public static function getPriorityToAttachClasses() : ?int
+    public function getPriorityToAttachToClasses() : int
     {
-        return null;
+        return 10;
     }
     /**
      * There are 2 ways of setting a priority: either by configuration through parameter, or explicity defined in the class itself
      * The priority in the class has priority (pun intended ;))
-     *
-     * @param string $group
-     * @param integer $priority
-     * @return void
      */
-    public static function attach(string $group, int $priority = 10)
+    public function attach(string $group) : void
     {
-        $attachableExtensionManager = \PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade::getInstance();
-        $extensionClass = \get_called_class();
-        foreach ($extensionClass::getClassesToAttachTo() as $attachableClass) {
-            $attachableExtensionManager->setExtensionClass($attachableClass, $group, $extensionClass, $extensionClass::getPriorityToAttachClasses() ?? $priority);
+        $attachableExtensionManager = AttachableExtensionManagerFacade::getInstance();
+        foreach ($this->getClassesToAttachTo() as $attachableClass) {
+            $attachableExtensionManager->attachExtensionToClass($attachableClass, $group, $this);
         }
     }
 }

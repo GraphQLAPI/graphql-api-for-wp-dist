@@ -5,7 +5,7 @@ namespace PoPSchema\UserStateAccessControl\Hooks;
 
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\AccessControl\Hooks\AbstractAccessControlForFieldsInPrivateSchemaHookSet;
-abstract class AbstractDisableFieldsIfUserIsLoggedInAccessControlForFieldsInPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractAccessControlForFieldsInPrivateSchemaHookSet
+abstract class AbstractDisableFieldsIfUserIsLoggedInAccessControlForFieldsInPrivateSchemaHookSet extends AbstractAccessControlForFieldsInPrivateSchemaHookSet
 {
     protected function enabled() : bool
     {
@@ -16,7 +16,7 @@ abstract class AbstractDisableFieldsIfUserIsLoggedInAccessControlForFieldsInPriv
         /**
          * If the user is logged in, then do not register field names
          */
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         return $vars['global-userstate']['is-user-logged-in'];
     }
 }

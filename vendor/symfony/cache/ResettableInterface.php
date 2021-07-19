@@ -14,6 +14,6 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
 /**
  * Resets a pool's local state.
  */
-interface ResettableInterface extends \PrefixedByPoP\Symfony\Contracts\Service\ResetInterface
+interface ResettableInterface extends ResetInterface
 {
 }

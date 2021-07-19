@@ -17,7 +17,7 @@ use PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-final class CacheItem implements \PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface
+final class CacheItem implements ItemInterface
 {
     private const METADATA_EXPIRY_OFFSET = 1527506807;
     protected $key;
@@ -74,7 +74,7 @@ final class CacheItem implements \PrefixedByPoP\Symfony\Contracts\Cache\ItemInte
         } elseif ($expiration instanceof \DateTimeInterface) {
             $this->expiry = (float) $expiration->format('U.u');
         } else {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Expiration date must implement DateTimeInterface or be null, "%s" given.', \get_debug_type($expiration)));
+            throw new InvalidArgumentException(\sprintf('Expiration date must implement DateTimeInterface or be null, "%s" given.', \get_debug_type($expiration)));
         }
         return $this;
     }
@@ -92,35 +92,35 @@ final class CacheItem implements \PrefixedByPoP\Symfony\Contracts\Cache\ItemInte
         } elseif (\is_int($time)) {
             $this->expiry = $time + \microtime(\true);
         } else {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Expiration date must be an integer, a DateInterval or null, "%s" given.', \get_debug_type($time)));
+            throw new InvalidArgumentException(\sprintf('Expiration date must be an integer, a DateInterval or null, "%s" given.', \get_debug_type($time)));
         }
         return $this;
     }
     /**
      * {@inheritdoc}
-     * @return \Symfony\Contracts\Cache\ItemInterface
+     * @return $this
      */
-    public function tag($tags) : self
+    public function tag($tags)
     {
         if (!$this->isTaggable) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\LogicException(\sprintf('Cache item "%s" comes from a non tag-aware pool: you cannot tag it.', $this->key));
+            throw new LogicException(\sprintf('Cache item "%s" comes from a non tag-aware pool: you cannot tag it.', $this->key));
         }
         if (!\is_iterable($tags)) {
             $tags = [$tags];
         }
         foreach ($tags as $tag) {
             if (!\is_string($tag) && !(\is_object($tag) && \method_exists($tag, '__toString'))) {
-                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', \is_object($tag) ? \get_class($tag) : \gettype($tag)));
+                throw new InvalidArgumentException(\sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', \is_object($tag) ? \get_class($tag) : \gettype($tag)));
             }
             $tag = (string) $tag;
             if (isset($this->newMetadata[self::METADATA_TAGS][$tag])) {
                 continue;
             }
             if ('' === $tag) {
-                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException('Cache tag length must be greater than zero.');
+                throw new InvalidArgumentException('Cache tag length must be greater than zero.');
             }
             if (\false !== \strpbrk($tag, self::RESERVED_CHARACTERS)) {
-                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache tag "%s" contains reserved characters "%s".', $tag, self::RESERVED_CHARACTERS));
+                throw new InvalidArgumentException(\sprintf('Cache tag "%s" contains reserved characters "%s".', $tag, self::RESERVED_CHARACTERS));
             }
             $this->newMetadata[self::METADATA_TAGS][$tag] = $tag;
         }
@@ -143,13 +143,13 @@ final class CacheItem implements \PrefixedByPoP\Symfony\Contracts\Cache\ItemInte
     public static function validateKey($key) : string
     {
         if (!\is_string($key)) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
+            throw new InvalidArgumentException(\sprintf('Cache key must be string, "%s" given.', \get_debug_type($key)));
         }
         if ('' === $key) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException('Cache key length must be greater than zero.');
+            throw new InvalidArgumentException('Cache key length must be greater than zero.');
         }
         if (\false !== \strpbrk($key, self::RESERVED_CHARACTERS)) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache key "%s" contains reserved characters "%s".', $key, self::RESERVED_CHARACTERS));
+            throw new InvalidArgumentException(\sprintf('Cache key "%s" contains reserved characters "%s".', $key, self::RESERVED_CHARACTERS));
         }
         return $key;
     }
@@ -158,7 +158,7 @@ final class CacheItem implements \PrefixedByPoP\Symfony\Contracts\Cache\ItemInte
      *
      * @internal
      */
-    public static function log(?\PrefixedByPoP\Psr\Log\LoggerInterface $logger, string $message, array $context = [])
+    public static function log(?LoggerInterface $logger, string $message, array $context = [])
     {
         if ($logger) {
             $logger->warning($message, $context);

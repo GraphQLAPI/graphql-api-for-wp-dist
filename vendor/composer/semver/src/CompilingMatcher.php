@@ -17,12 +17,17 @@ use PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface;
  */
 class CompilingMatcher
 {
+    /**
+     * @var array
+     * @phpstan-var array<string, callable>
+     */
     private static $compiledCheckerCache = array();
+    /** @var bool */
     private static $enabled;
     /**
-     * @phpstan-var array<Constraint::OP_*, string>
+     * @phpstan-var array<Constraint::OP_*, Constraint::STR_OP_*>
      */
-    private static $transOpInt = array(\PrefixedByPoP\Composer\Semver\Constraint\Constraint::OP_EQ => '==', \PrefixedByPoP\Composer\Semver\Constraint\Constraint::OP_LT => '<', \PrefixedByPoP\Composer\Semver\Constraint\Constraint::OP_LE => '<=', \PrefixedByPoP\Composer\Semver\Constraint\Constraint::OP_GT => '>', \PrefixedByPoP\Composer\Semver\Constraint\Constraint::OP_GE => '>=', \PrefixedByPoP\Composer\Semver\Constraint\Constraint::OP_NE => '!=');
+    private static $transOpInt = array(Constraint::OP_EQ => Constraint::STR_OP_EQ, Constraint::OP_LT => Constraint::STR_OP_LT, Constraint::OP_LE => Constraint::STR_OP_LE, Constraint::OP_GT => Constraint::STR_OP_GT, Constraint::OP_GE => Constraint::STR_OP_GE, Constraint::OP_NE => Constraint::STR_OP_NE);
     /**
      * Evaluates the expression: $constraint match $operator $version
      *
@@ -33,13 +38,13 @@ class CompilingMatcher
      *
      * @return mixed
      */
-    public static function match(\PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface $constraint, $operator, $version)
+    public static function match(ConstraintInterface $constraint, $operator, $version)
     {
         if (self::$enabled === null) {
-            self::$enabled = !\in_array('eval', \explode(',', \ini_get('disable_functions')), \true);
+            self::$enabled = !\in_array('eval', \explode(',', (string) \ini_get('disable_functions')), \true);
         }
         if (!self::$enabled) {
-            return $constraint->matches(new \PrefixedByPoP\Composer\Semver\Constraint\Constraint(self::$transOpInt[$operator], $version));
+            return $constraint->matches(new Constraint(self::$transOpInt[$operator], $version));
         }
         $cacheKey = $operator . $constraint;
         if (!isset(self::$compiledCheckerCache[$cacheKey])) {

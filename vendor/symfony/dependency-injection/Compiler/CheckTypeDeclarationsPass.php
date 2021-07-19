@@ -37,7 +37,7 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression;
  * @author Nicolas Grekas <p@tchwork.com>
  * @author Julien Maulny <jmaulny@darkmira.fr>
  */
-final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+final class CheckTypeDeclarationsPass extends AbstractRecursivePass
 {
     private const SCALAR_TYPES = ['int' => \true, 'float' => \true, 'bool' => \true, 'string' => \true];
     private const BUILTIN_TYPES = ['array' => \true, 'bool' => \true, 'callable' => \true, 'float' => \true, 'int' => \true, 'iterable' => \true, 'object' => \true, 'string' => \true];
@@ -57,18 +57,23 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
     /**
      * {@inheritdoc}
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
         if (isset($this->skippedIds[$this->currentId])) {
             return $value;
         }
-        if (!$value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition || $value->hasErrors() || $value->isDeprecated()) {
+        if (!$value instanceof Definition || $value->hasErrors() || $value->isDeprecated()) {
             return parent::processValue($value, $isRoot);
         }
-        if (!$this->autoload && !\class_exists($class = $value->getClass(), \false) && !\interface_exists($class, \false)) {
-            return parent::processValue($value, $isRoot);
+        if (!$this->autoload) {
+            if (!($class = $value->getClass())) {
+                return parent::processValue($value, $isRoot);
+            }
+            if (!\class_exists($class, \false) && !\interface_exists($class, \false)) {
+                return parent::processValue($value, $isRoot);
+            }
         }
-        if (\PrefixedByPoP\Symfony\Component\DependencyInjection\ServiceLocator::class === $value->getClass()) {
+        if (ServiceLocator::class === $value->getClass()) {
             return parent::processValue($value, $isRoot);
         }
         if ($constructor = $this->getConstructor($value, \false)) {
@@ -77,7 +82,7 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
         foreach ($value->getMethodCalls() as $methodCall) {
             try {
                 $reflectionMethod = $this->getReflectionMethod($value, $methodCall[0]);
-            } catch (\PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException $e) {
+            } catch (RuntimeException $e) {
                 if ($value->getFactory()) {
                     continue;
                 }
@@ -90,15 +95,15 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
     /**
      * @throws InvalidArgumentException When not enough parameters are defined for the method
      */
-    private function checkTypeDeclarations(\PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $checkedDefinition, \ReflectionFunctionAbstract $reflectionFunction, array $values) : void
+    private function checkTypeDeclarations(Definition $checkedDefinition, \ReflectionFunctionAbstract $reflectionFunction, array $values) : void
     {
         $numberOfRequiredParameters = $reflectionFunction->getNumberOfRequiredParameters();
         if (\count($values) < $numberOfRequiredParameters) {
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\sprintf('Invalid definition for service "%s": "%s::%s()" requires %d arguments, %d passed.', $this->currentId, $reflectionFunction->class, $reflectionFunction->name, $numberOfRequiredParameters, \count($values)));
+            throw new InvalidArgumentException(\sprintf('Invalid definition for service "%s": "%s::%s()" requires %d arguments, %d passed.', $this->currentId, $reflectionFunction->class, $reflectionFunction->name, $numberOfRequiredParameters, \count($values)));
         }
         $reflectionParameters = $reflectionFunction->getParameters();
         $checksCount = \min($reflectionFunction->getNumberOfParameters(), \count($values));
-        $envPlaceholderUniquePrefix = $this->container->getParameterBag() instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\EnvPlaceholderParameterBag ? $this->container->getParameterBag()->getEnvPlaceholderUniquePrefix() : null;
+        $envPlaceholderUniquePrefix = $this->container->getParameterBag() instanceof EnvPlaceholderParameterBag ? $this->container->getParameterBag()->getEnvPlaceholderUniquePrefix() : null;
         for ($i = 0; $i < $checksCount; ++$i) {
             if (!$reflectionParameters[$i]->hasType() || $reflectionParameters[$i]->isVariadic()) {
                 continue;
@@ -115,7 +120,7 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
     /**
      * @throws InvalidParameterTypeException When a parameter is not compatible with the declared type
      */
-    private function checkType(\PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $checkedDefinition, $value, \ReflectionParameter $parameter, ?string $envPlaceholderUniquePrefix, \ReflectionType $reflectionType = null) : void
+    private function checkType(Definition $checkedDefinition, $value, \ReflectionParameter $parameter, ?string $envPlaceholderUniquePrefix, \ReflectionType $reflectionType = null) : void
     {
         $reflectionType = $reflectionType ?? $parameter->getType();
         if ($reflectionType instanceof \ReflectionUnionType) {
@@ -123,20 +128,20 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
                 try {
                     $this->checkType($checkedDefinition, $value, $parameter, $envPlaceholderUniquePrefix, $t);
                     return;
-                } catch (\PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidParameterTypeException $e) {
+                } catch (InvalidParameterTypeException $e) {
                 }
             }
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidParameterTypeException($this->currentId, $e->getCode(), $parameter);
+            throw new InvalidParameterTypeException($this->currentId, $e->getCode(), $parameter);
         }
         if (!$reflectionType instanceof \ReflectionNamedType) {
             return;
         }
         $type = $reflectionType->getName();
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference) {
+        if ($value instanceof Reference) {
             if (!$this->container->has($value = (string) $value)) {
                 return;
             }
-            if ('service_container' === $value && \is_a($type, \PrefixedByPoP\Symfony\Component\DependencyInjection\Container::class, \true)) {
+            if ('service_container' === $value && \is_a($type, Container::class, \true)) {
                 return;
             }
             $value = $this->container->findDefinition($value);
@@ -148,16 +153,16 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
             $type = $checkedDefinition->getClass();
         }
         $class = null;
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+        if ($value instanceof Definition) {
             $class = $value->getClass();
-            if (isset(self::BUILTIN_TYPES[\strtolower($class)])) {
+            if ($class && isset(self::BUILTIN_TYPES[\strtolower($class)])) {
                 $class = \strtolower($class);
             } elseif (!$class || !$this->autoload && !\class_exists($class, \false) && !\interface_exists($class, \false)) {
                 return;
             }
-        } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Parameter) {
+        } elseif ($value instanceof Parameter) {
             $value = $this->container->getParameter($value);
-        } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression) {
+        } elseif ($value instanceof Expression) {
             try {
                 $value = $this->getExpressionLanguage()->evaluate($value, ['container' => $this->container]);
             } catch (\Exception $e) {
@@ -185,12 +190,12 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
             return;
         }
         if (null === $class) {
-            if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument) {
-                $class = \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\RewindableGenerator::class;
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument) {
+            if ($value instanceof IteratorArgument) {
+                $class = RewindableGenerator::class;
+            } elseif ($value instanceof ServiceClosureArgument) {
                 $class = \Closure::class;
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument) {
-                $class = \PrefixedByPoP\Symfony\Component\DependencyInjection\ServiceLocator::class;
+            } elseif ($value instanceof ServiceLocatorArgument) {
+                $class = ServiceLocator::class;
             } elseif (\is_object($value)) {
                 $class = \get_class($value);
             } else {
@@ -207,7 +212,7 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
         if ('callable' === $type && (\Closure::class === $class || \method_exists($class, '__invoke'))) {
             return;
         }
-        if ('callable' === $type && \is_array($value) && isset($value[0]) && ($value[0] instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference || $value[0] instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition || \is_string($value[0]))) {
+        if ('callable' === $type && \is_array($value) && isset($value[0]) && ($value[0] instanceof Reference || $value[0] instanceof Definition || \is_string($value[0]))) {
             return;
         }
         if ('iterable' === $type && (\is_array($value) || 'array' === $class || \is_subclass_of($class, \Traversable::class))) {
@@ -235,12 +240,12 @@ final class CheckTypeDeclarationsPass extends \PrefixedByPoP\Symfony\Component\D
                 return;
             }
         }
-        throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidParameterTypeException($this->currentId, \is_object($value) ? $class : \get_debug_type($value), $parameter);
+        throw new InvalidParameterTypeException($this->currentId, \is_object($value) ? $class : \get_debug_type($value), $parameter);
     }
-    private function getExpressionLanguage() : \PrefixedByPoP\Symfony\Component\DependencyInjection\ExpressionLanguage
+    private function getExpressionLanguage() : ExpressionLanguage
     {
         if (null === $this->expressionLanguage) {
-            $this->expressionLanguage = new \PrefixedByPoP\Symfony\Component\DependencyInjection\ExpressionLanguage(null, $this->container->getExpressionLanguageProviders());
+            $this->expressionLanguage = new ExpressionLanguage(null, $this->container->getExpressionLanguageProviders());
         }
         return $this->expressionLanguage;
     }

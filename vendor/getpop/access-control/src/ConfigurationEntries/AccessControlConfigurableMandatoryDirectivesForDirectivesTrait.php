@@ -4,8 +4,6 @@ declare (strict_types=1);
 namespace PoP\AccessControl\ConfigurationEntries;
 
 use PoP\AccessControl\ComponentConfiguration;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForDirectivesTrait;
 trait AccessControlConfigurableMandatoryDirectivesForDirectivesTrait
 {
@@ -15,10 +13,6 @@ trait AccessControlConfigurableMandatoryDirectivesForDirectivesTrait
     use AccessControlConfigurableMandatoryDirectivesForItemsTrait;
     /**
      * Filter all the entries from the list which apply to the passed typeResolver and fieldName
-     *
-     * @param array $entryList
-     * @param string|null $value
-     * @return array
      */
     protected final function getMatchingEntries(array $entryList, ?string $value) : array
     {
@@ -28,7 +22,7 @@ trait AccessControlConfigurableMandatoryDirectivesForDirectivesTrait
          * If the schema mode was not defined in the entry, then this field is valid if the default
          * schema mode is the same required one
          */
-        if (!\PoP\AccessControl\ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode()) {
+        if (!ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode()) {
             return $this->getUpstreamMatchingEntries($entryList, $value);
         }
         /**
@@ -48,38 +42,5 @@ trait AccessControlConfigurableMandatoryDirectivesForDirectivesTrait
         return \array_filter($entryList, function ($entry) use($individualControlSchemaMode, $matchNullControlEntry) {
             return isset($entry[2]) && $entry[2] == $individualControlSchemaMode || !isset($entry[2]) && $matchNullControlEntry;
         });
-    }
-    public function maybeFilterDirectiveName(bool $include, \PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, \PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver, string $directiveName) : bool
-    {
-        /**
-         * If not enabling individual control, then the parent case already deals with the general case
-         */
-        if (!\PoP\AccessControl\ComponentConfiguration::enableIndividualControlForPublicPrivateSchemaMode()) {
-            return parent::maybeFilterDirectiveName($include, $typeResolver, $directiveResolver, $directiveName);
-        }
-        /**
-         * On the entries we will resolve either the class of the directive resolver, or any of its ancestors
-         * If there is any entry for this directive resolver, after filtering, then enable it
-         * Otherwise, exit by returning the original hook value
-         */
-        $ancestorDirectiveResolverClasses = [];
-        $directiveResolverClass = \get_class($directiveResolver);
-        do {
-            $ancestorDirectiveResolverClasses[] = $directiveResolverClass;
-            $directiveResolverClass = \get_parent_class($directiveResolverClass);
-        } while ($directiveResolverClass != null);
-        $entries = $this->getEntries();
-        foreach ($entries as $entry) {
-            /**
-             * If there is any entry for this directive, then continue the normal execution: that of the parent
-             */
-            if (\in_array($entry[0], $ancestorDirectiveResolverClasses)) {
-                return parent::maybeFilterDirectiveName($include, $typeResolver, $directiveResolver, $directiveName);
-            }
-        }
-        /**
-         * If there are no entries, then exit
-         */
-        return $include;
     }
 }

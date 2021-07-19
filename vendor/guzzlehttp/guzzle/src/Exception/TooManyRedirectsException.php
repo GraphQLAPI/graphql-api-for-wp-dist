@@ -2,6 +2,6 @@
 
 namespace PrefixedByPoP\GuzzleHttp\Exception;
 
-class TooManyRedirectsException extends \PrefixedByPoP\GuzzleHttp\Exception\RequestException
+class TooManyRedirectsException extends RequestException
 {
 }

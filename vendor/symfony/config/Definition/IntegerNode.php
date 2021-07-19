@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidTypeExcep
  *
  * @author Jeanmonod David <david.jeanmonod@gmail.com>
  */
-class IntegerNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\NumericNode
+class IntegerNode extends NumericNode
 {
     /**
      * {@inheritdoc}
@@ -24,7 +24,7 @@ class IntegerNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\Num
     protected function validateType($value)
     {
         if (!\is_int($value)) {
-            $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidTypeException(\sprintf('Invalid type for path "%s". Expected "int", but got "%s".', $this->getPath(), \get_debug_type($value)));
+            $ex = new InvalidTypeException(\sprintf('Invalid type for path "%s". Expected "int", but got "%s".', $this->getPath(), \get_debug_type($value)));
             if ($hint = $this->getInfo()) {
                 $ex->addHint($hint);
             }

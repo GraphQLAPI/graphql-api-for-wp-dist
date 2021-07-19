@@ -5,9 +5,8 @@ namespace PoP\API\ModuleProcessors;
 
 use PoP\FieldQuery\QueryHelpers;
 use PoP\ComponentModel\State\ApplicationState;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoP\ComponentModel\ModuleProcessors\AbstractQueryDataModuleProcessor;
-abstract class AbstractRelationalFieldQueryDataModuleProcessor extends \PoP\ComponentModel\ModuleProcessors\AbstractQueryDataModuleProcessor
+abstract class AbstractRelationalFieldQueryDataModuleProcessor extends AbstractQueryDataModuleProcessor
 {
     protected function getFields(array $module, $moduleAtts) : array
     {
@@ -16,14 +15,11 @@ abstract class AbstractRelationalFieldQueryDataModuleProcessor extends \PoP\Comp
             return $moduleAtts['fields'];
         }
         // If it is a normal module, it is the first added, then simply get the fields from $vars
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         return $vars['query'] ?? [];
     }
     /**
      * Property fields: Those fields which have a numeric key only
-     *
-     * @param array $module
-     * @return array
      */
     protected function getPropertyFields(array $module) : array
     {
@@ -35,9 +31,6 @@ abstract class AbstractRelationalFieldQueryDataModuleProcessor extends \PoP\Comp
     }
     /**
      * Nested fields: Those fields which have a field as key and an array of submodules as value
-     *
-     * @param array $module
-     * @return array
      */
     protected function getFieldsWithNestedSubfields(array $module) : array
     {
@@ -49,37 +42,32 @@ abstract class AbstractRelationalFieldQueryDataModuleProcessor extends \PoP\Comp
     }
     /**
      * Given a field, return its corresponding "not(isEmpty($field))
-     *
-     * @param array $fields
-     * @return array
      */
     protected function getNotIsEmptyConditionField(string $field) : string
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $conditionFieldAlias = null;
         // Convert the field into its "not is null" version
-        if ($fieldAlias = $fieldQueryInterpreter->getFieldAlias($field)) {
+        if ($fieldAlias = $this->fieldQueryInterpreter->getFieldAlias($field)) {
             $conditionFieldAlias = 'not-isnull-' . $fieldAlias;
         }
-        return $fieldQueryInterpreter->getField('not', ['value' => $fieldQueryInterpreter->getField('isNull', ['value' => $fieldQueryInterpreter->composeField($fieldQueryInterpreter->getFieldName($field), $fieldQueryInterpreter->getFieldArgs($field) ?? \PoP\FieldQuery\QueryHelpers::getEmptyFieldArgs())])], $conditionFieldAlias, \false, $fieldQueryInterpreter->getDirectives($field));
+        return $this->fieldQueryInterpreter->getField('not', ['value' => $this->fieldQueryInterpreter->getField('isNull', ['value' => $this->fieldQueryInterpreter->composeField($this->fieldQueryInterpreter->getFieldName($field), $this->fieldQueryInterpreter->getFieldArgs($field) ?? QueryHelpers::getEmptyFieldArgs())])], $conditionFieldAlias, \false, $this->fieldQueryInterpreter->getDirectives($field));
     }
     public function getDataFields(array $module, array &$props) : array
     {
         // The fields which have a numeric key only are the data-fields for the current module level
         // Process only the fields without "skip output if null". Those will be processed on function `getConditionalOnDataFieldSubmodules`
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        return \array_filter($this->getPropertyFields($module), function ($field) use($fieldQueryInterpreter) {
-            return !$fieldQueryInterpreter->isSkipOuputIfNullField($field);
+        return \array_filter($this->getPropertyFields($module), function ($field) {
+            return !$this->fieldQueryInterpreter->isSkipOuputIfNullField($field);
         });
     }
     public function getDomainSwitchingSubmodules(array $module) : array
     {
         $ret = parent::getDomainSwitchingSubmodules($module);
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         // The fields which are not numeric are the keys from which to switch database domain
         $fieldNestedFields = $this->getFieldsWithNestedSubfields($module);
         // Process only the fields without "skip output if null". Those will be processed on function `getConditionalOnDataFieldDomainSwitchingSubmodules`
-        $fieldNestedFields = \array_filter($this->getFieldsWithNestedSubfields($module), function ($field) use($fieldQueryInterpreter) {
-            return !$fieldQueryInterpreter->isSkipOuputIfNullField($field);
+        $fieldNestedFields = \array_filter($this->getFieldsWithNestedSubfields($module), function ($field) {
+            return !$this->fieldQueryInterpreter->isSkipOuputIfNullField($field);
         }, \ARRAY_FILTER_USE_KEY);
         // Create a "virtual" module with the fields corresponding to the next level module
         foreach ($fieldNestedFields as $field => $nestedFields) {
@@ -90,19 +78,18 @@ abstract class AbstractRelationalFieldQueryDataModuleProcessor extends \PoP\Comp
     public function getConditionalOnDataFieldSubmodules(array $module) : array
     {
         $ret = parent::getConditionalOnDataFieldSubmodules($module);
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         // Calculate the property fields with "skip output if null" on true
-        $propertyFields = \array_filter($this->getPropertyFields($module), function ($field) use($fieldQueryInterpreter) {
-            return $fieldQueryInterpreter->isSkipOuputIfNullField($field);
+        $propertyFields = \array_filter($this->getPropertyFields($module), function ($field) {
+            return $this->fieldQueryInterpreter->isSkipOuputIfNullField($field);
         });
-        $relationalFields = \array_keys(\array_filter($this->getFieldsWithNestedSubfields($module), function ($field) use($fieldQueryInterpreter) {
-            return $fieldQueryInterpreter->isSkipOuputIfNullField($field);
+        $relationalFields = \array_keys(\array_filter($this->getFieldsWithNestedSubfields($module), function ($field) {
+            return $this->fieldQueryInterpreter->isSkipOuputIfNullField($field);
         }, \ARRAY_FILTER_USE_KEY));
         $fields = \array_values(\array_unique(\array_merge($propertyFields, $relationalFields)));
         // Create a "virtual" module with the fields corresponding to the next level module
         foreach ($fields as $field) {
             $conditionField = $this->getNotIsEmptyConditionField($field);
-            $conditionalField = $fieldQueryInterpreter->removeSkipOuputIfNullFromField($field);
+            $conditionalField = $this->fieldQueryInterpreter->removeSkipOuputIfNullFromField($field);
             $ret[$conditionField][] = [$module[0], $module[1], ['fields' => [$conditionalField]]];
         }
         return $ret;
@@ -110,14 +97,13 @@ abstract class AbstractRelationalFieldQueryDataModuleProcessor extends \PoP\Comp
     public function getConditionalOnDataFieldDomainSwitchingSubmodules(array $module) : array
     {
         $ret = parent::getConditionalOnDataFieldDomainSwitchingSubmodules($module);
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         // Calculate the nested fields with "skip output if null" on true
-        $fieldNestedFields = \array_filter($this->getFieldsWithNestedSubfields($module), function ($field) use($fieldQueryInterpreter) {
-            return $fieldQueryInterpreter->isSkipOuputIfNullField($field);
+        $fieldNestedFields = \array_filter($this->getFieldsWithNestedSubfields($module), function ($field) {
+            return $this->fieldQueryInterpreter->isSkipOuputIfNullField($field);
         }, \ARRAY_FILTER_USE_KEY);
         foreach ($fieldNestedFields as $field => $nestedFields) {
             $conditionField = $this->getNotIsEmptyConditionField($field);
-            $conditionalField = $fieldQueryInterpreter->removeSkipOuputIfNullFromField($field);
+            $conditionalField = $this->fieldQueryInterpreter->removeSkipOuputIfNullFromField($field);
             $ret[$conditionField][$conditionalField] = array([$module[0], $module[1], ['fields' => $nestedFields]]);
         }
         return $ret;

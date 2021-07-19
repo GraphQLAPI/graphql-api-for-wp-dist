@@ -3,32 +3,26 @@
 declare (strict_types=1);
 namespace PoPSchema\CustomPostMutations\MutationResolvers;
 
-use PoP\Hooks\Facades\HooksAPIFacade;
 use PoP\ComponentModel\ErrorHandling\Error;
 use PoP\ComponentModel\State\ApplicationState;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\LooseContracts\Facades\NameResolverFacade;
 use PoPSchema\CustomPosts\Enums\CustomPostStatusEnum;
 use PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade;
 use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
+use PoP\ComponentModel\Misc\GeneralUtils;
 use PoPSchema\UserRoles\Facades\UserRoleTypeDataResolverFacade;
 use PoP\ComponentModel\MutationResolvers\AbstractMutationResolver;
 use PoPSchema\UserStateMutations\MutationResolvers\ValidateUserLoggedInMutationResolverTrait;
-use PoPSchema\CustomPostMutations\Facades\CustomPostTypeAPIFacade as MutationCustomPostTypeAPIFacade;
+use PoPSchema\CustomPostMutations\Facades\CustomPostTypeMutationAPIFacade;
 use PoPSchema\CustomPostMutations\LooseContracts\LooseContractSet;
 use PoPSchema\CustomPosts\Types\Status;
-abstract class AbstractCreateUpdateCustomPostMutationResolver extends \PoP\ComponentModel\MutationResolvers\AbstractMutationResolver implements \PoPSchema\CustomPostMutations\MutationResolvers\CustomPostMutationResolverInterface
+abstract class AbstractCreateUpdateCustomPostMutationResolver extends AbstractMutationResolver implements \PoPSchema\CustomPostMutations\MutationResolvers\CustomPostMutationResolverInterface
 {
     use ValidateUserLoggedInMutationResolverTrait;
     public const HOOK_EXECUTE_CREATE_OR_UPDATE = __CLASS__ . ':execute-create-or-update';
     public const HOOK_EXECUTE_CREATE = __CLASS__ . ':execute-create';
     public const HOOK_EXECUTE_UPDATE = __CLASS__ . ':execute-update';
     public const HOOK_VALIDATE_CONTENT = __CLASS__ . ':validate-content';
-    // @TODO: Migrate when package "Categories" is completed
-    // protected function getCategoryTaxonomy(): ?string
-    // {
-    //     return null;
-    // }
     protected function validateCreateErrors(array $form_data) : ?array
     {
         $errors = [];
@@ -70,49 +64,45 @@ abstract class AbstractCreateUpdateCustomPostMutationResolver extends \PoP\Compo
         if ($errors) {
             return;
         }
-        $nameResolver = \PoP\LooseContracts\Facades\NameResolverFacade::getInstance();
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $nameResolver = NameResolverFacade::getInstance();
         // Validate user permission
-        $userRoleTypeDataResolver = \PoPSchema\UserRoles\Facades\UserRoleTypeDataResolverFacade::getInstance();
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $userRoleTypeDataResolver = UserRoleTypeDataResolverFacade::getInstance();
+        $vars = ApplicationState::getVars();
         $userID = $vars['global-userstate']['current-user-id'];
-        $editCustomPostsCapability = $nameResolver->getName(\PoPSchema\CustomPostMutations\LooseContracts\LooseContractSet::NAME_EDIT_CUSTOMPOSTS_CAPABILITY);
+        $editCustomPostsCapability = $nameResolver->getName(LooseContractSet::NAME_EDIT_CUSTOMPOSTS_CAPABILITY);
         if (!$userRoleTypeDataResolver->userCan($userID, $editCustomPostsCapability)) {
-            $errors[] = $translationAPI->__('Your user doesn\'t have permission for editing custom posts.', 'custompost-mutations');
+            $errors[] = $this->translationAPI->__('Your user doesn\'t have permission for editing custom posts.', 'custompost-mutations');
             return;
         }
         // Check if the user can publish custom posts
-        if (isset($form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::STATUS]) && $form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::STATUS] == \PoPSchema\CustomPosts\Types\Status::PUBLISHED) {
-            $publishCustomPostsCapability = $nameResolver->getName(\PoPSchema\CustomPostMutations\LooseContracts\LooseContractSet::NAME_PUBLISH_CUSTOMPOSTS_CAPABILITY);
+        if (isset($form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::STATUS]) && $form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::STATUS] == Status::PUBLISHED) {
+            $publishCustomPostsCapability = $nameResolver->getName(LooseContractSet::NAME_PUBLISH_CUSTOMPOSTS_CAPABILITY);
             if (!$userRoleTypeDataResolver->userCan($userID, $publishCustomPostsCapability)) {
-                $errors[] = $translationAPI->__('Your user doesn\'t have permission for publishing custom posts.', 'custompost-mutations');
+                $errors[] = $this->translationAPI->__('Your user doesn\'t have permission for publishing custom posts.', 'custompost-mutations');
                 return;
             }
         }
     }
     protected function getUserNotLoggedInErrorMessage() : string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('You must be logged in to create or update custom posts', 'custompost-mutations');
+        return $this->translationAPI->__('You must be logged in to create or update custom posts', 'custompost-mutations');
     }
     protected function validateContent(array &$errors, array $form_data) : void
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         // Validate that the status is valid
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+        $instanceManager = InstanceManagerFacade::getInstance();
         /**
          * @var CustomPostStatusEnum
          */
-        $customPostStatusEnum = $instanceManager->getInstance(\PoPSchema\CustomPosts\Enums\CustomPostStatusEnum::class);
+        $customPostStatusEnum = $instanceManager->getInstance(CustomPostStatusEnum::class);
         if (isset($form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::STATUS])) {
             $status = $form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::STATUS];
             if (!\in_array($status, $customPostStatusEnum->getValues())) {
-                $errors[] = \sprintf($translationAPI->__('Status \'%s\' is not supported', 'custompost-mutations'), $status);
+                $errors[] = \sprintf($this->translationAPI->__('Status \'%s\' is not supported', 'custompost-mutations'), $status);
             }
         }
         // Allow plugins to add validation for their fields
-        $hooksAPI = \PoP\Hooks\Facades\HooksAPIFacade::getInstance();
-        $hooksAPI->doAction(self::HOOK_VALIDATE_CONTENT, array(&$errors), $form_data);
+        $this->hooksAPI->doAction(self::HOOK_VALIDATE_CONTENT, array(&$errors), $form_data);
     }
     protected function validateCreateContent(array &$errors, array $form_data) : void
     {
@@ -122,44 +112,47 @@ abstract class AbstractCreateUpdateCustomPostMutationResolver extends \PoP\Compo
     }
     protected function validateCreate(array &$errors, array $form_data) : void
     {
+        // Either the title or the content must be set
+        if (!isset($form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::TITLE]) && !isset($form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::CONTENT])) {
+            $errors[] = $this->translationAPI->__('Either the title, or the content, must be provided', 'custompost-mutations');
+        }
     }
     protected function validateUpdate(array &$errors, array $form_data) : void
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         $customPostID = $form_data[\PoPSchema\CustomPostMutations\MutationResolvers\MutationInputProperties::ID] ?? null;
         if (!$customPostID) {
-            $errors[] = $translationAPI->__('The ID is missing', 'custompost-mutations');
+            $errors[] = $this->translationAPI->__('The ID is missing', 'custompost-mutations');
             return;
         }
-        $customPostTypeAPI = \PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade::getInstance();
+        $customPostTypeAPI = CustomPostTypeAPIFacade::getInstance();
         $post = $customPostTypeAPI->getCustomPost($customPostID);
         if (!$post) {
-            $errors[] = \sprintf($translationAPI->__('There is no entity with ID \'%s\'', 'custompost-mutations'), $customPostID);
+            $errors[] = \sprintf($this->translationAPI->__('There is no entity with ID \'%s\'', 'custompost-mutations'), $customPostID);
             return;
         }
         // Check that the user has access to the edited custom post
-        $mutationCustomPostTypeAPI = \PoPSchema\CustomPostMutations\Facades\CustomPostTypeAPIFacade::getInstance();
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $customPostTypeMutationAPI = CustomPostTypeMutationAPIFacade::getInstance();
+        $vars = ApplicationState::getVars();
         $userID = $vars['global-userstate']['current-user-id'];
-        if (!$mutationCustomPostTypeAPI->canUserEditCustomPost($userID, $customPostID)) {
-            $errors[] = \sprintf($translationAPI->__('You don\'t have permission to edit custom post with ID \'%s\'', 'custompost-mutations'), $customPostID);
+        if (!$customPostTypeMutationAPI->canUserEditCustomPost($userID, $customPostID)) {
+            $errors[] = \sprintf($this->translationAPI->__('You don\'t have permission to edit custom post with ID \'%s\'', 'custompost-mutations'), $customPostID);
             return;
         }
     }
     /**
-     * @param mixed $customPostID
+     * @param int|string $customPostID
      */
     protected function additionals($customPostID, array $form_data) : void
     {
     }
     /**
-     * @param mixed $customPostID
+     * @param int|string $customPostID
      */
     protected function updateAdditionals($customPostID, array $form_data, array $log) : void
     {
     }
     /**
-     * @param mixed $customPostID
+     * @param int|string $customPostID
      */
     protected function createAdditionals($customPostID, array $form_data) : void
     {
@@ -195,46 +188,33 @@ abstract class AbstractCreateUpdateCustomPostMutationResolver extends \PoP\Compo
     }
     /**
      * @param array<string, mixed> $data
-     * @return mixed the ID of the updated custom post
+     * @return string|int|null|\PoP\ComponentModel\ErrorHandling\Error
      */
     protected function executeUpdateCustomPost(array $data)
     {
-        $customPostTypeAPI = \PoPSchema\CustomPostMutations\Facades\CustomPostTypeAPIFacade::getInstance();
-        return $customPostTypeAPI->updateCustomPost($data);
+        $customPostTypeMutationAPI = CustomPostTypeMutationAPIFacade::getInstance();
+        return $customPostTypeMutationAPI->updateCustomPost($data);
     }
-    // @TODO: Migrate when package "Categories" is completed
-    // protected function getCategories(array $form_data): ?array
-    // {
-    //     return $form_data[MutationInputProperties::CATEGORIES];
-    // }
     /**
-     * @param mixed $customPostID
+     * @param int|string $customPostID
      */
     protected function createUpdateCustomPost(array $form_data, $customPostID) : void
     {
-        // @TODO: Migrate when package "Categories" is completed
-        // // Set categories for any taxonomy (not only for "category")
-        // if ($cats = $this->getCategories($form_data)) {
-        //     $taxonomyapi = \PoPSchema\Taxonomies\FunctionAPIFactory::getInstance();
-        //     $taxonomy = $this->getCategoryTaxonomy();
-        //     $taxonomyapi->setPostTerms($customPostID, $cats, $taxonomy);
-        // }
     }
     /**
-     * @param mixed $customPostID
+     * @param int|string $customPostID
      */
     protected function getUpdateCustomPostDataLog($customPostID, array $form_data) : array
     {
-        $customPostTypeAPI = \PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade::getInstance();
+        $customPostTypeAPI = CustomPostTypeAPIFacade::getInstance();
         $log = array('previous-status' => $customPostTypeAPI->getStatus($customPostID));
         return $log;
     }
     /**
-     * @return mixed The ID of the updated entity, or an Error
+     * @return string|int|Error The ID of the updated entity, or an Error
      */
     protected function update(array $form_data)
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         $post_data = $this->getUpdateCustomPostData($form_data);
         $customPostID = $post_data['id'];
         // Create the operation log, to see what changed. Needed for
@@ -242,47 +222,48 @@ abstract class AbstractCreateUpdateCustomPostMutationResolver extends \PoP\Compo
         // - Add user notification of post being referenced, only when the reference is new (otherwise it will add the notification each time the user updates the post)
         $log = $this->getUpdateCustomPostDataLog($customPostID, $form_data);
         $result = $this->executeUpdateCustomPost($post_data);
-        if ($result === 0) {
-            return new \PoP\ComponentModel\ErrorHandling\Error('update-error', $translationAPI->__('Oops, there was a problem... this is embarrassing, huh?', 'custompost-mutations'));
+        if (GeneralUtils::isError($result)) {
+            return $result;
+        } elseif ($result === null) {
+            return new Error('update-error', $this->translationAPI->__('Oops, there was a problem... this is embarrassing, huh?', 'custompost-mutations'));
         }
         $this->createUpdateCustomPost($form_data, $customPostID);
         // Allow for additional operations (eg: set Action categories)
         $this->additionals($customPostID, $form_data);
         $this->updateAdditionals($customPostID, $form_data, $log);
         // Inject Share profiles here
-        $hooksAPI = \PoP\Hooks\Facades\HooksAPIFacade::getInstance();
-        $hooksAPI->doAction(self::HOOK_EXECUTE_CREATE_OR_UPDATE, $customPostID, $form_data);
-        $hooksAPI->doAction(self::HOOK_EXECUTE_UPDATE, $customPostID, $log, $form_data);
+        $this->hooksAPI->doAction(self::HOOK_EXECUTE_CREATE_OR_UPDATE, $customPostID, $form_data);
+        $this->hooksAPI->doAction(self::HOOK_EXECUTE_UPDATE, $customPostID, $log, $form_data);
         return $customPostID;
     }
     /**
      * @param array<string, mixed> $data
-     * @return mixed the ID of the created custom post
+     * @return string|int|null|Error the ID of the created custom post
      */
     protected function executeCreateCustomPost(array $data)
     {
-        $customPostTypeAPI = \PoPSchema\CustomPostMutations\Facades\CustomPostTypeAPIFacade::getInstance();
-        return $customPostTypeAPI->createCustomPost($data);
+        $customPostTypeMutationAPI = CustomPostTypeMutationAPIFacade::getInstance();
+        return $customPostTypeMutationAPI->createCustomPost($data);
     }
     /**
-     * @return mixed The ID of the created entity, or an Error
+     * @return string|int|Error The ID of the created entity, or an Error
      */
     protected function create(array $form_data)
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         $post_data = $this->getCreateCustomPostData($form_data);
         $customPostID = $this->executeCreateCustomPost($post_data);
-        if ($customPostID == 0) {
-            return new \PoP\ComponentModel\ErrorHandling\Error('create-error', $translationAPI->__('Oops, there was a problem... this is embarrassing, huh?', 'custompost-mutations'));
+        if (GeneralUtils::isError($customPostID)) {
+            return $customPostID;
+        } elseif ($customPostID === null) {
+            return new Error('create-error', $this->translationAPI->__('Oops, there was a problem... this is embarrassing, huh?', 'custompost-mutations'));
         }
         $this->createUpdateCustomPost($form_data, $customPostID);
         // Allow for additional operations (eg: set Action categories)
         $this->additionals($customPostID, $form_data);
         $this->createAdditionals($customPostID, $form_data);
         // Inject Share profiles here
-        $hooksAPI = \PoP\Hooks\Facades\HooksAPIFacade::getInstance();
-        $hooksAPI->doAction(self::HOOK_EXECUTE_CREATE_OR_UPDATE, $customPostID, $form_data);
-        $hooksAPI->doAction(self::HOOK_EXECUTE_CREATE, $customPostID, $form_data);
+        $this->hooksAPI->doAction(self::HOOK_EXECUTE_CREATE_OR_UPDATE, $customPostID, $form_data);
+        $this->hooksAPI->doAction(self::HOOK_EXECUTE_CREATE, $customPostID, $form_data);
         return $customPostID;
     }
 }

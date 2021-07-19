@@ -25,10 +25,10 @@ class PersistedFragmentManager implements \PoP\API\PersistedQueries\PersistedFra
     public function addPersistedFragment(string $fragmentName, string $fragmentResolution, ?string $description = null) : void
     {
         $this->persistedFragments[$fragmentName] = $fragmentResolution;
-        $this->persistedFragmentsForSchema[$fragmentName] = [\PoP\API\Schema\SchemaDefinition::ARGNAME_NAME => $fragmentName];
+        $this->persistedFragmentsForSchema[$fragmentName] = [SchemaDefinition::ARGNAME_NAME => $fragmentName];
         if ($description) {
-            $this->persistedFragmentsForSchema[$fragmentName][\PoP\API\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+            $this->persistedFragmentsForSchema[$fragmentName][SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
         }
-        $this->persistedFragmentsForSchema[$fragmentName][\PoP\API\Schema\SchemaDefinition::ARGNAME_FRAGMENT_RESOLUTION] = $fragmentResolution;
+        $this->persistedFragmentsForSchema[$fragmentName][SchemaDefinition::ARGNAME_FRAGMENT_RESOLUTION] = $fragmentResolution;
     }
 }

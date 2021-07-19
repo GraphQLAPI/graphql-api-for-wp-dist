@@ -7,12 +7,12 @@ use PoPSchema\Users\TypeAPIs\UserTypeAPIInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class UserTypeAPIFacade
 {
-    public static function getInstance() : \PoPSchema\Users\TypeAPIs\UserTypeAPIInterface
+    public static function getInstance() : UserTypeAPIInterface
     {
         /**
          * @var UserTypeAPIInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\Users\TypeAPIs\UserTypeAPIInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(UserTypeAPIInterface::class);
         return $service;
     }
 }

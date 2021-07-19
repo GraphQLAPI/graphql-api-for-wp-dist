@@ -7,10 +7,10 @@ use Throwable;
 abstract class AbstractErrorManager implements \PoP\Engine\ErrorHandling\ErrorManagerInterface
 {
     /**
-     * @param object $object
+     * @param mixed $thing
      */
-    public function isCMSError($object) : bool
+    public function isCMSError($thing) : bool
     {
-        return $object instanceof \Throwable;
+        return $thing instanceof Throwable;
     }
 }

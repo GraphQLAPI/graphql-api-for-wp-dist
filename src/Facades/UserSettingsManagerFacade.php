@@ -18,7 +18,7 @@ class UserSettingsManagerFacade
     /**
      * @var \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface|null
      */
-    private static $instance = null;
+    private static $instance;
 
     public static function getInstance(): UserSettingsManagerInterface
     {

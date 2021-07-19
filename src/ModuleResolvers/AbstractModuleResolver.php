@@ -7,9 +7,39 @@ namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 // use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverInterface;
+use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Translation\TranslationAPIInterface;
 
 abstract class AbstractModuleResolver implements ModuleResolverInterface
 {
+    /**
+     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     */
+    protected $instanceManager;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     */
+    protected $moduleRegistry;
+    /**
+     * @var \PoP\Translation\TranslationAPIInterface
+     */
+    protected $translationAPI;
+    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, TranslationAPIInterface $translationAPI)
+    {
+        $this->instanceManager = $instanceManager;
+        $this->moduleRegistry = $moduleRegistry;
+        $this->translationAPI = $translationAPI;
+    }
+    /**
+     * The priority to display the modules from this resolver in the Modules page.
+     * The higher the number, the earlier it shows
+     */
+    public function getPriority(): int
+    {
+        return 10;
+    }
+
     /**
      * @return array<array> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
      */
@@ -48,8 +78,7 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
          * Do not use "." because it can't be used as an HTML ID
          */
         return str_replace(
-            '\\',
-            //['\\', '/', ' '],
+            '\\', //['\\', '/', ' '],
             '_',
             $moduleID
         );
@@ -87,11 +116,7 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
 
     /**
      * Indicate if the given value is valid for that option
-     *
-     * @param string $module
-     * @param string $option
      * @param mixed $value
-     * @return bool
      */
     public function isValidValue(string $module, string $option, $value): bool
     {
@@ -100,10 +125,7 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
 
     /**
      * Default value for an option set by the module
-     *
-     * @param string $module
-     * @param string $option
-     * @return mixed Anything the setting might be: an array|string|bool|int|null
+     * @return mixed
      */
     public function getSettingsDefaultValue(string $module, string $option)
     {
@@ -117,9 +139,6 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
 
     // /**
     //  * By default, point to https://graphql-api.com/modules/{component-slug}
-    //  *
-    //  * @param string $module
-    //  * @return string|null
     //  */
     // public function getURL(string $module): ?string
     // {
@@ -143,20 +162,13 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
     // /**
     //  * Return the default URL base for the module, defined through configuration
     //  * By default, point to https://graphql-api.com/modules/{component-slug}
-    //  *
-    //  * @param string $module
-    //  * @return string
     //  */
     // protected function getURLBase(string $module): string
     // {
     //     return ComponentConfiguration::getModuleURLBase();
     // }
-
     /**
      * Does the module have HTML Documentation?
-     *
-     * @param string $module
-     * @return bool
      */
     public function hasDocumentation(string $module): bool
     {
@@ -165,9 +177,6 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
 
     /**
      * HTML Documentation for the module
-     *
-     * @param string $module
-     * @return string|null
      */
     public function getDocumentation(string $module): ?string
     {

@@ -17,10 +17,8 @@ class Argument extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst
     private $value;
     /**
      * @param string         $name
-     * @param ValueInterface $value
-     * @param Location       $location
      */
-    public function __construct($name, \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\ValueInterface $value, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function __construct($name, ValueInterface $value, Location $location)
     {
         parent::__construct($location);
         $this->name = $name;

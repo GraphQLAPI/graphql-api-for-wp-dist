@@ -8,9 +8,6 @@ trait FilterInputModuleProcessorTrait
 {
     /**
      * Return an array of elements, instead of a single element, to enable filters with several inputs (such as "date", with inputs "date-from" and "date-to") to document all of them
-     *
-     * @param array $module
-     * @return array
      */
     public function getFilterInputSchemaDefinitionItems(array $module) : array
     {
@@ -20,12 +17,8 @@ trait FilterInputModuleProcessorTrait
     }
     /**
      * Function to override
-     *
-     * @param array $schemaDefinitionItems
-     * @param array $module
-     * @return void
      */
-    protected function modifyFilterSchemaDefinitionItems(array &$schemaDefinitionItems, array $module)
+    protected function modifyFilterSchemaDefinitionItems(array &$schemaDefinitionItems, array $module) : void
     {
     }
     public function getFilterInputSchemaDefinitionResolver(array $module) : ?\PoP\ComponentModel\ModuleProcessors\DataloadQueryArgsSchemaFilterInputModuleProcessorInterface
@@ -34,27 +27,38 @@ trait FilterInputModuleProcessorTrait
     }
     /**
      * Documentation for the module
-     *
-     * @param array $module
-     * @return array
      */
     protected function getFilterInputSchemaDefinition(array $module) : array
     {
-        $schemaDefinition = [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => $this->getName($module)];
+        $schemaDefinition = [SchemaDefinition::ARGNAME_NAME => $this->getName($module)];
         if ($filterSchemaDefinitionResolver = $this->getFilterInputSchemaDefinitionResolver($module)) {
-            if ($type = $filterSchemaDefinitionResolver->getSchemaFilterInputType($module)) {
-                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE] = $type;
-            }
+            $type = $filterSchemaDefinitionResolver->getSchemaFilterInputType($module);
+            $schemaDefinition[SchemaDefinition::ARGNAME_TYPE] = $type;
             if ($description = $filterSchemaDefinitionResolver->getSchemaFilterInputDescription($module)) {
-                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+                $schemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+            }
+            // If setting the "array of arrays" flag, there's no need to set the "array" flag
+            $isArrayOfArrays = $filterSchemaDefinitionResolver->getSchemaFilterInputIsArrayOfArraysType($module);
+            if ($filterSchemaDefinitionResolver->getSchemaFilterInputIsArrayType($module) || $isArrayOfArrays) {
+                $schemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY] = \true;
+                if ($filterSchemaDefinitionResolver->getSchemaFilterInputIsNonNullableItemsInArrayType($module)) {
+                    $schemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY] = \true;
+                }
+                if ($isArrayOfArrays) {
+                    $schemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY_OF_ARRAYS] = \true;
+                    if ($filterSchemaDefinitionResolver->getSchemaFilterInputIsNonNullableItemsInArrayOfArraysType($module)) {
+                        $schemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY_OF_ARRAYS] = \true;
+                    }
+                }
             }
             if ($filterSchemaDefinitionResolver->getSchemaFilterInputMandatory($module)) {
-                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY] = \true;
+                $schemaDefinition[SchemaDefinition::ARGNAME_MANDATORY] = \true;
             }
             if ($deprecationDescription = $filterSchemaDefinitionResolver->getSchemaFilterInputDeprecationDescription($module)) {
-                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATED] = \true;
-                $schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] = $deprecationDescription;
+                $schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATED] = \true;
+                $schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] = $deprecationDescription;
             }
+            $filterSchemaDefinitionResolver->addSchemaDefinitionForFilter($schemaDefinition, $module);
         }
         return $schemaDefinition;
     }

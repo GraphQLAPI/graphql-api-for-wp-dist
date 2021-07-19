@@ -7,12 +7,11 @@ use PoP\ComponentModel\ModulePath\ModulePathManagerInterface;
 use PoP\ComponentModel\ModulePath\ModulePathUtils;
 class ModulePaths extends \PoP\ComponentModel\ModuleFilters\AbstractModuleFilter
 {
-    public const NAME = 'modulepaths';
     public const URLPARAM_MODULEPATHS = 'modulepaths';
     /**
      * @var array[]
      */
-    protected $paths = null;
+    protected $paths;
     /**
      * @var array[]
      */
@@ -25,21 +24,21 @@ class ModulePaths extends \PoP\ComponentModel\ModuleFilters\AbstractModuleFilter
      * @var \PoP\ComponentModel\ModulePath\ModulePathManagerInterface
      */
     protected $modulePathManager;
-    public function __construct(\PoP\ComponentModel\ModulePath\ModulePathManagerInterface $modulePathManager)
+    public function __construct(ModulePathManagerInterface $modulePathManager)
     {
         $this->modulePathManager = $modulePathManager;
     }
-    protected function init()
+    protected function init() : void
     {
-        $this->paths = \PoP\ComponentModel\ModulePath\ModulePathUtils::getModulePaths();
+        $this->paths = ModulePathUtils::getModulePaths();
         $this->propagation_unsettled_paths = $this->paths;
         $this->backlog_unsettled_paths = array();
     }
-    public function getName()
+    public function getName() : string
     {
-        return self::NAME;
+        return 'modulepaths';
     }
-    public function excludeModule(array $module, array &$props)
+    public function excludeModule(array $module, array &$props) : bool
     {
         if (\is_null($this->paths)) {
             $this->init();
@@ -61,7 +60,7 @@ class ModulePaths extends \PoP\ComponentModel\ModuleFilters\AbstractModuleFilter
         }
         return \true;
     }
-    public function removeExcludedSubmodules(array $module, $submodules)
+    public function removeExcludedSubmodules(array $module, array $submodules) : array
     {
         if (\is_null($this->paths)) {
             $this->init();
@@ -96,7 +95,7 @@ class ModulePaths extends \PoP\ComponentModel\ModuleFilters\AbstractModuleFilter
     /**
      * The `prepare` function advances the modulepath one level down, when interating into the submodules, and then calling `restore` the value goes one level up again
      */
-    public function prepareForPropagation(array $module, array &$props)
+    public function prepareForPropagation(array $module, array &$props) : void
     {
         if (\is_null($this->paths)) {
             $this->init();
@@ -118,7 +117,7 @@ class ModulePaths extends \PoP\ComponentModel\ModuleFilters\AbstractModuleFilter
             $this->propagation_unsettled_paths = $matching_unsettled_paths;
         }
     }
-    public function restoreFromPropagation(array $module, array &$props)
+    public function restoreFromPropagation(array $module, array &$props) : void
     {
         if (\is_null($this->paths)) {
             $this->init();

@@ -8,16 +8,25 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
+    /**
+     * @var int|null
+     */
     private static $getPageListDefaultLimit;
+    /**
+     * @var int|null
+     */
     private static $getPageListMaxLimit;
-    private static $addPageTypeToCustomPostUnionTypes;
+    /**
+     * @var bool
+     */
+    private static $addPageTypeToCustomPostUnionTypes = \false;
     public static function getPageListDefaultLimit() : ?int
     {
         // Define properties
         $envVariable = \PoPSchema\Pages\Environment::PAGE_LIST_DEFAULT_LIMIT;
         $selfProperty =& self::$getPageListDefaultLimit;
         $defaultValue = 10;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -29,7 +38,7 @@ class ComponentConfiguration
         $selfProperty =& self::$getPageListMaxLimit;
         $defaultValue = -1;
         // Unlimited
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -40,7 +49,7 @@ class ComponentConfiguration
         $envVariable = \PoPSchema\Pages\Environment::ADD_PAGE_TYPE_TO_CUSTOMPOST_UNION_TYPES;
         $selfProperty =& self::$addPageTypeToCustomPostUnionTypes;
         $defaultValue = \false;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

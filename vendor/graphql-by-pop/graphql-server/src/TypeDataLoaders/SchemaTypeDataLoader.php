@@ -8,20 +8,23 @@ use GraphQLByPoP\GraphQLServer\TypeResolvers\SchemaTypeResolver;
 use PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader;
 use GraphQLByPoP\GraphQLServer\Facades\Registries\SchemaDefinitionReferenceRegistryFacade;
 use PoP\ComponentModel\TypeDataLoaders\UseObjectDictionaryTypeDataLoaderTrait;
-class SchemaTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractTypeDataLoader
+class SchemaTypeDataLoader extends AbstractTypeDataLoader
 {
     use UseObjectDictionaryTypeDataLoaderTrait;
     protected function getTypeResolverClass() : string
     {
-        return \GraphQLByPoP\GraphQLServer\TypeResolvers\SchemaTypeResolver::class;
+        return SchemaTypeResolver::class;
     }
+    /**
+     * @param int|string $id
+     */
     protected function getTypeNewInstance($id)
     {
-        return new \GraphQLByPoP\GraphQLServer\ObjectModels\Schema($this->getSchemaDefinition($id), $id);
+        return new Schema($this->getSchemaDefinition($id), (string) $id);
     }
     protected function &getSchemaDefinition(string $id) : array
     {
-        $schemaDefinitionReferenceRegistry = \GraphQLByPoP\GraphQLServer\Facades\Registries\SchemaDefinitionReferenceRegistryFacade::getInstance();
+        $schemaDefinitionReferenceRegistry = SchemaDefinitionReferenceRegistryFacade::getInstance();
         return $schemaDefinitionReferenceRegistry->getFullSchemaDefinition();
     }
 }

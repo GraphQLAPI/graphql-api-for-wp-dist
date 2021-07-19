@@ -3,43 +3,40 @@
 declare (strict_types=1);
 namespace PoPSchema\Users\FieldInterfaceResolvers;
 
-use PoPSchema\Users\TypeResolvers\UserTypeResolver;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\FieldInterfaceResolvers\AbstractSchemaFieldInterfaceResolver;
-class WithAuthorFieldInterfaceResolver extends \PoP\ComponentModel\FieldInterfaceResolvers\AbstractSchemaFieldInterfaceResolver
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+use PoPSchema\Users\TypeResolvers\UserTypeResolver;
+class WithAuthorFieldInterfaceResolver extends AbstractSchemaFieldInterfaceResolver
 {
-    public const NAME = 'WithAuthor';
     public function getInterfaceName() : string
     {
-        return self::NAME;
+        return 'WithAuthor';
     }
     public function getSchemaInterfaceDescription() : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('Entities that have an author', 'queriedobject');
+        return $this->translationAPI->__('Entities that have an author', 'queriedobject');
     }
-    public static function getFieldNamesToImplement() : array
+    public function getFieldNamesToImplement() : array
     {
         return ['author'];
     }
-    public function getSchemaFieldType(string $fieldName) : ?string
+    public function getSchemaFieldType(string $fieldName) : string
     {
-        $types = ['author' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID];
+        $types = ['author' => SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(string $fieldName) : ?int
     {
         switch ($fieldName) {
             case 'author':
-                return \true;
+                return SchemaTypeModifiers::NON_NULLABLE;
         }
-        return parent::isSchemaFieldResponseNonNullable($fieldName);
+        return parent::getSchemaFieldTypeModifiers($fieldName);
     }
     public function getSchemaFieldDescription(string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['author' => $translationAPI->__('The entity\'s author', 'queriedobject')];
+        $descriptions = ['author' => $this->translationAPI->__('The entity\'s author', 'queriedobject')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($fieldName);
     }
     /**
@@ -53,7 +50,7 @@ class WithAuthorFieldInterfaceResolver extends \PoP\ComponentModel\FieldInterfac
     {
         switch ($fieldName) {
             case 'author':
-                return \PoPSchema\Users\TypeResolvers\UserTypeResolver::class;
+                return UserTypeResolver::class;
         }
         return parent::getFieldTypeResolverClass($fieldName);
     }

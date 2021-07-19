@@ -2,7 +2,7 @@
 
 namespace PrefixedByPoP\FastRoute\Dispatcher;
 
-class MarkBased extends \PrefixedByPoP\FastRoute\Dispatcher\RegexBasedAbstract
+class MarkBased extends RegexBasedAbstract
 {
     public function __construct($data)
     {

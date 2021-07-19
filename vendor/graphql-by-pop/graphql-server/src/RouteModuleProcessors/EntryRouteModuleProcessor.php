@@ -8,7 +8,7 @@ use PoP\Routing\RouteNatures;
 use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
 use GraphQLByPoP\GraphQLServer\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor;
 use PoP\API\Response\Schemes as APISchemes;
-class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
+class EntryRouteModuleProcessor extends AbstractEntryRouteModuleProcessor
 {
     /**
      * @return array<string, array<array>>
@@ -16,8 +16,8 @@ class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteMod
     public function getModulesVarsPropertiesByNature() : array
     {
         $ret = array();
-        $ret[\PoP\Routing\RouteNatures::HOME][] = ['module' => [\GraphQLByPoP\GraphQLServer\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor::class, \GraphQLByPoP\GraphQLServer\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_QUERYROOT], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'graphql-operation-type' => \GraphQLByPoP\GraphQLQuery\Schema\OperationTypes::QUERY]];
-        $ret[\PoP\Routing\RouteNatures::HOME][] = ['module' => [\GraphQLByPoP\GraphQLServer\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor::class, \GraphQLByPoP\GraphQLServer\ModuleProcessors\RootRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_MUTATIONROOT], 'conditions' => ['scheme' => \PoP\API\Response\Schemes::API, 'graphql-operation-type' => \GraphQLByPoP\GraphQLQuery\Schema\OperationTypes::MUTATION]];
+        $ret[RouteNatures::HOME][] = ['module' => [RootRelationalFieldDataloadModuleProcessor::class, RootRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_QUERYROOT], 'conditions' => ['scheme' => APISchemes::API, 'graphql-operation-type' => OperationTypes::QUERY]];
+        $ret[RouteNatures::HOME][] = ['module' => [RootRelationalFieldDataloadModuleProcessor::class, RootRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_MUTATIONROOT], 'conditions' => ['scheme' => APISchemes::API, 'graphql-operation-type' => OperationTypes::MUTATION]];
         return $ret;
     }
 }

@@ -6,7 +6,7 @@ namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 use GraphQLByPoP\GraphQLServer\ObjectModels\InputValue;
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractDynamicType;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-class InputObjectType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractDynamicType
+class InputObjectType extends AbstractDynamicType
 {
     /**
      * @var InputValue[]
@@ -23,16 +23,16 @@ class InputObjectType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractD
     protected function initInputValues(array &$fullSchemaDefinition, array $schemaDefinitionPath) : void
     {
         $this->inputValues = [];
-        if ($inputValues = $this->schemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ARGS] ?? null) {
+        if ($inputValues = $this->schemaDefinition[SchemaDefinition::ARGNAME_ARGS] ?? null) {
             foreach (\array_keys($inputValues) as $inputValueName) {
-                $inputValueSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ARGS, $inputValueName]);
-                $this->inputValues[] = new \GraphQLByPoP\GraphQLServer\ObjectModels\InputValue($fullSchemaDefinition, $inputValueSchemaDefinitionPath);
+                $inputValueSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [SchemaDefinition::ARGNAME_ARGS, $inputValueName]);
+                $this->inputValues[] = new InputValue($fullSchemaDefinition, $inputValueSchemaDefinitionPath);
             }
         }
     }
     protected function getDynamicTypeNamePropertyInSchema() : string
     {
-        return \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_INPUT_OBJECT_NAME;
+        return SchemaDefinition::ARGNAME_INPUT_OBJECT_NAME;
     }
     public function getKind() : string
     {
@@ -44,7 +44,7 @@ class InputObjectType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractD
     }
     public function getInputFieldIDs() : array
     {
-        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\InputValue $inputValue) {
+        return \array_map(function (InputValue $inputValue) {
             return $inputValue->getID();
         }, $this->getInputFields());
     }

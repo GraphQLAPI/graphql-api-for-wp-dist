@@ -6,11 +6,11 @@ namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
 use GraphQLAPI\GraphQLAPI\Plugin;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
-use GraphQLAPI\GraphQLAPI\ModuleTypeResolvers\ModuleTypeResolver;
 
 class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModuleResolver
 {
     use ModuleResolverTrait;
+    use UserInterfaceFunctionalityModuleResolverTrait;
 
     public const EXCERPT_AS_DESCRIPTION = Plugin::NAMESPACE . '\excerpt-as-description';
     public const LOW_LEVEL_PERSISTED_QUERY_EDITING = Plugin::NAMESPACE . '\low-level-persisted-query-editing';
@@ -19,21 +19,13 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
     /**
      * @return string[]
      */
-    public static function getModulesToResolve(): array
+    public function getModulesToResolve(): array
     {
         return [
             self::LOW_LEVEL_PERSISTED_QUERY_EDITING,
             self::EXCERPT_AS_DESCRIPTION,
             self::WELCOME_GUIDES,
         ];
-    }
-
-    /**
-     * Enable to customize a specific UI for the module
-     */
-    public function getModuleType(string $module): string
-    {
-        return ModuleTypeResolver::USER_INTERFACE;
     }
 
     /**
@@ -105,7 +97,11 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
             case self::LOW_LEVEL_PERSISTED_QUERY_EDITING:
                 return \__('Have access to directives to be applied to the schema when editing persisted queries', 'graphql-api');
             case self::WELCOME_GUIDES:
-                return sprintf(\__('Display welcome guides which demonstrate how to use the plugin\'s different functionalities. <em>It requires WordPress version \'%s\' or above, or Gutenberg version \'%s\' or above</em>', 'graphql-api'), '5.5', '8.2');
+                return sprintf(
+                    \__('Display welcome guides which demonstrate how to use the plugin\'s different functionalities. <em>It requires WordPress version \'%s\' or above, or Gutenberg version \'%s\' or above</em>', 'graphql-api'),
+                    '5.5',
+                    '8.2'
+                );
         }
         return parent::getDescription($module);
     }

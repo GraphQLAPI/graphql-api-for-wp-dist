@@ -1832,12 +1832,12 @@ function execute(&$data_properties)
 }
 ```
 
-A ModuleProcessor can modify what data it will fetch from the database through function `prepareDataPropertiesAfterActionexecution`, which is invoked after executing the module's corresponding ActionExecuter. For instance, after creating a comment, we can load it immediately or, if the creation was not successful, state to skip loading any database object:
+A ModuleProcessor can modify what data it will fetch from the database through function `prepareDataPropertiesAfterMutationExecution`, which is invoked after executing the module's corresponding ActionExecuter. For instance, after creating a comment, we can load it immediately or, if the creation was not successful, state to skip loading any database object:
 
 ```php
-function prepareDataPropertiesAfterActionexecution($module, &$props, &$data_properties) {
+function prepareDataPropertiesAfterMutationExecution($module, &$props, &$data_properties) {
     
-  parent::prepareDataPropertiesAfterActionexecution($module, $props, $data_properties);
+  parent::prepareDataPropertiesAfterMutationExecution($module, $props, $data_properties);
 
   switch ($module[1]) {
     case self::MODULE_ADDCOMMENT:
@@ -1862,15 +1862,15 @@ A "checkpoint" is a condition that must be satisfied when performing an operatio
 
 Modules can specify their checkpoints through 2 functions in the ModuleProcessor:
 
-- `getDataaccessCheckpoints`: Define the checkpoints to access data for the module: both load data or execute the module's actionexecuter
-- `getActionexecutionCheckpoints`: Define the checkpoints to execute the module's actionexecuter
+- `getDataAccessCheckpoints`: Define the checkpoints to access data for the module: both load data or execute the module's actionexecuter
+- `getActionExecutionCheckpoints`: Define the checkpoints to execute the module's actionexecuter
 
 The reason why these 2 functions are split like is, is to allow a page perform the validation only when posting data. Then, an "Add Post" page can require no checkpoints when first loaded, which enables to cache it, and only perform the validation (eg: is user logged in?) when executing the POST operation and triggering the actionexecuter.
 
 For instance, a module that needs to validate that the user's IP is whitelisted can do it like this:
 
 ```php
-function getDataaccessCheckpoints($module, &$props) 
+function getDataAccessCheckpoints($module, &$props) 
 {
   switch ($module[1]) {
     case self::MODULE_SOMEMODULE:
@@ -1878,7 +1878,7 @@ function getDataaccessCheckpoints($module, &$props)
       return [CHECKPOINT_WHITELISTEDIP];
   }
   
-  return parent::getDataaccessCheckpoints($module, $props);
+  return parent::getDataAccessCheckpoints($module, $props);
 }
 ```
 
@@ -2013,12 +2013,12 @@ Will be added soon...
 
 Requirements:
 
-- PHP 7.4+ for development
+- PHP 8.0+ for development
 - PHP 7.1+ for production
 
 ### Supported PHP features
 
-Check the list of [Supported PHP features in `leoloso/PoP`](https://github.com/leoloso/PoP/#supported-php-features)
+Check the list of [Supported PHP features in `leoloso/PoP`](https://github.com/leoloso/PoP/blob/master/docs/supported-php-features.md)
 
 ### Preview downgrade to PHP 7.1
 

@@ -1,21 +1,39 @@
 <?php
 
-declare (strict_types=1);
+declare(strict_types=1);
+
 namespace GraphQLAPI\GraphQLAPI\Container\CompilerPasses;
 
+use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
 use PoP\AccessControl\Services\AccessControlManagerInterface;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 use PoP\Engine\TypeResolvers\RootTypeResolver;
-use GraphQLAPI\GraphQLAPI\Security\UserAuthorization;
+use PoP\Root\Container\CompilerPasses\AbstractCompilerPass;
+use PoP\Root\Container\ContainerBuilderWrapperInterface;
 use PoPSchema\UserRolesAccessControl\Services\AccessControlGroups as UserRolesAccessControlGroups;
-class ConfigureAccessControlCompilerPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+
+class ConfigureAccessControlCompilerPass extends AbstractCompilerPass
 {
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $containerBuilder) : void
+    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper): void
     {
-        $accessControlManagerDefinition = $containerBuilder->getDefinition(\PoP\AccessControl\Services\AccessControlManagerInterface::class);
-        $schemaEditorAccessCapability = \GraphQLAPI\GraphQLAPI\Security\UserAuthorization::getSchemaEditorAccessCapability();
-        $capabilities = [$schemaEditorAccessCapability];
-        $accessControlManagerDefinition->addMethodCall('addEntriesForFields', [\PoPSchema\UserRolesAccessControl\Services\AccessControlGroups::CAPABILITIES, [[\PoP\Engine\TypeResolvers\RootTypeResolver::class, 'accessControlLists', $capabilities], [\PoP\Engine\TypeResolvers\RootTypeResolver::class, 'cacheControlLists', $capabilities], [\PoP\Engine\TypeResolvers\RootTypeResolver::class, 'fieldDeprecationLists', $capabilities]]]);
+        $accessControlManagerDefinition = $containerBuilderWrapper->getDefinition(AccessControlManagerInterface::class);
+        // Obtain the capabilities from another service
+        $userAuthorizationDefinitionService = str_replace('\\', '\\\\', UserAuthorizationInterface::class);
+        $capabilities = [
+            $this->createExpression(sprintf(
+                'service("%s").getSchemaEditorAccessCapability()',
+                $userAuthorizationDefinitionService
+            ))
+        ];
+        $accessControlManagerDefinition->addMethodCall(
+            'addEntriesForFields',
+            [
+                UserRolesAccessControlGroups::CAPABILITIES,
+                [
+                    [RootTypeResolver::class, 'accessControlLists', $capabilities],
+                    [RootTypeResolver::class, 'cacheControlLists', $capabilities],
+                    [RootTypeResolver::class, 'fieldDeprecationLists', $capabilities],
+                ]
+            ]
+        );
     }
 }

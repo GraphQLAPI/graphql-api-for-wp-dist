@@ -8,7 +8,7 @@ namespace PrefixedByPoP\GuzzleHttp\Promise;
  * Thenning off of this promise will invoke the onRejected callback
  * immediately and ignore other callbacks.
  */
-class RejectedPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
+class RejectedPromise implements PromiseInterface
 {
     private $reason;
     public function __construct($reason)
@@ -18,17 +18,21 @@ class RejectedPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
         }
         $this->reason = $reason;
     }
-    public function then(callable $onFulfilled = null, callable $onRejected = null)
+    /**
+     * @param callable $onFulfilled
+     * @param callable $onRejected
+     */
+    public function then($onFulfilled = null, $onRejected = null)
     {
         // If there's no onRejected callback then just return self.
         if (!$onRejected) {
             return $this;
         }
-        $queue = \PrefixedByPoP\GuzzleHttp\Promise\Utils::queue();
+        $queue = Utils::queue();
         $reason = $this->reason;
-        $p = new \PrefixedByPoP\GuzzleHttp\Promise\Promise([$queue, 'run']);
+        $p = new Promise([$queue, 'run']);
         $queue->add(static function () use($p, $reason, $onRejected) {
-            if (\PrefixedByPoP\GuzzleHttp\Promise\Is::pending($p)) {
+            if (Is::pending($p)) {
                 try {
                     // Return a resolved promise if onRejected does not throw.
                     $p->resolve($onRejected($reason));
@@ -50,7 +54,7 @@ class RejectedPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
     public function wait($unwrap = \true, $defaultDelivery = null)
     {
         if ($unwrap) {
-            throw \PrefixedByPoP\GuzzleHttp\Promise\Create::exceptionFor($this->reason);
+            throw Create::exceptionFor($this->reason);
         }
         return null;
     }

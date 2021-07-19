@@ -26,8 +26,6 @@ class Component extends AbstractComponent
 
     /**
      * All conditional component classes that this component depends upon, to initialize them
-     *
-     * @return array
      */
     public static function getDependedConditionalComponentClasses(): array
     {
@@ -47,8 +45,8 @@ class Component extends AbstractComponent
         bool $skipSchema = false,
         array $skipSchemaComponentClasses = []
     ): void {
-        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-        self::initYAMLServices(dirname(__DIR__));
-        self::maybeInitYAMLSchemaServices(dirname(__DIR__), $skipSchema);
+        self::initServices(dirname(__DIR__));
+        self::initSchemaServices(dirname(__DIR__), $skipSchema);
+        self::initSchemaServices(dirname(__DIR__), $skipSchema, '/Overrides');
     }
 }

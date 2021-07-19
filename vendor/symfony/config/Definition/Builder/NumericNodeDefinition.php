@@ -16,14 +16,14 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidDefinitio
  *
  * @author David Jeanmonod <david.jeanmonod@gmail.com>
  */
-abstract class NumericNodeDefinition extends \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\ScalarNodeDefinition
+abstract class NumericNodeDefinition extends ScalarNodeDefinition
 {
     protected $min;
     protected $max;
     /**
      * Ensures that the value is smaller than the given reference.
      *
-     * @param mixed $max
+     * @param int|float $max
      *
      * @return $this
      *
@@ -40,7 +40,7 @@ abstract class NumericNodeDefinition extends \PrefixedByPoP\Symfony\Component\Co
     /**
      * Ensures that the value is bigger than the given reference.
      *
-     * @param mixed $min
+     * @param int|float $min
      *
      * @return $this
      *
@@ -61,6 +61,6 @@ abstract class NumericNodeDefinition extends \PrefixedByPoP\Symfony\Component\Co
      */
     public function cannotBeEmpty()
     {
-        throw new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidDefinitionException('->cannotBeEmpty() is not applicable to NumericNodeDefinition.');
+        throw new InvalidDefinitionException('->cannotBeEmpty() is not applicable to NumericNodeDefinition.');
     }
 }

@@ -57,7 +57,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
                     $this->data['fragments'][] = $this->parseFragment();
                     break;
                 default:
-                    throw new \GraphQLByPoP\GraphQLParser\Exception\Parser\SyntaxErrorException('Incorrect request syntax', $this->getLocation());
+                    throw new SyntaxErrorException('Incorrect request syntax', $this->getLocation());
             }
         }
         return $this->data;
@@ -143,7 +143,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
                 $required = \true;
                 $this->eat(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_REQUIRED);
             }
-            $variable = new \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Variable($nameToken->getData(), $type, $required, $isArray, $arrayElementNullable, new \GraphQLByPoP\GraphQLParser\Parser\Location($variableToken->getLine(), $variableToken->getColumn()));
+            $variable = new Variable($nameToken->getData(), $type, $required, $isArray, $arrayElementNullable, new \GraphQLByPoP\GraphQLParser\Parser\Location($variableToken->getLine(), $variableToken->getColumn()));
             if ($this->match(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_EQUAL)) {
                 $this->eat(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_EQUAL);
                 $variable->setDefaultValue($this->parseValue());
@@ -168,7 +168,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
             if ($variable) {
                 $variable->setUsed(\true);
             }
-            $variableReference = new \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\VariableReference($name, $variable, new \GraphQLByPoP\GraphQLParser\Parser\Location($startToken->getLine(), $startToken->getColumn()));
+            $variableReference = new VariableReference($name, $variable, new \GraphQLByPoP\GraphQLParser\Parser\Location($startToken->getLine(), $startToken->getColumn()));
             $this->data['variableReferences'][] = $variableReference;
             return $variableReference;
         }
@@ -187,7 +187,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
     protected function parseFragmentReference()
     {
         $nameToken = $this->eatIdentifierToken();
-        $fragmentReference = new \GraphQLByPoP\GraphQLParser\Parser\Ast\FragmentReference($nameToken->getData(), new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
+        $fragmentReference = new FragmentReference($nameToken->getData(), new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
         $this->data['fragmentReferences'][] = $fragmentReference;
         return $fragmentReference;
     }
@@ -212,19 +212,19 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
                 throw $this->createUnexpectedTokenTypeException($this->lookAhead->getType());
             }
             if ($type === \GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_QUERY) {
-                return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Query($nameToken->getData(), $alias, $arguments, $fields, $directives, $bodyLocation);
+                return new Query($nameToken->getData(), $alias, $arguments, $fields, $directives, $bodyLocation);
             } elseif ($type === \GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_TYPED_FRAGMENT) {
-                return new \GraphQLByPoP\GraphQLParser\Parser\Ast\TypedFragmentReference($nameToken->getData(), $fields, $directives, $bodyLocation);
+                return new TypedFragmentReference($nameToken->getData(), $fields, $directives, $bodyLocation);
             } else {
-                return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Mutation($nameToken->getData(), $alias, $arguments, $fields, $directives, $bodyLocation);
+                return new Mutation($nameToken->getData(), $alias, $arguments, $fields, $directives, $bodyLocation);
             }
         } else {
             if ($highLevel && $type === \GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_MUTATION) {
-                return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Mutation($nameToken->getData(), $alias, $arguments, [], $directives, $bodyLocation);
+                return new Mutation($nameToken->getData(), $alias, $arguments, [], $directives, $bodyLocation);
             } elseif ($highLevel && $type === \GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_QUERY) {
-                return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Query($nameToken->getData(), $alias, $arguments, [], $directives, $bodyLocation);
+                return new Query($nameToken->getData(), $alias, $arguments, [], $directives, $bodyLocation);
             }
-            return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Field($nameToken->getData(), $alias, $arguments, $directives, $bodyLocation);
+            return new Field($nameToken->getData(), $alias, $arguments, $directives, $bodyLocation);
         }
     }
     protected function parseArgumentList()
@@ -243,7 +243,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
         $nameToken = $this->eatIdentifierToken();
         $this->expect(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_COLON);
         $value = $this->parseValue();
-        return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Argument($nameToken->getData(), $value, new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
+        return new Argument($nameToken->getData(), $value, new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
     }
     protected function parseDirectiveList()
     {
@@ -259,12 +259,11 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
         $this->expect(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_AT);
         $nameToken = $this->eatIdentifierToken();
         $args = $this->match(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_LPAREN) ? $this->parseArgumentList() : [];
-        return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Directive($nameToken->getData(), $args, new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
+        return new Directive($nameToken->getData(), $args, new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
     }
     /**
-     * @return array|InputList|InputObject|Literal|VariableReference
-     *
      * @throws SyntaxErrorException
+     * @return mixed[]|\GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputList|\GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputObject|\GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Literal|\GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\VariableReference
      */
     protected function parseValue()
     {
@@ -282,7 +281,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
             case \GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_TRUE:
             case \GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_FALSE:
                 $token = $this->lex();
-                return new \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Literal($token->getData(), new \GraphQLByPoP\GraphQLParser\Parser\Location($token->getLine(), $token->getColumn()));
+                return new Literal($token->getData(), new \GraphQLByPoP\GraphQLParser\Parser\Location($token->getLine(), $token->getColumn()));
         }
         throw $this->createUnexpectedException($this->lookAhead);
     }
@@ -295,7 +294,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
             $this->eat(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_COMMA);
         }
         $this->expect(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_RSQUARE_BRACE);
-        return $createType ? new \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputList($list, new \GraphQLByPoP\GraphQLParser\Parser\Location($startToken->getLine(), $startToken->getColumn())) : $list;
+        return $createType ? new InputList($list, new \GraphQLByPoP\GraphQLParser\Parser\Location($startToken->getLine(), $startToken->getColumn())) : $list;
     }
     protected function parseListValue()
     {
@@ -314,7 +313,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
             case \GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_LSQUARE_BRACE:
                 return $this->parseList(\false);
         }
-        throw new \GraphQLByPoP\GraphQLParser\Exception\Parser\SyntaxErrorException('Can\'t parse argument', $this->getLocation());
+        throw new SyntaxErrorException('Can\'t parse argument', $this->getLocation());
     }
     protected function parseObject($createType = \true)
     {
@@ -328,7 +327,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
             $object[$key] = $value;
         }
         $this->eat(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_RBRACE);
-        return $createType ? new \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputObject($object, new \GraphQLByPoP\GraphQLParser\Parser\Location($startToken->getLine(), $startToken->getColumn())) : $object;
+        return $createType ? new InputObject($object, new \GraphQLByPoP\GraphQLParser\Parser\Location($startToken->getLine(), $startToken->getColumn())) : $object;
     }
     protected function parseFragment()
     {
@@ -338,7 +337,7 @@ class Parser extends \GraphQLByPoP\GraphQLParser\Parser\Tokenizer
         $model = $this->eatIdentifierToken();
         $directives = $this->match(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_AT) ? $this->parseDirectiveList() : [];
         $fields = $this->parseBody(\GraphQLByPoP\GraphQLParser\Parser\Token::TYPE_QUERY, \false);
-        return new \GraphQLByPoP\GraphQLParser\Parser\Ast\Fragment($nameToken->getData(), $model->getData(), $directives, $fields, new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
+        return new Fragment($nameToken->getData(), $model->getData(), $directives, $fields, new \GraphQLByPoP\GraphQLParser\Parser\Location($nameToken->getLine(), $nameToken->getColumn()));
     }
     protected function eat($type)
     {

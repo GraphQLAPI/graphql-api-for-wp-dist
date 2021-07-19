@@ -14,10 +14,10 @@ use PrefixedByPoP\Doctrine\Common\Cache\CacheProvider;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class DoctrineAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\AbstractAdapter
+class DoctrineAdapter extends AbstractAdapter
 {
     private $provider;
-    public function __construct(\PrefixedByPoP\Doctrine\Common\Cache\CacheProvider $provider, string $namespace = '', int $defaultLifetime = 0)
+    public function __construct(CacheProvider $provider, string $namespace = '', int $defaultLifetime = 0)
     {
         parent::__construct('', $defaultLifetime);
         $this->provider = $provider;

@@ -10,7 +10,7 @@ namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FragmentInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-class Query extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface
+class Query extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements FieldInterface
 {
     use AstArgumentsTrait;
     use AstDirectivesTrait;
@@ -25,12 +25,8 @@ class Query extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implement
      *
      * @param string   $name
      * @param string   $alias
-     * @param array    $arguments
-     * @param array    $fields
-     * @param array    $directives
-     * @param Location $location
      */
-    public function __construct($name, $alias, array $arguments, array $fields, array $directives, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function __construct($name, $alias, array $arguments, array $fields, array $directives, Location $location)
     {
         parent::__construct($location);
         $this->name = $name;

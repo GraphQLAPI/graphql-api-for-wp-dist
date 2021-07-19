@@ -8,7 +8,7 @@ trait UseObjectDictionaryTypeDataLoaderTrait
 {
     public function getObjects(array $ids) : array
     {
-        $objectDictionary = \PoP\ComponentModel\Facades\Container\ObjectDictionaryFacade::getInstance();
+        $objectDictionary = ObjectDictionaryFacade::getInstance();
         $typeResolverClass = $this->getTypeResolverClass();
         $ret = [];
         foreach ($ids as $id) {
@@ -20,5 +20,8 @@ trait UseObjectDictionaryTypeDataLoaderTrait
         return $ret;
     }
     protected abstract function getTypeResolverClass() : string;
+    /**
+     * @param int|string $id
+     */
     protected abstract function getTypeNewInstance($id);
 }

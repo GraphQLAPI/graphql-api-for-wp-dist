@@ -14,7 +14,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class InstanceofConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractServiceConfigurator
+class InstanceofConfigurator extends AbstractServiceConfigurator
 {
     public const FACTORY = 'instanceof';
     use Traits\AutowireTrait;
@@ -27,7 +27,7 @@ class InstanceofConfigurator extends \PrefixedByPoP\Symfony\Component\Dependency
     use Traits\ShareTrait;
     use Traits\TagTrait;
     private $path;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator $parent, \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $definition, string $id, string $path = null)
+    public function __construct(ServicesConfigurator $parent, Definition $definition, string $id, string $path = null)
     {
         parent::__construct($parent, $definition, $id, []);
         $this->path = $path;

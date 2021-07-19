@@ -6,7 +6,7 @@ namespace PoP\Root\Registries;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 interface CompilerPassRegistryInterface
 {
-    public function addCompilerPass(\PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface $compilerPass) : void;
+    public function addCompilerPass(CompilerPassInterface $compilerPass) : void;
     /**
      * @return CompilerPassInterface[]
      */

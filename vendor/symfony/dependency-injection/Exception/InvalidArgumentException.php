@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
  *
  * @author Bulat Shakirzyanov <bulat@theopenskyproject.com>
  */
-class InvalidArgumentException extends \InvalidArgumentException implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ExceptionInterface
+class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
 {
 }

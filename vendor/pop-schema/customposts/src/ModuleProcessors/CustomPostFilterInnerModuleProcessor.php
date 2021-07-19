@@ -3,36 +3,53 @@
 declare (strict_types=1);
 namespace PoPSchema\CustomPosts\ModuleProcessors;
 
-use PoP\Hooks\Facades\HooksAPIFacade;
 use PoP\ComponentModel\ModuleProcessors\AbstractModuleProcessor;
-class CustomPostFilterInnerModuleProcessor extends \PoP\ComponentModel\ModuleProcessors\AbstractModuleProcessor
+use PoPSchema\SchemaCommons\ModuleProcessors\FormInputs\CommonFilterInputModuleProcessor;
+use PoPSchema\SchemaCommons\ModuleProcessors\FormInputs\CommonFilterMultipleInputModuleProcessor;
+use PoPSchema\CustomPosts\ModuleProcessors\FormInputs\FilterInputModuleProcessor;
+class CustomPostFilterInnerModuleProcessor extends AbstractModuleProcessor
 {
     public const MODULE_FILTERINNER_UNIONCUSTOMPOSTLIST = 'filterinner-unioncustompostlist';
     public const MODULE_FILTERINNER_UNIONCUSTOMPOSTCOUNT = 'filterinner-unioncustompostcount';
+    public const MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTLIST = 'filterinner-adminunioncustompostlist';
+    public const MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTCOUNT = 'filterinner-adminunioncustompostcount';
     public const MODULE_FILTERINNER_CUSTOMPOSTLISTLIST = 'filterinner-custompostlist';
     public const MODULE_FILTERINNER_CUSTOMPOSTLISTCOUNT = 'filterinner-custompostcount';
+    public const MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTLIST = 'filterinner-admincustompostlist';
+    public const MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTCOUNT = 'filterinner-admincustompostcount';
     public function getModulesToProcess() : array
     {
-        return array([self::class, self::MODULE_FILTERINNER_UNIONCUSTOMPOSTLIST], [self::class, self::MODULE_FILTERINNER_UNIONCUSTOMPOSTCOUNT], [self::class, self::MODULE_FILTERINNER_CUSTOMPOSTLISTLIST], [self::class, self::MODULE_FILTERINNER_CUSTOMPOSTLISTCOUNT]);
+        return array([self::class, self::MODULE_FILTERINNER_UNIONCUSTOMPOSTLIST], [self::class, self::MODULE_FILTERINNER_UNIONCUSTOMPOSTCOUNT], [self::class, self::MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTLIST], [self::class, self::MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTCOUNT], [self::class, self::MODULE_FILTERINNER_CUSTOMPOSTLISTLIST], [self::class, self::MODULE_FILTERINNER_CUSTOMPOSTLISTCOUNT], [self::class, self::MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTLIST], [self::class, self::MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTCOUNT]);
     }
     public function getSubmodules(array $module) : array
     {
         $ret = parent::getSubmodules($module);
         switch ($module[1]) {
             case self::MODULE_FILTERINNER_UNIONCUSTOMPOSTLIST:
+            case self::MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTLIST:
             case self::MODULE_FILTERINNER_CUSTOMPOSTLISTLIST:
-                $inputmodules = [[\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_SEARCH], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_ORDER], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_LIMIT], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_OFFSET], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_DATES], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_IDS], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_ID]];
+            case self::MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTLIST:
+                $inputmodules = [[CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_SEARCH], [CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_ORDER], [CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_LIMIT], [CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_OFFSET], [CommonFilterMultipleInputModuleProcessor::class, CommonFilterMultipleInputModuleProcessor::MODULE_FILTERINPUT_DATES], [CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_IDS], [CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_ID]];
                 break;
             case self::MODULE_FILTERINNER_UNIONCUSTOMPOSTCOUNT:
+            case self::MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTCOUNT:
             case self::MODULE_FILTERINNER_CUSTOMPOSTLISTCOUNT:
-                $inputmodules = [[\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_SEARCH], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_DATES], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_IDS], [\PrefixedByPoP\PoP_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_Module_Processor_FilterInputs::MODULE_FILTERINPUT_ID]];
+            case self::MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTCOUNT:
+                $inputmodules = [[CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_SEARCH], [CommonFilterMultipleInputModuleProcessor::class, CommonFilterMultipleInputModuleProcessor::MODULE_FILTERINPUT_DATES], [CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_IDS], [CommonFilterInputModuleProcessor::class, CommonFilterInputModuleProcessor::MODULE_FILTERINPUT_ID]];
+                break;
+            default:
+                $inputmodules = [];
                 break;
         }
         // Fields "customPosts" and "customPostCount" also have the "postTypes" filter
         if (\in_array($module[1], [self::MODULE_FILTERINNER_UNIONCUSTOMPOSTLIST, self::MODULE_FILTERINNER_UNIONCUSTOMPOSTCOUNT])) {
-            $inputmodules[] = [\PrefixedByPoP\PoP_CustomPosts_Module_Processor_FilterInputs::class, \PrefixedByPoP\PoP_CustomPosts_Module_Processor_FilterInputs::MODULE_FILTERINPUT_UNIONCUSTOMPOSTTYPES];
+            $inputmodules[] = [FilterInputModuleProcessor::class, FilterInputModuleProcessor::MODULE_FILTERINPUT_UNIONCUSTOMPOSTTYPES];
         }
-        if ($modules = \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('CustomPosts:FilterInners:inputmodules', $inputmodules, $module)) {
+        // "Admin" fields also have the "status" filter
+        if (\in_array($module[1], [self::MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTLIST, self::MODULE_FILTERINNER_ADMINUNIONCUSTOMPOSTCOUNT, self::MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTLIST, self::MODULE_FILTERINNER_ADMINCUSTOMPOSTLISTCOUNT])) {
+            $inputmodules[] = [FilterInputModuleProcessor::class, FilterInputModuleProcessor::MODULE_FILTERINPUT_CUSTOMPOSTSTATUS];
+        }
+        if ($modules = $this->hooksAPI->applyFilters('CustomPosts:FilterInnerModuleProcessor:inputmodules', $inputmodules, $module)) {
             $ret = \array_merge($ret, $modules);
         }
         return $ret;

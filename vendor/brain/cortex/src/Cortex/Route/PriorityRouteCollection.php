@@ -15,9 +15,9 @@ namespace PrefixedByPoP\Brain\Cortex\Route;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class PriorityRouteCollection implements \PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface
+final class PriorityRouteCollection implements RouteCollectionInterface
 {
-    private static $pagedFlags = [\PrefixedByPoP\Brain\Cortex\Route\RouteInterface::PAGED_ARCHIVE, \PrefixedByPoP\Brain\Cortex\Route\RouteInterface::PAGED_SINGLE];
+    private static $pagedFlags = [RouteInterface::PAGED_ARCHIVE, RouteInterface::PAGED_SINGLE];
     /**
      * @var \SplPriorityQueue
      */
@@ -39,7 +39,7 @@ final class PriorityRouteCollection implements \PrefixedByPoP\Brain\Cortex\Route
      * @param  \Brain\Cortex\Route\RouteInterface $route
      * @return \Brain\Cortex\Route\RouteCollectionInterface
      */
-    public function addRoute(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route)
+    public function addRoute(RouteInterface $route)
     {
         if (!$route->offsetExists('priority') || !\is_numeric($route->offsetGet('priority'))) {
             $next = $this->priorities ? \max($this->priorities) + 1 : 10;
@@ -47,7 +47,7 @@ final class PriorityRouteCollection implements \PrefixedByPoP\Brain\Cortex\Route
         }
         $priority = $route->offsetGet('priority');
         $paged = $this->maybeBuildPaged($route);
-        if ($paged instanceof \PrefixedByPoP\Brain\Cortex\Route\RouteInterface && !\in_array($paged['paged'], self::$pagedFlags, \true)) {
+        if ($paged instanceof RouteInterface && !\in_array($paged['paged'], self::$pagedFlags, \true)) {
             $paged->offsetSet('priority', $priority);
             $priority++;
             $this->addRoute($paged);
@@ -102,7 +102,7 @@ final class PriorityRouteCollection implements \PrefixedByPoP\Brain\Cortex\Route
      * @param  \Brain\Cortex\Route\RouteInterface $route
      * @return \Brain\Cortex\Route\RouteInterface|null
      */
-    private function maybeBuildPaged(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route)
+    private function maybeBuildPaged(RouteInterface $route)
     {
         $built = null;
         $pagedArg = $route->offsetExists('paged') ? $route->offsetGet('paged') : '';
@@ -114,13 +114,13 @@ final class PriorityRouteCollection implements \PrefixedByPoP\Brain\Cortex\Route
             $wp_rewrite instanceof \WP_Rewrite and $base = $wp_rewrite->pagination_base;
             $array = $route->toArray();
             $array['id'] = $route->id() . '_paged';
-            $array['paged'] = \PrefixedByPoP\Brain\Cortex\Route\RouteInterface::PAGED_UNPAGED;
-            $array['path'] = $pagedArg === \PrefixedByPoP\Brain\Cortex\Route\RouteInterface::PAGED_ARCHIVE ? $path . '/' . $base . '/{paged:\\d+}' : $path . '/{page:\\d+}';
+            $array['paged'] = RouteInterface::PAGED_UNPAGED;
+            $array['path'] = $pagedArg === RouteInterface::PAGED_ARCHIVE ? $path . '/' . $base . '/{paged:\\d+}' : $path . '/{page:\\d+}';
             $routeVars = $route->offsetExists('vars') ? $route->offsetGet('vars') : [];
             if (\is_callable($routeVars)) {
                 $array['vars'] = $this->buildPagedVars($routeVars, $pagedArg);
             }
-            $built = apply_filters('cortex.paged-route', new \PrefixedByPoP\Brain\Cortex\Route\Route($array), $route);
+            $built = apply_filters('cortex.paged-route', new Route($array), $route);
         }
         return $built;
     }
@@ -135,7 +135,7 @@ final class PriorityRouteCollection implements \PrefixedByPoP\Brain\Cortex\Route
      */
     private function buildPagedVars(callable $routeVars, $pagedArg)
     {
-        $key = $pagedArg === \PrefixedByPoP\Brain\Cortex\Route\RouteInterface::PAGED_SINGLE ? 'page' : 'paged';
+        $key = $pagedArg === RouteInterface::PAGED_SINGLE ? 'page' : 'paged';
         return function (array $vars) use($routeVars, $key) {
             isset($vars[$key]) && \is_numeric($vars[$key]) or $vars[$key] = 1;
             $vars[$key] = (int) $vars[$key];

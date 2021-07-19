@@ -16,33 +16,34 @@ use PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface;
 /**
  * @author Titouan Galopin <galopintitouan@gmail.com>
  */
-class NullAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface
+class NullAdapter implements AdapterInterface, CacheInterface
 {
-    private $createCacheItem;
+    private static $createCacheItem;
     public function __construct()
     {
-        $this->createCacheItem = \Closure::bind(function ($key) {
-            $item = new \PrefixedByPoP\Symfony\Component\Cache\CacheItem();
+        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key) {
+            $item = new CacheItem();
             $item->key = $key;
             $item->isHit = \false;
             return $item;
-        }, $this, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+        }, null, CacheItem::class));
     }
     /**
      * {@inheritdoc}
+     * @param float $beta
+     * @param mixed[] $metadata
      */
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
+    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
     {
         $save = \true;
-        return $callback(($this->createCacheItem)($key), $save);
+        return $callback((self::$createCacheItem)($key), $save);
     }
     /**
      * {@inheritdoc}
      */
     public function getItem($key)
     {
-        $f = $this->createCacheItem;
-        return $f($key);
+        return (self::$createCacheItem)($key);
     }
     /**
      * {@inheritdoc}
@@ -64,8 +65,9 @@ class NullAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Adap
      * {@inheritdoc}
      *
      * @return bool
+     * @param string $prefix
      */
-    public function clear(string $prefix = '')
+    public function clear($prefix = '')
     {
         return \true;
     }
@@ -92,18 +94,18 @@ class NullAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Adap
      *
      * @return bool
      */
-    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function save(CacheItemInterface $item)
     {
-        return \false;
+        return \true;
     }
     /**
      * {@inheritdoc}
      *
      * @return bool
      */
-    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item)
     {
-        return \false;
+        return \true;
     }
     /**
      * {@inheritdoc}
@@ -112,7 +114,7 @@ class NullAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Adap
      */
     public function commit()
     {
-        return \false;
+        return \true;
     }
     /**
      * {@inheritdoc}
@@ -123,7 +125,7 @@ class NullAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Adap
     }
     private function generateItems(array $keys)
     {
-        $f = $this->createCacheItem;
+        $f = self::$createCacheItem;
         foreach ($keys as $key) {
             (yield $key => $f($key));
         }

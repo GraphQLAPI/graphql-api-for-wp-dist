@@ -17,7 +17,7 @@ use PrefixedByPoP\Brain\Cortex\Controller\RedirectController;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class RedirectRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterface
+final class RedirectRoute implements RouteInterface
 {
     use DerivativeRouteTrait;
     /**
@@ -36,9 +36,9 @@ final class RedirectRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInte
         list($vars, $options) = $this->parseOptions($options);
         $options['vars'] = \is_callable($to) ? $this->redirectToFromCallback($to, $vars) : \array_merge($vars, ['redirect_to' => $this->redirectToFromString($to, $vars)]);
         $options['path'] = $from;
-        $handler = isset($options['handler']) && $options['handler'] instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface ? $options['handler'] : new \PrefixedByPoP\Brain\Cortex\Controller\RedirectController();
+        $handler = isset($options['handler']) && $options['handler'] instanceof ControllerInterface ? $options['handler'] : new RedirectController();
         $options['handler'] = $handler;
-        $this->route = new \PrefixedByPoP\Brain\Cortex\Route\Route($options);
+        $this->route = new Route($options);
     }
     /**
      * @param  array $options

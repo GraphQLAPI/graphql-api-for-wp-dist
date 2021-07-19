@@ -34,16 +34,19 @@ use PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfoExtractorInter
  * @author Kévin Dunglas <dunglas@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessorInterface
+class PropertyAccessor implements PropertyAccessorInterface
 {
     /** @var int Allow none of the magic methods */
-    public const DISALLOW_MAGIC_METHODS = \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::DISALLOW_MAGIC_METHODS;
+    public const DISALLOW_MAGIC_METHODS = ReflectionExtractor::DISALLOW_MAGIC_METHODS;
     /** @var int Allow magic __get methods */
-    public const MAGIC_GET = \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::ALLOW_MAGIC_GET;
+    public const MAGIC_GET = ReflectionExtractor::ALLOW_MAGIC_GET;
     /** @var int Allow magic __set methods */
-    public const MAGIC_SET = \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::ALLOW_MAGIC_SET;
+    public const MAGIC_SET = ReflectionExtractor::ALLOW_MAGIC_SET;
     /** @var int Allow magic __call methods */
-    public const MAGIC_CALL = \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::ALLOW_MAGIC_CALL;
+    public const MAGIC_CALL = ReflectionExtractor::ALLOW_MAGIC_CALL;
+    public const DO_NOT_THROW = 0;
+    public const THROW_ON_INVALID_INDEX = 1;
+    public const THROW_ON_INVALID_PROPERTY_PATH = 2;
     private const VALUE = 0;
     private const REF = 1;
     private const IS_REF_CHAINED = 2;
@@ -73,18 +76,24 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
      * Should not be used by application code. Use
      * {@link PropertyAccess::createPropertyAccessor()} instead.
      *
-     * @param int $magicMethods A bitwise combination of the MAGIC_* constants
-     *                          to specify the allowed magic methods (__get, __set, __call)
-     *                          or self::DISALLOW_MAGIC_METHODS for none
+     * @param int                                 $magicMethods       A bitwise combination of the MAGIC_* constants
+     *                                                                to specify the allowed magic methods (__get, __set, __call)
+     *                                                                or self::DISALLOW_MAGIC_METHODS for none
+     * @param int                                 $throw              A bitwise combination of the THROW_* constants
+     *                                                                to specify when exceptions should be thrown
+     * @param PropertyReadInfoExtractorInterface  $readInfoExtractor
+     * @param PropertyWriteInfoExtractorInterface $writeInfoExtractor
      */
     public function __construct(
         /*int */
         $magicMethods = self::MAGIC_GET | self::MAGIC_SET,
-        bool $throwExceptionOnInvalidIndex = \false,
-        \PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $cacheItemPool = null,
-        bool $throwExceptionOnInvalidPropertyPath = \true,
-        \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfoExtractorInterface $readInfoExtractor = null,
-        \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfoExtractorInterface $writeInfoExtractor = null
+        /*int */
+        $throw = self::THROW_ON_INVALID_PROPERTY_PATH,
+        CacheItemPoolInterface $cacheItemPool = null,
+        /*PropertyReadInfoExtractorInterface */
+        $readInfoExtractor = null,
+        /*PropertyWriteInfoExtractorInterface */
+        $writeInfoExtractor = null
     )
     {
         if (\is_bool($magicMethods)) {
@@ -93,13 +102,34 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
         } elseif (!\is_int($magicMethods)) {
             throw new \TypeError(\sprintf('Argument 1 passed to "%s()" must be an integer, "%s" given.', __METHOD__, \get_debug_type($readInfoExtractor)));
         }
+        if (\is_bool($throw)) {
+            trigger_deprecation('symfony/property-access', '5.3', 'Passing a boolean as the second argument to "%s()" is deprecated. Pass a combination of bitwise flags instead (i.e an integer).', __METHOD__);
+            $throw = $throw ? self::THROW_ON_INVALID_INDEX : self::DO_NOT_THROW;
+            if (!\is_bool($readInfoExtractor)) {
+                $throw |= self::THROW_ON_INVALID_PROPERTY_PATH;
+            }
+        }
+        if (\is_bool($readInfoExtractor)) {
+            trigger_deprecation('symfony/property-access', '5.3', 'Passing a boolean as the fourth argument to "%s()" is deprecated. Pass a combination of bitwise flags as the second argument instead (i.e an integer).', __METHOD__);
+            if ($readInfoExtractor) {
+                $throw |= self::THROW_ON_INVALID_PROPERTY_PATH;
+            }
+            $readInfoExtractor = $writeInfoExtractor;
+            $writeInfoExtractor = 4 < \func_num_args() ? \func_get_arg(4) : null;
+        }
+        if (null !== $readInfoExtractor && !$readInfoExtractor instanceof PropertyReadInfoExtractorInterface) {
+            throw new \TypeError(\sprintf('Argument 4 passed to "%s()" must be null or an instance of "%s", "%s" given.', __METHOD__, PropertyReadInfoExtractorInterface::class, \get_debug_type($readInfoExtractor)));
+        }
+        if (null !== $writeInfoExtractor && !$writeInfoExtractor instanceof PropertyWriteInfoExtractorInterface) {
+            throw new \TypeError(\sprintf('Argument 5 passed to "%s()" must be null or an instance of "%s", "%s" given.', __METHOD__, PropertyWriteInfoExtractorInterface::class, \get_debug_type($writeInfoExtractor)));
+        }
         $this->magicMethodsFlags = $magicMethods;
-        $this->ignoreInvalidIndices = !$throwExceptionOnInvalidIndex;
-        $this->cacheItemPool = $cacheItemPool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\NullAdapter ? null : $cacheItemPool;
+        $this->ignoreInvalidIndices = 0 === ($throw & self::THROW_ON_INVALID_INDEX);
+        $this->cacheItemPool = $cacheItemPool instanceof NullAdapter ? null : $cacheItemPool;
         // Replace the NullAdapter by the null value
-        $this->ignoreInvalidProperty = !$throwExceptionOnInvalidPropertyPath;
-        $this->readInfoExtractor = $readInfoExtractor ?? new \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor([], null, null, \false);
-        $this->writeInfoExtractor = $writeInfoExtractor ?? new \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor(['set'], null, null, \false);
+        $this->ignoreInvalidProperty = 0 === ($throw & self::THROW_ON_INVALID_PROPERTY_PATH);
+        $this->readInfoExtractor = $readInfoExtractor ?? new ReflectionExtractor([], null, null, \false);
+        $this->writeInfoExtractor = $writeInfoExtractor ?? new ReflectionExtractor(['set'], null, null, \false);
     }
     /**
      * {@inheritdoc}
@@ -193,11 +223,11 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
             $j = \strpos($message, ',', $pos);
             $type = \substr($message, 2 + $j, \strpos($message, ' given', $j) - $j - 2);
             $message = \substr($message, $pos, $j - $pos);
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\InvalidArgumentException(\sprintf('Expected argument of type "%s", "%s" given at property path "%s".', $message, 'NULL' === $type ? 'null' : $type, $propertyPath), 0, $previous);
+            throw new InvalidArgumentException(\sprintf('Expected argument of type "%s", "%s" given at property path "%s".', $message, 'NULL' === $type ? 'null' : $type, $propertyPath), 0, $previous);
         }
         if (\preg_match('/^\\S+::\\S+\\(\\): Argument #\\d+ \\(\\$\\S+\\) must be of type (\\S+), (\\S+) given/', $message, $matches)) {
             [, $expectedType, $actualType] = $matches;
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\InvalidArgumentException(\sprintf('Expected argument of type "%s", "%s" given at property path "%s".', $expectedType, 'NULL' === $actualType ? 'null' : $actualType, $propertyPath), 0, $previous);
+            throw new InvalidArgumentException(\sprintf('Expected argument of type "%s", "%s" given at property path "%s".', $expectedType, 'NULL' === $actualType ? 'null' : $actualType, $propertyPath), 0, $previous);
         }
     }
     /**
@@ -205,16 +235,16 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
      */
     public function isReadable($objectOrArray, $propertyPath)
     {
-        if (!$propertyPath instanceof \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPathInterface) {
-            $propertyPath = new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPath($propertyPath);
+        if (!$propertyPath instanceof PropertyPathInterface) {
+            $propertyPath = new PropertyPath($propertyPath);
         }
         try {
             $zval = [self::VALUE => $objectOrArray];
             $this->readPropertiesUntil($zval, $propertyPath, $propertyPath->getLength(), $this->ignoreInvalidIndices);
             return \true;
-        } catch (\PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\AccessException $e) {
+        } catch (AccessException $e) {
             return \false;
-        } catch (\PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\UnexpectedTypeException $e) {
+        } catch (UnexpectedTypeException $e) {
             return \false;
         }
     }
@@ -244,9 +274,9 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
                 }
             }
             return \true;
-        } catch (\PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\AccessException $e) {
+        } catch (AccessException $e) {
             return \false;
-        } catch (\PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\UnexpectedTypeException $e) {
+        } catch (UnexpectedTypeException $e) {
             return \false;
         }
     }
@@ -256,10 +286,10 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
      * @throws UnexpectedTypeException if a value within the path is neither object nor array
      * @throws NoSuchIndexException    If a non-existing index is accessed
      */
-    private function readPropertiesUntil(array $zval, \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPathInterface $propertyPath, int $lastIndex, bool $ignoreInvalidIndices = \true) : array
+    private function readPropertiesUntil(array $zval, PropertyPathInterface $propertyPath, int $lastIndex, bool $ignoreInvalidIndices = \true) : array
     {
         if (!\is_object($zval[self::VALUE]) && !\is_array($zval[self::VALUE])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\UnexpectedTypeException($zval[self::VALUE], $propertyPath, 0);
+            throw new UnexpectedTypeException($zval[self::VALUE], $propertyPath, 0);
         }
         // Add the root object to the list
         $propertyValues = [$zval];
@@ -272,11 +302,11 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
                     if (!$ignoreInvalidIndices) {
                         if (!\is_array($zval[self::VALUE])) {
                             if (!$zval[self::VALUE] instanceof \Traversable) {
-                                throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchIndexException(\sprintf('Cannot read index "%s" while trying to traverse path "%s".', $property, (string) $propertyPath));
+                                throw new NoSuchIndexException(\sprintf('Cannot read index "%s" while trying to traverse path "%s".', $property, (string) $propertyPath));
                             }
                             $zval[self::VALUE] = \iterator_to_array($zval[self::VALUE]);
                         }
-                        throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchIndexException(\sprintf('Cannot read index "%s" while trying to traverse path "%s". Available indices are "%s".', $property, (string) $propertyPath, \print_r(\array_keys($zval[self::VALUE]), \true)));
+                        throw new NoSuchIndexException(\sprintf('Cannot read index "%s" while trying to traverse path "%s". Available indices are "%s".', $property, (string) $propertyPath, \print_r(\array_keys($zval[self::VALUE]), \true)));
                     }
                     if ($i + 1 < $propertyPath->getLength()) {
                         if (isset($zval[self::REF])) {
@@ -293,7 +323,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
             }
             // the final value of the path must not be validated
             if ($i + 1 < $propertyPath->getLength() && !\is_object($zval[self::VALUE]) && !\is_array($zval[self::VALUE])) {
-                throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\UnexpectedTypeException($zval[self::VALUE], $propertyPath, $i + 1);
+                throw new UnexpectedTypeException($zval[self::VALUE], $propertyPath, $i + 1);
             }
             if (isset($zval[self::REF]) && (0 === $i || isset($propertyValues[$i - 1][self::IS_REF_CHAINED]))) {
                 // Set the IS_REF_CHAINED flag to true if:
@@ -317,7 +347,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
     private function readIndex(array $zval, $index) : array
     {
         if (!$zval[self::VALUE] instanceof \ArrayAccess && !\is_array($zval[self::VALUE])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchIndexException(\sprintf('Cannot read index "%s" from object of type "%s" because it doesn\'t implement \\ArrayAccess.', $index, \get_debug_type($zval[self::VALUE])));
+            throw new NoSuchIndexException(\sprintf('Cannot read index "%s" from object of type "%s" because it doesn\'t implement \\ArrayAccess.', $index, \get_debug_type($zval[self::VALUE])));
         }
         $result = self::RESULT_PROTO;
         if (isset($zval[self::VALUE][$index])) {
@@ -340,7 +370,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
     private function readProperty(array $zval, string $property, bool $ignoreInvalidProperty = \false) : array
     {
         if (!\is_object($zval[self::VALUE])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException(\sprintf('Cannot read property "%s" from an array. Maybe you intended to write the property path as "[%1$s]" instead.', $property));
+            throw new NoSuchPropertyException(\sprintf('Cannot read property "%s" from an array. Maybe you intended to write the property path as "[%1$s]" instead.', $property));
         }
         $result = self::RESULT_PROTO;
         $object = $zval[self::VALUE];
@@ -350,18 +380,18 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
             $name = $access->getName();
             $type = $access->getType();
             try {
-                if (\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::TYPE_METHOD === $type) {
+                if (PropertyReadInfo::TYPE_METHOD === $type) {
                     try {
                         $result[self::VALUE] = $object->{$name}();
                     } catch (\TypeError $e) {
                         [$trace] = $e->getTrace();
                         // handle uninitialized properties in PHP >= 7
                         if (__FILE__ === $trace['file'] && $name === $trace['function'] && $object instanceof $trace['class'] && \preg_match('/Return value (?:of .*::\\w+\\(\\) )?must be of (?:the )?type (\\w+), null returned$/', $e->getMessage(), $matches)) {
-                            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException(\sprintf('The method "%s::%s()" returned "null", but expected type "%3$s". Did you forget to initialize a property or to make the return type nullable using "?%3$s"?', \false === \strpos(\get_class($object), "@anonymous\0") ? \get_class($object) : ((\get_parent_class($object) ?: \key(\class_implements($object))) ?: 'class') . '@anonymous', $name, $matches[1]), 0, $e);
+                            throw new UninitializedPropertyException(\sprintf('The method "%s::%s()" returned "null", but expected type "%3$s". Did you forget to initialize a property or to make the return type nullable using "?%3$s"?', \false === \strpos(\get_class($object), "@anonymous\x00") ? \get_class($object) : ((\get_parent_class($object) ?: \key(\class_implements($object))) ?: 'class') . '@anonymous', $name, $matches[1]), 0, $e);
                         }
                         throw $e;
                     }
-                } elseif (\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::TYPE_PROPERTY === $type) {
+                } elseif (PropertyReadInfo::TYPE_PROPERTY === $type) {
                     $result[self::VALUE] = $object->{$name};
                     if (isset($zval[self::REF]) && $access->canBeReference()) {
                         $result[self::REF] =& $object->{$name};
@@ -372,7 +402,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
                 if (\PHP_VERSION_ID >= 70400 && \preg_match('/^Typed property ([\\w\\\\]+)::\\$(\\w+) must not be accessed before initialization$/', $e->getMessage(), $matches)) {
                     $r = new \ReflectionProperty($matches[1], $matches[2]);
                     $type = ($type = $r->getType()) instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
-                    throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\UninitializedPropertyException(\sprintf('The property "%s::$%s" is not readable because it is typed "%s". You should initialize it or declare a default value instead.', $r->getDeclaringClass()->getName(), $r->getName(), $type), 0, $e);
+                    throw new UninitializedPropertyException(\sprintf('The property "%s::$%s" is not readable because it is typed "%s". You should initialize it or declare a default value instead.', $r->getDeclaringClass()->getName(), $r->getName(), $type), 0, $e);
                 }
                 throw $e;
             }
@@ -382,7 +412,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
                 $result[self::REF] =& $object->{$property};
             }
         } elseif (!$ignoreInvalidProperty) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException(\sprintf('Can\'t get a way to read the property "%s" in class "%s".', $property, $class));
+            throw new NoSuchPropertyException(\sprintf('Can\'t get a way to read the property "%s" in class "%s".', $property, $class));
         }
         // Objects are always passed around by reference
         if (isset($zval[self::REF]) && \is_object($result[self::VALUE])) {
@@ -393,7 +423,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
     /**
      * Guesses how to read the property value.
      */
-    private function getReadInfo(string $class, string $property) : ?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo
+    private function getReadInfo(string $class, string $property) : ?PropertyReadInfo
     {
         $key = \str_replace('\\', '.', $class) . '..' . $property;
         if (isset($this->readPropertyCache[$key])) {
@@ -422,7 +452,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
     private function writeIndex(array $zval, $index, $value)
     {
         if (!$zval[self::VALUE] instanceof \ArrayAccess && !\is_array($zval[self::VALUE])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchIndexException(\sprintf('Cannot modify index "%s" in object of type "%s" because it doesn\'t implement \\ArrayAccess.', $index, \get_debug_type($zval[self::VALUE])));
+            throw new NoSuchIndexException(\sprintf('Cannot modify index "%s" in object of type "%s" because it doesn\'t implement \\ArrayAccess.', $index, \get_debug_type($zval[self::VALUE])));
         }
         $zval[self::REF][$index] = $value;
     }
@@ -436,33 +466,33 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
     private function writeProperty(array $zval, string $property, $value)
     {
         if (!\is_object($zval[self::VALUE])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException(\sprintf('Cannot write property "%s" to an array. Maybe you should write the property path as "[%1$s]" instead?', $property));
+            throw new NoSuchPropertyException(\sprintf('Cannot write property "%s" to an array. Maybe you should write the property path as "[%1$s]" instead?', $property));
         }
         $object = $zval[self::VALUE];
         $class = \get_class($object);
         $mutator = $this->getWriteInfo($class, $property, $value);
-        if (\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_NONE !== $mutator->getType()) {
+        if (PropertyWriteInfo::TYPE_NONE !== $mutator->getType()) {
             $type = $mutator->getType();
-            if (\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_METHOD === $type) {
+            if (PropertyWriteInfo::TYPE_METHOD === $type) {
                 $object->{$mutator->getName()}($value);
-            } elseif (\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_PROPERTY === $type) {
+            } elseif (PropertyWriteInfo::TYPE_PROPERTY === $type) {
                 $object->{$mutator->getName()} = $value;
-            } elseif (\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_ADDER_AND_REMOVER === $type) {
+            } elseif (PropertyWriteInfo::TYPE_ADDER_AND_REMOVER === $type) {
                 $this->writeCollection($zval, $property, $value, $mutator->getAdderInfo(), $mutator->getRemoverInfo());
             }
         } elseif ($object instanceof \stdClass && \property_exists($object, $property)) {
             $object->{$property} = $value;
         } elseif (!$this->ignoreInvalidProperty) {
             if ($mutator->hasErrors()) {
-                throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException(\implode('. ', $mutator->getErrors()) . '.');
+                throw new NoSuchPropertyException(\implode('. ', $mutator->getErrors()) . '.');
             }
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\NoSuchPropertyException(\sprintf('Could not determine access type for property "%s" in class "%s".', $property, \get_debug_type($object)));
+            throw new NoSuchPropertyException(\sprintf('Could not determine access type for property "%s" in class "%s".', $property, \get_debug_type($object)));
         }
     }
     /**
      * Adjusts a collection-valued property by calling add*() and remove*() methods.
      */
-    private function writeCollection(array $zval, string $property, iterable $collection, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo $addMethod, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo $removeMethod)
+    private function writeCollection(array $zval, string $property, iterable $collection, PropertyWriteInfo $addMethod, PropertyWriteInfo $removeMethod)
     {
         // At this point the add and remove methods have been found
         $previousValue = $this->readProperty($zval, $property);
@@ -491,7 +521,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
             }
         }
     }
-    private function getWriteInfo(string $class, string $property, $value) : \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo
+    private function getWriteInfo(string $class, string $property, $value) : PropertyWriteInfo
     {
         $useAdderAndRemover = \is_array($value) || $value instanceof \Traversable;
         $key = \str_replace('\\', '.', $class) . '..' . $property . '..' . (int) $useAdderAndRemover;
@@ -521,20 +551,20 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
             return \false;
         }
         $mutatorForArray = $this->getWriteInfo(\get_class($object), $property, []);
-        if (\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_NONE !== $mutatorForArray->getType() || $object instanceof \stdClass && \property_exists($object, $property)) {
+        if (PropertyWriteInfo::TYPE_NONE !== $mutatorForArray->getType() || $object instanceof \stdClass && \property_exists($object, $property)) {
             return \true;
         }
         $mutator = $this->getWriteInfo(\get_class($object), $property, '');
-        return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_NONE !== $mutator->getType() || $object instanceof \stdClass && \property_exists($object, $property);
+        return PropertyWriteInfo::TYPE_NONE !== $mutator->getType() || $object instanceof \stdClass && \property_exists($object, $property);
     }
     /**
      * Gets a PropertyPath instance and caches it.
      *
      * @param string|PropertyPath $propertyPath
      */
-    private function getPropertyPath($propertyPath) : \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPath
+    private function getPropertyPath($propertyPath) : PropertyPath
     {
-        if ($propertyPath instanceof \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPathInterface) {
+        if ($propertyPath instanceof PropertyPathInterface) {
             // Don't call the copy constructor has it is not needed here
             return $propertyPath;
         }
@@ -547,7 +577,7 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
                 return $this->propertyPathCache[$propertyPath] = $item->get();
             }
         }
-        $propertyPathInstance = new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPath($propertyPath);
+        $propertyPathInstance = new PropertyPath($propertyPath);
         if (isset($item)) {
             $item->set($propertyPathInstance);
             $this->cacheItemPool->save($item);
@@ -561,17 +591,17 @@ class PropertyAccessor implements \PrefixedByPoP\Symfony\Component\PropertyAcces
      *
      * @throws \LogicException When the Cache Component isn't available
      */
-    public static function createCache(string $namespace, int $defaultLifetime, string $version, \PrefixedByPoP\Psr\Log\LoggerInterface $logger = null)
+    public static function createCache(string $namespace, int $defaultLifetime, string $version, LoggerInterface $logger = null)
     {
-        if (!\class_exists(\PrefixedByPoP\Symfony\Component\Cache\Adapter\ApcuAdapter::class)) {
+        if (!\class_exists(ApcuAdapter::class)) {
             throw new \LogicException(\sprintf('The Symfony Cache component must be installed to use "%s()".', __METHOD__));
         }
-        if (!\PrefixedByPoP\Symfony\Component\Cache\Adapter\ApcuAdapter::isSupported()) {
-            return new \PrefixedByPoP\Symfony\Component\Cache\Adapter\NullAdapter();
+        if (!ApcuAdapter::isSupported()) {
+            return new NullAdapter();
         }
-        $apcu = new \PrefixedByPoP\Symfony\Component\Cache\Adapter\ApcuAdapter($namespace, $defaultLifetime / 5, $version);
+        $apcu = new ApcuAdapter($namespace, $defaultLifetime / 5, $version);
         if ('cli' === \PHP_SAPI && !\filter_var(\ini_get('apc.enable_cli'), \FILTER_VALIDATE_BOOLEAN)) {
-            $apcu->setLogger(new \PrefixedByPoP\Psr\Log\NullLogger());
+            $apcu->setLogger(new NullLogger());
         } elseif (null !== $logger) {
             $apcu->setLogger($logger);
         }

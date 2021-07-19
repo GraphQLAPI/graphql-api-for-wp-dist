@@ -3,7 +3,7 @@
 declare (strict_types=1);
 namespace PrefixedByPoP\League\Pipeline;
 
-class PipelineBuilder implements \PrefixedByPoP\League\Pipeline\PipelineBuilderInterface
+class PipelineBuilder implements PipelineBuilderInterface
 {
     /**
      * @var callable[]
@@ -12,13 +12,16 @@ class PipelineBuilder implements \PrefixedByPoP\League\Pipeline\PipelineBuilderI
     /**
      * @return self
      */
-    public function add(callable $stage) : \PrefixedByPoP\League\Pipeline\PipelineBuilderInterface
+    public function add(callable $stage) : PipelineBuilderInterface
     {
         $this->stages[] = $stage;
         return $this;
     }
-    public function build(\PrefixedByPoP\League\Pipeline\ProcessorInterface $processor = null) : \PrefixedByPoP\League\Pipeline\PipelineInterface
+    /**
+     * @param \League\Pipeline\ProcessorInterface $processor
+     */
+    public function build($processor = null) : PipelineInterface
     {
-        return new \PrefixedByPoP\League\Pipeline\Pipeline($processor, ...$this->stages);
+        return new Pipeline($processor, ...$this->stages);
     }
 }

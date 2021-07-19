@@ -18,7 +18,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeExcepti
  * @author Kévin Dunglas <dunglas@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class CheckArgumentsValidityPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class CheckArgumentsValidityPass extends AbstractRecursivePass
 {
     private $throwExceptions;
     public function __construct(bool $throwExceptions = \true)
@@ -27,11 +27,10 @@ class CheckArgumentsValidityPass extends \PrefixedByPoP\Symfony\Component\Depend
     }
     /**
      * {@inheritdoc}
-     * @param bool $isRoot
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if (!$value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+        if (!$value instanceof Definition) {
             return parent::processValue($value, $isRoot);
         }
         $i = 0;
@@ -41,14 +40,14 @@ class CheckArgumentsValidityPass extends \PrefixedByPoP\Symfony\Component\Depend
                     $msg = \sprintf('Invalid constructor argument for service "%s": integer expected but found string "%s". Check your service definition.', $this->currentId, $k);
                     $value->addError($msg);
                     if ($this->throwExceptions) {
-                        throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException($msg);
+                        throw new RuntimeException($msg);
                     }
                     break;
                 }
                 $msg = \sprintf('Invalid constructor argument %d for service "%s": argument %d must be defined before. Check your service definition.', 1 + $k, $this->currentId, $i);
                 $value->addError($msg);
                 if ($this->throwExceptions) {
-                    throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException($msg);
+                    throw new RuntimeException($msg);
                 }
             }
         }
@@ -60,14 +59,14 @@ class CheckArgumentsValidityPass extends \PrefixedByPoP\Symfony\Component\Depend
                         $msg = \sprintf('Invalid argument for method call "%s" of service "%s": integer expected but found string "%s". Check your service definition.', $methodCall[0], $this->currentId, $k);
                         $value->addError($msg);
                         if ($this->throwExceptions) {
-                            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException($msg);
+                            throw new RuntimeException($msg);
                         }
                         break;
                     }
                     $msg = \sprintf('Invalid argument %d for method call "%s" of service "%s": argument %d must be defined before. Check your service definition.', 1 + $k, $methodCall[0], $this->currentId, $i);
                     $value->addError($msg);
                     if ($this->throwExceptions) {
-                        throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException($msg);
+                        throw new RuntimeException($msg);
                     }
                 }
             }

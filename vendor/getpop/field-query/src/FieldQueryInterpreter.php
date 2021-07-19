@@ -48,8 +48,9 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
     /**
      * @var array<string, mixed>|null
      */
-    private $variablesFromRequestCache = null;
-    // Services
+    private $variablesFromRequestCache;
+    public const ALIAS_POSITION_KEY = 'pos';
+    public const ALIAS_LENGTH_KEY = 'length';
     /**
      * @var \PoP\Translation\TranslationAPIInterface
      */
@@ -62,9 +63,7 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
      * @var \PoP\QueryParsing\QueryParserInterface
      */
     protected $queryParser;
-    public const ALIAS_POSITION_KEY = 'pos';
-    public const ALIAS_LENGTH_KEY = 'length';
-    public function __construct(\PoP\Translation\TranslationAPIInterface $translationAPI, \PoP\FieldQuery\FeedbackMessageStoreInterface $feedbackMessageStore, \PoP\QueryParsing\QueryParserInterface $queryParser)
+    public function __construct(TranslationAPIInterface $translationAPI, \PoP\FieldQuery\FeedbackMessageStoreInterface $feedbackMessageStore, QueryParserInterface $queryParser)
     {
         $this->translationAPI = $translationAPI;
         $this->feedbackMessageStore = $feedbackMessageStore;
@@ -96,7 +95,7 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
         }
         // If the field name is missing, show an error
         if ($pos === 0) {
-            $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Name in \'%s\' is missing', 'pop-component-model'), $field));
+            $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Name in \'%s\' is missing', 'field-query'), $field));
             return '';
         }
         // Extract the query until the found position
@@ -144,7 +143,7 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
         }
         // If there is only one of them, it's a query error, so discard the query bit
         if ($fieldArgsClosingSymbolPos === \false && $fieldArgsOpeningSymbolPos !== \false || $fieldArgsClosingSymbolPos !== \false && $fieldArgsOpeningSymbolPos === \false) {
-            $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Arguments \'%s\' must start with symbol \'%s\' and end with symbol \'%s\'', 'component-model'), $field, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING));
+            $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Arguments \'%s\' must start with symbol \'%s\' and end with symbol \'%s\'', 'field-query'), $field, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING));
             return null;
         }
         // We have field args. Extract them, including the brackets
@@ -173,9 +172,7 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
     /**
      * Replace the fieldArgs in the field
      *
-     * @param string $field
      * @param array<string, mixed> $fieldArgs
-     * @return string
      */
     protected function replaceFieldArgs(string $field, array $fieldArgs = []) : string
     {
@@ -249,11 +246,11 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
             $aliasSymbolPos = $fieldAliasPositionSpan[self::ALIAS_POSITION_KEY];
             if ($aliasSymbolPos === 0) {
                 // Only there is the alias, nothing to alias to
-                $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('The field to be aliased in \'%s\' is missing', 'pop-component-model'), $field));
+                $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('The field to be aliased in \'%s\' is missing', 'field-query'), $field));
                 return null;
             } elseif ($aliasSymbolPos === \strlen($field) - 1) {
                 // Only the "@" was added, but the alias is missing
-                $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Alias in \'%s\' is missing', 'pop-component-model'), $field));
+                $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Alias in \'%s\' is missing', 'field-query'), $field));
                 return null;
             }
             // Extract the alias, without the "@" symbol
@@ -321,7 +318,7 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
         }
         // If there is only one of them, it's a query error, so discard the query bit
         if ($fieldDirectivesClosingSymbolPos === \false && $fieldDirectivesOpeningSymbolPos !== \false || $fieldDirectivesClosingSymbolPos !== \false && $fieldDirectivesOpeningSymbolPos === \false) {
-            $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Directive \'%s\' must start with symbol \'%s\' and end with symbol \'%s\'', 'component-model'), $field, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING));
+            $this->feedbackMessageStore->addQueryError(\sprintf($this->translationAPI->__('Directive \'%s\' must start with symbol \'%s\' and end with symbol \'%s\'', 'field-query'), $field, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING));
             return null;
         }
         // We have a field directive. Extract it
@@ -513,8 +510,11 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
         }
         $elems = [];
         foreach ($fieldArgs as $fieldArgKey => $fieldArgValue) {
-            // Convert from array to its representation of array in a string
-            if (\is_array($fieldArgValue)) {
+            // If it is null, the unquoted `null` string will be represented as null
+            if ($fieldArgValue === null) {
+                $fieldArgValue = 'null';
+            } elseif (\is_array($fieldArgValue)) {
+                // Convert from array to its representation of array in a string
                 $fieldArgValue = $this->getArrayAsStringForQuery($fieldArgValue);
             } elseif (\is_string($fieldArgValue)) {
                 // If it doesn't have them yet, wrap the string between quotes for if there's a special symbol
@@ -535,7 +535,7 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
     }
     protected function isStringWrappedInQuotes(string $value) : bool
     {
-        return \str_starts_with($value, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING) && \str_ends_with($value, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING);
+        return \strncmp($value, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \strlen(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING)) === 0 && \substr_compare($value, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING, -\strlen(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING)) === 0;
     }
     /**
      * If it is not a function, then wrap the string between quotes to avoid
@@ -568,10 +568,13 @@ class FieldQueryInterpreter implements \PoP\FieldQuery\FieldQueryInterpreterInte
             if (\is_array($value)) {
                 $elems[] = $key . \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_KEYVALUEDELIMITER . $this->getArrayAsStringForQuery($value);
             } else {
-                // If it doesn't have them yet, wrap the string between quotes for if there's a special symbol
-                // inside of it (eg: it if has a ",", it will split the element there when decoding again
-                // from string to array in `getField`)
-                if (\is_string($value)) {
+                // If it is null, the unquoted `null` string will be represented as null
+                if ($value === null) {
+                    $value = 'null';
+                } elseif (\is_string($value)) {
+                    // If it doesn't have them yet, wrap the string between quotes for if there's a special symbol
+                    // inside of it (eg: it if has a ",", it will split the element there when decoding again
+                    // from string to array in `getField`)
                     $value = $this->maybeWrapStringInQuotes($value);
                 }
                 $elems[] = $key . \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_KEYVALUEDELIMITER . $value;

@@ -25,15 +25,15 @@ final class Php72
         $len = \strlen($s);
         for ($i = $len >> 1, $j = 0; $i < $len; ++$i, ++$j) {
             switch (\true) {
-                case $s[$i] < "€":
+                case $s[$i] < "\x80":
                     $s[$j] = $s[$i];
                     break;
-                case $s[$i] < "À":
-                    $s[$j] = "Â";
+                case $s[$i] < "\xc0":
+                    $s[$j] = "\xc2";
                     $s[++$j] = $s[$i];
                     break;
                 default:
-                    $s[$j] = "Ã";
+                    $s[$j] = "\xc3";
                     $s[++$j] = \chr(\ord($s[$i]) - 64);
                     break;
             }
@@ -45,16 +45,16 @@ final class Php72
         $s = (string) $s;
         $len = \strlen($s);
         for ($i = 0, $j = 0; $i < $len; ++$i, ++$j) {
-            switch ($s[$i] & "ð") {
-                case "À":
-                case "Ð":
-                    $c = \ord($s[$i] & "\37") << 6 | \ord($s[++$i] & "?");
+            switch ($s[$i] & "\xf0") {
+                case "\xc0":
+                case "\xd0":
+                    $c = \ord($s[$i] & "\x1f") << 6 | \ord($s[++$i] & "?");
                     $s[$j] = $c < 256 ? \chr($c) : '?';
                     break;
-                case "ð":
+                case "\xf0":
                     ++$i;
                 // no break
-                case "à":
+                case "\xe0":
                     $s[$j] = '?';
                     $i += 2;
                     break;
@@ -146,7 +146,7 @@ final class Php72
         } else {
             $s = \chr(0xf0 | $code >> 18) . \chr(0x80 | $code >> 12 & 0x3f) . \chr(0x80 | $code >> 6 & 0x3f) . \chr(0x80 | $code & 0x3f);
         }
-        if ('UTF-8' !== $encoding) {
+        if ('UTF-8' !== ($encoding = $encoding ?? \mb_internal_encoding())) {
             $s = \mb_convert_encoding($s, $encoding, 'UTF-8');
         }
         return $s;

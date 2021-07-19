@@ -4,7 +4,7 @@ declare (strict_types=1);
 namespace PoPSchema\Users\LooseContracts;
 
 use PoP\LooseContracts\AbstractLooseContractSet;
-class LooseContractSet extends \PoP\LooseContracts\AbstractLooseContractSet
+class LooseContractSet extends AbstractLooseContractSet
 {
     /**
      * @return string[]

@@ -16,13 +16,13 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class FunctionNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class FunctionNode extends Node
 {
-    public function __construct(string $name, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $arguments)
+    public function __construct(string $name, Node $arguments)
     {
         parent::__construct(['arguments' => $arguments], ['name' => $name]);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $arguments = [];
         foreach ($this->nodes['arguments']->nodes as $node) {

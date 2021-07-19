@@ -11,7 +11,7 @@ trait RoutingManagerTrait
     /**
      * @var \WP_Query|null
      */
-    private $query = null;
+    private $query;
 
     private function init(): void
     {
@@ -29,7 +29,10 @@ trait RoutingManagerTrait
         // Compare the keys only, because since PHP 8.0, comparing array values
         // (included in $query->query_vars) throws error
         return !empty(
-            array_intersect(array_keys($query->query_vars), array_keys(WPQueries::STANDARD_NATURE))
+            array_intersect(
+                array_keys($query->query_vars),
+                array_keys(WPQueries::STANDARD_NATURE)
+            )
         );
     }
 }

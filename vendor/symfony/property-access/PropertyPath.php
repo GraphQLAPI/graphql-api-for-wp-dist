@@ -18,7 +18,7 @@ use PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsExceptio
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class PropertyPath implements \IteratorAggregate, \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPathInterface
+class PropertyPath implements \IteratorAggregate, PropertyPathInterface
 {
     /**
      * Character used for separating between plural and singular of an element.
@@ -69,10 +69,10 @@ class PropertyPath implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
             return;
         }
         if (!\is_string($propertyPath)) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\InvalidArgumentException(\sprintf('The property path constructor needs a string or an instance of "Symfony\\Component\\PropertyAccess\\PropertyPath". Got: "%s".', \get_debug_type($propertyPath)));
+            throw new InvalidArgumentException(\sprintf('The property path constructor needs a string or an instance of "Symfony\\Component\\PropertyAccess\\PropertyPath". Got: "%s".', \get_debug_type($propertyPath)));
         }
         if ('' === $propertyPath) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\InvalidPropertyPathException('The property path should not be empty.');
+            throw new InvalidPropertyPathException('The property path should not be empty.');
         }
         $this->pathAsString = $propertyPath;
         $position = 0;
@@ -93,7 +93,7 @@ class PropertyPath implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
             $pattern = '/^(\\.([^\\.|\\[]++)|\\[([^\\]]++)\\])(.*)/';
         }
         if ('' !== $remaining) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\InvalidPropertyPathException(\sprintf('Could not parse property path "%s". Unexpected token "%s" at position %d.', $propertyPath, $remaining[0], $position));
+            throw new InvalidPropertyPathException(\sprintf('Could not parse property path "%s". Unexpected token "%s" at position %d.', $propertyPath, $remaining[0], $position));
         }
         $this->length = \count($this->elements);
     }
@@ -133,7 +133,7 @@ class PropertyPath implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
      */
     public function getIterator()
     {
-        return new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPathIterator($this);
+        return new PropertyPathIterator($this);
     }
     /**
      * {@inheritdoc}
@@ -148,7 +148,7 @@ class PropertyPath implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
     public function getElement(int $index)
     {
         if (!isset($this->elements[$index])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsException(\sprintf('The index "%s" is not within the property path.', $index));
+            throw new OutOfBoundsException(\sprintf('The index "%s" is not within the property path.', $index));
         }
         return $this->elements[$index];
     }
@@ -158,7 +158,7 @@ class PropertyPath implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
     public function isProperty(int $index)
     {
         if (!isset($this->isIndex[$index])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsException(\sprintf('The index "%s" is not within the property path.', $index));
+            throw new OutOfBoundsException(\sprintf('The index "%s" is not within the property path.', $index));
         }
         return !$this->isIndex[$index];
     }
@@ -168,7 +168,7 @@ class PropertyPath implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
     public function isIndex(int $index)
     {
         if (!isset($this->isIndex[$index])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsException(\sprintf('The index "%s" is not within the property path.', $index));
+            throw new OutOfBoundsException(\sprintf('The index "%s" is not within the property path.', $index));
         }
         return $this->isIndex[$index];
     }

@@ -9,7 +9,7 @@ import { PluginDocumentSettingPanel } from '@wordpress/edit-post';
  */
 import { MarkdownGuideButton } from '@graphqlapi/components';
 import { getMarkdownContentOrUseDefault } from '../markdown-loader';
-// import PersistedQueryGuideButton from './guide-for-css-tricks-article';
+// import PersistedQueryEndpointGuideButton from './guide-for-css-tricks-article';
 
 /**
  * Constants to customize
@@ -19,7 +19,6 @@ const guideName = __('Creating Persisted Queries', 'graphql-api');
 const pageFilenames = [
     'welcome-guide',
     'schema-config-options',
-    'lorem-ipsum',
 ]
 /**
  * Component
@@ -35,7 +34,7 @@ const DocumentSettingsPanel = () => (
             guideName={ guideName }
             pageFilenames={ pageFilenames }
         />
-        {/* <PersistedQueryGuideButton /> */}
+        {/* <PersistedQueryEndpointGuideButton /> */}
     </PluginDocumentSettingPanel>
 );
 export default DocumentSettingsPanel;

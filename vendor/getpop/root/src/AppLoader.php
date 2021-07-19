@@ -4,7 +4,6 @@ declare (strict_types=1);
 namespace PoP\Root;
 
 use PoP\Root\Container\ContainerBuilderFactory;
-use PoP\Root\Container\SystemCompilerPasses\RegisterSystemCompilerPassServiceCompilerPass;
 use PoP\Root\Container\SystemContainerBuilderFactory;
 use PoP\Root\Dotenv\DotenvBuilderFactory;
 use PoP\Root\Facades\SystemCompilerPassRegistryFacade;
@@ -21,6 +20,12 @@ class AppLoader
      */
     protected static $initializedClasses = [];
     /**
+     * Component in their initialization order
+     *
+     * @var string[]
+     */
+    protected static $orderedComponentClasses = [];
+    /**
      * Component classes to be initialized
      *
      * @var string[]
@@ -29,7 +34,7 @@ class AppLoader
     /**
      * [key]: Component class, [value]: Configuration
      *
-     * @var string[]
+     * @var array<string, array<string, mixed>>
      */
     protected static $componentClassConfiguration = [];
     /**
@@ -42,13 +47,31 @@ class AppLoader
      * Add Component classes to be initialized
      *
      * @param string[] $componentClasses List of `Component` class to initialize
-     * @param array<string, mixed> $componentClassConfiguration [key]: Component class, [value]: Configuration
-     * @param string[] $skipSchemaComponentClasses List of `Component` class which must not initialize their Schema services
      */
-    public static function addComponentClassesToInitialize(array $componentClasses, array $componentClassConfiguration = [], array $skipSchemaComponentClasses = []) : void
+    public static function addComponentClassesToInitialize(array $componentClasses) : void
     {
         self::$componentClassesToInitialize = \array_merge(self::$componentClassesToInitialize, $componentClasses);
-        self::$componentClassConfiguration = \array_merge_recursive(self::$componentClassConfiguration, $componentClassConfiguration);
+    }
+    /**
+     * Add configuration for the Component classes
+     *
+     * @param array<string, array<string, mixed>> $componentClassConfiguration [key]: Component class, [value]: Configuration
+     */
+    public static function addComponentClassConfiguration(array $componentClassConfiguration = []) : void
+    {
+        // Allow to override entries under each Component
+        foreach ($componentClassConfiguration as $componentClass => $componentConfiguration) {
+            self::$componentClassConfiguration[$componentClass] = self::$componentClassConfiguration[$componentClass] ?? [];
+            self::$componentClassConfiguration[$componentClass] = \array_merge(self::$componentClassConfiguration[$componentClass], $componentConfiguration);
+        }
+    }
+    /**
+     * Add schema Component classes to skip initializing
+     *
+     * @param string[] $skipSchemaComponentClasses List of `Component` class which must not initialize their Schema services
+     */
+    public static function addSchemaComponentClassesToSkip(array $skipSchemaComponentClasses = []) : void
+    {
         self::$skipSchemaComponentClasses = \array_merge(self::$skipSchemaComponentClasses, $skipSchemaComponentClasses);
     }
     /**
@@ -96,69 +119,95 @@ class AppLoader
      * 3. Allow Components to customize the component configuration for themselves, and the components they can see
      * 4. Register all Components with the ComponentManager
      * 5. Initialize the System Container, have all Components inject services, and compile it, making "system" services (eg: hooks, translation) available for initializing Application Container services
-     * 6. Initialize the Application Container, have all Components inject services, and compile it
-     * 7. Trigger "beforeBoot", "boot" and "afterBoot" events on all the Components, for them to execute any custom extra logic
      *
      * @param boolean|null $cacheContainerConfiguration Indicate if to cache the container. If null, it gets the value from ENV
-     * @param boolean|null $namespace Provide the namespace, to regenerate the cache whenever the application is upgraded. If null, it gets the value from ENV
+     * @param string|null $containerNamespace Provide the namespace, to regenerate the cache whenever the application is upgraded. If null, it gets the value from ENV
+     * @param string|null $containerDirectory Provide the directory, to regenerate the cache whenever the application is upgraded. If null, it uses the default /tmp folder by the OS
      */
-    public static function bootApplication(?bool $cacheContainerConfiguration = null, ?string $containerNamespace = null) : void
+    public static function bootSystem(?bool $cacheContainerConfiguration = null, ?string $containerNamespace = null, ?string $containerDirectory = null) : void
     {
         // Initialize Dotenv (before the ContainerBuilder, since this one uses environment constants)
-        \PoP\Root\Dotenv\DotenvBuilderFactory::init();
+        DotenvBuilderFactory::init();
         /**
          * Calculate the components in their initialization order
          */
-        $orderedComponentClasses = self::getComponentsOrderedForInitialization(self::$componentClassesToInitialize);
-        /**
-         * Allow each component to customize the configuration for itself,
-         * and for its depended-upon components.
-         * Hence this is executed from bottom to top
-         */
-        foreach (\array_reverse($orderedComponentClasses) as $componentClass) {
-            $componentClass::customizeComponentClassConfiguration(self::$componentClassConfiguration);
-        }
+        self::$orderedComponentClasses = self::getComponentsOrderedForInitialization(self::$componentClassesToInitialize);
         /**
          * Register all components in the ComponentManager
          */
-        foreach ($orderedComponentClasses as $componentClass) {
-            \PoP\Root\Managers\ComponentManager::register($componentClass);
+        foreach (self::$orderedComponentClasses as $componentClass) {
+            ComponentManager::register($componentClass);
         }
         /**
          * System container: initialize it and compile it already,
          * since it will be used to initialize the Application container
          */
-        \PoP\Root\Container\SystemContainerBuilderFactory::init($cacheContainerConfiguration, $containerNamespace);
+        SystemContainerBuilderFactory::init($cacheContainerConfiguration, $containerNamespace, $containerDirectory);
         /**
          * Have all Components register their Container services,
          * and already compile the container.
          * This way, these services become available for initializing
          * Application Container services.
          */
-        foreach ($orderedComponentClasses as $componentClass) {
-            $componentConfiguration = self::$componentClassConfiguration[$componentClass] ?? [];
-            $componentClass::initializeSystem($componentConfiguration);
+        foreach (self::$orderedComponentClasses as $componentClass) {
+            $componentClass::initializeSystem();
         }
-        $systemCompilerPasses = [new \PoP\Root\Container\SystemCompilerPasses\RegisterSystemCompilerPassServiceCompilerPass()];
-        \PoP\Root\Container\SystemContainerBuilderFactory::maybeCompileAndCacheContainer($systemCompilerPasses);
+        $systemCompilerPasses = \array_map(function ($class) {
+            return new $class();
+        }, self::getSystemContainerCompilerPasses());
+        SystemContainerBuilderFactory::maybeCompileAndCacheContainer($systemCompilerPasses);
+        // Finally boot the components
+        static::bootSystemForComponents();
+    }
+    /**
+     * Trigger "beforeBoot", "boot" and "afterBoot" events on all the Components,
+     * for them to execute any custom extra logic
+     */
+    protected static function bootSystemForComponents() : void
+    {
+        ComponentManager::bootSystem();
+    }
+    /**
+     * @return string[]
+     */
+    protected static final function getSystemContainerCompilerPasses() : array
+    {
+        // Collect the compiler pass classes from all components
+        $compilerPassClasses = [];
+        foreach (self::$orderedComponentClasses as $componentClass) {
+            $item1Unpacked = $componentClass::getSystemContainerCompilerPassClasses();
+            $compilerPassClasses = \array_merge($compilerPassClasses, \is_array($item1Unpacked) ? $item1Unpacked : \iterator_to_array($item1Unpacked));
+        }
+        return \array_values(\array_unique($compilerPassClasses));
+    }
+    /**
+     * Boot the application. It does these steps:
+     *
+     * 1. Initialize the Application Container, have all Components inject services, and compile it
+     * 2. Trigger "beforeBoot", "boot" and "afterBoot" events on all the Components, for them to execute any custom extra logic
+     *
+     * @param boolean|null $cacheContainerConfiguration Indicate if to cache the container. If null, it gets the value from ENV
+     * @param string|null $containerNamespace Provide the namespace, to regenerate the cache whenever the application is upgraded. If null, it gets the value from ENV
+     * @param string|null $containerDirectory Provide the directory, to regenerate the cache whenever the application is upgraded. If null, it uses the default /tmp folder by the OS
+     */
+    public static function bootApplication(?bool $cacheContainerConfiguration = null, ?string $containerNamespace = null, ?string $containerDirectory = null) : void
+    {
         /**
-         * Register all components in the ComponentManager
+         * Allow each component to customize the configuration for itself,
+         * and for its depended-upon components.
+         * Hence this is executed from bottom to top
          */
-        foreach ($orderedComponentClasses as $componentClass) {
-            // Temporary solution until migrated:
-            // Initialize all depended-upon migration plugins
-            foreach ($componentClass::getDependedMigrationPlugins() as $migrationPluginPath) {
-                require_once $migrationPluginPath;
-            }
+        foreach (\array_reverse(self::$orderedComponentClasses) as $componentClass) {
+            $componentClass::customizeComponentClassConfiguration(self::$componentClassConfiguration);
         }
         /**
          * Initialize the Application container only
          */
-        \PoP\Root\Container\ContainerBuilderFactory::init($cacheContainerConfiguration, $containerNamespace);
+        ContainerBuilderFactory::init($cacheContainerConfiguration, $containerNamespace, $containerDirectory);
         /**
          * Initialize the container services by the Components
          */
-        foreach ($orderedComponentClasses as $componentClass) {
+        foreach (self::$orderedComponentClasses as $componentClass) {
             // Initialize the component, passing its configuration, and checking if its schema must be skipped
             $componentConfiguration = self::$componentClassConfiguration[$componentClass] ?? [];
             $skipSchemaForComponent = \in_array($componentClass, self::$skipSchemaComponentClasses);
@@ -166,20 +215,20 @@ class AppLoader
         }
         // Register CompilerPasses, Compile and Cache
         // Symfony's DependencyInjection Application Container
-        $systemCompilerPassRegistry = \PoP\Root\Facades\SystemCompilerPassRegistryFacade::getInstance();
+        $systemCompilerPassRegistry = SystemCompilerPassRegistryFacade::getInstance();
         $systemCompilerPasses = $systemCompilerPassRegistry->getCompilerPasses();
-        \PoP\Root\Container\ContainerBuilderFactory::maybeCompileAndCacheContainer($systemCompilerPasses);
+        ContainerBuilderFactory::maybeCompileAndCacheContainer($systemCompilerPasses);
         // Finally boot the components
-        static::bootComponents();
+        static::bootApplicationForComponents();
     }
     /**
      * Trigger "beforeBoot", "boot" and "afterBoot" events on all the Components,
      * for them to execute any custom extra logic
      */
-    protected static function bootComponents() : void
+    protected static function bootApplicationForComponents() : void
     {
-        \PoP\Root\Managers\ComponentManager::beforeBoot();
-        \PoP\Root\Managers\ComponentManager::boot();
-        \PoP\Root\Managers\ComponentManager::afterBoot();
+        ComponentManager::beforeBoot();
+        ComponentManager::boot();
+        ComponentManager::afterBoot();
     }
 }

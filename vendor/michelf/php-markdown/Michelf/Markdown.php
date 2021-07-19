@@ -13,7 +13,7 @@ namespace PrefixedByPoP\Michelf;
 /**
  * Markdown Parser Class
  */
-class Markdown implements \PrefixedByPoP\Michelf\MarkdownInterface
+class Markdown implements MarkdownInterface
 {
     /**
      * Define the package version
@@ -448,7 +448,7 @@ class Markdown implements \PrefixedByPoP\Michelf\MarkdownInterface
         $text = $this->unhash($text);
         // Then hash the block.
         static $i = 0;
-        $key = "{$boundary}\32" . ++$i . $boundary;
+        $key = "{$boundary}\x1a" . ++$i . $boundary;
         $this->html_hashes[$key] = $text;
         return $key;
         // String that will replace the tag.

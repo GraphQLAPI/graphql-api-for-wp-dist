@@ -22,26 +22,26 @@ abstract class AbstractTypeQueryableDataLoader extends \PoP\ComponentModel\TypeD
     }
     protected function getPagenumberParam($query_args)
     {
-        return \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('GD_Dataloader_List:query:pagenumber', $query_args[\PoP\ComponentModel\Constants\Params::PAGE_NUMBER]);
+        return HooksAPIFacade::getInstance()->applyFilters('GD_Dataloader_List:query:pagenumber', $query_args[Params::PAGE_NUMBER]);
     }
     protected function getLimitParam($query_args)
     {
-        return \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('GD_Dataloader_List:query:limit', $query_args[\PoP\ComponentModel\Constants\Params::LIMIT]);
+        return HooksAPIFacade::getInstance()->applyFilters('GD_Dataloader_List:query:limit', $query_args[Params::LIMIT]);
     }
     public function findIDs(array $data_properties) : array
     {
-        $query_args = $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS];
+        $query_args = $data_properties[DataloadingConstants::QUERYARGS];
         // If already indicating the ids to get back, then already return them
-        if ($include = $query_args['include']) {
+        if ($include = $query_args['include'] ?? null) {
             return $include;
         }
         // Customize query
         $query = $this->getQuery($query_args);
         // Allow URE to modify the role, limiting selected users and excluding others, like 'subscriber'
-        $query = \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters(self::class . ':gd_dataload_query', $query, $data_properties);
+        $query = HooksAPIFacade::getInstance()->applyFilters(self::class . ':gd_dataload_query', $query, $data_properties);
         // Apply filtering of the data
-        if ($filtering_modules = $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGSFILTERINGMODULES] ?? null) {
-            $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
+        if ($filtering_modules = $data_properties[DataloadingConstants::QUERYARGSFILTERINGMODULES] ?? null) {
+            $moduleprocessor_manager = ModuleProcessorManagerFacade::getInstance();
             foreach ($filtering_modules as $module) {
                 $moduleprocessor_manager->getProcessor($module)->filterHeadmoduleDataloadQueryArgs($module, $query);
             }
@@ -86,14 +86,14 @@ abstract class AbstractTypeQueryableDataLoader extends \PoP\ComponentModel\TypeD
             $query['offset'] = ($pagenumber - 1) * $limit;
         }
         // Params and values by default
-        if (!$query['orderby']) {
+        if (!isset($query['orderby'])) {
             $query['orderby'] = $this->getOrderbyDefault();
         }
-        if (!$query['order']) {
+        if (!isset($query['order'])) {
             $query['order'] = $this->getOrderDefault();
         }
         // Allow CoAuthors Plus to modify the query to add the coauthors
-        return \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters($this->getQueryHookName(), $query, $query_args);
+        return HooksAPIFacade::getInstance()->applyFilters($this->getQueryHookName(), $query, $query_args);
     }
     public function getFilterDataloadingModule() : ?array
     {

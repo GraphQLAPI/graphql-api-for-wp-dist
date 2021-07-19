@@ -10,7 +10,6 @@
  */
 namespace PrefixedByPoP\Symfony\Contracts\Service\Attribute;
 
-use Attribute;
 /**
  * A required dependency.
  *
@@ -18,8 +17,8 @@ use Attribute;
  * considered during the instantiation process of the containing class.
  *
  * @author Alexander M. Turek <me@derrabus.de>
+ * @annotation
  */
-#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_PROPERTY)]
 final class Required
 {
 }

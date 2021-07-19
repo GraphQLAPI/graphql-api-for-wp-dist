@@ -7,12 +7,12 @@ use PoP\API\Registries\SchemaDefinitionRegistryInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class SchemaDefinitionRegistryFacade
 {
-    public static function getInstance() : \PoP\API\Registries\SchemaDefinitionRegistryInterface
+    public static function getInstance() : SchemaDefinitionRegistryInterface
     {
         /**
          * @var SchemaDefinitionRegistryInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\API\Registries\SchemaDefinitionRegistryInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(SchemaDefinitionRegistryInterface::class);
         return $service;
     }
 }

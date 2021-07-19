@@ -4,64 +4,51 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI;
 
-use GraphQLAPI\GraphQLAPI\Config\PluginConfigurationHelpers;
+use GraphQLAPI\GraphQLAPI\PluginManagement\PluginConfigurationHelper;
 
 class PluginEnvironment
 {
-    public const PLUGIN_ENVIRONMENT = 'PLUGIN_ENVIRONMENT';
+    public const DISABLE_CACHING = 'DISABLE_CACHING';
+    public const CACHE_DIR = 'CACHE_DIR';
+    public const REDEFINED_FIELD_ARGS_SYMBOLS = 'REDEFINED_FIELD_ARGS_SYMBOLS';
 
     /**
-     * The plugins runs in PROD
+     * If the information is provided by either environment variable
+     * or constant in wp-config.php, use it.
+     * By default, do cache (also for DEV)
      */
-    public const PLUGIN_ENVIRONMENT_PROD = 'production';
-    /**
-     * The plugins runs in DEV
-     */
-    public const PLUGIN_ENVIRONMENT_DEV = 'development';
-
-    /**
-     * Return a value for a variable, checking if it is defined in the environment
-     * first, and in the wp-config.php second
-     *
-     * @return mixed
-     */
-    protected static function getValueFromEnvironmentOrWPConfig(string $envVariable)
+    public static function isCachingEnabled(): bool
     {
-        if (getenv($envVariable) !== false) {
-            return getenv($envVariable);
+        if (getenv(self::DISABLE_CACHING) !== false) {
+            return strtolower(getenv(self::DISABLE_CACHING)) != "true";
         }
 
-        if (PluginConfigurationHelpers::isWPConfigConstantDefined($envVariable)) {
-            return PluginConfigurationHelpers::getWPConfigConstantValue($envVariable);
-        };
+        if (PluginConfigurationHelper::isWPConfigConstantDefined(self::DISABLE_CACHING)) {
+            return !PluginConfigurationHelper::getWPConfigConstantValue(self::DISABLE_CACHING);
+        }
 
-        return null;
+        return true;
     }
 
     /**
-     * The label to show when the value is empty
+     * If the cache dir is provided by either environment variable
+     * or constant in wp-config.php, use it.
+     * Otherwise, set the default to wp-content/graphql-api/cache
      */
-    public static function getPluginEnvironment(): string
+    public static function getCacheDir(): string
     {
-        $environments = [
-            self::PLUGIN_ENVIRONMENT_PROD,
-            self::PLUGIN_ENVIRONMENT_DEV,
-        ];
-        $value = self::getValueFromEnvironmentOrWPConfig(self::PLUGIN_ENVIRONMENT);
-        if (!is_null($value) && in_array($value, $environments)) {
-            return $value;
+        $baseCacheDir = null;
+        if (getenv(self::CACHE_DIR) !== false) {
+            $baseCacheDir = rtrim(getenv(self::CACHE_DIR), '/');
+        } elseif (PluginConfigurationHelper::isWPConfigConstantDefined(self::CACHE_DIR)) {
+            $baseCacheDir = rtrim(PluginConfigurationHelper::getWPConfigConstantValue(self::CACHE_DIR), '/');
+        } else {
+            $baseCacheDir = constant('WP_CONTENT_DIR');
         }
-        // Default value
-        return self::PLUGIN_ENVIRONMENT_PROD;
-    }
 
-    public static function isPluginEnvironmentProd(): bool
-    {
-        return self::getPluginEnvironment() == self::PLUGIN_ENVIRONMENT_PROD;
-    }
+        return $baseCacheDir . \DIRECTORY_SEPARATOR . 'graphql-api' . \DIRECTORY_SEPARATOR . 'cache';
 
-    public static function isPluginEnvironmentDev(): bool
-    {
-        return self::getPluginEnvironment() == self::PLUGIN_ENVIRONMENT_DEV;
+        // This is under wp-content/plugins/graphql-api/cache
+        // return dirname(__FILE__, 2) . \DIRECTORY_SEPARATOR . 'cache';
     }
 }

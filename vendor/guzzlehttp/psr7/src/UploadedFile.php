@@ -6,7 +6,7 @@ use InvalidArgumentException;
 use PrefixedByPoP\Psr\Http\Message\StreamInterface;
 use PrefixedByPoP\Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
-class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterface
+class UploadedFile implements UploadedFileInterface
 {
     /**
      * @var int[]
@@ -25,7 +25,7 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
      */
     private $error;
     /**
-     * @var null|string
+     * @var string|null
      */
     private $file;
     /**
@@ -42,10 +42,10 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     private $stream;
     /**
      * @param StreamInterface|string|resource $streamOrFile
-     * @param int $size
-     * @param int $errorStatus
-     * @param string|null $clientFilename
-     * @param string|null $clientMediaType
+     * @param int                             $size
+     * @param int                             $errorStatus
+     * @param string|null                     $clientFilename
+     * @param string|null                     $clientMediaType
      */
     public function __construct($streamOrFile, $size, $errorStatus, $clientFilename = null, $clientMediaType = null)
     {
@@ -69,11 +69,11 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
         if (\is_string($streamOrFile)) {
             $this->file = $streamOrFile;
         } elseif (\is_resource($streamOrFile)) {
-            $this->stream = new \PrefixedByPoP\GuzzleHttp\Psr7\Stream($streamOrFile);
-        } elseif ($streamOrFile instanceof \PrefixedByPoP\Psr\Http\Message\StreamInterface) {
+            $this->stream = new Stream($streamOrFile);
+        } elseif ($streamOrFile instanceof StreamInterface) {
             $this->stream = $streamOrFile;
         } else {
-            throw new \InvalidArgumentException('Invalid stream or file provided for UploadedFile');
+            throw new InvalidArgumentException('Invalid stream or file provided for UploadedFile');
         }
     }
     /**
@@ -84,10 +84,10 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     private function setError($error)
     {
         if (\false === \is_int($error)) {
-            throw new \InvalidArgumentException('Upload file error status must be an integer');
+            throw new InvalidArgumentException('Upload file error status must be an integer');
         }
-        if (\false === \in_array($error, \PrefixedByPoP\GuzzleHttp\Psr7\UploadedFile::$errors)) {
-            throw new \InvalidArgumentException('Invalid error status for UploadedFile');
+        if (\false === \in_array($error, UploadedFile::$errors)) {
+            throw new InvalidArgumentException('Invalid error status for UploadedFile');
         }
         $this->error = $error;
     }
@@ -99,13 +99,14 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     private function setSize($size)
     {
         if (\false === \is_int($size)) {
-            throw new \InvalidArgumentException('Upload file size must be an integer');
+            throw new InvalidArgumentException('Upload file size must be an integer');
         }
         $this->size = $size;
     }
     /**
      * @param mixed $param
-     * @return boolean
+     *
+     * @return bool
      */
     private function isStringOrNull($param)
     {
@@ -113,7 +114,8 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     }
     /**
      * @param mixed $param
-     * @return boolean
+     *
+     * @return bool
      */
     private function isStringNotEmpty($param)
     {
@@ -127,7 +129,7 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     private function setClientFilename($clientFilename)
     {
         if (\false === $this->isStringOrNull($clientFilename)) {
-            throw new \InvalidArgumentException('Upload file client filename must be a string or null');
+            throw new InvalidArgumentException('Upload file client filename must be a string or null');
         }
         $this->clientFilename = $clientFilename;
     }
@@ -139,21 +141,21 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     private function setClientMediaType($clientMediaType)
     {
         if (\false === $this->isStringOrNull($clientMediaType)) {
-            throw new \InvalidArgumentException('Upload file client media type must be a string or null');
+            throw new InvalidArgumentException('Upload file client media type must be a string or null');
         }
         $this->clientMediaType = $clientMediaType;
     }
     /**
      * Return true if there is no upload error
      *
-     * @return boolean
+     * @return bool
      */
     private function isOk()
     {
         return $this->error === \UPLOAD_ERR_OK;
     }
     /**
-     * @return boolean
+     * @return bool
      */
     public function isMoved()
     {
@@ -165,10 +167,10 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     private function validateActive()
     {
         if (\false === $this->isOk()) {
-            throw new \RuntimeException('Cannot retrieve stream due to upload error');
+            throw new RuntimeException('Cannot retrieve stream due to upload error');
         }
         if ($this->isMoved()) {
-            throw new \RuntimeException('Cannot retrieve stream after it has already been moved');
+            throw new RuntimeException('Cannot retrieve stream after it has already been moved');
         }
     }
     /**
@@ -179,10 +181,10 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
     public function getStream()
     {
         $this->validateActive();
-        if ($this->stream instanceof \PrefixedByPoP\Psr\Http\Message\StreamInterface) {
+        if ($this->stream instanceof StreamInterface) {
             return $this->stream;
         }
-        return new \PrefixedByPoP\GuzzleHttp\Psr7\LazyOpenStream($this->file, 'r+');
+        return new LazyOpenStream($this->file, 'r+');
     }
     /**
      * {@inheritdoc}
@@ -192,25 +194,25 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
      *
      * @param string $targetPath Path to which to move the uploaded file.
      *
-     * @throws RuntimeException if the upload was not successful.
+     * @throws RuntimeException         if the upload was not successful.
      * @throws InvalidArgumentException if the $path specified is invalid.
-     * @throws RuntimeException on any error during the move operation, or on
-     *     the second or subsequent call to the method.
+     * @throws RuntimeException         on any error during the move operation, or on
+     *                                  the second or subsequent call to the method.
      */
     public function moveTo($targetPath)
     {
         $this->validateActive();
         if (\false === $this->isStringNotEmpty($targetPath)) {
-            throw new \InvalidArgumentException('Invalid path provided for move operation; must be a non-empty string');
+            throw new InvalidArgumentException('Invalid path provided for move operation; must be a non-empty string');
         }
         if ($this->file) {
             $this->moved = \php_sapi_name() == 'cli' ? \rename($this->file, $targetPath) : \move_uploaded_file($this->file, $targetPath);
         } else {
-            \PrefixedByPoP\GuzzleHttp\Psr7\Utils::copyToStream($this->getStream(), new \PrefixedByPoP\GuzzleHttp\Psr7\LazyOpenStream($targetPath, 'w'));
+            Utils::copyToStream($this->getStream(), new LazyOpenStream($targetPath, 'w'));
             $this->moved = \true;
         }
         if (\false === $this->moved) {
-            throw new \RuntimeException(\sprintf('Uploaded file could not be moved to %s', $targetPath));
+            throw new RuntimeException(\sprintf('Uploaded file could not be moved to %s', $targetPath));
         }
     }
     /**
@@ -226,6 +228,7 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
      * {@inheritdoc}
      *
      * @see http://php.net/manual/en/features.file-upload.errors.php
+     *
      * @return int One of PHP's UPLOAD_ERR_XXX constants.
      */
     public function getError()
@@ -236,7 +239,7 @@ class UploadedFile implements \PrefixedByPoP\Psr\Http\Message\UploadedFileInterf
      * {@inheritdoc}
      *
      * @return string|null The filename sent by the client or null if none
-     *     was provided.
+     *                     was provided.
      */
     public function getClientFilename()
     {

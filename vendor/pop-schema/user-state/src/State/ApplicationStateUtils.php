@@ -14,7 +14,7 @@ class ApplicationStateUtils
     public static function setUserStateVars(array &$vars) : void
     {
         $vars['global-userstate'] = [];
-        $userStateTypeDataResolver = \PoPSchema\UserState\Facades\UserStateTypeDataResolverFacade::getInstance();
+        $userStateTypeDataResolver = UserStateTypeDataResolverFacade::getInstance();
         if ($userStateTypeDataResolver->isUserLoggedIn()) {
             $vars['global-userstate']['is-user-logged-in'] = \true;
             $vars['global-userstate']['current-user'] = $userStateTypeDataResolver->getCurrentUser();

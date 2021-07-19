@@ -9,9 +9,9 @@ trait QueryableFieldResolverTrait
 {
     protected function getFilterSchemaDefinitionItems(array $filterDataloadingModule) : array
     {
-        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
+        $moduleprocessor_manager = ModuleProcessorManagerFacade::getInstance();
         $filterqueryargs_modules = $moduleprocessor_manager->getProcessor((array) $filterDataloadingModule)->getDataloadQueryArgsFilteringModules($filterDataloadingModule);
-        return \PoP\ComponentModel\Misc\GeneralUtils::arrayFlatten(\array_map(function ($module) use($moduleprocessor_manager) {
+        return GeneralUtils::arrayFlatten(\array_map(function ($module) use($moduleprocessor_manager) {
             return $moduleprocessor_manager->getProcessor($module)->getFilterInputSchemaDefinitionItems($module);
         }, $filterqueryargs_modules));
     }

@@ -3,39 +3,50 @@
 declare (strict_types=1);
 namespace PoP\AccessControl\Hooks;
 
+use PoP\Hooks\HooksAPIInterface;
 use PoP\Engine\Hooks\AbstractCMSBootHookSet;
+use PoP\Translation\TranslationAPIInterface;
 use PoP\ComponentModel\TypeResolvers\HookHelpers;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\AccessControl\Services\AccessControlManagerInterface;
 use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
 use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
-abstract class AbstractAccessControlForDirectivesHookSet extends \PoP\Engine\Hooks\AbstractCMSBootHookSet
+abstract class AbstractAccessControlForDirectivesHookSet extends AbstractCMSBootHookSet
 {
+    /**
+     * @var \PoP\AccessControl\Services\AccessControlManagerInterface
+     */
+    protected $accessControlManager;
+    public function __construct(HooksAPIInterface $hooksAPI, TranslationAPIInterface $translationAPI, InstanceManagerInterface $instanceManager, AccessControlManagerInterface $accessControlManager)
+    {
+        $this->accessControlManager = $accessControlManager;
+        parent::__construct($hooksAPI, $translationAPI, $instanceManager);
+    }
     public function cmsBoot() : void
     {
         if (!$this->enabled()) {
             return;
         }
         // If no directiveNames defined, apply to all of them
-        if ($directiveNames = \array_map(function ($directiveResolverClass) {
-            return $directiveResolverClass::getDirectiveName();
-        }, $this->getDirectiveResolverClasses())) {
+        if ($directiveNames = \array_map(function ($directiveResolver) {
+            return $directiveResolver->getDirectiveName();
+        }, $this->getDirectiveResolvers())) {
             foreach ($directiveNames as $directiveName) {
-                $this->hooksAPI->addFilter(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterDirective($directiveName), array($this, 'maybeFilterDirectiveName'), 10, 4);
+                $this->hooksAPI->addFilter(HookHelpers::getHookNameToFilterDirective($directiveName), array($this, 'maybeFilterDirectiveName'), 10, 4);
             }
         } else {
-            $this->hooksAPI->addFilter(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterDirective(), array($this, 'maybeFilterDirectiveName'), 10, 4);
+            $this->hooksAPI->addFilter(HookHelpers::getHookNameToFilterDirective(), array($this, 'maybeFilterDirectiveName'), 10, 4);
         }
     }
     /**
      * Return true if the directives must be disabled
-     *
-     * @return boolean
      */
     protected function enabled() : bool
     {
         return \true;
     }
-    public function maybeFilterDirectiveName(bool $include, \PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, \PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver, string $directiveName) : bool
+    public function maybeFilterDirectiveName(bool $include, TypeResolverInterface $typeResolver, DirectiveResolverInterface $directiveResolver, string $directiveName) : bool
     {
         // Because there may be several hooks chained, if any of them has already rejected the field, then already return that response
         if (!$include) {
@@ -46,22 +57,22 @@ abstract class AbstractAccessControlForDirectivesHookSet extends \PoP\Engine\Hoo
     }
     /**
      * Affected directives
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @param FieldResolverInterface $directiveResolver
-     * @param string $directiveName
-     * @return boolean
      */
     protected abstract function getDirectiveResolverClasses() : array;
     /**
-     * Decide if to remove the directiveNames
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @param FieldResolverInterface $directiveResolver
-     * @param string $directiveName
-     * @return boolean
+     * Affected directives
+     * @return DirectiveResolverInterface[]
      */
-    protected function removeDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, \PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver, string $directiveName) : bool
+    protected function getDirectiveResolvers() : array
+    {
+        return \array_map(function (string $directiveResolverClass) {
+            return $this->instanceManager->getInstance($directiveResolverClass);
+        }, $this->getDirectiveResolverClasses());
+    }
+    /**
+     * Decide if to remove the directiveNames
+     */
+    protected function removeDirective(TypeResolverInterface $typeResolver, DirectiveResolverInterface $directiveResolver, string $directiveName) : bool
     {
         return \true;
     }

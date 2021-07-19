@@ -16,24 +16,24 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class ArrayNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class ArrayNode extends Node
 {
     protected $index;
     public function __construct()
     {
         $this->index = -1;
     }
-    public function addElement(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $value, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $key = null)
+    public function addElement(Node $value, Node $key = null)
     {
         if (null === $key) {
-            $key = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode(++$this->index);
+            $key = new ConstantNode(++$this->index);
         }
         \array_push($this->nodes, $key, $value);
     }
     /**
      * Compiles the node to PHP.
      */
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $compiler->raw('[');
         $this->compileArguments($compiler);
@@ -57,7 +57,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node
         if ($this->isHash($value)) {
             foreach ($value as $k => $v) {
                 $array[] = ', ';
-                $array[] = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode($k);
+                $array[] = new ConstantNode($k);
                 $array[] = ': ';
                 $array[] = $v;
             }
@@ -81,7 +81,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node
         }
         return $pairs;
     }
-    protected function compileArguments(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler, $withKeys = \true)
+    protected function compileArguments(Compiler $compiler, $withKeys = \true)
     {
         $first = \true;
         foreach ($this->getKeyValuePairs() as $pair) {

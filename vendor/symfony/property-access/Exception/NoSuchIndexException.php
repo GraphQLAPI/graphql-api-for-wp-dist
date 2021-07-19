@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
  *
  * @author Stéphane Escandell <stephane.escandell@gmail.com>
  */
-class NoSuchIndexException extends \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\AccessException
+class NoSuchIndexException extends AccessException
 {
 }

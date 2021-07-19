@@ -12,7 +12,7 @@ class Request
     public static function editSchema() : bool
     {
         if (isset($_REQUEST[self::URLPARAM_EDIT_SCHEMA])) {
-            return \PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::toBool($_REQUEST[self::URLPARAM_EDIT_SCHEMA]);
+            return EnvironmentValueHelpers::toBool($_REQUEST[self::URLPARAM_EDIT_SCHEMA]);
         }
         return \false;
     }
@@ -30,7 +30,7 @@ class Request
     public static function enableGraphQLIntrospection() : ?bool
     {
         if (isset($_REQUEST[self::URLPARAM_ENABLE_GRAPHQL_INTROSPECTION])) {
-            return \PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::toBool($_REQUEST[self::URLPARAM_ENABLE_GRAPHQL_INTROSPECTION]);
+            return EnvironmentValueHelpers::toBool($_REQUEST[self::URLPARAM_ENABLE_GRAPHQL_INTROSPECTION]);
         }
         return null;
     }

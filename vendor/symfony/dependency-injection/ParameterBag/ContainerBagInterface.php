@@ -17,7 +17,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFo
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-interface ContainerBagInterface extends \PrefixedByPoP\Psr\Container\ContainerInterface
+interface ContainerBagInterface extends ContainerInterface
 {
     /**
      * Gets the service container parameters.

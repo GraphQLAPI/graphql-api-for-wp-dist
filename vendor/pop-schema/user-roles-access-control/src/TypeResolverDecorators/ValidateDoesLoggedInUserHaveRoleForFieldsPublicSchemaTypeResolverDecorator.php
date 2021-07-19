@@ -3,22 +3,32 @@
 declare (strict_types=1);
 namespace PoPSchema\UserRolesAccessControl\TypeResolverDecorators;
 
-use PoP\AccessControl\Facades\AccessControlManagerFacade;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\AccessControl\Services\AccessControlManagerInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
 use PoPSchema\UserRolesAccessControl\Services\AccessControlGroups;
 use PoP\AccessControl\TypeResolverDecorators\AbstractPublicSchemaTypeResolverDecorator;
-use PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver;
 use PoP\AccessControl\TypeResolverDecorators\ConfigurableAccessControlForFieldsTypeResolverDecoratorTrait;
-class ValidateDoesLoggedInUserHaveRoleForFieldsPublicSchemaTypeResolverDecorator extends \PoP\AccessControl\TypeResolverDecorators\AbstractPublicSchemaTypeResolverDecorator
+use PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver;
+class ValidateDoesLoggedInUserHaveRoleForFieldsPublicSchemaTypeResolverDecorator extends AbstractPublicSchemaTypeResolverDecorator
 {
     use ConfigurableAccessControlForFieldsTypeResolverDecoratorTrait;
     use ValidateDoesLoggedInUserHaveRolePublicSchemaTypeResolverDecoratorTrait;
-    protected static function getConfigurationEntries() : array
+    /**
+     * @var \PoP\AccessControl\Services\AccessControlManagerInterface
+     */
+    protected $accessControlManager;
+    public function __construct(InstanceManagerInterface $instanceManager, FieldQueryInterpreterInterface $fieldQueryInterpreter, AccessControlManagerInterface $accessControlManager)
     {
-        $accessControlManager = \PoP\AccessControl\Facades\AccessControlManagerFacade::getInstance();
-        return $accessControlManager->getEntriesForFields(\PoPSchema\UserRolesAccessControl\Services\AccessControlGroups::ROLES);
+        $this->accessControlManager = $accessControlManager;
+        parent::__construct($instanceManager, $fieldQueryInterpreter);
+    }
+    protected function getConfigurationEntries() : array
+    {
+        return $this->accessControlManager->getEntriesForFields(AccessControlGroups::ROLES);
     }
     protected function getValidateRoleDirectiveResolverClass() : string
     {
-        return \PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver::class;
+        return ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver::class;
     }
 }

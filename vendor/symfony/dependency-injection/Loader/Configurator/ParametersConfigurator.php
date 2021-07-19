@@ -14,11 +14,11 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ParametersConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractConfigurator
+class ParametersConfigurator extends AbstractConfigurator
 {
     public const FACTORY = 'parameters';
     private $container;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function __construct(ContainerBuilder $container)
     {
         $this->container = $container;
     }

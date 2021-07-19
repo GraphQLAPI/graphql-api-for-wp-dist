@@ -15,20 +15,20 @@ namespace PrefixedByPoP\Symfony\Component\Config\Definition\Builder;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class NodeBuilder implements \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\NodeParentInterface
+class NodeBuilder implements NodeParentInterface
 {
     protected $parent;
     protected $nodeMapping;
     public function __construct()
     {
-        $this->nodeMapping = ['variable' => \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\VariableNodeDefinition::class, 'scalar' => \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\ScalarNodeDefinition::class, 'boolean' => \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\BooleanNodeDefinition::class, 'integer' => \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\IntegerNodeDefinition::class, 'float' => \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\FloatNodeDefinition::class, 'array' => \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition::class, 'enum' => \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\EnumNodeDefinition::class];
+        $this->nodeMapping = ['variable' => VariableNodeDefinition::class, 'scalar' => ScalarNodeDefinition::class, 'boolean' => BooleanNodeDefinition::class, 'integer' => IntegerNodeDefinition::class, 'float' => FloatNodeDefinition::class, 'array' => ArrayNodeDefinition::class, 'enum' => EnumNodeDefinition::class];
     }
     /**
      * Set the parent node.
      *
      * @return $this
      */
-    public function setParent(\PrefixedByPoP\Symfony\Component\Config\Definition\Builder\ParentNodeDefinitionInterface $parent = null)
+    public function setParent(ParentNodeDefinitionInterface $parent = null)
     {
         $this->parent = $parent;
         return $this;
@@ -135,9 +135,9 @@ class NodeBuilder implements \PrefixedByPoP\Symfony\Component\Config\Definition\
      *
      * @return $this
      */
-    public function append(\PrefixedByPoP\Symfony\Component\Config\Definition\Builder\NodeDefinition $node)
+    public function append(NodeDefinition $node)
     {
-        if ($node instanceof \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\BuilderAwareInterface) {
+        if ($node instanceof BuilderAwareInterface) {
             $builder = clone $this;
             $builder->setParent(null);
             $node->setBuilder($builder);

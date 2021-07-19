@@ -10,19 +10,25 @@
  */
 namespace PrefixedByPoP\Symfony\Component\String;
 
-function u(?string $string = '') : \PrefixedByPoP\Symfony\Component\String\UnicodeString
-{
-    return new \PrefixedByPoP\Symfony\Component\String\UnicodeString($string ?? '');
+if (!\function_exists(u::class)) {
+    function u(?string $string = '') : UnicodeString
+    {
+        return new UnicodeString($string ?? '');
+    }
 }
-function b(?string $string = '') : \PrefixedByPoP\Symfony\Component\String\ByteString
-{
-    return new \PrefixedByPoP\Symfony\Component\String\ByteString($string ?? '');
+if (!\function_exists(b::class)) {
+    function b(?string $string = '') : ByteString
+    {
+        return new ByteString($string ?? '');
+    }
 }
-/**
- * @return UnicodeString|ByteString
- */
-function s(?string $string = '') : \PrefixedByPoP\Symfony\Component\String\AbstractString
-{
-    $string = $string ?? '';
-    return \preg_match('//u', $string) ? new \PrefixedByPoP\Symfony\Component\String\UnicodeString($string) : new \PrefixedByPoP\Symfony\Component\String\ByteString($string);
+if (!\function_exists(s::class)) {
+    /**
+     * @return UnicodeString|ByteString
+     */
+    function s(?string $string = '') : AbstractString
+    {
+        $string = $string ?? '';
+        return \preg_match('//u', $string) ? new UnicodeString($string) : new ByteString($string);
+    }
 }

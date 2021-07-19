@@ -24,7 +24,7 @@ class Hydrator
     public $properties;
     public $value;
     public $wakeups;
-    public function __construct(?\PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry $registry, ?\PrefixedByPoP\Symfony\Component\VarExporter\Internal\Values $values, array $properties, $value, array $wakeups)
+    public function __construct(?Registry $registry, ?Values $values, array $properties, $value, array $wakeups)
     {
         $this->registry = $registry;
         $this->values = $values;
@@ -58,7 +58,7 @@ class Hydrator
             };
         }
         if (!\class_exists($class) && !\interface_exists($class, \false) && !\trait_exists($class, \false)) {
-            throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\ClassNotFoundException($class);
+            throw new ClassNotFoundException($class);
         }
         $classReflector = new \ReflectionClass($class);
         if (!$classReflector->isInternal()) {
@@ -73,13 +73,13 @@ class Hydrator
                 $constructor = \Closure::fromCallable([$classReflector->getConstructor(), 'invokeArgs']);
                 return self::$hydrators[$class] = static function ($properties, $objects) use($constructor) {
                     foreach ($properties as $name => $values) {
-                        if ("\0" !== $name) {
+                        if ("\x00" !== $name) {
                             foreach ($values as $i => $v) {
                                 $objects[$i]->{$name} = $v;
                             }
                         }
                     }
-                    foreach ($properties["\0"] ?? [] as $i => $v) {
+                    foreach ($properties["\x00"] ?? [] as $i => $v) {
                         $constructor($objects[$i], $v);
                     }
                 };
@@ -94,7 +94,7 @@ class Hydrator
             case 'SplObjectStorage':
                 return self::$hydrators[$class] = static function ($properties, $objects) {
                     foreach ($properties as $name => $values) {
-                        if ("\0" === $name) {
+                        if ("\x00" === $name) {
                             foreach ($values as $i => $v) {
                                 for ($j = 0; $j < \count($v); ++$j) {
                                     $objects[$i]->attach($v[$j], $v[++$j]);

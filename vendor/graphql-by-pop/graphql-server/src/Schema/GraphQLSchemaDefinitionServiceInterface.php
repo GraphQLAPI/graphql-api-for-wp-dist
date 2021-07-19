@@ -4,7 +4,7 @@ declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Schema;
 
 use PoP\Engine\Schema\SchemaDefinitionServiceInterface;
-interface GraphQLSchemaDefinitionServiceInterface extends \PoP\Engine\Schema\SchemaDefinitionServiceInterface
+interface GraphQLSchemaDefinitionServiceInterface extends SchemaDefinitionServiceInterface
 {
     public function getQueryRootTypeSchemaKey() : string;
     public function getQueryRootTypeResolverClass() : string;

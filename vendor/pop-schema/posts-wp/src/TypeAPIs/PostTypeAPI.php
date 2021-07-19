@@ -27,14 +27,16 @@ class PostTypeAPI extends CustomPostTypeAPI implements PostTypeAPIInterface
     protected function convertCustomPostsQuery(array $query, array $options = []): array
     {
         $query = parent::convertCustomPostsQuery($query, $options);
-        return HooksAPIFacade::getInstance()->applyFilters('CMSAPI:posts:query', $query, $options);
+        return HooksAPIFacade::getInstance()->applyFilters(
+            'CMSAPI:posts:query',
+            $query,
+            $options
+        );
     }
 
     /**
      * Indicates if the passed object is of type Post
-     *
      * @param object $object
-     * @return boolean
      */
     public function isInstanceOfPostType($object): bool
     {
@@ -43,9 +45,8 @@ class PostTypeAPI extends CustomPostTypeAPI implements PostTypeAPIInterface
 
     /**
      * Get the post with provided ID or, if it doesn't exist, null
-     *
-     * @param int $id
-     * @return void
+     * @param int|string $id
+     * @return object|null
      */
     public function getPost($id)
     {
@@ -58,9 +59,7 @@ class PostTypeAPI extends CustomPostTypeAPI implements PostTypeAPIInterface
 
     /**
      * Indicate if an post with provided ID exists
-     *
-     * @param int $id
-     * @return void
+     * @param int|string $id
      */
     public function postExists($id): bool
     {
@@ -70,8 +69,6 @@ class PostTypeAPI extends CustomPostTypeAPI implements PostTypeAPIInterface
     /**
      * Limit of how many custom posts can be retrieved in the query.
      * Override this value for specific custom post types
-     *
-     * @return integer
      */
     protected function getCustomPostListMaxLimit(): int
     {

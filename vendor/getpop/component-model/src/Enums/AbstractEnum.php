@@ -15,7 +15,7 @@ abstract class AbstractEnum implements \PoP\ComponentModel\Enums\EnumInterface
     public function __construct()
     {
         if (!\is_null($this->getCoreValues()) && \count($this->getCoreValues()) != \count($this->getValues())) {
-            throw new \Exception(\sprintf('Enum \'%s\' (in class \'%s\') must return the same number of elements in function `getCoreValues()` as in `getValues()`', $this->getName(), \get_called_class()));
+            throw new Exception(\sprintf('Enum \'%s\' (in class \'%s\') must return the same number of elements in function `getCoreValues()` as in `getValues()`', $this->getName(), \get_called_class()));
         }
     }
     public final function getName() : string
@@ -24,21 +24,19 @@ abstract class AbstractEnum implements \PoP\ComponentModel\Enums\EnumInterface
     }
     public function getNamespace() : string
     {
-        return \PoP\ComponentModel\Schema\SchemaHelpers::getSchemaNamespace(\get_called_class());
+        return SchemaHelpers::getSchemaNamespace(\get_called_class());
     }
     public final function getNamespacedName() : string
     {
-        return \PoP\ComponentModel\Schema\SchemaHelpers::getSchemaNamespacedName($this->getNamespace(), $this->getEnumName());
+        return SchemaHelpers::getSchemaNamespacedName($this->getNamespace(), $this->getEnumName());
     }
     public final function getMaybeNamespacedName() : string
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         return $vars['namespace-types-and-interfaces'] ? $this->getNamespacedName() : $this->getEnumName();
     }
     /**
      * Enum name
-     *
-     * @return string
      */
     protected abstract function getEnumName() : string;
     /**
@@ -49,8 +47,6 @@ abstract class AbstractEnum implements \PoP\ComponentModel\Enums\EnumInterface
      * values => ["ONE", "TWO"] and coreValues => ["one", "two"]
      *
      * If `null`, `getValues` is used
-     *
-     * @return array|null
      */
     public function getCoreValues() : ?array
     {
@@ -58,9 +54,6 @@ abstract class AbstractEnum implements \PoP\ComponentModel\Enums\EnumInterface
     }
     /**
      * Given an enum value, obtain its core value
-     *
-     * @param string $enumValue
-     * @return string|null
      */
     public final function getCoreValue(string $enumValue) : ?string
     {

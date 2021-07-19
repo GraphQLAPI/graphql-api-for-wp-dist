@@ -7,15 +7,15 @@ use PoP\ComponentModel\ComponentConfiguration;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\Registries\TypeRegistryInterface;
 use PoP\Root\Container\CompilerPasses\AbstractInjectServiceIntoRegistryCompilerPass;
-class RegisterTypeResolverCompilerPass extends \PoP\Root\Container\CompilerPasses\AbstractInjectServiceIntoRegistryCompilerPass
+class RegisterTypeResolverCompilerPass extends AbstractInjectServiceIntoRegistryCompilerPass
 {
     protected function getRegistryServiceDefinition() : string
     {
-        return \PoP\ComponentModel\Registries\TypeRegistryInterface::class;
+        return TypeRegistryInterface::class;
     }
     protected function getServiceClass() : string
     {
-        return \PoP\ComponentModel\TypeResolvers\TypeResolverInterface::class;
+        return TypeResolverInterface::class;
     }
     protected function getRegistryMethodCallName() : string
     {
@@ -23,6 +23,6 @@ class RegisterTypeResolverCompilerPass extends \PoP\Root\Container\CompilerPasse
     }
     protected function enabled() : bool
     {
-        return \PoP\ComponentModel\ComponentConfiguration::enableSchemaEntityRegistries();
+        return ComponentConfiguration::enableSchemaEntityRegistries();
     }
 }

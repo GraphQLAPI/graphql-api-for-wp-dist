@@ -3,35 +3,32 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DirectiveResolvers;
 
+use PoP\ComponentModel\ComponentConfiguration;
+use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTrait;
 use PoP\ComponentModel\Directives\DirectiveTypes;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTrait;
 abstract class AbstractValidateDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
 {
     use RemoveIDsDataFieldsDirectiveResolverTrait;
     /**
      * Validations are by default a "Schema" type directive
-     *
-     * @return string
      */
     public function getDirectiveType() : string
     {
-        return \PoP\ComponentModel\Directives\DirectiveTypes::SCHEMA;
+        return DirectiveTypes::SCHEMA;
     }
     /**
      * Each validate can execute multiple times (eg: an added @validateIsUserLoggedIn)
-     *
-     * @return boolean
      */
     public function isRepeatable() : bool
     {
         return \true;
     }
-    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    public function resolveDirective(TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
     {
-        $this->validateAndFilterFields($typeResolver, $idsDataFields, $succeedingPipelineIDsDataFields, $variables, $schemaErrors, $schemaWarnings, $schemaDeprecations);
+        $this->validateAndFilterFields($typeResolver, $idsDataFields, $succeedingPipelineIDsDataFields, $dbItems, $variables, $schemaErrors, $schemaWarnings, $schemaDeprecations);
     }
-    protected function validateAndFilterFields(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$variables, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations)
+    protected function validateAndFilterFields(TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$dbItems, array &$variables, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations) : void
     {
         // Validate that the schema and the provided data match, eg: passing mandatory values
         // (Such as fieldArg "status" for field "isStatus")
@@ -48,6 +45,9 @@ abstract class AbstractValidateDirectiveResolver extends \PoP\ComponentModel\Dir
                 $idsDataFieldsToRemove[(string) $id]['direct'] = \array_intersect($dataFields['direct'], $failedDataFields);
             }
             $this->removeIDsDataFields($idsDataFieldsToRemove, $succeedingPipelineIDsDataFields);
+            if (ComponentConfiguration::setFailingFieldResponseAsNull()) {
+                $this->setIDsDataFieldsAsNull($idsDataFieldsToRemove, $dbItems);
+            }
         }
         // Since adding the Validate directive also when processing the conditional fields, there is no need to validate them now
         // They will be validated when it's their turn to be processed
@@ -60,5 +60,5 @@ abstract class AbstractValidateDirectiveResolver extends \PoP\ComponentModel\Dir
         //     }
         // }
     }
-    protected abstract function validateFields(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array $dataFields, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$variables, array &$failedDataFields) : void;
+    protected abstract function validateFields(TypeResolverInterface $typeResolver, array $dataFields, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$variables, array &$failedDataFields) : void;
 }

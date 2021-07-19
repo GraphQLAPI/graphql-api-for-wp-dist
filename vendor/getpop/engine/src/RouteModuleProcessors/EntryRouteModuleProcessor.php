@@ -3,16 +3,17 @@
 declare (strict_types=1);
 namespace PoP\Engine\RouteModuleProcessors;
 
+use PoP\Engine\ModuleProcessors\RootModuleProcessors;
 use PoP\ModuleRouting\AbstractEntryRouteModuleProcessor;
-class EntryRouteModuleProcessor extends \PoP\ModuleRouting\AbstractEntryRouteModuleProcessor
+class EntryRouteModuleProcessor extends AbstractEntryRouteModuleProcessor
 {
     /**
-     * @return array<string, string[]>
+     * @return array<array<string, string[]>>
      */
     public function getModulesVarsProperties() : array
     {
         $ret = array();
-        $ret[] = ['module' => [\PrefixedByPoP\PoP_Engine_Module_Processor_Elements::class, \PrefixedByPoP\PoP_Engine_Module_Processor_Elements::MODULE_EMPTY]];
+        $ret[] = ['module' => [RootModuleProcessors::class, RootModuleProcessors::MODULE_EMPTY]];
         return $ret;
     }
 }

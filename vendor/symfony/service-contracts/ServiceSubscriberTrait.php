@@ -21,6 +21,9 @@ trait ServiceSubscriberTrait
 {
     /** @var ContainerInterface */
     protected $container;
+    /**
+     * {@inheritdoc}
+     */
     public static function getSubscribedServices() : array
     {
         static $services;
@@ -33,7 +36,7 @@ trait ServiceSubscriberTrait
                 continue;
             }
             if (self::class === $method->getDeclaringClass()->name && ($returnType = $method->getReturnType()) && !$returnType->isBuiltin()) {
-                $services[self::class . '::' . $method->name] = '?' . ($returnType instanceof \ReflectionNamedType ? $returnType->getName() : $type);
+                $services[self::class . '::' . $method->name] = '?' . ($returnType instanceof \ReflectionNamedType ? $returnType->getName() : $returnType);
             }
         }
         return $services;
@@ -41,7 +44,7 @@ trait ServiceSubscriberTrait
     /**
      * @required
      */
-    public function setContainer(\PrefixedByPoP\Psr\Container\ContainerInterface $container)
+    public function setContainer(ContainerInterface $container)
     {
         $this->container = $container;
         if (\is_callable(['parent', __FUNCTION__])) {

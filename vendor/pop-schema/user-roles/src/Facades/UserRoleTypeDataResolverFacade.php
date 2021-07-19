@@ -7,12 +7,12 @@ use PoPSchema\UserRoles\TypeDataResolvers\UserRoleTypeDataResolverInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class UserRoleTypeDataResolverFacade
 {
-    public static function getInstance() : \PoPSchema\UserRoles\TypeDataResolvers\UserRoleTypeDataResolverInterface
+    public static function getInstance() : UserRoleTypeDataResolverInterface
     {
         /**
          * @var UserRoleTypeDataResolverInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\UserRoles\TypeDataResolvers\UserRoleTypeDataResolverInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(UserRoleTypeDataResolverInterface::class);
         return $service;
     }
 }

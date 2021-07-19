@@ -23,5 +23,5 @@ interface ResultHandlerInterface
      * @param  bool                                $doParseRequest
      * @return bool
      */
-    public function handle(\PrefixedByPoP\Brain\Cortex\Router\MatchingResult $result, \WP $wp, $doParseRequest);
+    public function handle(MatchingResult $result, \WP $wp, $doParseRequest);
 }

@@ -3,27 +3,27 @@
 declare (strict_types=1);
 namespace PoPSchema\CustomPosts\FieldResolvers;
 
-use PoP\Hooks\Facades\HooksAPIFacade;
-use PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade;
-use PoPSchema\CustomPosts\Enums\CustomPostContentFormatEnum;
-use PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Engine\Facades\Formatters\DateFormatterFacade;
+use PoPSchema\CustomPosts\Enums\CustomPostContentFormatEnum;
+use PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade;
 use PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver;
+use PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface;
 use PoPSchema\QueriedObject\FieldInterfaceResolvers\QueryableFieldInterfaceResolver;
-abstract class AbstractCustomPostFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+abstract class AbstractCustomPostFieldResolver extends AbstractDBDataFieldResolver
 {
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
         return [];
     }
-    public static function getImplementedInterfaceClasses() : array
+    public function getImplementedFieldInterfaceResolverClasses() : array
     {
-        return [\PoPSchema\QueriedObject\FieldInterfaceResolvers\QueryableFieldInterfaceResolver::class, \PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver::class];
+        return [QueryableFieldInterfaceResolver::class, IsCustomPostFieldInterfaceResolver::class];
     }
-    protected function getCustomPostTypeAPI() : \PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface
+    protected function getCustomPostTypeAPI() : CustomPostTypeAPIInterface
     {
-        $customPostTypeAPI = \PoPSchema\CustomPosts\Facades\CustomPostTypeAPIFacade::getInstance();
+        $customPostTypeAPI = CustomPostTypeAPIFacade::getInstance();
         return $customPostTypeAPI;
     }
     /**
@@ -34,21 +34,21 @@ abstract class AbstractCustomPostFieldResolver extends \PoP\ComponentModel\Field
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $cmsengineapi = \PoP\Engine\FunctionAPIFactory::getInstance();
+        $dateFormatter = DateFormatterFacade::getInstance();
         $customPostTypeAPI = $this->getCustomPostTypeAPI();
         $customPost = $resultItem;
         switch ($fieldName) {
             case 'content':
                 $format = $fieldArgs['format'];
                 $value = '';
-                if ($format == \PoPSchema\CustomPosts\Enums\CustomPostContentFormatEnum::HTML) {
+                if ($format == CustomPostContentFormatEnum::HTML) {
                     $value = $customPostTypeAPI->getContent($customPost);
-                } elseif ($format == \PoPSchema\CustomPosts\Enums\CustomPostContentFormatEnum::PLAIN_TEXT) {
+                } elseif ($format == CustomPostContentFormatEnum::PLAIN_TEXT) {
                     $value = $customPostTypeAPI->getPlainTextContent($customPost);
                 }
-                return \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('pop_content', $value, $typeResolver->getID($customPost));
+                return $this->hooksAPI->applyFilters('pop_content', $value, $typeResolver->getID($customPost));
             case 'url':
                 return $customPostTypeAPI->getPermalink($customPost);
             case 'slug':
@@ -58,16 +58,16 @@ abstract class AbstractCustomPostFieldResolver extends \PoP\ComponentModel\Field
             case 'isStatus':
                 return $fieldArgs['status'] == $customPostTypeAPI->getStatus($customPost);
             case 'date':
-                return $cmsengineapi->getDate($fieldArgs['format'], $customPostTypeAPI->getPublishedDate($customPost));
+                return $dateFormatter->format($fieldArgs['format'], $customPostTypeAPI->getPublishedDate($customPost));
             case 'datetime':
                 // If it is the current year, don't add the year. Otherwise, do
                 // 15 Jul, 21:47 or // 15 Jul 2018, 21:47
                 $date = $customPostTypeAPI->getPublishedDate($customPost);
                 $format = $fieldArgs['format'];
                 if (!$format) {
-                    $format = $cmsengineapi->getDate('Y', $date) == \date('Y') ? 'j M, H:i' : 'j M Y, H:i';
+                    $format = $dateFormatter->format('Y', $date) == \date('Y') ? 'j M, H:i' : 'j M Y, H:i';
                 }
-                return $cmsengineapi->getDate($format, $date);
+                return $dateFormatter->format($format, $date);
             case 'title':
                 return $customPostTypeAPI->getTitle($customPost);
             case 'excerpt':

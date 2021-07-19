@@ -8,12 +8,19 @@ class FieldQueryUtils
 {
     public static function isAnyFieldArgumentValueAField(array $fieldArgValues) : bool
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
         return self::isAnyFieldArgumentValueASomething($fieldArgValues, [$fieldQueryInterpreter, 'isFieldArgumentValueAField']);
+    }
+    public static function isAnyFieldArgumentValueAFieldOrExpression(array $fieldArgValues) : bool
+    {
+        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+        return self::isAnyFieldArgumentValueASomething($fieldArgValues, function ($fieldArgValue) use($fieldQueryInterpreter) {
+            return $fieldQueryInterpreter->isFieldArgumentValueAField($fieldArgValue) || $fieldQueryInterpreter->isFieldArgumentValueAnExpression($fieldArgValue);
+        });
     }
     public static function isAnyFieldArgumentValueDynamic(array $fieldArgValues) : bool
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
         return self::isAnyFieldArgumentValueASomething($fieldArgValues, function ($fieldArgValue) use($fieldQueryInterpreter) {
             return $fieldQueryInterpreter->isFieldArgumentValueDynamic($fieldArgValue);
             // // Is it a field?
@@ -26,10 +33,6 @@ class FieldQueryUtils
     }
     /**
      * Indicate if the fieldArgValue is whatever is needed to know, executed against a $callback function
-     *
-     * @param array $fieldArgValues
-     * @param callback $callback
-     * @return boolean
      */
     public static function isAnyFieldArgumentValueASomething(array $fieldArgValues, callable $callback) : bool
     {

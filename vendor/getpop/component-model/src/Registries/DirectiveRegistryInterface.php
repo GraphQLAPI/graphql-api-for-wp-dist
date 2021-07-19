@@ -6,7 +6,7 @@ namespace PoP\ComponentModel\Registries;
 use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 interface DirectiveRegistryInterface
 {
-    public function addDirectiveResolver(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver) : void;
+    public function addDirectiveResolver(DirectiveResolverInterface $directiveResolver) : void;
     /**
      * @return DirectiveResolverInterface[]
      */

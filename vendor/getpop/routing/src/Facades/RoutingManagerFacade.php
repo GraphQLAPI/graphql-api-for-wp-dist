@@ -7,12 +7,12 @@ use PoP\Routing\RoutingManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class RoutingManagerFacade
 {
-    public static function getInstance() : \PoP\Routing\RoutingManagerInterface
+    public static function getInstance() : RoutingManagerInterface
     {
         /**
          * @var RoutingManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\Routing\RoutingManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(RoutingManagerInterface::class);
         return $service;
     }
 }

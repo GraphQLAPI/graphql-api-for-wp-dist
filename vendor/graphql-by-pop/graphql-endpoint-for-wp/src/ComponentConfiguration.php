@@ -12,8 +12,14 @@ class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
 
-    private static $isGraphQLAPIEndpointDisabled;
-    private static $getGraphQLAPIEndpoint;
+    /**
+     * @var bool
+     */
+    private static $isGraphQLAPIEndpointDisabled = false;
+    /**
+     * @var string
+     */
+    private static $getGraphQLAPIEndpoint = '/api/graphql/';
 
     public static function isGraphQLAPIEndpointDisabled(): bool
     {
@@ -24,7 +30,12 @@ class ComponentConfiguration
         $callback = [EnvironmentValueHelpers::class, 'toBool'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 
@@ -37,7 +48,12 @@ class ComponentConfiguration
         $callback = [EndpointUtils::class, 'slashURI'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 }

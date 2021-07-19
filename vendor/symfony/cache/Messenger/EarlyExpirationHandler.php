@@ -16,20 +16,20 @@ use PrefixedByPoP\Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 /**
  * Computes cached values sent to a message bus.
  */
-class EarlyExpirationHandler implements \PrefixedByPoP\Symfony\Component\Messenger\Handler\MessageHandlerInterface
+class EarlyExpirationHandler implements MessageHandlerInterface
 {
     private $reverseContainer;
     private $processedNonces = [];
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\ReverseContainer $reverseContainer)
+    public function __construct(ReverseContainer $reverseContainer)
     {
         $this->reverseContainer = $reverseContainer;
     }
-    public function __invoke(\PrefixedByPoP\Symfony\Component\Cache\Messenger\EarlyExpirationMessage $message)
+    public function __invoke(EarlyExpirationMessage $message)
     {
         $item = $message->getItem();
         $metadata = $item->getMetadata();
-        $expiry = $metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY] ?? 0;
-        $ctime = $metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_CTIME] ?? 0;
+        $expiry = $metadata[CacheItem::METADATA_EXPIRY] ?? 0;
+        $ctime = $metadata[CacheItem::METADATA_CTIME] ?? 0;
         if ($expiry && $ctime) {
             // skip duplicate or expired messages
             $processingNonce = [$expiry, $ctime];
@@ -47,12 +47,12 @@ class EarlyExpirationHandler implements \PrefixedByPoP\Symfony\Component\Messeng
             }
         }
         static $setMetadata;
-        $setMetadata = $setMetadata ?? \Closure::bind(function (\PrefixedByPoP\Symfony\Component\Cache\CacheItem $item, float $startTime) {
+        $setMetadata ?? ($setMetadata = \Closure::bind(function (CacheItem $item, float $startTime) {
             if ($item->expiry > ($endTime = \microtime(\true))) {
-                $item->newMetadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY] = $item->expiry;
-                $item->newMetadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_CTIME] = (int) \ceil(1000 * ($endTime - $startTime));
+                $item->newMetadata[CacheItem::METADATA_EXPIRY] = $item->expiry;
+                $item->newMetadata[CacheItem::METADATA_CTIME] = (int) \ceil(1000 * ($endTime - $startTime));
             }
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+        }, null, CacheItem::class));
         $startTime = \microtime(\true);
         $pool = $message->findPool($this->reverseContainer);
         $callback = $message->findCallback($this->reverseContainer);

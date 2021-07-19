@@ -6,18 +6,21 @@ namespace PoP\API\ModuleProcessors;
 use PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor;
 use PoP\Engine\Facades\Schema\SchemaDefinitionServiceFacade;
 use PoP\Engine\ObjectModels\Root;
-class RootRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor
+class RootRelationalFieldDataloadModuleProcessor extends AbstractRelationalFieldDataloadModuleProcessor
 {
     public const MODULE_DATALOAD_RELATIONALFIELDS_ROOT = 'dataload-relationalfields-root';
     public function getModulesToProcess() : array
     {
         return array([self::class, self::MODULE_DATALOAD_RELATIONALFIELDS_ROOT]);
     }
+    /**
+     * @return string|int|mixed[]
+     */
     public function getDBObjectIDOrIDs(array $module, array &$props, &$data_properties)
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_ROOT:
-                return \PoP\Engine\ObjectModels\Root::ID;
+                return Root::ID;
         }
         return parent::getDBObjectIDOrIDs($module, $props, $data_properties);
     }
@@ -25,7 +28,7 @@ class RootRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProcesso
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_ROOT:
-                $schemaDefinitionService = \PoP\Engine\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
+                $schemaDefinitionService = SchemaDefinitionServiceFacade::getInstance();
                 return $schemaDefinitionService->getRootTypeResolverClass();
         }
         return parent::getTypeResolverClass($module);

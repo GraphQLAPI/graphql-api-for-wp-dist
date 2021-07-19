@@ -8,6 +8,7 @@
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Argument;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\Directive;
 interface FieldInterface extends \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\LocatableInterface
 {
     /**
@@ -36,4 +37,12 @@ interface FieldInterface extends \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfac
      * @return array
      */
     public function getFields();
+    /**
+     * @return bool
+     */
+    public function hasDirectives();
+    /**
+     * @return Directive[]
+     */
+    public function getDirectives();
 }

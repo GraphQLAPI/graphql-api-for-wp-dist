@@ -10,7 +10,7 @@ class DirectiveRegistry implements \PoP\ComponentModel\Registries\DirectiveRegis
      * @var DirectiveResolverInterface[]
      */
     protected $directiveResolvers = [];
-    public function addDirectiveResolver(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver) : void
+    public function addDirectiveResolver(DirectiveResolverInterface $directiveResolver) : void
     {
         $this->directiveResolvers[] = $directiveResolver;
     }

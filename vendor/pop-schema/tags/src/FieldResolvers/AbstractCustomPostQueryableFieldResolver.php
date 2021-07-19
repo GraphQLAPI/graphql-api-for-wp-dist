@@ -3,66 +3,62 @@
 declare (strict_types=1);
 namespace PoPSchema\Tags\FieldResolvers;
 
-use PoPSchema\Tags\ComponentConfiguration;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Schema\TypeCastingHelpers;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver;
-use PoPSchema\Tags\ComponentContracts\TagAPIRequestedContractTrait;
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
-abstract class AbstractCustomPostQueryableFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver
+use PoPSchema\Tags\ComponentConfiguration;
+use PoPSchema\Tags\ComponentContracts\TagAPIRequestedContractTrait;
+abstract class AbstractCustomPostQueryableFieldResolver extends AbstractQueryableFieldResolver
 {
     use TagAPIRequestedContractTrait;
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
-        return ['tags', 'tagCount'];
+        return ['tags', 'tagCount', 'tagNames'];
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
     {
-        $types = ['tags' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID), 'tagCount' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_INT];
+        $types = ['tags' => SchemaDefinition::TYPE_ID, 'tagCount' => SchemaDefinition::TYPE_INT, 'tagNames' => SchemaDefinition::TYPE_STRING];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(TypeResolverInterface $typeResolver, string $fieldName) : ?int
     {
-        $nonNullableFieldNames = ['tags', 'tagCount'];
-        if (\in_array($fieldName, $nonNullableFieldNames)) {
-            return \true;
+        switch ($fieldName) {
+            case 'tagCount':
+                return SchemaTypeModifiers::NON_NULLABLE;
+            case 'tags':
+            case 'tagNames':
+                return SchemaTypeModifiers::NON_NULLABLE | SchemaTypeModifiers::IS_ARRAY;
+            default:
+                return parent::getSchemaFieldTypeModifiers($typeResolver, $fieldName);
         }
-        return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['tags' => $translationAPI->__('Tags added to this custom post', 'pop-tags'), 'tagCount' => $translationAPI->__('Number of tags added to this custom post', 'pop-tags')];
+        $descriptions = ['tags' => $this->translationAPI->__('Tags added to this custom post', 'pop-tags'), 'tagCount' => $this->translationAPI->__('Number of tags added to this custom post', 'pop-tags'), 'tagNames' => $this->translationAPI->__('Names of the tags added to this custom post', 'pop-tags')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
+    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         $schemaFieldArgs = parent::getSchemaFieldArgs($typeResolver, $fieldName);
         switch ($fieldName) {
             case 'tags':
             case 'tagCount':
+            case 'tagNames':
                 return \array_merge($schemaFieldArgs, $this->getFieldArgumentsSchemaDefinitions($typeResolver, $fieldName));
         }
         return $schemaFieldArgs;
     }
-    public function enableOrderedSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function enableOrderedSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
         switch ($fieldName) {
             case 'tags':
             case 'tagCount':
+            case 'tagNames':
                 return \false;
         }
         return parent::enableOrderedSchemaFieldArgs($typeResolver, $fieldName);
-    }
-    protected function getFieldDefaultFilterDataloadingModule(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []) : ?array
-    {
-        switch ($fieldName) {
-            case 'tagCount':
-                return [\PrefixedByPoP\PoP_Tags_Module_Processor_FieldDataloads::class, \PrefixedByPoP\PoP_Tags_Module_Processor_FieldDataloads::MODULE_DATALOAD_RELATIONALFIELDS_TAGCOUNT];
-        }
-        return parent::getFieldDefaultFilterDataloadingModule($typeResolver, $fieldName, $fieldArgs);
     }
     /**
      * @param array<string, mixed> $fieldArgs
@@ -72,24 +68,25 @@ abstract class AbstractCustomPostQueryableFieldResolver extends \PoP\ComponentMo
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $tagapi = $this->getTypeAPI();
-        $post = $resultItem;
+        $tagTypeAPI = $this->getTypeAPI();
+        $customPost = $resultItem;
         switch ($fieldName) {
             case 'tags':
-                $query = ['limit' => \PoPSchema\Tags\ComponentConfiguration::getTagListDefaultLimit()];
-                $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
+            case 'tagNames':
+                $query = ['limit' => ComponentConfiguration::getTagListDefaultLimit()];
+                $options = ['return-type' => $fieldName === 'tags' ? ReturnTypes::IDS : ReturnTypes::NAMES];
                 $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
-                return $tagapi->getCustomPostTags($typeResolver->getID($post), $query, $options);
+                return $tagTypeAPI->getCustomPostTags($typeResolver->getID($customPost), $query, $options);
             case 'tagCount':
                 $options = [];
                 $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
-                return $tagapi->getCustomPostTagCount($typeResolver->getID($post), [], $options);
+                return $tagTypeAPI->getCustomPostTagCount($typeResolver->getID($customPost), [], $options);
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'tags':

@@ -7,12 +7,12 @@ use GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class GraphQLSchemaDefinitionServiceFacade
 {
-    public static function getInstance() : \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface
+    public static function getInstance() : GraphQLSchemaDefinitionServiceInterface
     {
         /**
          * @var GraphQLSchemaDefinitionServiceInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(GraphQLSchemaDefinitionServiceInterface::class);
         return $service;
     }
 }

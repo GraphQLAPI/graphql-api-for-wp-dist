@@ -26,7 +26,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class GraphvizDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dumper\Dumper
+class GraphvizDumper extends Dumper
 {
     private $nodes;
     private $edges;
@@ -89,12 +89,12 @@ class GraphvizDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjectio
     {
         $edges = [];
         foreach ($arguments as $argument) {
-            if ($argument instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Parameter) {
+            if ($argument instanceof Parameter) {
                 $argument = $this->container->hasParameter($argument) ? $this->container->getParameter($argument) : null;
             } elseif (\is_string($argument) && \preg_match('/^%([^%]+)%$/', $argument, $match)) {
                 $argument = $this->container->hasParameter($match[1]) ? $this->container->getParameter($match[1]) : null;
             }
-            if ($argument instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference) {
+            if ($argument instanceof Reference) {
                 $lazyEdge = $lazy;
                 if (!$this->container->has((string) $argument)) {
                     $this->nodes[(string) $argument] = ['name' => $name, 'required' => $required, 'class' => '', 'attributes' => $this->options['node.missing']];
@@ -102,9 +102,9 @@ class GraphvizDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjectio
                     $lazyEdge = $lazy || $this->container->getDefinition((string) $argument)->isLazy();
                 }
                 $edges[] = ['name' => $name, 'required' => $required, 'to' => $argument, 'lazy' => $lazyEdge];
-            } elseif ($argument instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ArgumentInterface) {
+            } elseif ($argument instanceof ArgumentInterface) {
                 $edges = \array_merge($edges, $this->findEdges($id, $argument->getValues(), $required, $name, \true));
-            } elseif ($argument instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+            } elseif ($argument instanceof Definition) {
                 $edges = \array_merge($edges, $this->findEdges($id, $argument->getArguments(), $required, ''), $this->findEdges($id, $argument->getProperties(), \false, ''));
                 foreach ($argument->getMethodCalls() as $call) {
                     $edges = \array_merge($edges, $this->findEdges($id, $call[1], \false, $call[0] . '()'));
@@ -126,10 +126,10 @@ class GraphvizDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjectio
             }
             try {
                 $class = $this->container->getParameterBag()->resolveValue($class);
-            } catch (\PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException $e) {
+            } catch (ParameterNotFoundException $e) {
             }
             $nodes[$id] = ['class' => \str_replace('\\', '\\\\', $class), 'attributes' => \array_merge($this->options['node.definition'], ['style' => $definition->isShared() ? 'filled' : 'dotted'])];
-            $container->setDefinition($id, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition('stdClass'));
+            $container->setDefinition($id, new Definition('stdClass'));
         }
         foreach ($container->getServiceIds() as $id) {
             if (\array_key_exists($id, $container->getAliases())) {
@@ -141,10 +141,10 @@ class GraphvizDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjectio
         }
         return $nodes;
     }
-    private function cloneContainer() : \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder
+    private function cloneContainer() : ContainerBuilder
     {
-        $parameterBag = new \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\ParameterBag($this->container->getParameterBag()->all());
-        $container = new \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder($parameterBag);
+        $parameterBag = new ParameterBag($this->container->getParameterBag()->all());
+        $container = new ContainerBuilder($parameterBag);
         $container->setDefinitions($this->container->getDefinitions());
         $container->setAliases($this->container->getAliases());
         $container->setResources($this->container->getResources());

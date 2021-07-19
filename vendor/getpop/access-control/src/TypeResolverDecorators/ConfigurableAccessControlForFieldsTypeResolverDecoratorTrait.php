@@ -17,8 +17,8 @@ trait ConfigurableAccessControlForFieldsTypeResolverDecoratorTrait
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getEntries insteadof ConfigurableMandatoryDirectivesForFieldsTypeResolverDecoratorTrait;
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getFieldNames insteadof ConfigurableMandatoryDirectivesForFieldsTypeResolverDecoratorTrait;
     }
-    public function enabled(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : bool
+    public function enabled(TypeResolverInterface $typeResolver) : bool
     {
-        return parent::enabled($typeResolver) && !empty(static::getConfigurationEntries());
+        return parent::enabled($typeResolver) && !empty($this->getConfigurationEntries());
     }
 }

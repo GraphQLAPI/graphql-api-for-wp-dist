@@ -10,7 +10,7 @@ class FieldInterfaceRegistry implements \PoP\ComponentModel\Registries\FieldInte
      * @var FieldInterfaceResolverInterface[]
      */
     protected $fieldInterfaceResolvers = [];
-    public function addFieldInterfaceResolver(\PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface $fieldInterfaceResolver) : void
+    public function addFieldInterfaceResolver(FieldInterfaceResolverInterface $fieldInterfaceResolver) : void
     {
         $this->fieldInterfaceResolvers[] = $fieldInterfaceResolver;
     }

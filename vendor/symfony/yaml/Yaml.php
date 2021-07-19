@@ -49,7 +49,7 @@ class Yaml
      */
     public static function parseFile(string $filename, int $flags = 0)
     {
-        $yaml = new \PrefixedByPoP\Symfony\Component\Yaml\Parser();
+        $yaml = new Parser();
         return $yaml->parseFile($filename, $flags);
     }
     /**
@@ -70,7 +70,7 @@ class Yaml
      */
     public static function parse(string $input, int $flags = 0)
     {
-        $yaml = new \PrefixedByPoP\Symfony\Component\Yaml\Parser();
+        $yaml = new Parser();
         return $yaml->parse($input, $flags);
     }
     /**
@@ -88,7 +88,7 @@ class Yaml
      */
     public static function dump($input, int $inline = 2, int $indent = 4, int $flags = 0) : string
     {
-        $yaml = new \PrefixedByPoP\Symfony\Component\Yaml\Dumper($indent);
+        $yaml = new Dumper($indent);
         return $yaml->dump($input, $inline, 0, $flags);
     }
 }

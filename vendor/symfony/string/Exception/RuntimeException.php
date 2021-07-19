@@ -10,6 +10,6 @@
  */
 namespace PrefixedByPoP\Symfony\Component\String\Exception;
 
-class RuntimeException extends \RuntimeException implements \PrefixedByPoP\Symfony\Component\String\Exception\ExceptionInterface
+class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
 }

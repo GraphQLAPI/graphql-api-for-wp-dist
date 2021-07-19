@@ -3,7 +3,7 @@
 declare (strict_types=1);
 namespace PrefixedByPoP\League\Pipeline;
 
-class Pipeline implements \PrefixedByPoP\League\Pipeline\PipelineInterface
+class Pipeline implements PipelineInterface
 {
     /**
      * @var callable[]
@@ -13,12 +13,12 @@ class Pipeline implements \PrefixedByPoP\League\Pipeline\PipelineInterface
      * @var ProcessorInterface
      */
     private $processor;
-    public function __construct(\PrefixedByPoP\League\Pipeline\ProcessorInterface $processor = null, callable ...$stages)
+    public function __construct(ProcessorInterface $processor = null, callable ...$stages)
     {
-        $this->processor = $processor ?? new \PrefixedByPoP\League\Pipeline\FingersCrossedProcessor();
+        $this->processor = $processor ?? new FingersCrossedProcessor();
         $this->stages = $stages;
     }
-    public function pipe(callable $stage) : \PrefixedByPoP\League\Pipeline\PipelineInterface
+    public function pipe(callable $stage) : PipelineInterface
     {
         $pipeline = clone $this;
         $pipeline->stages[] = $stage;

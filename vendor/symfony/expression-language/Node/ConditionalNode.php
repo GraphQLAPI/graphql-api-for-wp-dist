@@ -16,13 +16,13 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class ConditionalNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class ConditionalNode extends Node
 {
-    public function __construct(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $expr1, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $expr2, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $expr3)
+    public function __construct(Node $expr1, Node $expr2, Node $expr3)
     {
         parent::__construct(['expr1' => $expr1, 'expr2' => $expr2, 'expr3' => $expr3]);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $compiler->raw('((')->compile($this->nodes['expr1'])->raw(') ? (')->compile($this->nodes['expr2'])->raw(') : (')->compile($this->nodes['expr3'])->raw('))');
     }

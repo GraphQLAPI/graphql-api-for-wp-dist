@@ -14,14 +14,14 @@ trait ValidateUserLoggedInMutationResolverTrait
      */
     protected function validateUserIsLoggedIn(array &$errors) : void
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if (!$vars['global-userstate']['is-user-logged-in']) {
             $errors[] = $this->getUserNotLoggedInErrorMessage();
         }
     }
     protected function getUserNotLoggedInErrorMessage() : string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $translationAPI = TranslationAPIFacade::getInstance();
         return $translationAPI->__('You are not logged in', 'user-state-mutations');
     }
 }

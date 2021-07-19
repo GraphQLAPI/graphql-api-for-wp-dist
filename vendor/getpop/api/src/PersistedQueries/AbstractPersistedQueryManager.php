@@ -36,24 +36,24 @@ abstract class AbstractPersistedQueryManager implements \PoP\API\PersistedQuerie
      */
     public function isPersistedQuery(string $query) : bool
     {
-        return \substr($query, 0, \strlen(\PoP\API\Schema\QuerySymbols::PERSISTED_QUERY)) == \PoP\API\Schema\QuerySymbols::PERSISTED_QUERY;
+        return \substr($query, 0, \strlen(QuerySymbols::PERSISTED_QUERY)) == QuerySymbols::PERSISTED_QUERY;
     }
     /**
      * Remove "!" to get the persisted query name
      */
     public function getPersistedQueryName(string $query) : string
     {
-        return \substr($query, \strlen(\PoP\API\Schema\QuerySymbols::PERSISTED_QUERY));
+        return \substr($query, \strlen(QuerySymbols::PERSISTED_QUERY));
     }
     public function addPersistedQuery(string $queryName, string $queryResolution, ?string $description = null) : void
     {
         $this->persistedQueries[$queryName] = $queryResolution;
-        $this->persistedQueriesForSchema[$queryName] = [\PoP\API\Schema\SchemaDefinition::ARGNAME_NAME => $queryName];
+        $this->persistedQueriesForSchema[$queryName] = [SchemaDefinition::ARGNAME_NAME => $queryName];
         if ($description) {
-            $this->persistedQueriesForSchema[$queryName][\PoP\API\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+            $this->persistedQueriesForSchema[$queryName][SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
         }
         if ($this->addQueryResolutionToSchema()) {
-            $this->persistedQueriesForSchema[$queryName][\PoP\API\Schema\SchemaDefinition::ARGNAME_FRAGMENT_RESOLUTION] = $queryResolution;
+            $this->persistedQueriesForSchema[$queryName][SchemaDefinition::ARGNAME_FRAGMENT_RESOLUTION] = $queryResolution;
         }
     }
     protected abstract function addQueryResolutionToSchema() : bool;

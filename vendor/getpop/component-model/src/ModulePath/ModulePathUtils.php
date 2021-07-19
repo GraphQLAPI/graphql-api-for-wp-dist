@@ -11,7 +11,7 @@ class ModulePathUtils
     public static function getModulePaths()
     {
         $ret = array();
-        if ($paths = $_REQUEST[\PoP\ComponentModel\ModuleFilters\ModulePaths::URLPARAM_MODULEPATHS] ?? null) {
+        if ($paths = $_REQUEST[ModulePaths::URLPARAM_MODULEPATHS] ?? null) {
             if (!\is_array($paths)) {
                 $paths = array($paths);
             }
@@ -20,7 +20,7 @@ class ModulePathUtils
             // Check that the last character is ".", to avoid toplevel1 to be removed
             $paths = \array_filter($paths, function ($item) use($paths) {
                 foreach ($paths as $path) {
-                    if (\strlen($item) > \strlen($path) && \strpos($item, $path) === 0 && $item[\strlen($path)] == \PoP\ComponentModel\Tokens\ModulePath::MODULE_SEPARATOR) {
+                    if (\strlen($item) > \strlen($path) && \strncmp($item, $path, \strlen($path)) === 0 && $item[\strlen($path)] == ModulePath::MODULE_SEPARATOR) {
                         return \false;
                     }
                 }
@@ -28,7 +28,7 @@ class ModulePathUtils
             });
             foreach ($paths as $path) {
                 // Each path must be converted to an array of the modules
-                $ret[] = \PoP\ComponentModel\Facades\ModulePath\ModulePathHelpersFacade::getInstance()->recastModulePath($path);
+                $ret[] = ModulePathHelpersFacade::getInstance()->recastModulePath($path);
             }
         }
         return $ret;

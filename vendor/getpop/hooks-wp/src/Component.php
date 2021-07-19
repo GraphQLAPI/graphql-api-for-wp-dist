@@ -34,20 +34,15 @@ class Component extends AbstractComponent
         bool $skipSchema = false,
         array $skipSchemaComponentClasses = []
     ): void {
-        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-        self::initYAMLServices(dirname(__DIR__));
+        self::initServices(dirname(__DIR__));
     }
 
     /**
      * Initialize services for the system container
-     *
-     * @param array<string, mixed> $configuration
      */
-    protected static function initializeSystemContainerServices(
-        array $configuration = []
-    ): void {
-        parent::initializeSystemContainerServices($configuration);
+    protected static function initializeSystemContainerServices(): void
+    {
         // The same services injected into the application are injected into the system container
-        self::initYAMLSystemContainerServices(dirname(__DIR__), '', 'services.yaml');
+        self::initSystemServices(dirname(__DIR__), '', 'services.yaml');
     }
 }

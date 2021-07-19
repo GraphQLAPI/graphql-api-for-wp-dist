@@ -6,7 +6,7 @@ namespace PoPSchema\UserState\CheckpointProcessors;
 use PoP\ComponentModel\CheckpointProcessors\AbstractCheckpointProcessor;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\ComponentModel\ErrorHandling\Error;
-class UserStateCheckpointProcessor extends \PoP\ComponentModel\CheckpointProcessors\AbstractCheckpointProcessor
+class UserStateCheckpointProcessor extends AbstractCheckpointProcessor
 {
     public const USERLOGGEDIN = 'userloggedin';
     public const USERNOTLOGGEDIN = 'usernotloggedin';
@@ -16,16 +16,16 @@ class UserStateCheckpointProcessor extends \PoP\ComponentModel\CheckpointProcess
     }
     public function process(array $checkpoint)
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         switch ($checkpoint[1]) {
             case self::USERLOGGEDIN:
                 if (!$vars['global-userstate']['is-user-logged-in']) {
-                    return new \PoP\ComponentModel\ErrorHandling\Error('usernotloggedin');
+                    return new Error('usernotloggedin');
                 }
                 break;
             case self::USERNOTLOGGEDIN:
                 if ($vars['global-userstate']['is-user-logged-in']) {
-                    return new \PoP\ComponentModel\ErrorHandling\Error('userloggedin');
+                    return new Error('userloggedin');
                 }
                 break;
         }

@@ -5,15 +5,14 @@ namespace PoPSchema\CustomPosts\Enums;
 
 use PoPSchema\CustomPosts\Types\Status;
 use PoP\ComponentModel\Enums\AbstractEnum;
-class CustomPostStatusEnum extends \PoP\ComponentModel\Enums\AbstractEnum
+class CustomPostStatusEnum extends AbstractEnum
 {
-    public const NAME = 'CustomPostStatus';
     protected function getEnumName() : string
     {
-        return self::NAME;
+        return 'CustomPostStatus';
     }
     public function getValues() : array
     {
-        return [\PoPSchema\CustomPosts\Types\Status::PUBLISHED, \PoPSchema\CustomPosts\Types\Status::PENDING, \PoPSchema\CustomPosts\Types\Status::DRAFT, \PoPSchema\CustomPosts\Types\Status::TRASH];
+        return [Status::PUBLISHED, Status::PENDING, Status::DRAFT, Status::TRASH];
     }
 }

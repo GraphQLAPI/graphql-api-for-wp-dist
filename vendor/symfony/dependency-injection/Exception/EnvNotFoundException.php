@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class EnvNotFoundException extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+class EnvNotFoundException extends InvalidArgumentException
 {
 }

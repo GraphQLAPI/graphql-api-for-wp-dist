@@ -4,7 +4,7 @@ declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
-abstract class AbstractDynamicType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+abstract class AbstractDynamicType extends AbstractType
 {
     public function isDynamicType() : bool
     {
@@ -15,8 +15,6 @@ abstract class AbstractDynamicType extends \GraphQLByPoP\GraphQLServer\ObjectMod
      * field in the schema or, if not provided, it is dynamically generated.
      * This name is either namespaced or not (depending on configuration),
      * it doesn't support the two different cases
-     *
-     * @return string
      */
     public function getNamespacedName() : string
     {
@@ -27,8 +25,6 @@ abstract class AbstractDynamicType extends \GraphQLByPoP\GraphQLServer\ObjectMod
      * field in the schema or, if not provided, it is dynamically generated
      * This name is either namespaced or not (depending on configuration),
      * it doesn't support the two different cases
-     *
-     * @return string
      */
     public function getElementName() : string
     {
@@ -63,8 +59,6 @@ abstract class AbstractDynamicType extends \GraphQLByPoP\GraphQLServer\ObjectMod
     /**
      * Indicate under what property in the schema definition
      * is the Dynamic Type's name provided
-     *
-     * @return string
      */
     protected abstract function getDynamicTypeNamePropertyInSchema() : string;
 }

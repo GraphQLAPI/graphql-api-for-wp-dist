@@ -25,7 +25,7 @@ class ModelInstance implements \PoP\ComponentModel\ModelInstance\ModelInstanceIn
      * @var \PoP\ComponentModel\Info\ApplicationInfoInterface
      */
     protected $applicationInfo;
-    public function __construct(\PoP\Translation\TranslationAPIInterface $translationAPI, \PoP\Hooks\HooksAPIInterface $hooksAPI, \PoP\ComponentModel\Info\ApplicationInfoInterface $applicationInfo)
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, ApplicationInfoInterface $applicationInfo)
     {
         $this->translationAPI = $translationAPI;
         $this->hooksAPI = $hooksAPI;
@@ -48,7 +48,7 @@ class ModelInstance implements \PoP\ComponentModel\ModelInstance\ModelInstanceIn
         // Comment Leo 05/04/2017: Also add the module-definition type, for 2 reasons:
         // 1. It allows to create the 2 versions (DEV/PROD) of the configuration files, to compare/debug them side by side
         // 2. It allows to switch from DEV/PROD without having to delete the pop-cache
-        if ($definitionResolvers = \PoP\Definitions\Facades\DefinitionManagerFacade::getInstance()->getDefinitionResolvers()) {
+        if ($definitionResolvers = DefinitionManagerFacade::getInstance()->getDefinitionResolvers()) {
             $resolvers = [];
             foreach ($definitionResolvers as $group => $resolverInstance) {
                 $resolvers[] = $group . '-' . \get_class($resolverInstance);
@@ -63,7 +63,7 @@ class ModelInstance implements \PoP\ComponentModel\ModelInstance\ModelInstanceIn
     protected function getModelInstanceComponentsFromVars() : array
     {
         $components = array();
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         // There will always be a nature. Add it.
         $nature = $vars['nature'];
         $route = $vars['route'];
@@ -87,12 +87,9 @@ class ModelInstance implements \PoP\ComponentModel\ModelInstance\ModelInstanceIn
         if ($modulefilter = $vars['modulefilter'] ?? null) {
             $components[] = $this->translationAPI->__('module filter:', 'component-model') . $modulefilter;
         }
-        if ($stratum = $vars['stratum'] ?? null) {
-            $components[] = $this->translationAPI->__('stratum:', 'component-model') . $stratum;
-        }
         // Can the configuration change when doing a POST or GET?
         if ($this->hooksAPI->applyFilters(self::HOOK_COMPONENTSFROMVARS_POSTORGETCHANGE, \false)) {
-            $components[] = $this->translationAPI->__('operation:', 'component-model') . (doingPost() ? 'post' : 'get');
+            $components[] = $this->translationAPI->__('operation:', 'component-model') . ('POST' == $_SERVER['REQUEST_METHOD'] ? 'post' : 'get');
         }
         if ($mangled = $vars['mangled'] ?? null) {
             // By default it is mangled. To make it non-mangled, url must have param "mangled=none",

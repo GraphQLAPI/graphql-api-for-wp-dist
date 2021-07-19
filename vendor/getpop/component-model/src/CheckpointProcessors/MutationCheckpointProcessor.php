@@ -4,11 +4,10 @@ declare (strict_types=1);
 namespace PoP\ComponentModel\CheckpointProcessors;
 
 use PoP\ComponentModel\ErrorHandling\Error;
-use PoP\Hooks\Facades\HooksAPIFacade;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\CheckpointProcessors\AbstractCheckpointProcessor;
-class MutationCheckpointProcessor extends \PoP\ComponentModel\CheckpointProcessors\AbstractCheckpointProcessor
+class MutationCheckpointProcessor extends AbstractCheckpointProcessor
 {
     public const HOOK_MUTATIONS_NOT_SUPPORTED_ERROR_MSG = __CLASS__ . ':MutationsNotSupportedErrorMsg';
     public const ENABLED_MUTATIONS = 'enabled-mutations';
@@ -20,11 +19,10 @@ class MutationCheckpointProcessor extends \PoP\ComponentModel\CheckpointProcesso
     {
         switch ($checkpoint[1]) {
             case self::ENABLED_MUTATIONS:
-                $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+                $vars = ApplicationState::getVars();
                 if (!$vars['are-mutations-enabled']) {
-                    $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-                    $errorMessage = \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters(self::HOOK_MUTATIONS_NOT_SUPPORTED_ERROR_MSG, $translationAPI->__('Mutations cannot be executed', 'component-model'));
-                    return new \PoP\ComponentModel\ErrorHandling\Error('mutations-not-supported', $errorMessage);
+                    $errorMessage = $this->hooksAPI->applyFilters(self::HOOK_MUTATIONS_NOT_SUPPORTED_ERROR_MSG, $this->translationAPI->__('Mutations cannot be executed', 'component-model'));
+                    return new Error('mutations-not-supported', $errorMessage);
                 }
                 break;
         }

@@ -6,7 +6,7 @@ namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeTrait;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface;
-class UnionType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType implements \GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface
+class UnionType extends AbstractType implements HasPossibleTypesTypeInterface
 {
     use HasPossibleTypesTypeTrait;
     public function initializeTypeDependencies() : void

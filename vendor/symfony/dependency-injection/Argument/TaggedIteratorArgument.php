@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Argument;
  *
  * @author Roland Franssen <franssen.roland@gmail.com>
  */
-class TaggedIteratorArgument extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument
+class TaggedIteratorArgument extends IteratorArgument
 {
     private $tag;
     private $indexAttribute;

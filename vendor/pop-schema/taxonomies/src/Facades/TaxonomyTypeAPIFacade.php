@@ -7,12 +7,12 @@ use PoPSchema\Taxonomies\TypeAPIs\TaxonomyTypeAPIInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class TaxonomyTypeAPIFacade
 {
-    public static function getInstance() : \PoPSchema\Taxonomies\TypeAPIs\TaxonomyTypeAPIInterface
+    public static function getInstance() : TaxonomyTypeAPIInterface
     {
         /**
          * @var TaxonomyTypeAPIInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\Taxonomies\TypeAPIs\TaxonomyTypeAPIInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(TaxonomyTypeAPIInterface::class);
         return $service;
     }
 }

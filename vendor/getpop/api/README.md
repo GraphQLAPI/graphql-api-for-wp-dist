@@ -483,12 +483,12 @@ Hence, PoP can query resources in a REST fashion, and specify schema-based queri
 
 Requirements:
 
-- PHP 7.4+ for development
+- PHP 8.0+ for development
 - PHP 7.1+ for production
 
 ### Supported PHP features
 
-Check the list of [Supported PHP features in `leoloso/PoP`](https://github.com/leoloso/PoP/#supported-php-features)
+Check the list of [Supported PHP features in `leoloso/PoP`](https://github.com/leoloso/PoP/blob/master/docs/supported-php-features.md)
 
 ### Preview downgrade to PHP 7.1
 

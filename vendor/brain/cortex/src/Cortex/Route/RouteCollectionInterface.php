@@ -21,5 +21,5 @@ interface RouteCollectionInterface extends \Iterator, \Countable
      * @param  \Brain\Cortex\Route\RouteInterface $route
      * @return \Brain\Cortex\Route\RouteCollectionInterface
      */
-    public function addRoute(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route);
+    public function addRoute(RouteInterface $route);
 }

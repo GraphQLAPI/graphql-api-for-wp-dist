@@ -3,54 +3,57 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\TypeResolverDecorators;
 
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
 use PoP\ComponentModel\AttachableExtensions\AttachableExtensionTrait;
 use PoP\ComponentModel\TypeResolverDecorators\TypeResolverDecoratorInterface;
-abstract class AbstractTypeResolverDecorator implements \PoP\ComponentModel\TypeResolverDecorators\TypeResolverDecoratorInterface
+abstract class AbstractTypeResolverDecorator implements TypeResolverDecoratorInterface
 {
     /**
      * This class is attached to a TypeResolver
      */
     use AttachableExtensionTrait;
     /**
-     * Allow to disable the functionality
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @return array
+     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
      */
-    public function enabled(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : bool
+    protected $instanceManager;
+    /**
+     * @var \PoP\ComponentModel\Schema\FieldQueryInterpreterInterface
+     */
+    protected $fieldQueryInterpreter;
+    public function __construct(InstanceManagerInterface $instanceManager, FieldQueryInterpreterInterface $fieldQueryInterpreter)
+    {
+        $this->instanceManager = $instanceManager;
+        $this->fieldQueryInterpreter = $fieldQueryInterpreter;
+    }
+    /**
+     * Allow to disable the functionality
+     */
+    public function enabled(TypeResolverInterface $typeResolver) : bool
     {
         return \true;
     }
     /**
      * Return an array of fieldNames as keys, and, for each fieldName, an array of directives (including directive arguments) to be applied always on the field
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @return array
      */
-    public function getMandatoryDirectivesForFields(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getMandatoryDirectivesForFields(TypeResolverInterface $typeResolver) : array
     {
         return [];
     }
     /**
      * Return an array of directiveName as keys, and, for each directiveName,
      * an array of directives (including directive arguments) to be applied before
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @return array
      */
-    public function getPrecedingMandatoryDirectivesForDirectives(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getPrecedingMandatoryDirectivesForDirectives(TypeResolverInterface $typeResolver) : array
     {
         return [];
     }
     /**
      * Return an array of directiveName as keys, and, for each directiveName,
      * an array of directives (including directive arguments) to be applied after
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @return array
      */
-    public function getSucceedingMandatoryDirectivesForDirectives(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getSucceedingMandatoryDirectivesForDirectives(TypeResolverInterface $typeResolver) : array
     {
         return [];
     }

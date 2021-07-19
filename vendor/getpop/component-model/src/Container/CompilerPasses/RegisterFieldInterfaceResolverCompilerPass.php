@@ -7,15 +7,15 @@ use PoP\ComponentModel\ComponentConfiguration;
 use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface;
 use PoP\ComponentModel\Registries\FieldInterfaceRegistryInterface;
 use PoP\Root\Container\CompilerPasses\AbstractInjectServiceIntoRegistryCompilerPass;
-class RegisterFieldInterfaceResolverCompilerPass extends \PoP\Root\Container\CompilerPasses\AbstractInjectServiceIntoRegistryCompilerPass
+class RegisterFieldInterfaceResolverCompilerPass extends AbstractInjectServiceIntoRegistryCompilerPass
 {
     protected function getRegistryServiceDefinition() : string
     {
-        return \PoP\ComponentModel\Registries\FieldInterfaceRegistryInterface::class;
+        return FieldInterfaceRegistryInterface::class;
     }
     protected function getServiceClass() : string
     {
-        return \PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface::class;
+        return FieldInterfaceResolverInterface::class;
     }
     protected function getRegistryMethodCallName() : string
     {
@@ -23,6 +23,6 @@ class RegisterFieldInterfaceResolverCompilerPass extends \PoP\Root\Container\Com
     }
     protected function enabled() : bool
     {
-        return \PoP\ComponentModel\ComponentConfiguration::enableSchemaEntityRegistries();
+        return ComponentConfiguration::enableSchemaEntityRegistries();
     }
 }

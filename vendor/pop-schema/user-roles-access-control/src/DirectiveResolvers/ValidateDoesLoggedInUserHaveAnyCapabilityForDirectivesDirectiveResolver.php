@@ -5,10 +5,9 @@ namespace PoPSchema\UserRolesAccessControl\DirectiveResolvers;
 
 class ValidateDoesLoggedInUserHaveAnyCapabilityForDirectivesDirectiveResolver extends \PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyCapabilityDirectiveResolver
 {
-    const DIRECTIVE_NAME = 'validateDoesLoggedInUserHaveAnyCapabilityForDirectives';
-    public static function getDirectiveName() : string
+    public function getDirectiveName() : string
     {
-        return self::DIRECTIVE_NAME;
+        return 'validateDoesLoggedInUserHaveAnyCapabilityForDirectives';
     }
     protected function isValidatingDirective() : bool
     {

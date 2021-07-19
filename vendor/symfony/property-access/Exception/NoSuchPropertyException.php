@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class NoSuchPropertyException extends \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\AccessException
+class NoSuchPropertyException extends AccessException
 {
 }

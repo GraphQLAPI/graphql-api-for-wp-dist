@@ -2,7 +2,7 @@
 
 namespace PrefixedByPoP\FastRoute\DataGenerator;
 
-class MarkBased extends \PrefixedByPoP\FastRoute\DataGenerator\RegexBasedAbstract
+class MarkBased extends RegexBasedAbstract
 {
     protected function getApproxChunkSize()
     {

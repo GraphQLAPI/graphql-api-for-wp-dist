@@ -18,7 +18,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeExcepti
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class ParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface
+class ParameterBag implements ParameterBagInterface
 {
     protected $parameters = [];
     protected $resolved = \false;
@@ -62,7 +62,7 @@ class ParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjecti
     {
         if (!\array_key_exists($name, $this->parameters)) {
             if (!$name) {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException($name);
+                throw new ParameterNotFoundException($name);
             }
             $alternatives = [];
             foreach ($this->parameters as $key => $parameterValue) {
@@ -85,7 +85,7 @@ class ParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjecti
                     $key = \substr($key, 0, -1 * (1 + \array_pop($namePartsLength)));
                 }
             }
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException($name, null, null, null, $alternatives, $nonNestedAlternative);
+            throw new ParameterNotFoundException($name, null, null, null, $alternatives, $nonNestedAlternative);
         }
         return $this->parameters[$name];
     }
@@ -129,7 +129,7 @@ class ParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjecti
             try {
                 $value = $this->resolveValue($value);
                 $parameters[$key] = $this->unescapeValue($value);
-            } catch (\PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException $e) {
+            } catch (ParameterNotFoundException $e) {
                 $e->setSourceKey($key);
                 throw $e;
             }
@@ -149,7 +149,7 @@ class ParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjecti
      * @throws ParameterCircularReferenceException if a circular reference if detected
      * @throws RuntimeException                    when a given parameter has a type problem
      */
-    public function resolveValue($value, array $resolving = [])
+    public function resolveValue($value, $resolving = [])
     {
         if (\is_array($value)) {
             $args = [];
@@ -182,7 +182,7 @@ class ParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjecti
         if (\preg_match('/^%([^%\\s]+)%$/', $value, $match)) {
             $key = $match[1];
             if (isset($resolving[$key])) {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterCircularReferenceException(\array_keys($resolving));
+                throw new ParameterCircularReferenceException(\array_keys($resolving));
             }
             $resolving[$key] = \true;
             return $this->resolved ? $this->get($key) : $this->resolveValue($this->get($key), $resolving);
@@ -194,11 +194,11 @@ class ParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjecti
             }
             $key = $match[1];
             if (isset($resolving[$key])) {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterCircularReferenceException(\array_keys($resolving));
+                throw new ParameterCircularReferenceException(\array_keys($resolving));
             }
             $resolved = $this->get($key);
             if (!\is_string($resolved) && !\is_numeric($resolved)) {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException(\sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, \get_debug_type($resolved), $value));
+                throw new RuntimeException(\sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, \get_debug_type($resolved), $value));
             }
             $resolved = (string) $resolved;
             $resolving[$key] = \true;

@@ -4,31 +4,29 @@ declare (strict_types=1);
 namespace PoPSchema\Tags\FieldResolvers;
 
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
 use PoPSchema\QueriedObject\FieldInterfaceResolvers\QueryableFieldInterfaceResolver;
 use PoPSchema\Tags\ComponentContracts\TagAPIRequestedContractTrait;
-abstract class AbstractTagFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+abstract class AbstractTagFieldResolver extends AbstractDBDataFieldResolver
 {
     use TagAPIRequestedContractTrait;
-    public static function getImplementedInterfaceClasses() : array
+    public function getImplementedFieldInterfaceResolverClasses() : array
     {
-        return [\PoPSchema\QueriedObject\FieldInterfaceResolvers\QueryableFieldInterfaceResolver::class];
+        return [QueryableFieldInterfaceResolver::class];
     }
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
-        return ['url', 'name', 'slug', 'description', 'parent', 'count'];
+        return ['url', 'name', 'slug', 'description', 'count'];
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
     {
-        $types = ['url' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_URL, 'name' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'slug' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'description' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'parent' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'count' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_INT];
+        $types = ['url' => SchemaDefinition::TYPE_URL, 'name' => SchemaDefinition::TYPE_STRING, 'slug' => SchemaDefinition::TYPE_STRING, 'description' => SchemaDefinition::TYPE_STRING, 'count' => SchemaDefinition::TYPE_INT];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['url' => $translationAPI->__('Tag URL', 'pop-tags'), 'name' => $translationAPI->__('Tag', 'pop-tags'), 'slug' => $translationAPI->__('Tag slug', 'pop-tags'), 'description' => $translationAPI->__('Tag description', 'pop-tags'), 'parent' => $translationAPI->__('Parent category (if this category is a child of another one)', 'pop-tags'), 'count' => $translationAPI->__('Number of custom posts containing this tag', 'pop-tags')];
+        $descriptions = ['url' => $this->translationAPI->__('Tag URL', 'pop-tags'), 'name' => $this->translationAPI->__('Tag', 'pop-tags'), 'slug' => $this->translationAPI->__('Tag slug', 'pop-tags'), 'description' => $this->translationAPI->__('Tag description', 'pop-tags'), 'count' => $this->translationAPI->__('Number of custom posts containing this tag', 'pop-tags')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
     /**
@@ -39,33 +37,22 @@ abstract class AbstractTagFieldResolver extends \PoP\ComponentModel\FieldResolve
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $cmstagsresolver = $this->getObjectPropertyAPI();
-        $tagapi = $this->getTypeAPI();
+        $tagTypeAPI = $this->getTypeAPI();
         $tag = $resultItem;
         switch ($fieldName) {
             case 'url':
-                return $tagapi->getTagLink($typeResolver->getID($tag));
+                return $tagTypeAPI->getTagURL($typeResolver->getID($tag));
             case 'name':
-                return $cmstagsresolver->getTagName($tag);
+                return $tagTypeAPI->getTagName($tag);
             case 'slug':
-                return $cmstagsresolver->getTagSlug($tag);
+                return $tagTypeAPI->getTagSlug($tag);
             case 'description':
-                return $cmstagsresolver->getTagDescription($tag);
-            case 'parent':
-                return $cmstagsresolver->getTagParent($tag);
+                return $tagTypeAPI->getTagDescription($tag);
             case 'count':
-                return $cmstagsresolver->getTagCount($tag);
+                return $tagTypeAPI->getTagItemCount($tag);
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
-    }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
-    {
-        switch ($fieldName) {
-            case 'parent':
-                return $this->getTypeResolverClass();
-        }
-        return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }
 }

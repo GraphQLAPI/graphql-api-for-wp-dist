@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class InvalidArgumentException extends \InvalidArgumentException implements \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\ExceptionInterface
+class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
 {
 }

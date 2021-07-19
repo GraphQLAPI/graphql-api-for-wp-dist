@@ -10,7 +10,7 @@
  */
 namespace PrefixedByPoP\Symfony\Component\VarExporter\Exception;
 
-class NotInstantiableTypeException extends \Exception implements \PrefixedByPoP\Symfony\Component\VarExporter\Exception\ExceptionInterface
+class NotInstantiableTypeException extends \Exception implements ExceptionInterface
 {
     public function __construct(string $type, \Throwable $previous = null)
     {

@@ -17,27 +17,24 @@ trait HasInterfacesTypeTrait
     protected $interfaces;
     /**
      * Reference the already-registered interfaces
-     *
-     * @return void
      */
     protected function initInterfaces(array &$fullSchemaDefinition, array $schemaDefinitionPath) : void
     {
         $this->interfaces = [];
-        $interfaceSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [\PoP\API\Schema\SchemaDefinition::ARGNAME_INTERFACES]);
-        $schemaDefinitionReferenceRegistry = \GraphQLByPoP\GraphQLServer\Facades\Registries\SchemaDefinitionReferenceRegistryFacade::getInstance();
-        $interfaceSchemaDefinitionPointer = \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers::advancePointerToPath($fullSchemaDefinition, $interfaceSchemaDefinitionPath);
+        $interfaceSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [SchemaDefinition::ARGNAME_INTERFACES]);
+        $schemaDefinitionReferenceRegistry = SchemaDefinitionReferenceRegistryFacade::getInstance();
+        $interfaceSchemaDefinitionPointer = SchemaDefinitionHelpers::advancePointerToPath($fullSchemaDefinition, $interfaceSchemaDefinitionPath);
         foreach ($interfaceSchemaDefinitionPointer as $interfaceName) {
             // The InterfaceType must have already been registered on the root, under "interfaces"
-            $schemaDefinitionID = \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers::getID([\PoP\API\Schema\SchemaDefinition::ARGNAME_INTERFACES, $interfaceName]);
+            $schemaDefinitionID = SchemaDefinitionHelpers::getID([SchemaDefinition::ARGNAME_INTERFACES, $interfaceName]);
             // If the interface was not registered, that means that no FieldResolver implements it
-            /**
-             * @var InterfaceType
-             */
             $interface = $schemaDefinitionReferenceRegistry->getSchemaDefinitionReference($schemaDefinitionID);
-            if (\is_null($interface)) {
-                $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-                throw new \Exception(\sprintf($translationAPI->__('No FieldResolver resolves Interface \'%s\' for schema definition path \'%s\'', 'graphql-server'), $interfaceName, \implode(' => ', $schemaDefinitionPath)));
+            if ($interface === null) {
+                $translationAPI = TranslationAPIFacade::getInstance();
+                throw new Exception(\sprintf($translationAPI->__('No FieldResolver resolves Interface \'%s\' for schema definition path \'%s\'', 'graphql-server'), $interfaceName, \implode(' => ', $schemaDefinitionPath)));
             }
+            /** @var InterfaceType */
+            $interface = $interface;
             $this->interfaces[] = $interface;
         }
     }
@@ -47,7 +44,7 @@ trait HasInterfacesTypeTrait
     }
     public function getInterfaceIDs() : array
     {
-        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\InterfaceType $interfaceType) {
+        return \array_map(function (InterfaceType $interfaceType) {
             return $interfaceType->getID();
         }, $this->getInterfaces());
     }

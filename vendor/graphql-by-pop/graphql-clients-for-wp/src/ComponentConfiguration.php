@@ -12,13 +12,31 @@ class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
 
-    private static $getGraphQLClientsComponentURL;
+    /**
+     * @var string
+     */
+    private static $getGraphQLClientsComponentURL = '';
 
-    private static $isGraphiQLClientEndpointDisabled;
-    private static $graphiQLClientEndpoint;
-    private static $useGraphiQLExplorer;
-    private static $isGoyagerClientEndpointDisabled;
-    private static $voyagerClientEndpoint;
+    /**
+     * @var bool
+     */
+    private static $isGraphiQLClientEndpointDisabled = false;
+    /**
+     * @var string
+     */
+    private static $graphiQLClientEndpoint = '/graphiql/';
+    /**
+     * @var bool
+     */
+    private static $useGraphiQLExplorer = true;
+    /**
+     * @var bool
+     */
+    private static $isGoyagerClientEndpointDisabled = false;
+    /**
+     * @var string
+     */
+    private static $voyagerClientEndpoint = '/schema/';
 
 
     /**
@@ -33,7 +51,11 @@ class ComponentConfiguration
         $defaultValue = '';
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue
+        );
         return $selfProperty;
     }
 
@@ -49,7 +71,12 @@ class ComponentConfiguration
         $callback = [EnvironmentValueHelpers::class, 'toBool'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 
@@ -65,7 +92,12 @@ class ComponentConfiguration
         $callback = [EnvironmentValueHelpers::class, 'toBool'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 
@@ -81,7 +113,12 @@ class ComponentConfiguration
         $callback = [EndpointUtils::class, 'slashURI'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 
@@ -97,7 +134,12 @@ class ComponentConfiguration
         $callback = [EnvironmentValueHelpers::class, 'toBool'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 
@@ -113,7 +155,12 @@ class ComponentConfiguration
         $callback = [EndpointUtils::class, 'slashURI'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 }

@@ -25,7 +25,7 @@ interface ConstraintInterface
      *
      * @return bool
      */
-    public function matches(\PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface $provider);
+    public function matches(ConstraintInterface $provider);
     /**
      * Provides a compiled version of the constraint for the given operator
      * The compiled version must be a PHP expression.
@@ -36,11 +36,13 @@ interface ConstraintInterface
      * @see Constraint::OP_* for the list of available operators.
      * @example return '!$b && version_compare($v, '1.0', '>')';
      *
-     * @param int $operator one Constraint::OP_*
+     * @param int $otherOperator one Constraint::OP_*
      *
      * @return string
+     *
+     * @phpstan-param Constraint::OP_* $otherOperator
      */
-    public function compile($operator);
+    public function compile($otherOperator);
     /**
      * @return Bound
      */
@@ -55,6 +57,8 @@ interface ConstraintInterface
     public function getPrettyString();
     /**
      * @param string|null $prettyString
+     *
+     * @return void
      */
     public function setPrettyString($prettyString);
     /**

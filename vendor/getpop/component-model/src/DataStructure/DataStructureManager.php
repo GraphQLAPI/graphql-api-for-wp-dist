@@ -15,26 +15,29 @@ class DataStructureManager implements \PoP\ComponentModel\DataStructure\DataStru
      * @var \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface
      */
     protected $defaultFormatter;
-    function __construct(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $defaultFormatter)
+    public function __construct(DataStructureFormatterInterface $defaultFormatter)
     {
         $this->defaultFormatter = $defaultFormatter;
     }
-    public function addDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void
+    public function addDataStructureFormatter(DataStructureFormatterInterface $formatter) : void
     {
         $this->formatters[$formatter->getName()] = $formatter;
     }
-    public function setDefaultDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $defaultFormatter) : void
+    public function setDefaultDataStructureFormatter(DataStructureFormatterInterface $defaultFormatter) : void
     {
         $this->defaultFormatter = $defaultFormatter;
     }
-    public function getDataStructureFormatter(string $name = null) : \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface
+    /**
+     * @param string $name
+     */
+    public function getDataStructureFormatter($name = null) : DataStructureFormatterInterface
     {
         // Return the formatter if it exists
         if ($name && isset($this->formatters[$name])) {
             return $this->formatters[$name];
         }
         // Return the one saved in the vars
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         $name = $vars['datastructure'];
         if ($name && isset($this->formatters[$name])) {
             return $this->formatters[$name];

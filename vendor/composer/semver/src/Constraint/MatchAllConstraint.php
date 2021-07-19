@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Composer\Semver\Constraint;
  *
  * This constraint matches everything.
  */
-class MatchAllConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface
+class MatchAllConstraint implements ConstraintInterface
 {
     /** @var string|null */
     protected $prettyString;
@@ -24,23 +24,26 @@ class MatchAllConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\Co
      *
      * @return bool
      */
-    public function matches(\PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface $provider)
+    public function matches(ConstraintInterface $provider)
     {
         return \true;
     }
-    public function compile($operator)
+    /**
+     * {@inheritDoc}
+     */
+    public function compile($otherOperator)
     {
         return 'true';
     }
     /**
-     * @param string|null $prettyString
+     * {@inheritDoc}
      */
     public function setPrettyString($prettyString)
     {
         $this->prettyString = $prettyString;
     }
     /**
-     * @return string
+     * {@inheritDoc}
      */
     public function getPrettyString()
     {
@@ -50,7 +53,7 @@ class MatchAllConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\Co
         return (string) $this;
     }
     /**
-     * @return string
+     * {@inheritDoc}
      */
     public function __toString()
     {
@@ -61,13 +64,13 @@ class MatchAllConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\Co
      */
     public function getUpperBound()
     {
-        return \PrefixedByPoP\Composer\Semver\Constraint\Bound::positiveInfinity();
+        return Bound::positiveInfinity();
     }
     /**
      * {@inheritDoc}
      */
     public function getLowerBound()
     {
-        return \PrefixedByPoP\Composer\Semver\Constraint\Bound::zero();
+        return Bound::zero();
     }
 }

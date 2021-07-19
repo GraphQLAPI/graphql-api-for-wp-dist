@@ -5,6 +5,7 @@ namespace PrefixedByPoP\GuzzleHttp\Psr7;
 use PrefixedByPoP\Psr\Http\Message\StreamInterface;
 /**
  * Stream decorator trait
+ *
  * @property StreamInterface stream
  */
 trait StreamDecoratorTrait
@@ -12,7 +13,7 @@ trait StreamDecoratorTrait
     /**
      * @param StreamInterface $stream Stream to decorate
      */
-    public function __construct(\PrefixedByPoP\Psr\Http\Message\StreamInterface $stream)
+    public function __construct(StreamInterface $stream)
     {
         $this->stream = $stream;
     }
@@ -47,7 +48,7 @@ trait StreamDecoratorTrait
     }
     public function getContents()
     {
-        return \PrefixedByPoP\GuzzleHttp\Psr7\Utils::copyToString($this);
+        return Utils::copyToString($this);
     }
     /**
      * Allow decorators to implement custom methods

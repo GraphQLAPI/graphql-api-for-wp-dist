@@ -14,10 +14,10 @@ trait HasArgsSchemaDefinitionReferenceTrait
     protected function initArgs(array &$fullSchemaDefinition, array $schemaDefinitionPath) : void
     {
         $this->args = [];
-        if ($args = $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_ARGS] ?? null) {
+        if ($args = $this->schemaDefinition[SchemaDefinition::ARGNAME_ARGS] ?? null) {
             foreach (\array_keys($args) as $fieldArgName) {
-                $fieldArgSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [\PoP\API\Schema\SchemaDefinition::ARGNAME_ARGS, $fieldArgName]);
-                $this->args[] = new \GraphQLByPoP\GraphQLServer\ObjectModels\InputValue($fullSchemaDefinition, $fieldArgSchemaDefinitionPath);
+                $fieldArgSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [SchemaDefinition::ARGNAME_ARGS, $fieldArgName]);
+                $this->args[] = new InputValue($fullSchemaDefinition, $fieldArgSchemaDefinitionPath);
             }
         }
     }
@@ -38,7 +38,7 @@ trait HasArgsSchemaDefinitionReferenceTrait
     }
     public function getArgIDs() : array
     {
-        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\InputValue $inputValue) {
+        return \array_map(function (InputValue $inputValue) {
             return $inputValue->getID();
         }, $this->getArgs());
     }

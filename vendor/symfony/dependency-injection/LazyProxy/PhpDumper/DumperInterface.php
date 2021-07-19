@@ -23,17 +23,17 @@ interface DumperInterface
      *
      * @return bool
      */
-    public function isProxyCandidate(\PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $definition);
+    public function isProxyCandidate(Definition $definition);
     /**
      * Generates the code to be used to instantiate a proxy in the dumped factory code.
      *
      * @return string
      */
-    public function getProxyFactoryCode(\PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $definition, string $id, string $factoryCode);
+    public function getProxyFactoryCode(Definition $definition, string $id, string $factoryCode);
     /**
      * Generates the code for the lazy proxy.
      *
      * @return string
      */
-    public function getProxyCode(\PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $definition);
+    public function getProxyCode(Definition $definition);
 }

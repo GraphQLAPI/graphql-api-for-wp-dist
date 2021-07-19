@@ -10,9 +10,21 @@ interface MediaTypeAPIInterface
 {
     /**
      * Indicates if the passed object is of type Media
-     *
-     * @param [type] $object
-     * @return boolean
+     * @param object $object
      */
     public function isInstanceOfMediaType($object) : bool;
+    /**
+     * @param string|int $image_id
+     */
+    public function getImageSrc($image_id, ?string $size = null) : ?string;
+    /**
+     * @param string|int $image_id
+     */
+    public function getImageProperties($image_id, ?string $size = null) : ?array;
+    public function getMediaElements(array $query, array $options = []) : array;
+    /**
+     * @return string|int
+     * @param object $media
+     */
+    public function getMediaElementId($media);
 }

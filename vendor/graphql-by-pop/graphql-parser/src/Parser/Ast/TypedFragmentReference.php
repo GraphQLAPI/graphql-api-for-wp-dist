@@ -9,7 +9,7 @@ namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FragmentInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-class TypedFragmentReference extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FragmentInterface
+class TypedFragmentReference extends \GraphQLByPoP\GraphQLParser\Parser\Ast\AbstractAst implements FragmentInterface
 {
     use AstDirectivesTrait;
     /** @var Field[]|Query[] */
@@ -20,9 +20,8 @@ class TypedFragmentReference extends \GraphQLByPoP\GraphQLParser\Parser\Ast\Abst
      * @param string          $typeName
      * @param Field[]|Query[] $fields
      * @param Directive[]     $directives
-     * @param Location        $location
      */
-    public function __construct($typeName, array $fields, array $directives, \GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function __construct($typeName, array $fields, array $directives, Location $location)
     {
         parent::__construct($location);
         $this->typeName = $typeName;

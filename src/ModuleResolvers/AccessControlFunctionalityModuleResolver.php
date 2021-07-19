@@ -7,13 +7,13 @@ namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 use GraphQLAPI\GraphQLAPI\Plugin;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleTypeResolvers\ModuleTypeResolver;
 
 class AccessControlFunctionalityModuleResolver extends AbstractFunctionalityModuleResolver
 {
     use ModuleResolverTrait {
         ModuleResolverTrait::hasDocumentation as upstreamHasDocumentation;
     }
+    use AccessControlFunctionalityModuleResolverTrait;
 
     public const ACCESS_CONTROL = Plugin::NAMESPACE . '\access-control';
     public const ACCESS_CONTROL_RULE_DISABLE_ACCESS = Plugin::NAMESPACE . '\access-control-rule-disable-access';
@@ -24,7 +24,7 @@ class AccessControlFunctionalityModuleResolver extends AbstractFunctionalityModu
     /**
      * @return string[]
      */
-    public static function getModulesToResolve(): array
+    public function getModulesToResolve(): array
     {
         return [
             self::ACCESS_CONTROL,
@@ -33,14 +33,6 @@ class AccessControlFunctionalityModuleResolver extends AbstractFunctionalityModu
             self::ACCESS_CONTROL_RULE_USER_ROLES,
             self::ACCESS_CONTROL_RULE_USER_CAPABILITIES,
         ];
-    }
-
-    /**
-     * Enable to customize a specific UI for the module
-     */
-    public function getModuleType(string $module): string
-    {
-        return ModuleTypeResolver::ACCESS_CONTROL;
     }
 
     /**

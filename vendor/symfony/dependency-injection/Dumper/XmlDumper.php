@@ -28,7 +28,7 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Martin Hasoň <martin.hason@gmail.com>
  */
-class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dumper\Dumper
+class XmlDumper extends Dumper
 {
     /**
      * @var \DOMDocument
@@ -80,7 +80,7 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
             $parent->appendChild($call);
         }
     }
-    private function addService(\PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $definition, ?string $id, \DOMElement $parent)
+    private function addService(Definition $definition, ?string $id, \DOMElement $parent)
     {
         $service = $this->document->createElement('service');
         if (null !== $id) {
@@ -107,9 +107,9 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
         if (null !== ($decoratedService = $definition->getDecoratedService())) {
             [$decorated, $renamedId, $priority] = $decoratedService;
             $service->setAttribute('decorates', $decorated);
-            $decorationOnInvalid = $decoratedService[3] ?? \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
-            if (\in_array($decorationOnInvalid, [\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::IGNORE_ON_INVALID_REFERENCE, \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::NULL_ON_INVALID_REFERENCE], \true)) {
-                $invalidBehavior = \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::NULL_ON_INVALID_REFERENCE === $decorationOnInvalid ? 'null' : 'ignore';
+            $decorationOnInvalid = $decoratedService[3] ?? ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
+            if (\in_array($decorationOnInvalid, [ContainerInterface::IGNORE_ON_INVALID_REFERENCE, ContainerInterface::NULL_ON_INVALID_REFERENCE], \true)) {
+                $invalidBehavior = ContainerInterface::NULL_ON_INVALID_REFERENCE === $decorationOnInvalid ? 'null' : 'ignore';
                 $service->setAttribute('decoration-on-invalid', $invalidBehavior);
             }
             if (null !== $renamedId) {
@@ -147,12 +147,12 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
         $this->addMethodCalls($definition->getMethodCalls(), $service);
         if ($callable = $definition->getFactory()) {
             $factory = $this->document->createElement('factory');
-            if (\is_array($callable) && $callable[0] instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+            if (\is_array($callable) && $callable[0] instanceof Definition) {
                 $this->addService($callable[0], null, $factory);
                 $factory->setAttribute('method', $callable[1]);
             } elseif (\is_array($callable)) {
                 if (null !== $callable[0]) {
-                    $factory->setAttribute($callable[0] instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference ? 'service' : 'class', $callable[0]);
+                    $factory->setAttribute($callable[0] instanceof Reference ? 'service' : 'class', $callable[0]);
                 }
                 $factory->setAttribute('method', $callable[1]);
             } else {
@@ -179,11 +179,11 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
         }
         if ($callable = $definition->getConfigurator()) {
             $configurator = $this->document->createElement('configurator');
-            if (\is_array($callable) && $callable[0] instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+            if (\is_array($callable) && $callable[0] instanceof Definition) {
                 $this->addService($callable[0], null, $configurator);
                 $configurator->setAttribute('method', $callable[1]);
             } elseif (\is_array($callable)) {
-                $configurator->setAttribute($callable[0] instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference ? 'service' : 'class', $callable[0]);
+                $configurator->setAttribute($callable[0] instanceof Reference ? 'service' : 'class', $callable[0]);
                 $configurator->setAttribute('method', $callable[1]);
             } else {
                 $configurator->setAttribute('function', $callable);
@@ -192,7 +192,7 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
         }
         $parent->appendChild($service);
     }
-    private function addServiceAlias(string $alias, \PrefixedByPoP\Symfony\Component\DependencyInjection\Alias $id, \DOMElement $parent)
+    private function addServiceAlias(string $alias, Alias $id, \DOMElement $parent)
     {
         $service = $this->document->createElement('service');
         $service->setAttribute('id', $alias);
@@ -237,14 +237,11 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
             if ($withKeys) {
                 $element->setAttribute($keyAttribute, $key);
             }
-            if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument) {
-                $value = $value->getValues()[0];
-            }
             if (\is_array($tag = $value)) {
                 $element->setAttribute('type', 'collection');
                 $this->convertParameters($value, $type, $element, 'key');
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument || $value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument && ($tag = $value->getTaggedIteratorArgument())) {
-                $element->setAttribute('type', $value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument ? 'tagged_iterator' : 'tagged_locator');
+            } elseif ($value instanceof TaggedIteratorArgument || $value instanceof ServiceLocatorArgument && ($tag = $value->getTaggedIteratorArgument())) {
+                $element->setAttribute('type', $value instanceof TaggedIteratorArgument ? 'tagged_iterator' : 'tagged_locator');
                 $element->setAttribute('tag', $tag->getTag());
                 if (null !== $tag->getIndexAttribute()) {
                     $element->setAttribute('index-by', $tag->getIndexAttribute());
@@ -255,27 +252,31 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
                         $element->setAttribute('default-priority-method', $tag->getDefaultPriorityMethod());
                     }
                 }
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument) {
+            } elseif ($value instanceof IteratorArgument) {
                 $element->setAttribute('type', 'iterator');
                 $this->convertParameters($value->getValues(), $type, $element, 'key');
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument) {
+            } elseif ($value instanceof ServiceLocatorArgument) {
                 $element->setAttribute('type', 'service_locator');
                 $this->convertParameters($value->getValues(), $type, $element, 'key');
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference) {
+            } elseif ($value instanceof Reference || $value instanceof ServiceClosureArgument) {
                 $element->setAttribute('type', 'service');
+                if ($value instanceof ServiceClosureArgument) {
+                    $element->setAttribute('type', 'service_closure');
+                    $value = $value->getValues()[0];
+                }
                 $element->setAttribute('id', (string) $value);
                 $behavior = $value->getInvalidBehavior();
-                if (\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::NULL_ON_INVALID_REFERENCE == $behavior) {
+                if (ContainerInterface::NULL_ON_INVALID_REFERENCE == $behavior) {
                     $element->setAttribute('on-invalid', 'null');
-                } elseif (\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::IGNORE_ON_INVALID_REFERENCE == $behavior) {
+                } elseif (ContainerInterface::IGNORE_ON_INVALID_REFERENCE == $behavior) {
                     $element->setAttribute('on-invalid', 'ignore');
-                } elseif (\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE == $behavior) {
+                } elseif (ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE == $behavior) {
                     $element->setAttribute('on-invalid', 'ignore_uninitialized');
                 }
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+            } elseif ($value instanceof Definition) {
                 $element->setAttribute('type', 'service');
                 $this->addService($value, null, $element);
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression) {
+            } elseif ($value instanceof Expression) {
                 $element->setAttribute('type', 'expression');
                 $text = $this->document->createTextNode(self::phpToXml((string) $value));
                 $element->appendChild($text);
@@ -283,7 +284,10 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
                 $element->setAttribute('type', 'binary');
                 $text = $this->document->createTextNode(self::phpToXml(\base64_encode($value)));
                 $element->appendChild($text);
-            } elseif ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\AbstractArgument) {
+            } elseif ($value instanceof \PrefixedByPoP\UnitEnum) {
+                $element->setAttribute('type', 'constant');
+                $element->appendChild($this->document->createTextNode(self::phpToXml($value)));
+            } elseif ($value instanceof AbstractArgument) {
                 $element->setAttribute('type', 'abstract');
                 $text = $this->document->createTextNode(self::phpToXml($value->getText()));
                 $element->appendChild($text);
@@ -333,10 +337,12 @@ class XmlDumper extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Dum
                 return 'true';
             case \false === $value:
                 return 'false';
-            case $value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Parameter:
+            case $value instanceof Parameter:
                 return '%' . $value . '%';
+            case $value instanceof \PrefixedByPoP\UnitEnum:
+                return \sprintf('%s::%s', \get_class($value), $value->name);
             case \is_object($value) || \is_resource($value):
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException('Unable to dump a service container if a parameter is an object or a resource.');
+                throw new RuntimeException('Unable to dump a service container if a parameter is an object or a resource.');
             default:
                 return (string) $value;
         }

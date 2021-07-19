@@ -7,12 +7,12 @@ use PoP\ComponentModel\Schema\TypeCastingExecuterInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class TypeCastingExecuterFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Schema\TypeCastingExecuterInterface
+    public static function getInstance() : TypeCastingExecuterInterface
     {
         /**
          * @var TypeCastingExecuterInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Schema\TypeCastingExecuterInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(TypeCastingExecuterInterface::class);
         return $service;
     }
 }

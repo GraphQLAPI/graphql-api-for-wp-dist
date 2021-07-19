@@ -7,12 +7,12 @@ use PoP\ComponentModel\MutationResolution\MutationResolutionManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class MutationResolutionManagerFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\MutationResolution\MutationResolutionManagerInterface
+    public static function getInstance() : MutationResolutionManagerInterface
     {
         /**
          * @var MutationResolutionManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\MutationResolution\MutationResolutionManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(MutationResolutionManagerInterface::class);
         return $service;
     }
 }

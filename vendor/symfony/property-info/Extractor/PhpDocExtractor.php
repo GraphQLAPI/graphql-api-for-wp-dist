@@ -27,7 +27,7 @@ use PrefixedByPoP\Symfony\Component\PropertyInfo\Util\PhpDocTypeHelper;
  *
  * @final
  */
-class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyDescriptionExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ConstructorArgumentTypeExtractorInterface
+class PhpDocExtractor implements PropertyDescriptionExtractorInterface, PropertyTypeExtractorInterface, ConstructorArgumentTypeExtractorInterface
 {
     public const PROPERTY = 0;
     public const ACCESSOR = 1;
@@ -51,17 +51,17 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
      * @param string[]|null $accessorPrefixes
      * @param string[]|null $arrayMutatorPrefixes
      */
-    public function __construct(\PrefixedByPoP\phpDocumentor\Reflection\DocBlockFactoryInterface $docBlockFactory = null, array $mutatorPrefixes = null, array $accessorPrefixes = null, array $arrayMutatorPrefixes = null)
+    public function __construct(DocBlockFactoryInterface $docBlockFactory = null, array $mutatorPrefixes = null, array $accessorPrefixes = null, array $arrayMutatorPrefixes = null)
     {
-        if (!\class_exists(\PrefixedByPoP\phpDocumentor\Reflection\DocBlockFactory::class)) {
+        if (!\class_exists(DocBlockFactory::class)) {
             throw new \LogicException(\sprintf('Unable to use the "%s" class as the "phpdocumentor/reflection-docblock" package is not installed.', __CLASS__));
         }
-        $this->docBlockFactory = $docBlockFactory ?: \PrefixedByPoP\phpDocumentor\Reflection\DocBlockFactory::createInstance();
-        $this->contextFactory = new \PrefixedByPoP\phpDocumentor\Reflection\Types\ContextFactory();
-        $this->phpDocTypeHelper = new \PrefixedByPoP\Symfony\Component\PropertyInfo\Util\PhpDocTypeHelper();
-        $this->mutatorPrefixes = null !== $mutatorPrefixes ? $mutatorPrefixes : \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::$defaultMutatorPrefixes;
-        $this->accessorPrefixes = null !== $accessorPrefixes ? $accessorPrefixes : \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::$defaultAccessorPrefixes;
-        $this->arrayMutatorPrefixes = null !== $arrayMutatorPrefixes ? $arrayMutatorPrefixes : \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor::$defaultArrayMutatorPrefixes;
+        $this->docBlockFactory = $docBlockFactory ?: DocBlockFactory::createInstance();
+        $this->contextFactory = new ContextFactory();
+        $this->phpDocTypeHelper = new PhpDocTypeHelper();
+        $this->mutatorPrefixes = null !== $mutatorPrefixes ? $mutatorPrefixes : ReflectionExtractor::$defaultMutatorPrefixes;
+        $this->accessorPrefixes = null !== $accessorPrefixes ? $accessorPrefixes : ReflectionExtractor::$defaultAccessorPrefixes;
+        $this->arrayMutatorPrefixes = null !== $arrayMutatorPrefixes ? $arrayMutatorPrefixes : ReflectionExtractor::$defaultArrayMutatorPrefixes;
     }
     /**
      * {@inheritdoc}
@@ -78,7 +78,7 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
             return $shortDescription;
         }
         foreach ($docBlock->getTagsByName('var') as $var) {
-            if ($var && !$var instanceof \PrefixedByPoP\phpDocumentor\Reflection\DocBlock\Tags\InvalidTag) {
+            if ($var && !$var instanceof InvalidTag) {
                 $varDescription = $var->getDescription()->render();
                 if (!empty($varDescription)) {
                     return $varDescription;
@@ -123,11 +123,28 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
                 $tag = 'param';
                 break;
         }
+        $parentClass = null;
         $types = [];
         /** @var DocBlock\Tags\Var_|DocBlock\Tags\Return_|DocBlock\Tags\Param $tag */
         foreach ($docBlock->getTagsByName($tag) as $tag) {
-            if ($tag && !$tag instanceof \PrefixedByPoP\phpDocumentor\Reflection\DocBlock\Tags\InvalidTag && null !== $tag->getType()) {
-                $types = \array_merge($types, $this->phpDocTypeHelper->getTypes($tag->getType()));
+            if ($tag && !$tag instanceof InvalidTag && null !== $tag->getType()) {
+                foreach ($this->phpDocTypeHelper->getTypes($tag->getType()) as $type) {
+                    switch ($type->getClassName()) {
+                        case 'self':
+                        case 'static':
+                            $resolvedClass = $class;
+                            break;
+                        case 'parent':
+                            if (\false !== ($resolvedClass = $parentClass ?? ($parentClass = \get_parent_class($class)))) {
+                                break;
+                            }
+                        // no break
+                        default:
+                            $types[] = $type;
+                            continue 2;
+                    }
+                    $types[] = new Type(Type::BUILTIN_TYPE_OBJECT, $type->isNullable(), $resolvedClass, $type->isCollection(), $type->getCollectionKeyTypes(), $type->getCollectionValueTypes());
+                }
             }
         }
         if (!isset($types[0])) {
@@ -136,7 +153,7 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
         if (!\in_array($prefix, $this->arrayMutatorPrefixes)) {
             return $types;
         }
-        return [new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_ARRAY, \false, null, \true, new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_INT), $types[0])];
+        return [new Type(Type::BUILTIN_TYPE_ARRAY, \false, null, \true, new Type(Type::BUILTIN_TYPE_INT), $types[0])];
     }
     /**
      * {@inheritdoc}
@@ -159,7 +176,7 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
         }
         return $types;
     }
-    private function getDocBlockFromConstructor(string $class, string $property) : ?\PrefixedByPoP\phpDocumentor\Reflection\DocBlock
+    private function getDocBlockFromConstructor(string $class, string $property) : ?DocBlock
     {
         try {
             $reflectionClass = new \ReflectionClass($class);
@@ -177,12 +194,12 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
             return null;
         }
     }
-    private function filterDocBlockParams(\PrefixedByPoP\phpDocumentor\Reflection\DocBlock $docBlock, string $allowedParam) : \PrefixedByPoP\phpDocumentor\Reflection\DocBlock
+    private function filterDocBlockParams(DocBlock $docBlock, string $allowedParam) : DocBlock
     {
         $tags = \array_values(\array_filter($docBlock->getTagsByName('param'), function ($tag) use($allowedParam) {
-            return $tag instanceof \PrefixedByPoP\phpDocumentor\Reflection\DocBlock\Tags\Param && $allowedParam === $tag->getVariableName();
+            return $tag instanceof DocBlock\Tags\Param && $allowedParam === $tag->getVariableName();
         }));
-        return new \PrefixedByPoP\phpDocumentor\Reflection\DocBlock($docBlock->getSummary(), $docBlock->getDescription(), $tags, $docBlock->getContext(), $docBlock->getLocation(), $docBlock->isTemplateStart(), $docBlock->isTemplateEnd());
+        return new DocBlock($docBlock->getSummary(), $docBlock->getDescription(), $tags, $docBlock->getContext(), $docBlock->getLocation(), $docBlock->isTemplateStart(), $docBlock->isTemplateEnd());
     }
     private function getDocBlock(string $class, string $property) : array
     {
@@ -206,7 +223,7 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
         }
         return $this->docBlocks[$propertyHash] = $data;
     }
-    private function getDocBlockFromProperty(string $class, string $property) : ?\PrefixedByPoP\phpDocumentor\Reflection\DocBlock
+    private function getDocBlockFromProperty(string $class, string $property) : ?DocBlock
     {
         // Use a ReflectionProperty instead of $class to get the parent class if applicable
         try {
@@ -214,8 +231,14 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
         } catch (\ReflectionException $e) {
             return null;
         }
+        $reflector = $reflectionProperty->getDeclaringClass();
+        foreach ($reflector->getTraits() as $trait) {
+            if ($trait->hasProperty($property)) {
+                return $this->getDocBlockFromProperty($trait->getName(), $property);
+            }
+        }
         try {
-            return $this->docBlockFactory->create($reflectionProperty, $this->createFromReflector($reflectionProperty->getDeclaringClass()));
+            return $this->docBlockFactory->create($reflectionProperty, $this->createFromReflector($reflector));
         } catch (\InvalidArgumentException $e) {
             return null;
         } catch (\RuntimeException $e) {
@@ -243,8 +266,14 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
         if (!isset($reflectionMethod)) {
             return null;
         }
+        $reflector = $reflectionMethod->getDeclaringClass();
+        foreach ($reflector->getTraits() as $trait) {
+            if ($trait->hasMethod($methodName)) {
+                return $this->getDocBlockFromMethod($trait->getName(), $ucFirstProperty, $type);
+            }
+        }
         try {
-            return [$this->docBlockFactory->create($reflectionMethod, $this->createFromReflector($reflectionMethod->getDeclaringClass())), $prefix];
+            return [$this->docBlockFactory->create($reflectionMethod, $this->createFromReflector($reflector)), $prefix];
         } catch (\InvalidArgumentException $e) {
             return null;
         } catch (\RuntimeException $e) {
@@ -254,7 +283,7 @@ class PhpDocExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\P
     /**
      * Prevents a lot of redundant calls to ContextFactory::createForNamespace().
      */
-    private function createFromReflector(\ReflectionClass $reflector) : \PrefixedByPoP\phpDocumentor\Reflection\Types\Context
+    private function createFromReflector(\ReflectionClass $reflector) : Context
     {
         $cacheKey = $reflector->getNamespaceName() . ':' . $reflector->getFileName();
         if (isset($this->contexts[$cacheKey])) {

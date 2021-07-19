@@ -13,7 +13,7 @@ namespace PrefixedByPoP\Composer\Semver\Constraint;
 /**
  * Blackhole of constraints, nothing escapes it
  */
-class MatchNoneConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface
+class MatchNoneConstraint implements ConstraintInterface
 {
     /** @var string|null */
     protected $prettyString;
@@ -22,23 +22,26 @@ class MatchNoneConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\C
      *
      * @return bool
      */
-    public function matches(\PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface $provider)
+    public function matches(ConstraintInterface $provider)
     {
         return \false;
     }
-    public function compile($operator)
+    /**
+     * {@inheritDoc}
+     */
+    public function compile($otherOperator)
     {
         return 'false';
     }
     /**
-     * @param string|null $prettyString
+     * {@inheritDoc}
      */
     public function setPrettyString($prettyString)
     {
         $this->prettyString = $prettyString;
     }
     /**
-     * @return string
+     * {@inheritDoc}
      */
     public function getPrettyString()
     {
@@ -48,7 +51,7 @@ class MatchNoneConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\C
         return (string) $this;
     }
     /**
-     * @return string
+     * {@inheritDoc}
      */
     public function __toString()
     {
@@ -59,13 +62,13 @@ class MatchNoneConstraint implements \PrefixedByPoP\Composer\Semver\Constraint\C
      */
     public function getUpperBound()
     {
-        return new \PrefixedByPoP\Composer\Semver\Constraint\Bound('0.0.0.0-dev', \false);
+        return new Bound('0.0.0.0-dev', \false);
     }
     /**
      * {@inheritDoc}
      */
     public function getLowerBound()
     {
-        return new \PrefixedByPoP\Composer\Semver\Constraint\Bound('0.0.0.0-dev', \false);
+        return new Bound('0.0.0.0-dev', \false);
     }
 }

@@ -28,7 +28,7 @@ use PrefixedByPoP\Symfony\Component\String\Inflector\InflectorInterface;
  *
  * @final
  */
-class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyListExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyAccessExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInitializableExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfoExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfoExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\Extractor\ConstructorArgumentTypeExtractorInterface
+class ReflectionExtractor implements PropertyListExtractorInterface, PropertyTypeExtractorInterface, PropertyAccessExtractorInterface, PropertyInitializableExtractorInterface, PropertyReadInfoExtractorInterface, PropertyWriteInfoExtractorInterface, ConstructorArgumentTypeExtractorInterface
 {
     /**
      * @internal
@@ -53,7 +53,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
     public const ALLOW_MAGIC_SET = 1 << 1;
     /** @var int Allow magic __call methods */
     public const ALLOW_MAGIC_CALL = 1 << 2;
-    private const MAP_TYPES = ['integer' => \PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_INT, 'boolean' => \PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_BOOL, 'double' => \PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_FLOAT];
+    private const MAP_TYPES = ['integer' => Type::BUILTIN_TYPE_INT, 'boolean' => Type::BUILTIN_TYPE_BOOL, 'double' => Type::BUILTIN_TYPE_FLOAT];
     private $mutatorPrefixes;
     private $accessorPrefixes;
     private $arrayMutatorPrefixes;
@@ -69,7 +69,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
      * @param string[]|null $accessorPrefixes
      * @param string[]|null $arrayMutatorPrefixes
      */
-    public function __construct(array $mutatorPrefixes = null, array $accessorPrefixes = null, array $arrayMutatorPrefixes = null, bool $enableConstructorExtraction = \true, int $accessFlags = self::ALLOW_PUBLIC, \PrefixedByPoP\Symfony\Component\String\Inflector\InflectorInterface $inflector = null, int $magicMethodsFlags = self::ALLOW_MAGIC_GET | self::ALLOW_MAGIC_SET)
+    public function __construct(array $mutatorPrefixes = null, array $accessorPrefixes = null, array $arrayMutatorPrefixes = null, bool $enableConstructorExtraction = \true, int $accessFlags = self::ALLOW_PUBLIC, InflectorInterface $inflector = null, int $magicMethodsFlags = self::ALLOW_MAGIC_GET | self::ALLOW_MAGIC_SET)
     {
         $this->mutatorPrefixes = null !== $mutatorPrefixes ? $mutatorPrefixes : self::$defaultMutatorPrefixes;
         $this->accessorPrefixes = null !== $accessorPrefixes ? $accessorPrefixes : self::$defaultAccessorPrefixes;
@@ -78,7 +78,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         $this->methodReflectionFlags = $this->getMethodsFlags($accessFlags);
         $this->propertyReflectionFlags = $this->getPropertyFlags($accessFlags);
         $this->magicMethodsFlags = $magicMethodsFlags;
-        $this->inflector = $inflector ?? new \PrefixedByPoP\Symfony\Component\String\Inflector\EnglishInflector();
+        $this->inflector = $inflector ?? new EnglishInflector();
         $this->arrayMutatorPrefixesFirst = \array_merge($this->arrayMutatorPrefixes, \array_diff($this->mutatorPrefixes, $this->arrayMutatorPrefixes));
         $this->arrayMutatorPrefixesLast = \array_reverse($this->arrayMutatorPrefixesFirst);
     }
@@ -130,19 +130,8 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         if (($context['enable_constructor_extraction'] ?? $this->enableConstructorExtraction) && ($fromConstructor = $this->extractFromConstructor($class, $property))) {
             return $fromConstructor;
         }
-        if ($fromDefaultValue = $this->extractFromDefaultValue($class, $property)) {
-            return $fromDefaultValue;
-        }
-        if (\PHP_VERSION_ID >= 70400) {
-            try {
-                $reflectionProperty = new \ReflectionProperty($class, $property);
-                $type = $reflectionProperty->getType();
-                if (null !== $type) {
-                    return $this->extractFromReflectionType($type, $reflectionProperty->getDeclaringClass());
-                }
-            } catch (\ReflectionException $e) {
-                // noop
-            }
+        if ($fromPropertyDeclaration = $this->extractFromPropertyDeclaration($class, $property)) {
+            return $fromPropertyDeclaration;
         }
         return null;
     }
@@ -228,7 +217,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
     /**
      * {@inheritdoc}
      */
-    public function getReadInfo(string $class, string $property, array $context = []) : ?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo
+    public function getReadInfo(string $class, string $property, array $context = []) : ?PropertyReadInfo
     {
         try {
             $reflClass = new \ReflectionClass($class);
@@ -251,29 +240,29 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
             $methodName = $prefix . $camelProp;
             if ($reflClass->hasMethod($methodName) && $reflClass->getMethod($methodName)->getModifiers() & $this->methodReflectionFlags && !$reflClass->getMethod($methodName)->getNumberOfRequiredParameters()) {
                 $method = $reflClass->getMethod($methodName);
-                return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::TYPE_METHOD, $methodName, $this->getReadVisiblityForMethod($method), $method->isStatic(), \false);
+                return new PropertyReadInfo(PropertyReadInfo::TYPE_METHOD, $methodName, $this->getReadVisiblityForMethod($method), $method->isStatic(), \false);
             }
         }
         if ($allowGetterSetter && $reflClass->hasMethod($getsetter) && $reflClass->getMethod($getsetter)->getModifiers() & $this->methodReflectionFlags) {
             $method = $reflClass->getMethod($getsetter);
-            return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::TYPE_METHOD, $getsetter, $this->getReadVisiblityForMethod($method), $method->isStatic(), \false);
+            return new PropertyReadInfo(PropertyReadInfo::TYPE_METHOD, $getsetter, $this->getReadVisiblityForMethod($method), $method->isStatic(), \false);
         }
         if ($hasProperty && $reflClass->getProperty($property)->getModifiers() & $this->propertyReflectionFlags) {
             $reflProperty = $reflClass->getProperty($property);
-            return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::TYPE_PROPERTY, $property, $this->getReadVisiblityForProperty($reflProperty), $reflProperty->isStatic(), \true);
+            return new PropertyReadInfo(PropertyReadInfo::TYPE_PROPERTY, $property, $this->getReadVisiblityForProperty($reflProperty), $reflProperty->isStatic(), \true);
         }
         if ($allowMagicGet && $reflClass->hasMethod('__get') && $reflClass->getMethod('__get')->getModifiers() & $this->methodReflectionFlags) {
-            return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::TYPE_PROPERTY, $property, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PUBLIC, \false, \false);
+            return new PropertyReadInfo(PropertyReadInfo::TYPE_PROPERTY, $property, PropertyReadInfo::VISIBILITY_PUBLIC, \false, \false);
         }
         if ($allowMagicCall && $reflClass->hasMethod('__call') && $reflClass->getMethod('__call')->getModifiers() & $this->methodReflectionFlags) {
-            return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::TYPE_METHOD, 'get' . $camelProp, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PUBLIC, \false, \false);
+            return new PropertyReadInfo(PropertyReadInfo::TYPE_METHOD, 'get' . $camelProp, PropertyReadInfo::VISIBILITY_PUBLIC, \false, \false);
         }
         return null;
     }
     /**
      * {@inheritdoc}
      */
-    public function getWriteInfo(string $class, string $property, array $context = []) : ?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo
+    public function getWriteInfo(string $class, string $property, array $context = []) : ?PropertyWriteInfo
     {
         try {
             $reflClass = new \ReflectionClass($class);
@@ -297,7 +286,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         if (null !== $constructor && $allowConstruct) {
             foreach ($constructor->getParameters() as $parameter) {
                 if ($parameter->getName() === $property) {
-                    return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_CONSTRUCTOR, $property);
+                    return new PropertyWriteInfo(PropertyWriteInfo::TYPE_CONSTRUCTOR, $property);
                 }
             }
         }
@@ -305,9 +294,9 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         if ($allowAdderRemover && null !== $adderAccessName && null !== $removerAccessName) {
             $adderMethod = $reflClass->getMethod($adderAccessName);
             $removerMethod = $reflClass->getMethod($removerAccessName);
-            $mutator = new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_ADDER_AND_REMOVER);
-            $mutator->setAdderInfo(new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_METHOD, $adderAccessName, $this->getWriteVisiblityForMethod($adderMethod), $adderMethod->isStatic()));
-            $mutator->setRemoverInfo(new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_METHOD, $removerAccessName, $this->getWriteVisiblityForMethod($removerMethod), $removerMethod->isStatic()));
+            $mutator = new PropertyWriteInfo(PropertyWriteInfo::TYPE_ADDER_AND_REMOVER);
+            $mutator->setAdderInfo(new PropertyWriteInfo(PropertyWriteInfo::TYPE_METHOD, $adderAccessName, $this->getWriteVisiblityForMethod($adderMethod), $adderMethod->isStatic()));
+            $mutator->setRemoverInfo(new PropertyWriteInfo(PropertyWriteInfo::TYPE_METHOD, $removerAccessName, $this->getWriteVisiblityForMethod($removerMethod), $removerMethod->isStatic()));
             return $mutator;
         }
         $errors = \array_merge($errors, $adderAndRemoverErrors);
@@ -320,7 +309,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
             }
             $method = $reflClass->getMethod($methodName);
             if (!\in_array($mutatorPrefix, $this->arrayMutatorPrefixes, \true)) {
-                return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_METHOD, $methodName, $this->getWriteVisiblityForMethod($method), $method->isStatic());
+                return new PropertyWriteInfo(PropertyWriteInfo::TYPE_METHOD, $methodName, $this->getWriteVisiblityForMethod($method), $method->isStatic());
             }
         }
         $getsetter = \lcfirst($camelized);
@@ -328,32 +317,32 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
             [$accessible, $methodAccessibleErrors] = $this->isMethodAccessible($reflClass, $getsetter, 1);
             if ($accessible) {
                 $method = $reflClass->getMethod($getsetter);
-                return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_METHOD, $getsetter, $this->getWriteVisiblityForMethod($method), $method->isStatic());
+                return new PropertyWriteInfo(PropertyWriteInfo::TYPE_METHOD, $getsetter, $this->getWriteVisiblityForMethod($method), $method->isStatic());
             }
             $errors = \array_merge($errors, $methodAccessibleErrors);
         }
         if ($reflClass->hasProperty($property) && $reflClass->getProperty($property)->getModifiers() & $this->propertyReflectionFlags) {
             $reflProperty = $reflClass->getProperty($property);
-            return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_PROPERTY, $property, $this->getWriteVisiblityForProperty($reflProperty), $reflProperty->isStatic());
+            return new PropertyWriteInfo(PropertyWriteInfo::TYPE_PROPERTY, $property, $this->getWriteVisiblityForProperty($reflProperty), $reflProperty->isStatic());
         }
         if ($allowMagicSet) {
             [$accessible, $methodAccessibleErrors] = $this->isMethodAccessible($reflClass, '__set', 2);
             if ($accessible) {
-                return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_PROPERTY, $property, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PUBLIC, \false);
+                return new PropertyWriteInfo(PropertyWriteInfo::TYPE_PROPERTY, $property, PropertyWriteInfo::VISIBILITY_PUBLIC, \false);
             }
             $errors = \array_merge($errors, $methodAccessibleErrors);
         }
         if ($allowMagicCall) {
             [$accessible, $methodAccessibleErrors] = $this->isMethodAccessible($reflClass, '__call', 2);
             if ($accessible) {
-                return new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::TYPE_METHOD, 'set' . $camelized, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PUBLIC, \false);
+                return new PropertyWriteInfo(PropertyWriteInfo::TYPE_METHOD, 'set' . $camelized, PropertyWriteInfo::VISIBILITY_PUBLIC, \false);
             }
             $errors = \array_merge($errors, $methodAccessibleErrors);
         }
         if (!$allowAdderRemover && null !== $adderAccessName && null !== $removerAccessName) {
             $errors[] = \sprintf('The property "%s" in class "%s" can be defined with the methods "%s()" but ' . 'the new value must be an array or an instance of \\Traversable', $property, $reflClass->getName(), \implode('()", "', [$adderAccessName, $removerAccessName]));
         }
-        $noneProperty = new \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo();
+        $noneProperty = new PropertyWriteInfo();
         $noneProperty->setErrors($errors);
         return $noneProperty;
     }
@@ -373,7 +362,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         }
         $type = $this->extractFromReflectionType($reflectionType, $reflectionMethod->getDeclaringClass());
         if (1 === \count($type) && \in_array($prefix, $this->arrayMutatorPrefixes)) {
-            $type = [new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_ARRAY, \false, null, \true, new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_INT), $type[0])];
+            $type = [new Type(Type::BUILTIN_TYPE_ARRAY, \false, null, \true, new Type(Type::BUILTIN_TYPE_INT), $type[0])];
         }
         return $type;
     }
@@ -392,7 +381,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
             return $this->extractFromReflectionType($reflectionType, $reflectionMethod->getDeclaringClass());
         }
         if (\in_array($prefix, ['is', 'can', 'has'])) {
-            return [new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_BOOL)];
+            return [new Type(Type::BUILTIN_TYPE_BOOL)];
         }
         return null;
     }
@@ -424,10 +413,17 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         }
         return null;
     }
-    private function extractFromDefaultValue(string $class, string $property) : ?array
+    private function extractFromPropertyDeclaration(string $class, string $property) : ?array
     {
         try {
             $reflectionClass = new \ReflectionClass($class);
+            if (\PHP_VERSION_ID >= 70400) {
+                $reflectionProperty = $reflectionClass->getProperty($property);
+                $reflectionPropertyType = $reflectionProperty->getType();
+                if (null !== $reflectionPropertyType && ($types = $this->extractFromReflectionType($reflectionPropertyType, $reflectionProperty->getDeclaringClass()))) {
+                    return $types;
+                }
+            }
         } catch (\ReflectionException $e) {
             return null;
         }
@@ -437,7 +433,7 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         }
         $type = \gettype($defaultValue);
         $type = static::MAP_TYPES[$type] ?? $type;
-        return [new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type($type, \false, null, \PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_ARRAY === $type)];
+        return [new Type($type, $this->isNullableProperty($class, $property), null, Type::BUILTIN_TYPE_ARRAY === $type)];
     }
     private function extractFromReflectionType(\ReflectionType $reflectionType, \ReflectionClass $declaringClass) : array
     {
@@ -448,14 +444,14 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
             if ('null' === $phpTypeOrClass || 'mixed' === $phpTypeOrClass) {
                 continue;
             }
-            if (\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass) {
-                $types[] = new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_ARRAY, $nullable, null, \true);
+            if (Type::BUILTIN_TYPE_ARRAY === $phpTypeOrClass) {
+                $types[] = new Type(Type::BUILTIN_TYPE_ARRAY, $nullable, null, \true);
             } elseif ('void' === $phpTypeOrClass) {
-                $types[] = new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_NULL, $nullable);
+                $types[] = new Type(Type::BUILTIN_TYPE_NULL, $nullable);
             } elseif ($type->isBuiltin()) {
-                $types[] = new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type($phpTypeOrClass, $nullable);
+                $types[] = new Type($phpTypeOrClass, $nullable);
             } else {
-                $types[] = new \PrefixedByPoP\Symfony\Component\PropertyInfo\Type(\PrefixedByPoP\Symfony\Component\PropertyInfo\Type::BUILTIN_TYPE_OBJECT, $nullable, $this->resolveTypeName($phpTypeOrClass, $declaringClass));
+                $types[] = new Type(Type::BUILTIN_TYPE_OBJECT, $nullable, $this->resolveTypeName($phpTypeOrClass, $declaringClass));
             }
         }
         return $types;
@@ -470,11 +466,25 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
         }
         return $name;
     }
+    private function isNullableProperty(string $class, string $property) : bool
+    {
+        try {
+            $reflectionProperty = new \ReflectionProperty($class, $property);
+            if (\PHP_VERSION_ID >= 70400) {
+                $reflectionPropertyType = $reflectionProperty->getType();
+                return null !== $reflectionPropertyType && $reflectionPropertyType->allowsNull();
+            }
+            return \false;
+        } catch (\ReflectionException $e) {
+            // Return false if the property doesn't exist
+        }
+        return \false;
+    }
     private function isAllowedProperty(string $class, string $property) : bool
     {
         try {
             $reflectionProperty = new \ReflectionProperty($class, $property);
-            return $reflectionProperty->getModifiers() & $this->propertyReflectionFlags;
+            return (bool) ($reflectionProperty->getModifiers() & $this->propertyReflectionFlags);
         } catch (\ReflectionException $e) {
             // Return false if the property doesn't exist
         }
@@ -647,41 +657,41 @@ class ReflectionExtractor implements \PrefixedByPoP\Symfony\Component\PropertyIn
     private function getReadVisiblityForProperty(\ReflectionProperty $reflectionProperty) : string
     {
         if ($reflectionProperty->isPrivate()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PRIVATE;
+            return PropertyReadInfo::VISIBILITY_PRIVATE;
         }
         if ($reflectionProperty->isProtected()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PROTECTED;
+            return PropertyReadInfo::VISIBILITY_PROTECTED;
         }
-        return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PUBLIC;
+        return PropertyReadInfo::VISIBILITY_PUBLIC;
     }
     private function getReadVisiblityForMethod(\ReflectionMethod $reflectionMethod) : string
     {
         if ($reflectionMethod->isPrivate()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PRIVATE;
+            return PropertyReadInfo::VISIBILITY_PRIVATE;
         }
         if ($reflectionMethod->isProtected()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PROTECTED;
+            return PropertyReadInfo::VISIBILITY_PROTECTED;
         }
-        return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo::VISIBILITY_PUBLIC;
+        return PropertyReadInfo::VISIBILITY_PUBLIC;
     }
     private function getWriteVisiblityForProperty(\ReflectionProperty $reflectionProperty) : string
     {
         if ($reflectionProperty->isPrivate()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PRIVATE;
+            return PropertyWriteInfo::VISIBILITY_PRIVATE;
         }
         if ($reflectionProperty->isProtected()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PROTECTED;
+            return PropertyWriteInfo::VISIBILITY_PROTECTED;
         }
-        return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PUBLIC;
+        return PropertyWriteInfo::VISIBILITY_PUBLIC;
     }
     private function getWriteVisiblityForMethod(\ReflectionMethod $reflectionMethod) : string
     {
         if ($reflectionMethod->isPrivate()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PRIVATE;
+            return PropertyWriteInfo::VISIBILITY_PRIVATE;
         }
         if ($reflectionMethod->isProtected()) {
-            return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PROTECTED;
+            return PropertyWriteInfo::VISIBILITY_PROTECTED;
         }
-        return \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfo::VISIBILITY_PUBLIC;
+        return PropertyWriteInfo::VISIBILITY_PUBLIC;
     }
 }

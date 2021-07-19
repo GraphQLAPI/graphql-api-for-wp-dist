@@ -21,7 +21,7 @@ use PrefixedByPoP\Symfony\Component\String\Exception\RuntimeException;
  *
  * @throws ExceptionInterface
  */
-class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
+class ByteString extends AbstractString
 {
     private const ALPHABET_ALPHANUMERIC = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
     public function __construct(string $string = '')
@@ -43,13 +43,13 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
     public static function fromRandom(int $length = 16, string $alphabet = null)
     {
         if ($length <= 0) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException(\sprintf('A strictly positive length is expected, "%d" given.', $length));
+            throw new InvalidArgumentException(\sprintf('A strictly positive length is expected, "%d" given.', $length));
         }
         $alphabet = $alphabet ?? self::ALPHABET_ALPHANUMERIC;
         $alphabetSize = \strlen($alphabet);
         $bits = (int) \ceil(\log($alphabetSize, 2.0));
         if ($bits <= 0 || $bits > 56) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('The length of the alphabet must in the [2^1, 2^56] range.');
+            throw new InvalidArgumentException('The length of the alphabet must in the [2^1, 2^56] range.');
         }
         $ret = '';
         while ($length > 0) {
@@ -83,13 +83,13 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
         $str = $this->string[$offset] ?? '';
         return '' === $str ? [] : [\ord($str)];
     }
-    public function append(string ...$suffix) : self
+    public function append(string ...$suffix)
     {
         $str = clone $this;
         $str->string .= 1 >= \count($suffix) ? $suffix[0] ?? '' : \implode('', $suffix);
         return $str;
     }
-    public function camel() : self
+    public function camel()
     {
         $str = clone $this;
         $str->string = \lcfirst(\str_replace(' ', '', \ucwords(\preg_replace('/[^a-zA-Z0-9\\x7f-\\xff]++/', ' ', $this->string))));
@@ -98,7 +98,7 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
     public function chunk(int $length = 1) : array
     {
         if (1 > $length) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('The chunk length must be greater than zero.');
+            throw new InvalidArgumentException('The chunk length must be greater than zero.');
         }
         if ('' === $this->string) {
             return [];
@@ -136,7 +136,7 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
         }
         return $string === $this->string;
     }
-    public function folded() : self
+    public function folded()
     {
         $str = clone $this;
         $str->string = \strtolower($str->string);
@@ -176,7 +176,7 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
     {
         return '' === $this->string || \preg_match('//u', $this->string);
     }
-    public function join(array $strings, string $lastGlue = null) : self
+    public function join(array $strings, string $lastGlue = null)
     {
         $str = clone $this;
         $tail = null !== $lastGlue && 1 < \count($strings) ? $lastGlue . \array_pop($strings) : '';
@@ -187,7 +187,7 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
     {
         return \strlen($this->string);
     }
-    public function lower() : self
+    public function lower()
     {
         $str = clone $this;
         $str->string = \strtolower($str->string);
@@ -200,48 +200,53 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
             $regexp .= 'i';
         }
         \set_error_handler(static function ($t, $m) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException($m);
+            throw new InvalidArgumentException($m);
         });
         try {
-            if (\false === $match($regexp, $this->string, $matches, $flags | \PREG_UNMATCHED_AS_NULL, $offset)) {
+            if (\false === $match($regexp, $this->string, $matches, $flags, $offset)) {
                 $lastError = \preg_last_error();
                 foreach (\get_defined_constants(\true)['pcre'] as $k => $v) {
                     if ($lastError === $v && '_ERROR' === \substr($k, -6)) {
-                        throw new \PrefixedByPoP\Symfony\Component\String\Exception\RuntimeException('Matching failed with ' . $k . '.');
+                        throw new RuntimeException('Matching failed with ' . $k . '.');
                     }
                 }
-                throw new \PrefixedByPoP\Symfony\Component\String\Exception\RuntimeException('Matching failed with unknown error code.');
+                throw new RuntimeException('Matching failed with unknown error code.');
             }
+            \array_walk_recursive($matches, function (&$value) {
+                if ($value === '') {
+                    $value = null;
+                }
+            });
         } finally {
             \restore_error_handler();
         }
         return $matches;
     }
-    public function padBoth(int $length, string $padStr = ' ') : self
+    public function padBoth(int $length, string $padStr = ' ')
     {
         $str = clone $this;
         $str->string = \str_pad($this->string, $length, $padStr, \STR_PAD_BOTH);
         return $str;
     }
-    public function padEnd(int $length, string $padStr = ' ') : self
+    public function padEnd(int $length, string $padStr = ' ')
     {
         $str = clone $this;
         $str->string = \str_pad($this->string, $length, $padStr, \STR_PAD_RIGHT);
         return $str;
     }
-    public function padStart(int $length, string $padStr = ' ') : self
+    public function padStart(int $length, string $padStr = ' ')
     {
         $str = clone $this;
         $str->string = \str_pad($this->string, $length, $padStr, \STR_PAD_LEFT);
         return $str;
     }
-    public function prepend(string ...$prefix) : self
+    public function prepend(string ...$prefix)
     {
         $str = clone $this;
         $str->string = (1 >= \count($prefix) ? $prefix[0] ?? '' : \implode('', $prefix)) . $str->string;
         return $str;
     }
-    public function replace(string $from, string $to) : self
+    public function replace(string $from, string $to)
     {
         $str = clone $this;
         if ('' !== $from) {
@@ -249,7 +254,7 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
         }
         return $str;
     }
-    public function replaceMatches(string $fromRegexp, $to) : self
+    public function replaceMatches(string $fromRegexp, $to)
     {
         if ($this->ignoreCase) {
             $fromRegexp .= 'i';
@@ -263,17 +268,17 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
             $replace = $to instanceof \Closure ? 'preg_replace_callback' : 'preg_replace';
         }
         \set_error_handler(static function ($t, $m) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException($m);
+            throw new InvalidArgumentException($m);
         });
         try {
             if (null === ($string = $replace($fromRegexp, $to, $this->string))) {
                 $lastError = \preg_last_error();
                 foreach (\get_defined_constants(\true)['pcre'] as $k => $v) {
                     if ($lastError === $v && '_ERROR' === \substr($k, -6)) {
-                        throw new \PrefixedByPoP\Symfony\Component\String\Exception\RuntimeException('Matching failed with ' . $k . '.');
+                        throw new RuntimeException('Matching failed with ' . $k . '.');
                     }
                 }
-                throw new \PrefixedByPoP\Symfony\Component\String\Exception\RuntimeException('Matching failed with unknown error code.');
+                throw new RuntimeException('Matching failed with unknown error code.');
             }
         } finally {
             \restore_error_handler();
@@ -282,25 +287,25 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
         $str->string = $string;
         return $str;
     }
-    public function reverse() : self
+    public function reverse()
     {
         $str = clone $this;
         $str->string = \strrev($str->string);
         return $str;
     }
-    public function slice(int $start = 0, int $length = null) : self
+    public function slice(int $start = 0, int $length = null)
     {
         $str = clone $this;
         $str->string = (string) \substr($this->string, $start, $length ?? \PHP_INT_MAX);
         return $str;
     }
-    public function snake() : self
+    public function snake()
     {
         $str = $this->camel()->title();
         $str->string = \strtolower(\preg_replace(['/([A-Z]+)([A-Z][a-z])/', '/([a-z\\d])([A-Z])/'], 'PrefixedByPoP\\1_\\2', $str->string));
         return $str;
     }
-    public function splice(string $replacement, int $start = 0, int $length = null) : self
+    public function splice(string $replacement, int $start = 0, int $length = null)
     {
         $str = clone $this;
         $str->string = \substr_replace($this->string, $replacement, $start, $length ?? \PHP_INT_MAX);
@@ -309,10 +314,10 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
     public function split(string $delimiter, int $limit = null, int $flags = null) : array
     {
         if (1 > ($limit = $limit ?? \PHP_INT_MAX)) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Split limit must be a positive integer.');
+            throw new InvalidArgumentException('Split limit must be a positive integer.');
         }
         if ('' === $delimiter) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Split delimiter is empty.');
+            throw new InvalidArgumentException('Split delimiter is empty.');
         }
         if (null !== $flags) {
             return parent::split($delimiter, $limit, $flags);
@@ -334,30 +339,36 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
         }
         return '' !== $prefix && 0 === ($this->ignoreCase ? \strncasecmp($this->string, $prefix, \strlen($prefix)) : \strncmp($this->string, $prefix, \strlen($prefix)));
     }
-    public function title(bool $allWords = \false) : self
+    public function title(bool $allWords = \false)
     {
         $str = clone $this;
         $str->string = $allWords ? \ucwords($str->string) : \ucfirst($str->string);
         return $str;
     }
-    public function toUnicodeString(string $fromEncoding = null) : \PrefixedByPoP\Symfony\Component\String\UnicodeString
+    /**
+     * @param string $fromEncoding
+     */
+    public function toUnicodeString($fromEncoding = null) : UnicodeString
     {
-        return new \PrefixedByPoP\Symfony\Component\String\UnicodeString($this->toCodePointString($fromEncoding)->string);
+        return new UnicodeString($this->toCodePointString($fromEncoding)->string);
     }
-    public function toCodePointString(string $fromEncoding = null) : \PrefixedByPoP\Symfony\Component\String\CodePointString
+    /**
+     * @param string $fromEncoding
+     */
+    public function toCodePointString($fromEncoding = null) : CodePointString
     {
-        $u = new \PrefixedByPoP\Symfony\Component\String\CodePointString();
+        $u = new CodePointString();
         if (\in_array($fromEncoding, [null, 'utf8', 'utf-8', 'UTF8', 'UTF-8'], \true) && \preg_match('//u', $this->string)) {
             $u->string = $this->string;
             return $u;
         }
         \set_error_handler(static function ($t, $m) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException($m);
+            throw new InvalidArgumentException($m);
         });
         try {
             try {
                 $validEncoding = \false !== \mb_detect_encoding($this->string, $fromEncoding ?? 'Windows-1252', \true);
-            } catch (\PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 if (!\function_exists('iconv')) {
                     throw $e;
                 }
@@ -368,30 +379,30 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
             \restore_error_handler();
         }
         if (!$validEncoding) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException(\sprintf('Invalid "%s" string.', $fromEncoding ?? 'Windows-1252'));
+            throw new InvalidArgumentException(\sprintf('Invalid "%s" string.', $fromEncoding ?? 'Windows-1252'));
         }
         $u->string = \mb_convert_encoding($this->string, 'UTF-8', $fromEncoding ?? 'Windows-1252');
         return $u;
     }
-    public function trim(string $chars = " \t\n\r\0\v\f") : self
+    public function trim(string $chars = " \t\n\r\x00\v\f")
     {
         $str = clone $this;
         $str->string = \trim($str->string, $chars);
         return $str;
     }
-    public function trimEnd(string $chars = " \t\n\r\0\v\f") : self
+    public function trimEnd(string $chars = " \t\n\r\x00\v\f")
     {
         $str = clone $this;
         $str->string = \rtrim($str->string, $chars);
         return $str;
     }
-    public function trimStart(string $chars = " \t\n\r\0\v\f") : self
+    public function trimStart(string $chars = " \t\n\r\x00\v\f")
     {
         $str = clone $this;
         $str->string = \ltrim($str->string, $chars);
         return $str;
     }
-    public function upper() : self
+    public function upper()
     {
         $str = clone $this;
         $str->string = \strtoupper($str->string);
@@ -400,6 +411,6 @@ class ByteString extends \PrefixedByPoP\Symfony\Component\String\AbstractString
     public function width(bool $ignoreAnsiDecoration = \true) : int
     {
         $string = \preg_match('//u', $this->string) ? $this->string : \preg_replace('/[\\x80-\\xFF]/', '?', $this->string);
-        return (new \PrefixedByPoP\Symfony\Component\String\CodePointString($string))->width($ignoreAnsiDecoration);
+        return (new CodePointString($string))->width($ignoreAnsiDecoration);
     }
 }

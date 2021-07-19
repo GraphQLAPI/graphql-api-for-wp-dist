@@ -41,7 +41,7 @@ use Throwable;
  *
  * @link https://github.com/petkaantonov/bluebird/blob/master/API.md#generators inspiration
  */
-final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
+final class Coroutine implements PromiseInterface
 {
     /**
      * @var PromiseInterface|null
@@ -58,7 +58,7 @@ final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
     public function __construct(callable $generatorFn)
     {
         $this->generator = $generatorFn();
-        $this->result = new \PrefixedByPoP\GuzzleHttp\Promise\Promise(function () {
+        $this->result = new Promise(function () {
             while (isset($this->currentPromise)) {
                 $this->currentPromise->wait();
             }
@@ -67,7 +67,7 @@ final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
             $this->nextCoroutine($this->generator->current());
         } catch (\Exception $exception) {
             $this->result->reject($exception);
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             $this->result->reject($throwable);
         }
     }
@@ -80,7 +80,11 @@ final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
     {
         return new self($generatorFn);
     }
-    public function then(callable $onFulfilled = null, callable $onRejected = null)
+    /**
+     * @param callable $onFulfilled
+     * @param callable $onRejected
+     */
+    public function then($onFulfilled = null, $onRejected = null)
     {
         return $this->result->then($onFulfilled, $onRejected);
     }
@@ -111,7 +115,7 @@ final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
     }
     private function nextCoroutine($yielded)
     {
-        $this->currentPromise = \PrefixedByPoP\GuzzleHttp\Promise\Create::promiseFor($yielded)->then([$this, '_handleSuccess'], [$this, '_handleFailure']);
+        $this->currentPromise = Create::promiseFor($yielded)->then([$this, '_handleSuccess'], [$this, '_handleFailure']);
     }
     /**
      * @internal
@@ -126,9 +130,9 @@ final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
             } else {
                 $this->result->resolve($value);
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->result->reject($exception);
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             $this->result->reject($throwable);
         }
     }
@@ -139,12 +143,12 @@ final class Coroutine implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterf
     {
         unset($this->currentPromise);
         try {
-            $nextYield = $this->generator->throw(\PrefixedByPoP\GuzzleHttp\Promise\Create::exceptionFor($reason));
+            $nextYield = $this->generator->throw(Create::exceptionFor($reason));
             // The throw was caught, so keep iterating on the coroutine
             $this->nextCoroutine($nextYield);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->result->reject($exception);
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             $this->result->reject($throwable);
         }
     }

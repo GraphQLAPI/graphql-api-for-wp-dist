@@ -2,9 +2,10 @@ services:
     _defaults:
         public: true
         autowire: true
-
-    PoPSchema\Tags\TypeAPIs\TagTypeAPIInterface:
-        class: \PoPSchema\TagsWP\TypeAPIs\TagTypeAPI
+        autoconfigure: true
 
     PoPSchema\TagsWP\LooseContracts\:
         resource: '../src/LooseContracts/*'
+
+    PoPSchema\TagsWP\Hooks\:
+        resource: '../src/Hooks/*'

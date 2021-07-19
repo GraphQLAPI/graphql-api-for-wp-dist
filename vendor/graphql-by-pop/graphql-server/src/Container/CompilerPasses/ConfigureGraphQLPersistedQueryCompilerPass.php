@@ -3,21 +3,22 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Container\CompilerPasses;
 
-use GraphQLByPoP\GraphQLServer\Environment;
 use GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface;
+use GraphQLByPoP\GraphQLServer\Environment;
+use PoP\Root\Container\CompilerPasses\AbstractCompilerPass;
+use PoP\Root\Container\ContainerBuilderWrapperInterface;
 use PoP\Translation\Facades\SystemTranslationAPIFacade;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
-class ConfigureGraphQLPersistedQueryCompilerPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+class ConfigureGraphQLPersistedQueryCompilerPass extends AbstractCompilerPass
 {
+    protected function enabled() : bool
+    {
+        return Environment::addGraphQLIntrospectionPersistedQuery();
+    }
     /**
      * GraphQL persisted query for Introspection query
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $containerBuilder) : void
+    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void
     {
-        if (!\GraphQLByPoP\GraphQLServer\Environment::addGraphQLIntrospectionPersistedQuery()) {
-            return;
-        }
         $introspectionPersistedQuery = <<<EOT
 query IntrospectionQuery {
     __schema {
@@ -123,9 +124,9 @@ EOT;
          * Watch out: in the Service Configuration we can't access other services yet,
          * so we use the Translate service from the System Container
          */
-        $translationAPI = \PoP\Translation\Facades\SystemTranslationAPIFacade::getInstance();
-        $description = $translationAPI->__('GraphQL introspection query', 'examples-for-pop');
-        $graphQLPersistedQueryManagerDefinition = $containerBuilder->getDefinition(\GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface::class);
+        $translationAPI = SystemTranslationAPIFacade::getInstance();
+        $description = $translationAPI->__('GraphQL introspection query', 'graphql-server');
+        $graphQLPersistedQueryManagerDefinition = $containerBuilderWrapper->getDefinition(GraphQLPersistedQueryManagerInterface::class);
         $graphQLPersistedQueryManagerDefinition->addMethodCall('addPersistedQuery', ['introspectionQuery', $introspectionPersistedQuery, $description]);
     }
 }

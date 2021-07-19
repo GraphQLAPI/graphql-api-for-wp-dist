@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\Yaml\Exception;
  *
  * @author Romain Neutron <imprec@gmail.com>
  */
-class RuntimeException extends \RuntimeException implements \PrefixedByPoP\Symfony\Component\Yaml\Exception\ExceptionInterface
+class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
 }

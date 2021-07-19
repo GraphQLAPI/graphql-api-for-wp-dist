@@ -2,9 +2,13 @@ services:
     _defaults:
         public: true
         autowire: true
+        autoconfigure: true
 
     GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface:
         class: \GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManager
+
+    GraphQLByPoP\GraphQLRequest\Execution\QueryRetrieverInterface:
+        class: \GraphQLByPoP\GraphQLRequest\Execution\QueryRetriever
 
     GraphQLByPoP\GraphQLRequest\Hooks\:
         resource: '../src/Hooks/*'

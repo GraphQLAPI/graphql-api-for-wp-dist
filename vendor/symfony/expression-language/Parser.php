@@ -53,7 +53,7 @@ class Parser
      *
      * @throws SyntaxError
      */
-    public function parse(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\TokenStream $stream, array $names = [])
+    public function parse(TokenStream $stream, array $names = [])
     {
         $this->lint = \false;
         return $this->doParse($stream, $names);
@@ -66,7 +66,7 @@ class Parser
      *
      * @throws SyntaxError When the passed expression is invalid
      */
-    public function lint(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\TokenStream $stream, ?array $names = []) : void
+    public function lint(TokenStream $stream, ?array $names = []) : void
     {
         $this->lint = \true;
         $this->doParse($stream, $names);
@@ -74,13 +74,13 @@ class Parser
     /**
      * @throws SyntaxError
      */
-    private function doParse(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\TokenStream $stream, ?array $names = []) : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+    private function doParse(TokenStream $stream, ?array $names = []) : Node\Node
     {
         $this->stream = $stream;
         $this->names = $names;
         $node = $this->parseExpression();
         if (!$stream->isEOF()) {
-            throw new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\SyntaxError(\sprintf('Unexpected token "%s" of value "%s".', $stream->current->type, $stream->current->value), $stream->current->cursor, $stream->getExpression());
+            throw new SyntaxError(\sprintf('Unexpected token "%s" of value "%s".', $stream->current->type, $stream->current->value), $stream->current->cursor, $stream->getExpression());
         }
         $this->stream = null;
         $this->names = null;
@@ -90,11 +90,11 @@ class Parser
     {
         $expr = $this->getPrimary();
         $token = $this->stream->current;
-        while ($token->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::OPERATOR_TYPE) && isset($this->binaryOperators[$token->value]) && $this->binaryOperators[$token->value]['precedence'] >= $precedence) {
+        while ($token->test(Token::OPERATOR_TYPE) && isset($this->binaryOperators[$token->value]) && $this->binaryOperators[$token->value]['precedence'] >= $precedence) {
             $op = $this->binaryOperators[$token->value];
             $this->stream->next();
             $expr1 = $this->parseExpression(self::OPERATOR_LEFT === $op['associativity'] ? $op['precedence'] + 1 : $op['precedence']);
-            $expr = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\BinaryNode($token->value, $expr, $expr1);
+            $expr = new Node\BinaryNode($token->value, $expr, $expr1);
             $token = $this->stream->current;
         }
         if (0 === $precedence) {
@@ -105,38 +105,38 @@ class Parser
     protected function getPrimary()
     {
         $token = $this->stream->current;
-        if ($token->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::OPERATOR_TYPE) && isset($this->unaryOperators[$token->value])) {
+        if ($token->test(Token::OPERATOR_TYPE) && isset($this->unaryOperators[$token->value])) {
             $operator = $this->unaryOperators[$token->value];
             $this->stream->next();
             $expr = $this->parseExpression($operator['precedence']);
-            return $this->parsePostfixExpression(new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\UnaryNode($token->value, $expr));
+            return $this->parsePostfixExpression(new Node\UnaryNode($token->value, $expr));
         }
-        if ($token->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '(')) {
+        if ($token->test(Token::PUNCTUATION_TYPE, '(')) {
             $this->stream->next();
             $expr = $this->parseExpression();
-            $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ')', 'An opened parenthesis is not properly closed');
+            $this->stream->expect(Token::PUNCTUATION_TYPE, ')', 'An opened parenthesis is not properly closed');
             return $this->parsePostfixExpression($expr);
         }
         return $this->parsePrimaryExpression();
     }
-    protected function parseConditionalExpression(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $expr)
+    protected function parseConditionalExpression(Node\Node $expr)
     {
-        while ($this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '?')) {
+        while ($this->stream->current->test(Token::PUNCTUATION_TYPE, '?')) {
             $this->stream->next();
-            if (!$this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ':')) {
+            if (!$this->stream->current->test(Token::PUNCTUATION_TYPE, ':')) {
                 $expr2 = $this->parseExpression();
-                if ($this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ':')) {
+                if ($this->stream->current->test(Token::PUNCTUATION_TYPE, ':')) {
                     $this->stream->next();
                     $expr3 = $this->parseExpression();
                 } else {
-                    $expr3 = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode(null);
+                    $expr3 = new Node\ConstantNode(null);
                 }
             } else {
                 $this->stream->next();
                 $expr2 = $expr;
                 $expr3 = $this->parseExpression();
             }
-            $expr = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConditionalNode($expr, $expr2, $expr3);
+            $expr = new Node\ConditionalNode($expr, $expr2, $expr3);
         }
         return $expr;
     }
@@ -144,28 +144,28 @@ class Parser
     {
         $token = $this->stream->current;
         switch ($token->type) {
-            case \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::NAME_TYPE:
+            case Token::NAME_TYPE:
                 $this->stream->next();
                 switch ($token->value) {
                     case 'true':
                     case 'TRUE':
-                        return new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode(\true);
+                        return new Node\ConstantNode(\true);
                     case 'false':
                     case 'FALSE':
-                        return new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode(\false);
+                        return new Node\ConstantNode(\false);
                     case 'null':
                     case 'NULL':
-                        return new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode(null);
+                        return new Node\ConstantNode(null);
                     default:
                         if ('(' === $this->stream->current->value) {
                             if (\false === isset($this->functions[$token->value])) {
-                                throw new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\SyntaxError(\sprintf('The function "%s" does not exist.', $token->value), $token->cursor, $this->stream->getExpression(), $token->value, \array_keys($this->functions));
+                                throw new SyntaxError(\sprintf('The function "%s" does not exist.', $token->value), $token->cursor, $this->stream->getExpression(), $token->value, \array_keys($this->functions));
                             }
-                            $node = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\FunctionNode($token->value, $this->parseArguments());
+                            $node = new Node\FunctionNode($token->value, $this->parseArguments());
                         } else {
                             if (!$this->lint || \is_array($this->names)) {
                                 if (!\in_array($token->value, $this->names, \true)) {
-                                    throw new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\SyntaxError(\sprintf('Variable "%s" is not valid.', $token->value), $token->cursor, $this->stream->getExpression(), $token->value, $this->names);
+                                    throw new SyntaxError(\sprintf('Variable "%s" is not valid.', $token->value), $token->cursor, $this->stream->getExpression(), $token->value, $this->names);
                                 }
                                 // is the name used in the compiled code different
                                 // from the name used in the expression?
@@ -175,54 +175,54 @@ class Parser
                             } else {
                                 $name = $token->value;
                             }
-                            $node = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\NameNode($name);
+                            $node = new Node\NameNode($name);
                         }
                 }
                 break;
-            case \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::NUMBER_TYPE:
-            case \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::STRING_TYPE:
+            case Token::NUMBER_TYPE:
+            case Token::STRING_TYPE:
                 $this->stream->next();
-                return new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode($token->value);
+                return new Node\ConstantNode($token->value);
             default:
-                if ($token->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '[')) {
+                if ($token->test(Token::PUNCTUATION_TYPE, '[')) {
                     $node = $this->parseArrayExpression();
-                } elseif ($token->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '{')) {
+                } elseif ($token->test(Token::PUNCTUATION_TYPE, '{')) {
                     $node = $this->parseHashExpression();
                 } else {
-                    throw new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\SyntaxError(\sprintf('Unexpected token "%s" of value "%s".', $token->type, $token->value), $token->cursor, $this->stream->getExpression());
+                    throw new SyntaxError(\sprintf('Unexpected token "%s" of value "%s".', $token->type, $token->value), $token->cursor, $this->stream->getExpression());
                 }
         }
         return $this->parsePostfixExpression($node);
     }
     public function parseArrayExpression()
     {
-        $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '[', 'An array element was expected');
-        $node = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ArrayNode();
+        $this->stream->expect(Token::PUNCTUATION_TYPE, '[', 'An array element was expected');
+        $node = new Node\ArrayNode();
         $first = \true;
-        while (!$this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ']')) {
+        while (!$this->stream->current->test(Token::PUNCTUATION_TYPE, ']')) {
             if (!$first) {
-                $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ',', 'An array element must be followed by a comma');
+                $this->stream->expect(Token::PUNCTUATION_TYPE, ',', 'An array element must be followed by a comma');
                 // trailing ,?
-                if ($this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ']')) {
+                if ($this->stream->current->test(Token::PUNCTUATION_TYPE, ']')) {
                     break;
                 }
             }
             $first = \false;
             $node->addElement($this->parseExpression());
         }
-        $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ']', 'An opened array is not properly closed');
+        $this->stream->expect(Token::PUNCTUATION_TYPE, ']', 'An opened array is not properly closed');
         return $node;
     }
     public function parseHashExpression()
     {
-        $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '{', 'A hash element was expected');
-        $node = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ArrayNode();
+        $this->stream->expect(Token::PUNCTUATION_TYPE, '{', 'A hash element was expected');
+        $node = new Node\ArrayNode();
         $first = \true;
-        while (!$this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '}')) {
+        while (!$this->stream->current->test(Token::PUNCTUATION_TYPE, '}')) {
             if (!$first) {
-                $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ',', 'A hash value must be followed by a comma');
+                $this->stream->expect(Token::PUNCTUATION_TYPE, ',', 'A hash value must be followed by a comma');
                 // trailing ,?
-                if ($this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '}')) {
+                if ($this->stream->current->test(Token::PUNCTUATION_TYPE, '}')) {
                     break;
                 }
             }
@@ -233,49 +233,49 @@ class Parser
             //  * a string -- 'a'
             //  * a name, which is equivalent to a string -- a
             //  * an expression, which must be enclosed in parentheses -- (1 + 2)
-            if ($this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::STRING_TYPE) || $this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::NAME_TYPE) || $this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::NUMBER_TYPE)) {
-                $key = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode($this->stream->current->value);
+            if ($this->stream->current->test(Token::STRING_TYPE) || $this->stream->current->test(Token::NAME_TYPE) || $this->stream->current->test(Token::NUMBER_TYPE)) {
+                $key = new Node\ConstantNode($this->stream->current->value);
                 $this->stream->next();
-            } elseif ($this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '(')) {
+            } elseif ($this->stream->current->test(Token::PUNCTUATION_TYPE, '(')) {
                 $key = $this->parseExpression();
             } else {
                 $current = $this->stream->current;
-                throw new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\SyntaxError(\sprintf('A hash key must be a quoted string, a number, a name, or an expression enclosed in parentheses (unexpected token "%s" of value "%s".', $current->type, $current->value), $current->cursor, $this->stream->getExpression());
+                throw new SyntaxError(\sprintf('A hash key must be a quoted string, a number, a name, or an expression enclosed in parentheses (unexpected token "%s" of value "%s".', $current->type, $current->value), $current->cursor, $this->stream->getExpression());
             }
-            $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ':', 'A hash key must be followed by a colon (:)');
+            $this->stream->expect(Token::PUNCTUATION_TYPE, ':', 'A hash key must be followed by a colon (:)');
             $value = $this->parseExpression();
             $node->addElement($value, $key);
         }
-        $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '}', 'An opened hash is not properly closed');
+        $this->stream->expect(Token::PUNCTUATION_TYPE, '}', 'An opened hash is not properly closed');
         return $node;
     }
-    public function parsePostfixExpression(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $node)
+    public function parsePostfixExpression(Node\Node $node)
     {
         $token = $this->stream->current;
-        while (\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE == $token->type) {
+        while (Token::PUNCTUATION_TYPE == $token->type) {
             if ('.' === $token->value) {
                 $this->stream->next();
                 $token = $this->stream->current;
                 $this->stream->next();
-                if (\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::NAME_TYPE !== $token->type && (\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::OPERATOR_TYPE !== $token->type || !\preg_match('/[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*/A', $token->value))) {
-                    throw new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\SyntaxError('Expected name.', $token->cursor, $this->stream->getExpression());
+                if (Token::NAME_TYPE !== $token->type && (Token::OPERATOR_TYPE !== $token->type || !\preg_match('/[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*/A', $token->value))) {
+                    throw new SyntaxError('Expected name.', $token->cursor, $this->stream->getExpression());
                 }
-                $arg = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ConstantNode($token->value, \true);
-                $arguments = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ArgumentsNode();
-                if ($this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '(')) {
-                    $type = \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\GetAttrNode::METHOD_CALL;
+                $arg = new Node\ConstantNode($token->value, \true);
+                $arguments = new Node\ArgumentsNode();
+                if ($this->stream->current->test(Token::PUNCTUATION_TYPE, '(')) {
+                    $type = Node\GetAttrNode::METHOD_CALL;
                     foreach ($this->parseArguments()->nodes as $n) {
                         $arguments->addElement($n);
                     }
                 } else {
-                    $type = \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\GetAttrNode::PROPERTY_CALL;
+                    $type = Node\GetAttrNode::PROPERTY_CALL;
                 }
-                $node = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\GetAttrNode($node, $arg, $arguments, $type);
+                $node = new Node\GetAttrNode($node, $arg, $arguments, $type);
             } elseif ('[' === $token->value) {
                 $this->stream->next();
                 $arg = $this->parseExpression();
-                $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ']');
-                $node = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\GetAttrNode($node, $arg, new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ArgumentsNode(), \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\GetAttrNode::ARRAY_CALL);
+                $this->stream->expect(Token::PUNCTUATION_TYPE, ']');
+                $node = new Node\GetAttrNode($node, $arg, new Node\ArgumentsNode(), Node\GetAttrNode::ARRAY_CALL);
             } else {
                 break;
             }
@@ -289,14 +289,14 @@ class Parser
     public function parseArguments()
     {
         $args = [];
-        $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, '(', 'A list of arguments must begin with an opening parenthesis');
-        while (!$this->stream->current->test(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ')')) {
+        $this->stream->expect(Token::PUNCTUATION_TYPE, '(', 'A list of arguments must begin with an opening parenthesis');
+        while (!$this->stream->current->test(Token::PUNCTUATION_TYPE, ')')) {
             if (!empty($args)) {
-                $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ',', 'Arguments must be separated by a comma');
+                $this->stream->expect(Token::PUNCTUATION_TYPE, ',', 'Arguments must be separated by a comma');
             }
             $args[] = $this->parseExpression();
         }
-        $this->stream->expect(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Token::PUNCTUATION_TYPE, ')', 'A list of arguments must be closed by a parenthesis');
-        return new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node($args);
+        $this->stream->expect(Token::PUNCTUATION_TYPE, ')', 'A list of arguments must be closed by a parenthesis');
+        return new Node\Node($args);
     }
 }

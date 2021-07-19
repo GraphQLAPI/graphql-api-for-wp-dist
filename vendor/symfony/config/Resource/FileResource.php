@@ -19,7 +19,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Resource;
  *
  * @final
  */
-class FileResource implements \PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceInterface
+class FileResource implements SelfCheckingResourceInterface
 {
     /**
      * @var string|false

@@ -15,7 +15,7 @@ namespace PrefixedByPoP;
 use PrefixedByPoP\Michelf\Markdown;
 // Read file and pass content through the Markdown parser
 $text = \file_get_contents('Readme.md');
-$html = \PrefixedByPoP\Michelf\Markdown::defaultTransform($text);
+$html = Markdown::defaultTransform($text);
 ?>
 <!DOCTYPE html>
 <html>

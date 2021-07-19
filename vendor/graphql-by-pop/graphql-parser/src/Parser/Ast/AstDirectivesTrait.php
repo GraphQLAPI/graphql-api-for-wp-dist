@@ -7,6 +7,7 @@
  */
 namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
+use GraphQLByPoP\GraphQLParser\Parser\Ast\Directive;
 trait AstDirectivesTrait
 {
     /** @var Directive[] */
@@ -51,7 +52,7 @@ trait AstDirectivesTrait
             $this->addDirective($directive);
         }
     }
-    public function addDirective(\GraphQLByPoP\GraphQLParser\Parser\Ast\Directive $directive)
+    public function addDirective(Directive $directive)
     {
         /**
          * Watch out! In this query, a field contains the same directive twice:

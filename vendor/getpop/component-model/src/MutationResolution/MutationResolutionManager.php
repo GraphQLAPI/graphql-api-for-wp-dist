@@ -11,7 +11,7 @@ class MutationResolutionManager implements \PoP\ComponentModel\MutationResolutio
      * @var array<string, mixed>
      */
     private $results = [];
-    public function __construct(\PoP\Hooks\HooksAPIInterface $hooksAPI)
+    public function __construct(HooksAPIInterface $hooksAPI)
     {
         $hooksAPI->addAction('augmentVarsProperties', [$this, 'clearResults']);
     }
@@ -36,8 +36,8 @@ class MutationResolutionManager implements \PoP\ComponentModel\MutationResolutio
          * it uses that one, but `getResult` uses the original class, so they will mismatch!
          * To avoid this problem, get the actual implementation class for this class
          */
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $class = $instanceManager->getImplementationClass($class);
+        $instanceManager = InstanceManagerFacade::getInstance();
+        $class = $instanceManager->getInstanceClass($class);
         return $this->results[$class];
     }
 }

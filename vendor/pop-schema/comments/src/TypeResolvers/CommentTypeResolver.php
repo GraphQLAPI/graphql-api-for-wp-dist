@@ -3,32 +3,46 @@
 declare (strict_types=1);
 namespace PoPSchema\Comments\TypeResolvers;
 
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoPSchema\Comments\TypeDataLoaders\CommentTypeDataLoader;
+use PoP\ComponentModel\ErrorHandling\ErrorProviderInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\ComponentModel\Schema\FeedbackMessageStoreInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface;
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
-class CommentTypeResolver extends \PoP\ComponentModel\TypeResolvers\AbstractTypeResolver
+use PoP\Hooks\HooksAPIInterface;
+use PoP\Translation\TranslationAPIInterface;
+use PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface;
+use PoPSchema\Comments\TypeDataLoaders\CommentTypeDataLoader;
+class CommentTypeResolver extends AbstractTypeResolver
 {
-    public const NAME = 'Comment';
+    /**
+     * @var \PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface
+     */
+    protected $commentTypeAPI;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FeedbackMessageStoreInterface $feedbackMessageStore, FieldQueryInterpreterInterface $fieldQueryInterpreter, ErrorProviderInterface $errorProvider, SchemaDefinitionServiceInterface $schemaDefinitionService, CommentTypeAPIInterface $commentTypeAPI)
+    {
+        $this->commentTypeAPI = $commentTypeAPI;
+        parent::__construct($translationAPI, $hooksAPI, $instanceManager, $feedbackMessageStore, $fieldQueryInterpreter, $errorProvider, $schemaDefinitionService);
+    }
     public function getTypeName() : string
     {
-        return self::NAME;
+        return 'Comment';
     }
     public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('Comments added to posts', 'comments');
+        return $this->translationAPI->__('Comments added to posts', 'comments');
     }
     /**
+     * @return string|int|null
      * @param object $resultItem
      */
     public function getID($resultItem)
     {
-        $cmscommentsresolver = \PoPSchema\Comments\ObjectPropertyResolverFactory::getInstance();
         $comment = $resultItem;
-        return $cmscommentsresolver->getCommentId($comment);
+        return $this->commentTypeAPI->getCommentId($comment);
     }
     public function getTypeDataLoaderClass() : string
     {
-        return \PoPSchema\Comments\TypeDataLoaders\CommentTypeDataLoader::class;
+        return CommentTypeDataLoader::class;
     }
 }

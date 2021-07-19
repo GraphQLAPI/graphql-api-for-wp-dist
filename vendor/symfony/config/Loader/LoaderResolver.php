@@ -18,7 +18,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Loader;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class LoaderResolver implements \PrefixedByPoP\Symfony\Component\Config\Loader\LoaderResolverInterface
+class LoaderResolver implements LoaderResolverInterface
 {
     /**
      * @var LoaderInterface[] An array of LoaderInterface objects
@@ -35,8 +35,9 @@ class LoaderResolver implements \PrefixedByPoP\Symfony\Component\Config\Loader\L
     }
     /**
      * {@inheritdoc}
+     * @param string $type
      */
-    public function resolve($resource, string $type = null)
+    public function resolve($resource, $type = null)
     {
         foreach ($this->loaders as $loader) {
             if ($loader->supports($resource, $type)) {
@@ -45,7 +46,7 @@ class LoaderResolver implements \PrefixedByPoP\Symfony\Component\Config\Loader\L
         }
         return \false;
     }
-    public function addLoader(\PrefixedByPoP\Symfony\Component\Config\Loader\LoaderInterface $loader)
+    public function addLoader(LoaderInterface $loader)
     {
         $this->loaders[] = $loader;
         $loader->setResolver($this);

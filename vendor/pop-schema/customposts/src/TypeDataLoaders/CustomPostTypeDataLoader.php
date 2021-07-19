@@ -5,10 +5,10 @@ namespace PoPSchema\CustomPosts\TypeDataLoaders;
 
 use PoPSchema\CustomPosts\TypeDataLoaders\AbstractCustomPostTypeDataLoader;
 use PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor;
-class CustomPostTypeDataLoader extends \PoPSchema\CustomPosts\TypeDataLoaders\AbstractCustomPostTypeDataLoader
+class CustomPostTypeDataLoader extends AbstractCustomPostTypeDataLoader
 {
     public function getFilterDataloadingModule() : ?array
     {
-        return [\PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor::class, \PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_UNIONCUSTOMPOSTLIST];
+        return [CustomPostRelationalFieldDataloadModuleProcessor::class, CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_UNIONCUSTOMPOSTLIST];
     }
 }

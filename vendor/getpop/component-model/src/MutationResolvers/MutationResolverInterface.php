@@ -6,6 +6,7 @@ namespace PoP\ComponentModel\MutationResolvers;
 interface MutationResolverInterface
 {
     /**
+     * Please notice: the return type `mixed` includes `Error`
      * @return mixed
      */
     public function execute(array $form_data);

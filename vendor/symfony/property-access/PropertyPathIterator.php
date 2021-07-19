@@ -16,10 +16,10 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class PropertyPathIterator extends \ArrayIterator implements \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPathIteratorInterface
+class PropertyPathIterator extends \ArrayIterator implements PropertyPathIteratorInterface
 {
     protected $path;
-    public function __construct(\PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPathInterface $path)
+    public function __construct(PropertyPathInterface $path)
     {
         parent::__construct($path->getElements());
         $this->path = $path;

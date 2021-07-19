@@ -20,17 +20,7 @@ class Component extends AbstractComponent
     {
         return [
             \PoPSchema\PostTags\Component::class,
-            \PoPSchema\PostsWP\Component::class,
-            \PoPSchema\TagsWP\Component::class,
-        ];
-    }
-
-    public static function getDependedMigrationPlugins(): array
-    {
-        $packageName = basename(dirname(__DIR__));
-        $folder = dirname(__DIR__, 2);
-        return [
-            $folder . '/migrate-' . $packageName . '/initialize.php',
+            \PoPSchema\CustomPostTagsWP\Component::class,
         ];
     }
 
@@ -45,7 +35,6 @@ class Component extends AbstractComponent
         bool $skipSchema = false,
         array $skipSchemaComponentClasses = []
     ): void {
-        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-        self::initYAMLServices(dirname(__DIR__));
+        self::initServices(dirname(__DIR__));
     }
 }

@@ -6,19 +6,17 @@ namespace PoP\AccessControl\Hooks;
 use PoP\AccessControl\ComponentConfiguration;
 use PoP\AccessControl\Schema\SchemaModes;
 use PoP\AccessControl\Hooks\AbstractAccessControlForFieldsHookSet;
-abstract class AbstractAccessControlForFieldsInPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractAccessControlForFieldsHookSet
+abstract class AbstractAccessControlForFieldsInPrivateSchemaHookSet extends AbstractAccessControlForFieldsHookSet
 {
     /**
      * Indicate if this hook is enabled
-     *
-     * @return boolean
      */
     protected function enabled() : bool
     {
-        return \PoP\AccessControl\ComponentConfiguration::canSchemaBePrivate();
+        return ComponentConfiguration::canSchemaBePrivate();
     }
     protected function getSchemaMode() : string
     {
-        return \PoP\AccessControl\Schema\SchemaModes::PRIVATE_SCHEMA_MODE;
+        return SchemaModes::PRIVATE_SCHEMA_MODE;
     }
 }

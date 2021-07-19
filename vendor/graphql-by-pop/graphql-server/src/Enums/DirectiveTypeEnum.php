@@ -3,14 +3,14 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Enums;
 
+use GraphQLByPoP\GraphQLQuery\ComponentConfiguration;
 use PoP\ComponentModel\Enums\AbstractEnum;
 use PoP\ComponentModel\Directives\DirectiveTypes;
-class DirectiveTypeEnum extends \PoP\ComponentModel\Enums\AbstractEnum
+class DirectiveTypeEnum extends AbstractEnum
 {
-    public const NAME = 'DirectiveType';
     protected function getEnumName() : string
     {
-        return self::NAME;
+        return 'DirectiveType';
     }
     public function getValues() : array
     {
@@ -18,6 +18,6 @@ class DirectiveTypeEnum extends \PoP\ComponentModel\Enums\AbstractEnum
     }
     public function getCoreValues() : ?array
     {
-        return [\PoP\ComponentModel\Directives\DirectiveTypes::QUERY, \PoP\ComponentModel\Directives\DirectiveTypes::SCHEMA];
+        return \array_merge([DirectiveTypes::QUERY, DirectiveTypes::SCHEMA], ComponentConfiguration::enableComposableDirectives() ? [DirectiveTypes::INDEXING] : []);
     }
 }

@@ -16,25 +16,25 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * @author Maxime Steinhausser <maxime.steinhausser@gmail.com>
  */
-class ContainerParametersResourceChecker implements \PrefixedByPoP\Symfony\Component\Config\ResourceCheckerInterface
+class ContainerParametersResourceChecker implements ResourceCheckerInterface
 {
     /** @var ContainerInterface */
     private $container;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface $container)
+    public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
     }
     /**
      * {@inheritdoc}
      */
-    public function supports(\PrefixedByPoP\Symfony\Component\Config\Resource\ResourceInterface $metadata)
+    public function supports(ResourceInterface $metadata)
     {
-        return $metadata instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Config\ContainerParametersResource;
+        return $metadata instanceof ContainerParametersResource;
     }
     /**
      * {@inheritdoc}
      */
-    public function isFresh(\PrefixedByPoP\Symfony\Component\Config\Resource\ResourceInterface $resource, int $timestamp)
+    public function isFresh(ResourceInterface $resource, int $timestamp)
     {
         foreach ($resource->getParameters() as $key => $value) {
             if (!$this->container->hasParameter($key) || $this->container->getParameter($key) !== $value) {

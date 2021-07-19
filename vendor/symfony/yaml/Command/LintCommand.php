@@ -10,6 +10,7 @@
  */
 namespace PrefixedByPoP\Symfony\Component\Yaml\Command;
 
+use PrefixedByPoP\Symfony\Component\Console\CI\GithubActionReporter;
 use PrefixedByPoP\Symfony\Component\Console\Command\Command;
 use PrefixedByPoP\Symfony\Component\Console\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\Console\Exception\RuntimeException;
@@ -27,9 +28,10 @@ use PrefixedByPoP\Symfony\Component\Yaml\Yaml;
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
  * @author Robin Chalas <robin.chalas@gmail.com>
  */
-class LintCommand extends \PrefixedByPoP\Symfony\Component\Console\Command\Command
+class LintCommand extends Command
 {
     protected static $defaultName = 'lint:yaml';
+    protected static $defaultDescription = 'Lint a YAML file and outputs encountered errors';
     private $parser;
     private $format;
     private $displayCorrectFiles;
@@ -46,7 +48,7 @@ class LintCommand extends \PrefixedByPoP\Symfony\Component\Console\Command\Comma
      */
     protected function configure()
     {
-        $this->setDescription('Lints a file and outputs encountered errors')->addArgument('filename', \PrefixedByPoP\Symfony\Component\Console\Input\InputArgument::IS_ARRAY, 'A file, a directory or "-" for reading from STDIN')->addOption('format', null, \PrefixedByPoP\Symfony\Component\Console\Input\InputOption::VALUE_REQUIRED, 'The output format', 'txt')->addOption('parse-tags', null, \PrefixedByPoP\Symfony\Component\Console\Input\InputOption::VALUE_NONE, 'Parse custom tags')->setHelp(<<<EOF
+        $this->setDescription(self::$defaultDescription)->addArgument('filename', InputArgument::IS_ARRAY, 'A file, a directory or "-" for reading from STDIN')->addOption('format', null, InputOption::VALUE_REQUIRED, 'The output format')->addOption('parse-tags', null, InputOption::VALUE_NONE, 'Parse custom tags')->setHelp(<<<EOF
 The <info>%command.name%</info> command lints a YAML file and outputs to STDOUT
 the first encountered syntax error.
 
@@ -66,23 +68,30 @@ Or of a whole directory:
 EOF
 );
     }
-    protected function execute(\PrefixedByPoP\Symfony\Component\Console\Input\InputInterface $input, \PrefixedByPoP\Symfony\Component\Console\Output\OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $io = new \PrefixedByPoP\Symfony\Component\Console\Style\SymfonyStyle($input, $output);
+        $io = new SymfonyStyle($input, $output);
         $filenames = (array) $input->getArgument('filename');
         $this->format = $input->getOption('format');
+        if ('github' === $this->format && !\class_exists(GithubActionReporter::class)) {
+            throw new \InvalidArgumentException('The "github" format is only available since "symfony/console" >= 5.3.');
+        }
+        if (null === $this->format) {
+            // Autodetect format according to CI environment
+            $this->format = \class_exists(GithubActionReporter::class) && GithubActionReporter::isGithubActionEnvironment() ? 'github' : 'txt';
+        }
         $this->displayCorrectFiles = $output->isVerbose();
-        $flags = $input->getOption('parse-tags') ? \PrefixedByPoP\Symfony\Component\Yaml\Yaml::PARSE_CUSTOM_TAGS : 0;
+        $flags = $input->getOption('parse-tags') ? Yaml::PARSE_CUSTOM_TAGS : 0;
         if (['-'] === $filenames) {
             return $this->display($io, [$this->validate(\file_get_contents('php://stdin'), $flags)]);
         }
         if (!$filenames) {
-            throw new \PrefixedByPoP\Symfony\Component\Console\Exception\RuntimeException('Please provide a filename or pipe file content to STDIN.');
+            throw new RuntimeException('Please provide a filename or pipe file content to STDIN.');
         }
         $filesInfo = [];
         foreach ($filenames as $filename) {
             if (!$this->isReadable($filename)) {
-                throw new \PrefixedByPoP\Symfony\Component\Console\Exception\RuntimeException(\sprintf('File or directory "%s" is not readable.', $filename));
+                throw new RuntimeException(\sprintf('File or directory "%s" is not readable.', $filename));
             }
             foreach ($this->getFiles($filename) as $file) {
                 $filesInfo[] = $this->validate(\file_get_contents($file), $flags, $file);
@@ -94,35 +103,40 @@ EOF
     {
         $prevErrorHandler = \set_error_handler(function ($level, $message, $file, $line) use(&$prevErrorHandler) {
             if (\E_USER_DEPRECATED === $level) {
-                throw new \PrefixedByPoP\Symfony\Component\Yaml\Exception\ParseException($message, $this->getParser()->getRealCurrentLineNb() + 1);
+                throw new ParseException($message, $this->getParser()->getRealCurrentLineNb() + 1);
             }
             return $prevErrorHandler ? $prevErrorHandler($level, $message, $file, $line) : \false;
         });
         try {
-            $this->getParser()->parse($content, \PrefixedByPoP\Symfony\Component\Yaml\Yaml::PARSE_CONSTANT | $flags);
-        } catch (\PrefixedByPoP\Symfony\Component\Yaml\Exception\ParseException $e) {
+            $this->getParser()->parse($content, Yaml::PARSE_CONSTANT | $flags);
+        } catch (ParseException $e) {
             return ['file' => $file, 'line' => $e->getParsedLine(), 'valid' => \false, 'message' => $e->getMessage()];
         } finally {
             \restore_error_handler();
         }
         return ['file' => $file, 'valid' => \true];
     }
-    private function display(\PrefixedByPoP\Symfony\Component\Console\Style\SymfonyStyle $io, array $files) : int
+    private function display(SymfonyStyle $io, array $files) : int
     {
         switch ($this->format) {
             case 'txt':
                 return $this->displayTxt($io, $files);
             case 'json':
                 return $this->displayJson($io, $files);
+            case 'github':
+                return $this->displayTxt($io, $files, \true);
             default:
-                throw new \PrefixedByPoP\Symfony\Component\Console\Exception\InvalidArgumentException(\sprintf('The format "%s" is not supported.', $this->format));
+                throw new InvalidArgumentException(\sprintf('The format "%s" is not supported.', $this->format));
         }
     }
-    private function displayTxt(\PrefixedByPoP\Symfony\Component\Console\Style\SymfonyStyle $io, array $filesInfo) : int
+    private function displayTxt(SymfonyStyle $io, array $filesInfo, bool $errorAsGithubAnnotations = \false) : int
     {
         $countFiles = \count($filesInfo);
         $erroredFiles = 0;
         $suggestTagOption = \false;
+        if ($errorAsGithubAnnotations) {
+            $githubReporter = new GithubActionReporter($io);
+        }
         foreach ($filesInfo as $info) {
             if ($info['valid'] && $this->displayCorrectFiles) {
                 $io->comment('<info>OK</info>' . ($info['file'] ? \sprintf(' in %s', $info['file']) : ''));
@@ -133,6 +147,9 @@ EOF
                 if (\false !== \strpos($info['message'], 'PARSE_CUSTOM_TAGS')) {
                     $suggestTagOption = \true;
                 }
+                if ($errorAsGithubAnnotations) {
+                    $githubReporter->error($info['message'], $info['file'] ?? 'php://stdin', $info['line']);
+                }
             }
         }
         if (0 === $erroredFiles) {
@@ -142,7 +159,7 @@ EOF
         }
         return \min($erroredFiles, 1);
     }
-    private function displayJson(\PrefixedByPoP\Symfony\Component\Console\Style\SymfonyStyle $io, array $filesInfo) : int
+    private function displayJson(SymfonyStyle $io, array $filesInfo) : int
     {
         $errors = 0;
         \array_walk($filesInfo, function (&$v) use(&$errors) {
@@ -170,10 +187,10 @@ EOF
             (yield $file);
         }
     }
-    private function getParser() : \PrefixedByPoP\Symfony\Component\Yaml\Parser
+    private function getParser() : Parser
     {
         if (!$this->parser) {
-            $this->parser = new \PrefixedByPoP\Symfony\Component\Yaml\Parser();
+            $this->parser = new Parser();
         }
         return $this->parser;
     }

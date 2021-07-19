@@ -52,7 +52,7 @@ abstract class AbstractDefinitionPersistence implements \PoP\Definitions\Definit
     public function setDefinitionResolver(\PoP\Definitions\DefinitionResolverInterface $definition_resolver, string $group) : void
     {
         $this->definition_resolvers[$group] = $definition_resolver;
-        $definition_resolver->setPersistedData($this->resolverData[$group]);
+        $definition_resolver->setPersistedData($this->resolverData[$group] ?? []);
     }
     public function getDefinitionResolver(string $group) : ?\PoP\Definitions\DefinitionResolverInterface
     {
@@ -92,7 +92,7 @@ abstract class AbstractDefinitionPersistence implements \PoP\Definitions\Definit
     }
     public function storeDefinitionsPersistently() : void
     {
-        if (\PoP\Definitions\Environment::disableDefinitionPersistence()) {
+        if (Environment::disableDefinitionPersistence()) {
             return;
         }
         if ($this->addedDefinition()) {

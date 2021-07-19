@@ -17,6 +17,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
-interface PropertyInfoExtractorInterface extends \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyDescriptionExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyAccessExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyListExtractorInterface
+interface PropertyInfoExtractorInterface extends PropertyTypeExtractorInterface, PropertyDescriptionExtractorInterface, PropertyAccessExtractorInterface, PropertyListExtractorInterface
 {
 }

@@ -16,9 +16,14 @@ use PrefixedByPoP\Symfony\Component\Config\Exception\LoaderLoadException;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-abstract class Loader implements \PrefixedByPoP\Symfony\Component\Config\Loader\LoaderInterface
+abstract class Loader implements LoaderInterface
 {
     protected $resolver;
+    protected $env;
+    public function __construct(string $env = null)
+    {
+        $this->env = $env;
+    }
     /**
      * {@inheritdoc}
      */
@@ -29,7 +34,7 @@ abstract class Loader implements \PrefixedByPoP\Symfony\Component\Config\Loader\
     /**
      * {@inheritdoc}
      */
-    public function setResolver(\PrefixedByPoP\Symfony\Component\Config\Loader\LoaderResolverInterface $resolver)
+    public function setResolver(LoaderResolverInterface $resolver)
     {
         $this->resolver = $resolver;
     }
@@ -37,7 +42,7 @@ abstract class Loader implements \PrefixedByPoP\Symfony\Component\Config\Loader\
      * Imports a resource.
      *
      * @param mixed       $resource A resource
-     * @param string $type     The resource type or null if unknown
+     * @param string $type The resource type or null if unknown
      *
      * @return mixed
      */
@@ -62,7 +67,7 @@ abstract class Loader implements \PrefixedByPoP\Symfony\Component\Config\Loader\
         }
         $loader = null === $this->resolver ? \false : $this->resolver->resolve($resource, $type);
         if (\false === $loader) {
-            throw new \PrefixedByPoP\Symfony\Component\Config\Exception\LoaderLoadException($resource, null, null, null, $type);
+            throw new LoaderLoadException($resource, null, 0, null, $type);
         }
         return $loader;
     }

@@ -9,7 +9,7 @@ use PrefixedByPoP\FastRoute\RouteParser;
  *
  * "/user/{name}[/{id:[0-9]+}]"
  */
-class Std implements \PrefixedByPoP\FastRoute\RouteParser
+class Std implements RouteParser
 {
     const VARIABLE_REGEX = <<<'REGEX'
 \{
@@ -29,15 +29,15 @@ REGEX;
         if ($numOptionals !== \count($segments) - 1) {
             // If there are any ] in the middle of the route, throw a more specific error message
             if (\preg_match('~' . self::VARIABLE_REGEX . '(*SKIP)(*F) | \\]~x', $routeWithoutClosingOptionals)) {
-                throw new \PrefixedByPoP\FastRoute\BadRouteException("Optional segments can only occur at the end of a route");
+                throw new BadRouteException("Optional segments can only occur at the end of a route");
             }
-            throw new \PrefixedByPoP\FastRoute\BadRouteException("Number of opening '[' and closing ']' does not match");
+            throw new BadRouteException("Number of opening '[' and closing ']' does not match");
         }
         $currentRoute = '';
         $routeDatas = [];
         foreach ($segments as $n => $segment) {
             if ($segment === '' && $n !== 0) {
-                throw new \PrefixedByPoP\FastRoute\BadRouteException("Empty optional part");
+                throw new BadRouteException("Empty optional part");
             }
             $currentRoute .= $segment;
             $routeDatas[] = $this->parsePlaceholders($currentRoute);

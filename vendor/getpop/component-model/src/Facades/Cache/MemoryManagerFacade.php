@@ -7,12 +7,12 @@ use PoP\ComponentModel\Cache\CacheInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class MemoryManagerFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Cache\CacheInterface
+    public static function getInstance() : CacheInterface
     {
         /**
          * @var CacheInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get('memory_cache');
+        $service = ContainerBuilderFactory::getInstance()->get('memory_cache');
         return $service;
     }
 }

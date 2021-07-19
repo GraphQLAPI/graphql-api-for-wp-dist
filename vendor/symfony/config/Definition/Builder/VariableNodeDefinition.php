@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\VariableNode;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class VariableNodeDefinition extends \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\NodeDefinition
+class VariableNodeDefinition extends NodeDefinition
 {
     /**
      * Instantiate a Node.
@@ -25,7 +25,7 @@ class VariableNodeDefinition extends \PrefixedByPoP\Symfony\Component\Config\Def
      */
     protected function instantiateNode()
     {
-        return new \PrefixedByPoP\Symfony\Component\Config\Definition\VariableNode($this->name, $this->parent, $this->pathSeparator);
+        return new VariableNode($this->name, $this->parent, $this->pathSeparator);
     }
     /**
      * {@inheritdoc}

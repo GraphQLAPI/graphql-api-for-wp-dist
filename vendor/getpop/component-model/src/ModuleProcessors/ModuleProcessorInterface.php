@@ -8,21 +8,27 @@ interface ModuleProcessorInterface
     public function getModulesToProcess() : array;
     public function getSubmodules(array $module) : array;
     public function getAllSubmodules(array $module) : array;
-    public function executeInitPropsModuletree($eval_self_fn, $get_props_for_descendant_modules_fn, $get_props_for_descendant_datasetmodules_fn, $propagate_fn, array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate);
-    public function initModelPropsModuletree(array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate);
+    public function executeInitPropsModuletree(callable $eval_self_fn, callable $get_props_for_descendant_modules_fn, callable $get_props_for_descendant_datasetmodules_fn, string $propagate_fn, array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate) : void;
+    public function initModelPropsModuletree(array $module, array &$props, array $wildcard_props_to_propagate, array $targetted_props_to_propagate) : void;
     public function getModelPropsForDescendantModules(array $module, array &$props) : array;
     public function getModelPropsForDescendantDatasetmodules(array $module, array &$props) : array;
-    public function initModelProps(array $module, array &$props);
-    public function initRequestPropsModuletree(array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate);
+    public function initModelProps(array $module, array &$props) : void;
+    public function initRequestPropsModuletree(array $module, array &$props, array $wildcard_props_to_propagate, array $targetted_props_to_propagate) : void;
     public function getRequestPropsForDescendantModules(array $module, array &$props) : array;
     public function getRequestPropsForDescendantDatasetmodules(array $module, array &$props) : array;
-    public function initRequestProps(array $module, array &$props);
+    public function initRequestProps(array $module, array &$props) : void;
     public function setProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void;
     public function appendGroupProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void;
     public function appendProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void;
     public function mergeGroupProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void;
     public function mergeProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void;
+    /**
+     * @return mixed
+     */
     public function getGroupProp(string $group, array $module, array &$props, string $field, array $starting_from_modulepath = array());
+    /**
+     * @return mixed
+     */
     public function getProp(array $module, array &$props, string $field, array $starting_from_modulepath = array());
     public function mergeGroupIterateKeyProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void;
     public function mergeIterateKeyProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void;
@@ -32,10 +38,13 @@ interface ModuleProcessorInterface
     public function getImmutableDatasetsettings(array $module, array &$props) : array;
     public function getDatasetDatabaseKeys(array $module, array &$props) : array;
     public function getDatasource(array $module, array &$props) : string;
+    /**
+     * @return string|int|mixed[]
+     */
     public function getDBObjectIDOrIDs(array $module, array &$props, &$data_properties);
     public function getTypeResolverClass(array $module) : ?string;
     public function getComponentMutationResolverBridgeClass(array $module) : ?string;
-    public function prepareDataPropertiesAfterActionexecution(array $module, array &$props, &$data_properties);
+    public function prepareDataPropertiesAfterMutationExecution(array $module, array &$props, array &$data_properties) : void;
     public function getDataFields(array $module, array &$props) : array;
     public function getDomainSwitchingSubmodules(array $module) : array;
     public function getConditionalOnDataFieldSubmodules(array $module) : array;
@@ -58,10 +67,8 @@ interface ModuleProcessorInterface
     public function getBackgroundurlsMergeddatasetmoduletree(array $module, array &$props, array $data_properties, $dataaccess_checkpoint_validation, $actionexecution_checkpoint_validation, $executed, $dbObjectIDs) : array;
     public function getBackgroundurls(array $module, array &$props, array $data_properties, $dataaccess_checkpoint_validation, $actionexecution_checkpoint_validation, $executed, $dbObjectIDs) : array;
     public function getDatasetmeta(array $module, array &$props, array $data_properties, $dataaccess_checkpoint_validation, $actionexecution_checkpoint_validation, $executed, $dbObjectIDOrIDs) : array;
-    public function getRelevantRoute(array $module, array &$props) : ?string;
-    public function getRelevantRouteCheckpointTarget(array $module, array &$props) : string;
-    public function getDataaccessCheckpoints(array $module, array &$props) : array;
-    public function getActionexecutionCheckpoints(array $module, array &$props) : array;
+    public function getDataAccessCheckpoints(array $module, array &$props) : array;
+    public function getActionExecutionCheckpoints(array $module, array &$props) : array;
     public function shouldExecuteMutation(array $module, array &$props) : bool;
     public function getDataloadSource(array $module, array &$props) : string;
     public function getModulesToPropagateDataProperties(array $module) : array;

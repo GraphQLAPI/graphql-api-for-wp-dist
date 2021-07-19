@@ -13,7 +13,7 @@ namespace PrefixedByPoP\Composer\Semver\Constraint;
 /**
  * Defines a constraint.
  */
-class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface
+class Constraint implements ConstraintInterface
 {
     /* operator integer values */
     const OP_EQ = 0;
@@ -22,18 +22,27 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
     const OP_GT = 3;
     const OP_GE = 4;
     const OP_NE = 5;
+    /* operator string values */
+    const STR_OP_EQ = '==';
+    const STR_OP_EQ_ALT = '=';
+    const STR_OP_LT = '<';
+    const STR_OP_LE = '<=';
+    const STR_OP_GT = '>';
+    const STR_OP_GE = '>=';
+    const STR_OP_NE = '!=';
+    const STR_OP_NE_ALT = '<>';
     /**
      * Operator to integer translation table.
      *
      * @var array
-     * @phpstan-var array<string, self::OP_*>
+     * @phpstan-var array<self::STR_OP_*, self::OP_*>
      */
     private static $transOpStr = array('=' => self::OP_EQ, '==' => self::OP_EQ, '<' => self::OP_LT, '<=' => self::OP_LE, '>' => self::OP_GT, '>=' => self::OP_GE, '<>' => self::OP_NE, '!=' => self::OP_NE);
     /**
      * Integer to operator translation table.
      *
      * @var array
-     * @phpstan-var array<self::OP_*, string>
+     * @phpstan-var array<self::OP_*, self::STR_OP_*>
      */
     private static $transOpInt = array(self::OP_EQ => '==', self::OP_LT => '<', self::OP_LE => '<=', self::OP_GT => '>', self::OP_GE => '>=', self::OP_NE => '!=');
     /**
@@ -56,6 +65,8 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
      * @param string $version
      *
      * @throws \InvalidArgumentException if invalid operator is given.
+     *
+     * @phpstan-param self::STR_OP_* $operator
      */
     public function __construct($operator, $version)
     {
@@ -65,10 +76,18 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
         $this->operator = self::$transOpStr[$operator];
         $this->version = $version;
     }
+    /**
+     * @return string
+     */
     public function getVersion()
     {
         return $this->version;
     }
+    /**
+     * @return string
+     *
+     * @phpstan-return self::STR_OP_*
+     */
     public function getOperator()
     {
         return self::$transOpInt[$this->operator];
@@ -78,7 +97,7 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
      *
      * @return bool
      */
-    public function matches(\PrefixedByPoP\Composer\Semver\Constraint\ConstraintInterface $provider)
+    public function matches(ConstraintInterface $provider)
     {
         if ($provider instanceof self) {
             return $this->matchSpecific($provider);
@@ -87,14 +106,14 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
         return $provider->matches($this);
     }
     /**
-     * @param string|null $prettyString
+     * {@inheritDoc}
      */
     public function setPrettyString($prettyString)
     {
         $this->prettyString = $prettyString;
     }
     /**
-     * @return string
+     * {@inheritDoc}
      */
     public function getPrettyString()
     {
@@ -107,6 +126,8 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
      * Get all supported comparison operators.
      *
      * @return array
+     *
+     * @phpstan-return list<self::STR_OP_*>
      */
     public static function getSupportedOperators()
     {
@@ -116,6 +137,7 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
      * @param  string $operator
      * @return int
      *
+     * @phpstan-param  self::STR_OP_* $operator
      * @phpstan-return self::OP_*
      */
     public static function getOperatorConstant($operator)
@@ -131,6 +153,8 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
      * @throws \InvalidArgumentException if invalid operator is given.
      *
      * @return bool
+     *
+     * @phpstan-param self::STR_OP_* $operator
      */
     public function versionCompare($a, $b, $operator, $compareBranches = \false)
     {
@@ -151,6 +175,9 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
         }
         return \version_compare($a, $b, $operator);
     }
+    /**
+     * {@inheritDoc}
+     */
     public function compile($otherOperator)
     {
         if (\strpos($this->version, 'dev-') === 0) {
@@ -196,7 +223,8 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
             if (self::OP_LT === $otherOperator || self::OP_LE === $otherOperator) {
                 return '!$b';
             }
-        } elseif (self::OP_GT === $this->operator || self::OP_GE === $this->operator) {
+        } else {
+            // $this->operator must be self::OP_GT || self::OP_GE here
             if (self::OP_GT === $otherOperator || self::OP_GE === $otherOperator) {
                 return '!$b';
             }
@@ -222,7 +250,7 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
      *
      * @return bool
      */
-    public function matchSpecific(\PrefixedByPoP\Composer\Semver\Constraint\Constraint $provider, $compareBranches = \false)
+    public function matchSpecific(Constraint $provider, $compareBranches = \false)
     {
         $noEqualOp = \str_replace('=', '', self::$transOpInt[$this->operator]);
         $providerNoEqualOp = \str_replace('=', '', self::$transOpInt[$provider->operator]);
@@ -282,6 +310,9 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
         $this->extractBounds();
         return $this->upperBound;
     }
+    /**
+     * @return void
+     */
     private function extractBounds()
     {
         if (null !== $this->lowerBound) {
@@ -289,34 +320,34 @@ class Constraint implements \PrefixedByPoP\Composer\Semver\Constraint\Constraint
         }
         // Branches
         if (\strpos($this->version, 'dev-') === 0) {
-            $this->lowerBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::zero();
-            $this->upperBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::positiveInfinity();
+            $this->lowerBound = Bound::zero();
+            $this->upperBound = Bound::positiveInfinity();
             return;
         }
         switch ($this->operator) {
             case self::OP_EQ:
-                $this->lowerBound = new \PrefixedByPoP\Composer\Semver\Constraint\Bound($this->version, \true);
-                $this->upperBound = new \PrefixedByPoP\Composer\Semver\Constraint\Bound($this->version, \true);
+                $this->lowerBound = new Bound($this->version, \true);
+                $this->upperBound = new Bound($this->version, \true);
                 break;
             case self::OP_LT:
-                $this->lowerBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::zero();
-                $this->upperBound = new \PrefixedByPoP\Composer\Semver\Constraint\Bound($this->version, \false);
+                $this->lowerBound = Bound::zero();
+                $this->upperBound = new Bound($this->version, \false);
                 break;
             case self::OP_LE:
-                $this->lowerBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::zero();
-                $this->upperBound = new \PrefixedByPoP\Composer\Semver\Constraint\Bound($this->version, \true);
+                $this->lowerBound = Bound::zero();
+                $this->upperBound = new Bound($this->version, \true);
                 break;
             case self::OP_GT:
-                $this->lowerBound = new \PrefixedByPoP\Composer\Semver\Constraint\Bound($this->version, \false);
-                $this->upperBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::positiveInfinity();
+                $this->lowerBound = new Bound($this->version, \false);
+                $this->upperBound = Bound::positiveInfinity();
                 break;
             case self::OP_GE:
-                $this->lowerBound = new \PrefixedByPoP\Composer\Semver\Constraint\Bound($this->version, \true);
-                $this->upperBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::positiveInfinity();
+                $this->lowerBound = new Bound($this->version, \true);
+                $this->upperBound = Bound::positiveInfinity();
                 break;
             case self::OP_NE:
-                $this->lowerBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::zero();
-                $this->upperBound = \PrefixedByPoP\Composer\Semver\Constraint\Bound::positiveInfinity();
+                $this->lowerBound = Bound::zero();
+                $this->upperBound = Bound::positiveInfinity();
                 break;
         }
     }

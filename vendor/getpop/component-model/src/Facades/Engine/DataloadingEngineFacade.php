@@ -7,12 +7,12 @@ use PoP\ComponentModel\Engine\DataloadingEngineInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class DataloadingEngineFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Engine\DataloadingEngineInterface
+    public static function getInstance() : DataloadingEngineInterface
     {
         /**
          * @var DataloadingEngineInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Engine\DataloadingEngineInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(DataloadingEngineInterface::class);
         return $service;
     }
 }

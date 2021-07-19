@@ -7,12 +7,12 @@ use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class MemoryManagerItemPoolFacade
 {
-    public static function getInstance() : \PrefixedByPoP\Psr\Cache\CacheItemPoolInterface
+    public static function getInstance() : CacheItemPoolInterface
     {
         /**
          * @var CacheItemPoolInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get('memory_cache_item_pool');
+        $service = ContainerBuilderFactory::getInstance()->get('memory_cache_item_pool');
         return $service;
     }
 }

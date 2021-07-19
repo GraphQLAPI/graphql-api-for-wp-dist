@@ -7,7 +7,7 @@ namespace PrefixedByPoP\GuzzleHttp\Promise;
  *
  * @link https://promisesaplus.com/
  */
-class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
+class Promise implements PromiseInterface
 {
     private $state = self::PENDING;
     private $result;
@@ -24,10 +24,14 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
         $this->waitFn = $waitFn;
         $this->cancelFn = $cancelFn;
     }
-    public function then(callable $onFulfilled = null, callable $onRejected = null)
+    /**
+     * @param callable $onFulfilled
+     * @param callable $onRejected
+     */
+    public function then($onFulfilled = null, $onRejected = null)
     {
         if ($this->state === self::PENDING) {
-            $p = new \PrefixedByPoP\GuzzleHttp\Promise\Promise(null, [$this, 'cancel']);
+            $p = new Promise(null, [$this, 'cancel']);
             $this->handlers[] = [$p, $onFulfilled, $onRejected];
             $p->waitList = $this->waitList;
             $p->waitList[] = $this;
@@ -35,12 +39,12 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
         }
         // Return a fulfilled promise and immediately invoke any callbacks.
         if ($this->state === self::FULFILLED) {
-            $promise = \PrefixedByPoP\GuzzleHttp\Promise\Create::promiseFor($this->result);
+            $promise = Create::promiseFor($this->result);
             return $onFulfilled ? $promise->then($onFulfilled) : $promise;
         }
         // It's either cancelled or rejected, so return a rejected promise
         // and immediately invoke any callbacks.
-        $rejection = \PrefixedByPoP\GuzzleHttp\Promise\Create::rejectionFor($this->result);
+        $rejection = Create::rejectionFor($this->result);
         return $onRejected ? $rejection->then(null, $onRejected) : $rejection;
     }
     public function otherwise(callable $onRejected)
@@ -50,7 +54,7 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
     public function wait($unwrap = \true)
     {
         $this->waitIfPending();
-        if ($this->result instanceof \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface) {
+        if ($this->result instanceof PromiseInterface) {
             return $this->result->wait($unwrap);
         }
         if ($unwrap) {
@@ -58,7 +62,7 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
                 return $this->result;
             }
             // It's rejected so "unwrap" and throw an exception.
-            throw \PrefixedByPoP\GuzzleHttp\Promise\Create::exceptionFor($this->result);
+            throw Create::exceptionFor($this->result);
         }
     }
     public function getState()
@@ -85,7 +89,7 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
         // Reject the promise only if it wasn't rejected in a then callback.
         /** @psalm-suppress RedundantCondition */
         if ($this->state === self::PENDING) {
-            $this->reject(new \PrefixedByPoP\GuzzleHttp\Promise\CancellationException('Promise has been cancelled'));
+            $this->reject(new CancellationException('Promise has been cancelled'));
         }
     }
     public function resolve($value)
@@ -123,12 +127,12 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
         if (!\is_object($value) || !\method_exists($value, 'then')) {
             $id = $state === self::FULFILLED ? 1 : 2;
             // It's a success, so resolve the handlers in the queue.
-            \PrefixedByPoP\GuzzleHttp\Promise\Utils::queue()->add(static function () use($id, $value, $handlers) {
+            Utils::queue()->add(static function () use($id, $value, $handlers) {
                 foreach ($handlers as $handler) {
                     self::callHandler($id, $value, $handler);
                 }
             });
-        } elseif ($value instanceof \PrefixedByPoP\GuzzleHttp\Promise\Promise && \PrefixedByPoP\GuzzleHttp\Promise\Is::pending($value)) {
+        } elseif ($value instanceof Promise && Is::pending($value)) {
             // We can just merge our handlers onto the next promise.
             $value->handlers = \array_merge($value->handlers, $handlers);
         } else {
@@ -157,7 +161,7 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
         $promise = $handler[0];
         // The promise may have been cancelled or resolved before placing
         // this thunk in the queue.
-        if (\PrefixedByPoP\GuzzleHttp\Promise\Is::settled($promise)) {
+        if (Is::settled($promise)) {
             return;
         }
         try {
@@ -196,7 +200,7 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
             // If there's no wait function, then reject the promise.
             $this->reject('Cannot wait on a promise that has ' . 'no internal wait function. You must provide a wait ' . 'function when constructing the promise to be able to ' . 'wait on a promise.');
         }
-        \PrefixedByPoP\GuzzleHttp\Promise\Utils::queue()->run();
+        Utils::queue()->run();
         /** @psalm-suppress RedundantCondition */
         if ($this->state === self::PENDING) {
             $this->reject('Invoking the wait callback did not resolve the promise');
@@ -228,8 +232,8 @@ class Promise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
             do {
                 $result->waitIfPending();
                 $result = $result->result;
-            } while ($result instanceof \PrefixedByPoP\GuzzleHttp\Promise\Promise);
-            if ($result instanceof \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface) {
+            } while ($result instanceof Promise);
+            if ($result instanceof PromiseInterface) {
                 $result->wait(\false);
             }
         }

@@ -3,42 +3,39 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\FieldInterfaceResolvers;
 
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\FieldInterfaceResolvers\AbstractSchemaFieldInterfaceResolver;
-class ElementalFieldInterfaceResolver extends \PoP\ComponentModel\FieldInterfaceResolvers\AbstractSchemaFieldInterfaceResolver
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+class ElementalFieldInterfaceResolver extends AbstractSchemaFieldInterfaceResolver
 {
-    public const NAME = 'Elemental';
     public function getInterfaceName() : string
     {
-        return self::NAME;
+        return 'Elemental';
     }
     public function getSchemaInterfaceDescription() : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('The fundamental fields that must be implemented by all objects', 'component-model');
+        return $this->translationAPI->__('The fundamental fields that must be implemented by all objects', 'component-model');
     }
-    public static function getFieldNamesToImplement() : array
+    public function getFieldNamesToImplement() : array
     {
         return ['id'];
     }
-    public function getSchemaFieldType(string $fieldName) : ?string
+    public function getSchemaFieldType(string $fieldName) : string
     {
-        $types = ['id' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID];
+        $types = ['id' => SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(string $fieldName) : ?int
     {
         switch ($fieldName) {
             case 'id':
-                return \true;
+                return SchemaTypeModifiers::NON_NULLABLE;
         }
-        return parent::isSchemaFieldResponseNonNullable($fieldName);
+        return parent::getSchemaFieldTypeModifiers($fieldName);
     }
     public function getSchemaFieldDescription(string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['id' => $translationAPI->__('The object\'s unique identifier for its type', 'component-model')];
+        $descriptions = ['id' => $this->translationAPI->__('The object\'s unique identifier for its type', 'component-model')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($fieldName);
     }
 }

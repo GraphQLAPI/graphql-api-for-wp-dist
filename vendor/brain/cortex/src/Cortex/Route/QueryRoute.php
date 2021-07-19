@@ -17,7 +17,7 @@ use PrefixedByPoP\Brain\Cortex\Controller\QueryVarsController;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class QueryRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterface
+final class QueryRoute implements RouteInterface
 {
     use DerivativeRouteTrait;
     /**
@@ -35,12 +35,12 @@ final class QueryRoute implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterfa
     {
         $options['path'] = $path;
         $options['vars'] = $queryBuilder;
-        $handler = isset($options['handler']) && $options['handler'] instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface ? $options['handler'] : new \PrefixedByPoP\Brain\Cortex\Controller\QueryVarsController();
+        $handler = isset($options['handler']) && $options['handler'] instanceof ControllerInterface ? $options['handler'] : new QueryVarsController();
         $options['handler'] = $handler;
         $default = isset($options['default_vars']) && \is_array($options['default_vars']) ? $options['default_vars'] : [];
         if (isset($options['default']) && \is_array($options['default'])) {
             $options['default_vars'] = \array_merge($options['default'], $default);
         }
-        $this->route = new \PrefixedByPoP\Brain\Cortex\Route\Route($options);
+        $this->route = new Route($options);
     }
 }

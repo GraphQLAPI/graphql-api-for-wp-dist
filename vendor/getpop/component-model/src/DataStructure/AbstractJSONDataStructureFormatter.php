@@ -9,7 +9,7 @@ abstract class AbstractJSONDataStructureFormatter extends \PoP\ComponentModel\Da
     {
         return 'application/json';
     }
-    protected function printData(&$data)
+    protected function printData(array &$data) : void
     {
         echo \json_encode($data, $this->getJsonEncodeType() ?? 0);
     }

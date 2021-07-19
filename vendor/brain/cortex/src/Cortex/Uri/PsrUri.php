@@ -16,7 +16,7 @@ use PrefixedByPoP\Psr\Http\Message\UriInterface as PsrUriInterface;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class PsrUri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
+final class PsrUri implements PsrUriInterface
 {
     /**
      * @var array

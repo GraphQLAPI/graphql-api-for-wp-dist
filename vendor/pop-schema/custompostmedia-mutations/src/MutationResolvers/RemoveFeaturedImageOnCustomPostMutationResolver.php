@@ -3,11 +3,10 @@
 declare (strict_types=1);
 namespace PoPSchema\CustomPostMediaMutations\MutationResolvers;
 
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\MutationResolvers\AbstractMutationResolver;
-use PoPSchema\CustomPostMediaMutations\Facades\CustomPostMediaTypeAPIFacade;
+use PoPSchema\CustomPostMediaMutations\Facades\CustomPostMediaTypeMutationAPIFacade;
 use PoPSchema\UserStateMutations\MutationResolvers\ValidateUserLoggedInMutationResolverTrait;
-class RemoveFeaturedImageOnCustomPostMutationResolver extends \PoP\ComponentModel\MutationResolvers\AbstractMutationResolver
+class RemoveFeaturedImageOnCustomPostMutationResolver extends AbstractMutationResolver
 {
     use ValidateUserLoggedInMutationResolverTrait;
     /**
@@ -16,8 +15,8 @@ class RemoveFeaturedImageOnCustomPostMutationResolver extends \PoP\ComponentMode
     public function execute(array $form_data)
     {
         $customPostID = $form_data[\PoPSchema\CustomPostMediaMutations\MutationResolvers\MutationInputProperties::CUSTOMPOST_ID];
-        $customPostMediaTypeAPI = \PoPSchema\CustomPostMediaMutations\Facades\CustomPostMediaTypeAPIFacade::getInstance();
-        $customPostMediaTypeAPI->removeFeaturedImage($customPostID);
+        $customPostMediaTypeMutationAPI = CustomPostMediaTypeMutationAPIFacade::getInstance();
+        $customPostMediaTypeMutationAPI->removeFeaturedImage($customPostID);
         return $customPostID;
     }
     public function validateErrors(array $form_data) : ?array
@@ -28,9 +27,8 @@ class RemoveFeaturedImageOnCustomPostMutationResolver extends \PoP\ComponentMode
         if ($errors) {
             return $errors;
         }
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         if (!$form_data[\PoPSchema\CustomPostMediaMutations\MutationResolvers\MutationInputProperties::CUSTOMPOST_ID]) {
-            $errors[] = $translationAPI->__('The custom post ID is missing.', 'custompostmedia-mutations');
+            $errors[] = $this->translationAPI->__('The custom post ID is missing.', 'custompostmedia-mutations');
         }
         return $errors;
     }

@@ -16,7 +16,7 @@ use PrefixedByPoP\Psr\Cache\InvalidArgumentException;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-interface TagAwareCacheInterface extends \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface
+interface TagAwareCacheInterface extends CacheInterface
 {
     /**
      * Invalidates cached items using tags.

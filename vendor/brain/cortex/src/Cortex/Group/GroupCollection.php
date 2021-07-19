@@ -16,7 +16,7 @@ use PrefixedByPoP\Brain\Cortex\Route\RouteInterface;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class GroupCollection implements \PrefixedByPoP\Brain\Cortex\Group\GroupCollectionInterface
+final class GroupCollection implements GroupCollectionInterface
 {
     /**
      * @var array
@@ -25,7 +25,7 @@ final class GroupCollection implements \PrefixedByPoP\Brain\Cortex\Group\GroupCo
     /**
      * @inheritdoc
      */
-    public function addGroup(\PrefixedByPoP\Brain\Cortex\Group\GroupInterface $group)
+    public function addGroup(GroupInterface $group)
     {
         $this->groups[$group->id()] = $group;
         return $this;
@@ -33,7 +33,7 @@ final class GroupCollection implements \PrefixedByPoP\Brain\Cortex\Group\GroupCo
     /**
      * @inheritdoc
      */
-    public function mergeGroup(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route)
+    public function mergeGroup(RouteInterface $route)
     {
         $groups = $route->offsetGet('group');
         if (empty($groups)) {

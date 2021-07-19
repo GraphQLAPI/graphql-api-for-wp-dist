@@ -25,12 +25,13 @@ trait AbstractAdapterTrait
     /**
      * @var \Closure needs to be set by class, signature is function(string <key>, mixed <value>, bool <isHit>)
      */
-    private $createCacheItem;
+    private static $createCacheItem;
     /**
      * @var \Closure needs to be set by class, signature is function(array <deferred>, string <namespace>, array <&expiredIds>)
      */
-    private $mergeByLifetime;
-    private $namespace;
+    private static $mergeByLifetime;
+    private $namespace = '';
+    private $defaultLifetime;
     private $namespaceVersion = '';
     private $versioningIsEnabled = \false;
     private $deferred = [];
@@ -94,7 +95,7 @@ trait AbstractAdapterTrait
         try {
             return $this->doHave($id);
         } catch (\Exception $e) {
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, 'Failed to check if key "{key}" is cached: ' . $e->getMessage(), ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            CacheItem::log($this->logger, 'Failed to check if key "{key}" is cached: ' . $e->getMessage(), ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
             return \false;
         }
     }
@@ -103,7 +104,7 @@ trait AbstractAdapterTrait
      *
      * @return bool
      */
-    public function clear(string $prefix = '')
+    public function clear($prefix = '')
     {
         $this->deferred = [];
         if ($cleared = $this->versioningIsEnabled) {
@@ -129,7 +130,7 @@ trait AbstractAdapterTrait
         try {
             return $this->doClear($namespaceToClear) || $cleared;
         } catch (\Exception $e) {
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, 'Failed to clear the cache: ' . $e->getMessage(), ['exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            CacheItem::log($this->logger, 'Failed to clear the cache: ' . $e->getMessage(), ['exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
             return \false;
         }
     }
@@ -171,7 +172,7 @@ trait AbstractAdapterTrait
             } catch (\Exception $e) {
             }
             $message = 'Failed to delete key "{key}"' . ($e instanceof \Exception ? ': ' . $e->getMessage() : '.');
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
             $ok = \false;
         }
         return $ok;
@@ -185,18 +186,17 @@ trait AbstractAdapterTrait
             $this->commit();
         }
         $id = $this->getId($key);
-        $f = $this->createCacheItem;
         $isHit = \false;
         $value = null;
         try {
             foreach ($this->doFetch([$id]) as $value) {
                 $isHit = \true;
             }
-            return $f($key, $value, $isHit);
+            return (self::$createCacheItem)($key, $value, $isHit);
         } catch (\Exception $e) {
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, 'Failed to fetch key "{key}": ' . $e->getMessage(), ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            CacheItem::log($this->logger, 'Failed to fetch key "{key}": ' . $e->getMessage(), ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
         }
-        return $f($key, null, \false);
+        return (self::$createCacheItem)($key, null, \false);
     }
     /**
      * {@inheritdoc}
@@ -213,7 +213,7 @@ trait AbstractAdapterTrait
         try {
             $items = $this->doFetch($ids);
         } catch (\Exception $e) {
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, 'Failed to fetch items: ' . $e->getMessage(), ['keys' => $keys, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            CacheItem::log($this->logger, 'Failed to fetch items: ' . $e->getMessage(), ['keys' => $keys, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
             $items = [];
         }
         $ids = \array_combine($ids, $keys);
@@ -224,9 +224,9 @@ trait AbstractAdapterTrait
      *
      * @return bool
      */
-    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function save(CacheItemInterface $item)
     {
-        if (!$item instanceof \PrefixedByPoP\Symfony\Component\Cache\CacheItem) {
+        if (!$item instanceof CacheItem) {
             return \false;
         }
         $this->deferred[$item->getKey()] = $item;
@@ -237,9 +237,9 @@ trait AbstractAdapterTrait
      *
      * @return bool
      */
-    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item)
     {
-        if (!$item instanceof \PrefixedByPoP\Symfony\Component\Cache\CacheItem) {
+        if (!$item instanceof CacheItem) {
             return \false;
         }
         $this->deferred[$item->getKey()] = $item;
@@ -292,18 +292,18 @@ trait AbstractAdapterTrait
     }
     private function generateItems(iterable $items, array &$keys) : iterable
     {
-        $f = $this->createCacheItem;
+        $f = self::$createCacheItem;
         try {
             foreach ($items as $id => $value) {
                 if (!isset($keys[$id])) {
-                    throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Could not match value id "%s" to keys "%s".', $id, \implode('", "', $keys)));
+                    throw new InvalidArgumentException(\sprintf('Could not match value id "%s" to keys "%s".', $id, \implode('", "', $keys)));
                 }
                 $key = $keys[$id];
                 unset($keys[$id]);
                 (yield $key => $f($key, $value, \true));
             }
         } catch (\Exception $e) {
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, 'Failed to fetch items: ' . $e->getMessage(), ['keys' => \array_values($keys), 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            CacheItem::log($this->logger, 'Failed to fetch items: ' . $e->getMessage(), ['keys' => \array_values($keys), 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
         }
         foreach ($keys as $key) {
             (yield $key => $f($key, null, \false));
@@ -328,7 +328,7 @@ trait AbstractAdapterTrait
         if (\is_string($key) && isset($this->ids[$key])) {
             return $this->namespace . $this->namespaceVersion . $this->ids[$key];
         }
-        \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($key);
+        \assert('' !== CacheItem::validateKey($key));
         $this->ids[$key] = $key;
         if (null === $this->maxIdLength) {
             return $this->namespace . $this->namespaceVersion . $key;

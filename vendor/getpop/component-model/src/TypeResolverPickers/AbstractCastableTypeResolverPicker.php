@@ -5,7 +5,7 @@ namespace PoP\ComponentModel\TypeResolverPickers;
 
 use PoP\ComponentModel\TypeResolverPickers\AbstractTypeResolverPicker;
 use PoP\ComponentModel\TypeResolverPickers\CastableTypeResolverPickerInterface;
-abstract class AbstractCastableTypeResolverPicker extends \PoP\ComponentModel\TypeResolverPickers\AbstractTypeResolverPicker implements \PoP\ComponentModel\TypeResolverPickers\CastableTypeResolverPickerInterface
+abstract class AbstractCastableTypeResolverPicker extends AbstractTypeResolverPicker implements CastableTypeResolverPickerInterface
 {
     /**
      * @param object $resultItem

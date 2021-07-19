@@ -3,27 +3,52 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\MutationResolverBridges;
 
-use PoP\ComponentModel\ErrorHandling\Error;
+use PoP\Hooks\HooksAPIInterface;
 use PoP\ComponentModel\Misc\GeneralUtils;
+use PoP\ComponentModel\ErrorHandling\Error;
+use PoP\Translation\TranslationAPIInterface;
 use PoP\ComponentModel\MutationResolvers\ErrorTypes;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use PoP\ComponentModel\ModuleProcessors\DataloadingConstants;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\QueryInputOutputHandlers\ResponseConstants;
 use PoP\ComponentModel\MutationResolvers\MutationResolverInterface;
-use PoP\ComponentModel\Facades\MutationResolution\MutationResolutionManagerFacade;
+use PoP\ComponentModel\MutationResolution\MutationResolutionManagerInterface;
 use PoP\ComponentModel\MutationResolverBridges\ComponentMutationResolverBridgeInterface;
-abstract class AbstractComponentMutationResolverBridge implements \PoP\ComponentModel\MutationResolverBridges\ComponentMutationResolverBridgeInterface
+abstract class AbstractComponentMutationResolverBridge implements ComponentMutationResolverBridgeInterface
 {
     /**
-     * @param mixed $result_id Maybe an int, maybe a string
+     * @var \PoP\Hooks\HooksAPIInterface
+     */
+    protected $hooksAPI;
+    /**
+     * @var \PoP\Translation\TranslationAPIInterface
+     */
+    protected $translationAPI;
+    /**
+     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     */
+    protected $instanceManager;
+    /**
+     * @var \PoP\ComponentModel\MutationResolution\MutationResolutionManagerInterface
+     */
+    protected $mutationResolutionManager;
+    public function __construct(HooksAPIInterface $hooksAPI, TranslationAPIInterface $translationAPI, InstanceManagerInterface $instanceManager, MutationResolutionManagerInterface $mutationResolutionManager)
+    {
+        $this->hooksAPI = $hooksAPI;
+        $this->translationAPI = $translationAPI;
+        $this->instanceManager = $instanceManager;
+        $this->mutationResolutionManager = $mutationResolutionManager;
+    }
+    /**
+     * @param string|int $result_id
      */
     public function getSuccessString($result_id) : ?string
     {
         return null;
     }
     /**
-     * @param mixed $result_id Maybe an int, maybe a string
      * @return string[]
+     * @param string|int $result_id
      */
     public function getSuccessStrings($result_id) : array
     {
@@ -39,7 +64,6 @@ abstract class AbstractComponentMutationResolverBridge implements \PoP\Component
         return \false;
     }
     /**
-     * @param array $data_properties
      * @return array<string, mixed>|null
      */
     public function execute(array &$data_properties) : ?array
@@ -48,57 +72,55 @@ abstract class AbstractComponentMutationResolverBridge implements \PoP\Component
             return null;
         }
         $mutationResolverClass = $this->getMutationResolverClass();
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         /** @var MutationResolverInterface */
-        $mutationResolver = $instanceManager->getInstance($mutationResolverClass);
+        $mutationResolver = $this->instanceManager->getInstance($mutationResolverClass);
         $form_data = $this->getFormData();
         $return = [];
         // Validate errors
         $errorType = $mutationResolver->getErrorType();
-        $errorTypeKeys = [\PoP\ComponentModel\MutationResolvers\ErrorTypes::DESCRIPTIONS => \PoP\ComponentModel\QueryInputOutputHandlers\ResponseConstants::ERRORSTRINGS, \PoP\ComponentModel\MutationResolvers\ErrorTypes::CODES => \PoP\ComponentModel\QueryInputOutputHandlers\ResponseConstants::ERRORCODES];
+        $errorTypeKeys = [ErrorTypes::DESCRIPTIONS => ResponseConstants::ERRORSTRINGS, ErrorTypes::CODES => ResponseConstants::ERRORCODES];
         $errorTypeKey = $errorTypeKeys[$errorType];
         if ($errors = $mutationResolver->validateErrors($form_data)) {
             $return[$errorTypeKey] = $errors;
             if ($this->skipDataloadIfError()) {
                 // Bring no results
-                $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::SKIPDATALOAD] = \true;
+                $data_properties[DataloadingConstants::SKIPDATALOAD] = \true;
             }
             return $return;
         }
         if ($warnings = $mutationResolver->validateWarnings($form_data)) {
-            $warningTypeKeys = [\PoP\ComponentModel\MutationResolvers\ErrorTypes::DESCRIPTIONS => \PoP\ComponentModel\QueryInputOutputHandlers\ResponseConstants::WARNINGSTRINGS, \PoP\ComponentModel\MutationResolvers\ErrorTypes::CODES => \PoP\ComponentModel\QueryInputOutputHandlers\ResponseConstants::WARNINGCODES];
+            $warningTypeKeys = [ErrorTypes::DESCRIPTIONS => ResponseConstants::WARNINGSTRINGS, ErrorTypes::CODES => ResponseConstants::WARNINGCODES];
             $warningTypeKey = $warningTypeKeys[$errorType];
             $return[$warningTypeKey] = $warnings;
         }
         $result_id = $mutationResolver->execute($form_data);
-        if (\PoP\ComponentModel\Misc\GeneralUtils::isError($result_id)) {
+        if (GeneralUtils::isError($result_id)) {
             /** @var Error */
             $error = $result_id;
             $errors = [];
-            if ($errorTypeKey == \PoP\ComponentModel\MutationResolvers\ErrorTypes::DESCRIPTIONS) {
-                $errors = $error->getErrorMessages();
-            } elseif ($errorTypeKey == \PoP\ComponentModel\MutationResolvers\ErrorTypes::CODES) {
-                $errors = $error->getErrorCodes();
+            if ($errorTypeKey == ErrorTypes::DESCRIPTIONS) {
+                $errors[] = $error->getMessageOrCode();
+            } elseif ($errorTypeKey == ErrorTypes::CODES) {
+                $errors[] = $error->getCode();
             }
             $return[$errorTypeKey] = $errors;
             if ($this->skipDataloadIfError()) {
                 // Bring no results
-                $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::SKIPDATALOAD] = \true;
+                $data_properties[DataloadingConstants::SKIPDATALOAD] = \true;
             }
             return $return;
         }
         $this->modifyDataProperties($data_properties, $result_id);
         // Save the result for some module to incorporate it into the query args
-        $gd_dataload_actionexecution_manager = \PoP\ComponentModel\Facades\MutationResolution\MutationResolutionManagerFacade::getInstance();
-        $gd_dataload_actionexecution_manager->setResult(\get_called_class(), $result_id);
-        $return[\PoP\ComponentModel\QueryInputOutputHandlers\ResponseConstants::SUCCESS] = \true;
+        $this->mutationResolutionManager->setResult(\get_called_class(), $result_id);
+        $return[ResponseConstants::SUCCESS] = \true;
         if ($success_strings = $this->getSuccessStrings($result_id)) {
-            $return[\PoP\ComponentModel\QueryInputOutputHandlers\ResponseConstants::SUCCESSSTRINGS] = $success_strings;
+            $return[ResponseConstants::SUCCESSSTRINGS] = $success_strings;
         }
         return $return;
     }
     /**
-     * @param mixed $result_id Maybe an int, maybe a string
+     * @param string|int $result_id
      */
     protected function modifyDataProperties(array &$data_properties, $result_id) : void
     {

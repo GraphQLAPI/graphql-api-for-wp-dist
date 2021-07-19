@@ -5,7 +5,7 @@ namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
 use GraphQLByPoP\GraphQLServer\ObjectModels\NonDocumentableTypeTrait;
-class ScalarType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+class ScalarType extends AbstractType
 {
     use NonDocumentableTypeTrait;
     /**
@@ -14,8 +14,8 @@ class ScalarType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
     protected $name;
     public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath, string $name, array $customDefinition = [])
     {
-        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath, $customDefinition);
         $this->name = $name;
+        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath, $customDefinition);
     }
     public function getName() : string
     {

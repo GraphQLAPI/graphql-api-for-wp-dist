@@ -1461,7 +1461,7 @@ class MarkdownExtra extends \PrefixedByPoP\Michelf\Markdown
     protected function doFootnotes($text)
     {
         if (!$this->in_anchor) {
-            $text = \preg_replace('{\\[\\^(.+?)\\]}', "F\32fn:\\1\32:", $text);
+            $text = \preg_replace('{\\[\\^(.+?)\\]}', "F\x1afn:\\1\x1a:", $text);
         }
         return $text;
     }

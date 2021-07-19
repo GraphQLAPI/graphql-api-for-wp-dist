@@ -34,33 +34,29 @@ class SchemaDefinitionHelpers
      *
      * @deprecated 0.1.0 The error above must be fixed for the Enum, by unifying its name wherever it is referenced
      * This solution with the interfaces creates other issue: The type cannot customize its field schema definition
-     *
-     * @param array $fullSchemaDefinition
-     * @param array $interfaceNames
-     * @return array
      */
     protected static function getFieldInterfaces(array &$fullSchemaDefinition, array $interfaceNames) : array
     {
         $fieldInterfaces = [];
         if ($interfaceNames) {
             foreach ($interfaceNames as $interfaceName) {
-                $interfaceSchemaDefinition = $fullSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_INTERFACES][$interfaceName];
+                $interfaceSchemaDefinition = $fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES][$interfaceName];
                 // If there is no definition for the interface, that means that it is not resolved by any FieldResolver
                 // That's an error, so throw a helpful exception
                 if (\is_null($interfaceSchemaDefinition)) {
-                    $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-                    throw new \Exception(\sprintf($translationAPI->__('Interface \'%s\' is not resolved by any FieldResolver', 'graphql-server'), $interfaceName));
+                    $translationAPI = TranslationAPIFacade::getInstance();
+                    throw new Exception(\sprintf($translationAPI->__('Interface \'%s\' is not resolved by any FieldResolver', 'graphql-server'), $interfaceName));
                 }
-                $interfaceFields = \array_keys($interfaceSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_FIELDS]);
+                $interfaceFields = \array_keys($interfaceSchemaDefinition[SchemaDefinition::ARGNAME_FIELDS]);
                 // Watch out (again)! An interface can itself implement interfaces,
                 // and a field can be shared across them
                 // (eg: field "status" for interfaces CustomPost and ContentEntry)
                 // Then, check if the interface's interface also implements the field!
                 // Then, do not add it yet, leave it for its implemented interface to add it
-                if ($interfaceImplementedInterfaceNames = $fullSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_INTERFACES][$interfaceName][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_INTERFACES] ?? []) {
+                if ($interfaceImplementedInterfaceNames = $fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES][$interfaceName][SchemaDefinition::ARGNAME_INTERFACES] ?? []) {
                     $interfaceImplementedInterfaceFields = [];
                     foreach ($interfaceImplementedInterfaceNames as $interfaceImplementedInterfaceName) {
-                        $interfaceImplementedInterfaceFields = \array_merge($interfaceImplementedInterfaceFields, \array_keys($fullSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_INTERFACES][$interfaceImplementedInterfaceName][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_FIELDS]));
+                        $interfaceImplementedInterfaceFields = \array_merge($interfaceImplementedInterfaceFields, \array_keys($fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES][$interfaceImplementedInterfaceName][SchemaDefinition::ARGNAME_FIELDS]));
                     }
                     $interfaceFields = \array_diff($interfaceFields, $interfaceImplementedInterfaceFields);
                 }
@@ -74,7 +70,7 @@ class SchemaDefinitionHelpers
     }
     public static function initFieldsFromPath(array &$fullSchemaDefinition, array $fieldSchemaDefinitionPath, array $interfaceNames = []) : array
     {
-        $addVersionToSchemaFieldDescription = \GraphQLByPoP\GraphQLServer\Environment::addVersionToSchemaFieldDescription();
+        $addVersionToSchemaFieldDescription = Environment::addVersionToSchemaFieldDescription();
         // $fieldInterfaces = self::getFieldInterfaces($fullSchemaDefinition, $interfaceNames);
         $fieldSchemaDefinitionPointer = self::advancePointerToPath($fullSchemaDefinition, $fieldSchemaDefinitionPath);
         $fields = [];
@@ -109,19 +105,19 @@ class SchemaDefinitionHelpers
              */
             $customDefinition = [];
             if ($addVersionToSchemaFieldDescription) {
-                if ($schemaFieldVersion = $fieldSchemaDefinitionPointer[$fieldName][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_VERSION] ?? null) {
-                    $schemaFieldDescription = $fieldSchemaDefinitionPointer[$fieldName][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION];
-                    $customDefinition = [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_VERSION => $schemaFieldVersion, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $schemaFieldDescription];
+                if ($schemaFieldVersion = $fieldSchemaDefinitionPointer[$fieldName][SchemaDefinition::ARGNAME_VERSION] ?? null) {
+                    $schemaFieldDescription = $fieldSchemaDefinitionPointer[$fieldName][SchemaDefinition::ARGNAME_DESCRIPTION];
+                    $customDefinition = [SchemaDefinition::ARGNAME_VERSION => $schemaFieldVersion, SchemaDefinition::ARGNAME_DESCRIPTION => $schemaFieldDescription];
                 }
             }
-            $fields[] = new \GraphQLByPoP\GraphQLServer\ObjectModels\Field($fullSchemaDefinition, \array_merge($targetFieldSchemaDefinitionPath, [$fieldName]), $customDefinition);
+            $fields[] = new Field($fullSchemaDefinition, \array_merge($targetFieldSchemaDefinitionPath, [$fieldName]), $customDefinition);
         }
         return $fields;
     }
     public static function retrieveFieldsFromPath(array &$fullSchemaDefinition, array $fieldSchemaDefinitionPath) : array
     {
         $fieldSchemaDefinitionPointer = self::advancePointerToPath($fullSchemaDefinition, $fieldSchemaDefinitionPath);
-        $schemaDefinitionReferenceRegistry = \GraphQLByPoP\GraphQLServer\Facades\Registries\SchemaDefinitionReferenceRegistryFacade::getInstance();
+        $schemaDefinitionReferenceRegistry = SchemaDefinitionReferenceRegistryFacade::getInstance();
         $fields = [];
         foreach (\array_keys($fieldSchemaDefinitionPointer) as $fieldName) {
             $schemaDefinitionID = \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers::getID(\array_merge($fieldSchemaDefinitionPath, [$fieldName]));

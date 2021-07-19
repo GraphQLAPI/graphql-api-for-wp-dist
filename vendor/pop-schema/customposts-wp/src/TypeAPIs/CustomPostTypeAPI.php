@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace PoPSchema\CustomPostsWP\TypeAPIs;
 
-use PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface;
-use PoPSchema\CustomPosts\Types\Status;
-use PoP\Hooks\Facades\HooksAPIFacade;
+use PoP\ComponentModel\TypeDataResolvers\InjectedFilterDataloadingModuleTypeDataResolverTrait;
+use PoP\Hooks\HooksAPIInterface;
 use PoPSchema\CustomPosts\ComponentConfiguration;
-use PoPSchema\QueriedObject\TypeAPIs\TypeAPIUtils;
-use PoPSchema\CustomPostsWP\TypeAPIs\CustomPostTypeAPIUtils;
-use PoPSchema\CustomPostsWP\TypeAPIs\CustomPostTypeAPIHelpers;
-use PoP\ComponentModel\TypeDataResolvers\APITypeDataResolverTrait;
+use PoPSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface;
 use PoPSchema\CustomPosts\TypeHelpers\CustomPostUnionTypeHelpers;
+use PoPSchema\CustomPosts\Types\Status;
+use PoPSchema\CustomPostsWP\TypeAPIs\CustomPostTypeAPIHelpers;
+use PoPSchema\CustomPostsWP\TypeAPIs\CustomPostTypeAPIUtils;
+use PoPSchema\QueriedObject\Helpers\QueriedObjectHelperServiceInterface;
 use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
 
-use function apply_filters;
 use function get_post_status;
 
 /**
@@ -23,21 +22,35 @@ use function get_post_status;
  */
 class CustomPostTypeAPI implements CustomPostTypeAPIInterface
 {
-    use APITypeDataResolverTrait;
+    use InjectedFilterDataloadingModuleTypeDataResolverTrait;
+    /**
+     * @var \PoP\Hooks\HooksAPIInterface
+     */
+    protected $hooksAPI;
+    /**
+     * @var \PoPSchema\QueriedObject\Helpers\QueriedObjectHelperServiceInterface
+     */
+    protected $queriedObjectHelperService;
+    public function __construct(HooksAPIInterface $hooksAPI, QueriedObjectHelperServiceInterface $queriedObjectHelperService)
+    {
+        $this->hooksAPI = $hooksAPI;
+        $this->queriedObjectHelperService = $queriedObjectHelperService;
+    }
 
     // public const NON_EXISTING_ID = "non-existing";
-
     /**
      * Return the post's ID
-     *
+     * @return string|int
      * @param object $customPost
-     * @return void
      */
     public function getID($customPost)
     {
         return $customPost->ID;
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getStatus($customPostObjectOrID): ?string
     {
         $status = get_post_status($customPostObjectOrID);
@@ -47,7 +60,7 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
     /**
      * @param array<string, mixed> $query
      * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @return object[]
      */
     public function getCustomPosts(array $query, array $options = []): array
     {
@@ -71,8 +84,6 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
     /**
      * Limit of how many custom posts can be retrieved in the query.
      * Override this value for specific custom post types
-     *
-     * @return integer
      */
     protected function getCustomPostListMaxLimit(): int
     {
@@ -98,7 +109,10 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
         if (isset($query['status'])) {
             if (is_array($query['status'])) {
                 // doing get_posts can accept an array of values
-                $query['post_status'] = array_map([CustomPostTypeAPIUtils::class, 'convertPostStatusFromPoPToCMS'], $query['status']);
+                $query['post_status'] = array_map(
+                    [CustomPostTypeAPIUtils::class, 'convertPostStatusFromPoPToCMS'],
+                    $query['status']
+                );
             } else {
                 // doing wp_insert/update_post accepts a single value
                 $query['post_status'] = CustomPostTypeAPIUtils::convertPostStatusFromPoPToCMS($query['status']);
@@ -132,8 +146,10 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
             //     $query['include'] = self::NON_EXISTING_ID; // Non-existing ID
             // }
             unset($query['custompost-types']);
-        } elseif ($unionTypeResolverClass = $query['types-from-union-resolver-class']) {
-            $query['post_type'] = CustomPostUnionTypeHelpers::getTargetTypeResolverCustomPostTypes($unionTypeResolverClass);
+        } elseif ($unionTypeResolverClass = $query['types-from-union-resolver-class'] ?? null) {
+            $query['post_type'] = CustomPostUnionTypeHelpers::getTargetTypeResolverCustomPostTypes(
+                $unionTypeResolverClass
+            );
             unset($query['types-from-union-resolver-class']);
         }
         // else {
@@ -148,7 +164,10 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
             // Allow to not limit by max when querying from within the application
             $limit = (int) $query['limit'];
             if (!isset($options['skip-max-limit']) || !$options['skip-max-limit']) {
-                $limit = TypeAPIUtils::getLimitOrMaxLimit($limit, $this->getCustomPostListMaxLimit());
+                $limit = $this->queriedObjectHelperService->getLimitOrMaxLimit(
+                    $limit,
+                    $this->getCustomPostListMaxLimit()
+                );
             }
 
             // Assign the limit as the required attribute
@@ -202,7 +221,11 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
             unset($query['date-to-inclusive']);
         }
 
-        return HooksAPIFacade::getInstance()->applyFilters('CMSAPI:customposts:query', $query, $options);
+        return $this->hooksAPI->applyFilters(
+            'CMSAPI:customposts:query',
+            $query,
+            $options
+        );
     }
     public function getCustomPostTypes(array $query = array()): array
     {
@@ -223,6 +246,9 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
         return \get_post_types($query);
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getPermalink($customPostObjectOrID): ?string
     {
         list(
@@ -241,6 +267,9 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
     }
 
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getSlug($customPostObjectOrID): ?string
     {
         list(
@@ -258,33 +287,48 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
         return $post_name;
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getExcerpt($customPostObjectOrID): ?string
     {
         return \get_the_excerpt($customPostObjectOrID);
     }
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     protected function getCustomPostObjectAndID($customPostObjectOrID): array
     {
         return CustomPostTypeAPIHelpers::getCustomPostObjectAndID($customPostObjectOrID);
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getTitle($customPostObjectOrID): ?string
     {
         list(
             $customPost,
             $customPostID,
         ) = $this->getCustomPostObjectAndID($customPostObjectOrID);
-        return apply_filters('the_title', $customPost->post_title, $customPostID);
+        return $this->hooksAPI->applyFilters('the_title', $customPost->post_title, $customPostID);
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getContent($customPostObjectOrID): ?string
     {
         list(
             $customPost,
             $customPostID,
         ) = $this->getCustomPostObjectAndID($customPostObjectOrID);
-        return apply_filters('the_content', $customPost->post_content);
+        return $this->hooksAPI->applyFilters('the_content', $customPost->post_content);
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getPlainTextContent($customPostObjectOrID): string
     {
         list(
@@ -295,16 +339,19 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
         // Basic content: remove embeds, shortcodes, and tags
         // Remove the embed functionality, and then add again
         $wp_embed = $GLOBALS['wp_embed'];
-        HooksAPIFacade::getInstance()->removeFilter('the_content', array( $wp_embed, 'autoembed' ), 8);
+        $this->hooksAPI->removeFilter('the_content', array( $wp_embed, 'autoembed' ), 8);
 
         // Do not allow HTML tags or shortcodes
         $ret = \strip_shortcodes($customPost->post_content);
-        $ret = HooksAPIFacade::getInstance()->applyFilters('the_content', $ret);
-        HooksAPIFacade::getInstance()->addFilter('the_content', array( $wp_embed, 'autoembed' ), 8);
+        $ret = $this->hooksAPI->applyFilters('the_content', $ret);
+        $this->hooksAPI->addFilter('the_content', array( $wp_embed, 'autoembed' ), 8);
 
         return strip_tags($ret);
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getPublishedDate($customPostObjectOrID): ?string
     {
         list(
@@ -314,6 +361,9 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
         return $customPost->post_date;
     }
 
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getModifiedDate($customPostObjectOrID): ?string
     {
         list(
@@ -322,6 +372,9 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
         ) = $this->getCustomPostObjectAndID($customPostObjectOrID);
         return $customPost->post_modified;
     }
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
     public function getCustomPostType($customPostObjectOrID): string
     {
         list(
@@ -333,9 +386,8 @@ class CustomPostTypeAPI implements CustomPostTypeAPIInterface
 
     /**
      * Get the post with provided ID or, if it doesn't exist, null
-     *
-     * @param int $id
-     * @return void
+     * @param int|string $id
+     * @return object|null
      */
     public function getCustomPost($id)
     {

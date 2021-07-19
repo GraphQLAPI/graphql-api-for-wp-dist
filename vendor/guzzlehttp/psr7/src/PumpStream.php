@@ -12,8 +12,10 @@ use PrefixedByPoP\Psr\Http\Message\StreamInterface;
  * returned by the provided callable is buffered internally until drained using
  * the read() function of the PumpStream. The provided callable MUST return
  * false when there is no more data to read.
+ *
+ * @final
  */
-class PumpStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
+class PumpStream implements StreamInterface
 {
     /** @var callable */
     private $source;
@@ -26,26 +28,26 @@ class PumpStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
     /** @var BufferStream */
     private $buffer;
     /**
-     * @param callable $source Source of the stream data. The callable MAY
-     *                         accept an integer argument used to control the
-     *                         amount of data to return. The callable MUST
-     *                         return a string when called, or false on error
-     *                         or EOF.
-     * @param array $options   Stream options:
-     *                         - metadata: Hash of metadata to use with stream.
-     *                         - size: Size of the stream, if known.
+     * @param callable $source  Source of the stream data. The callable MAY
+     *                          accept an integer argument used to control the
+     *                          amount of data to return. The callable MUST
+     *                          return a string when called, or false on error
+     *                          or EOF.
+     * @param array    $options Stream options:
+     *                          - metadata: Hash of metadata to use with stream.
+     *                          - size: Size of the stream, if known.
      */
     public function __construct(callable $source, array $options = [])
     {
         $this->source = $source;
         $this->size = isset($options['size']) ? $options['size'] : null;
         $this->metadata = isset($options['metadata']) ? $options['metadata'] : [];
-        $this->buffer = new \PrefixedByPoP\GuzzleHttp\Psr7\BufferStream();
+        $this->buffer = new BufferStream();
     }
     public function __toString()
     {
         try {
-            return \PrefixedByPoP\GuzzleHttp\Psr7\Utils::copyToString($this);
+            return Utils::copyToString($this);
         } catch (\Exception $e) {
             return '';
         }

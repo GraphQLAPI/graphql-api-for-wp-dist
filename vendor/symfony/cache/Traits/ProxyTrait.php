@@ -25,14 +25,14 @@ trait ProxyTrait
      */
     public function prune()
     {
-        return $this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface && $this->pool->prune();
+        return $this->pool instanceof PruneableInterface && $this->pool->prune();
     }
     /**
      * {@inheritdoc}
      */
     public function reset()
     {
-        if ($this->pool instanceof \PrefixedByPoP\Symfony\Contracts\Service\ResetInterface) {
+        if ($this->pool instanceof ResetInterface) {
             $this->pool->reset();
         }
     }

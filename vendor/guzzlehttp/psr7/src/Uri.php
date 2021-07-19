@@ -10,7 +10,7 @@ use PrefixedByPoP\Psr\Http\Message\UriInterface;
  * @author Tobias Schultze
  * @author Matthew Weier O'Phinney
  */
-class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
+class Uri implements UriInterface
 {
     /**
      * Absolute http and https URIs require a host per RFC 7230 Section 2.7
@@ -44,12 +44,46 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
     {
         // weak type check to also accept null until we can add scalar type hints
         if ($uri != '') {
-            $parts = \parse_url($uri);
+            $parts = self::parse($uri);
             if ($parts === \false) {
                 throw new \InvalidArgumentException("Unable to parse URI: {$uri}");
             }
             $this->applyParts($parts);
         }
+    }
+    /**
+     * UTF-8 aware \parse_url() replacement.
+     *
+     * The internal function produces broken output for non ASCII domain names
+     * (IDN) when used with locales other than "C".
+     *
+     * On the other hand, cURL understands IDN correctly only when UTF-8 locale
+     * is configured ("C.UTF-8", "en_US.UTF-8", etc.).
+     *
+     * @see https://bugs.php.net/bug.php?id=52923
+     * @see https://www.php.net/manual/en/function.parse-url.php#114817
+     * @see https://curl.haxx.se/libcurl/c/CURLOPT_URL.html#ENCODING
+     *
+     * @param string $url
+     *
+     * @return array|false
+     */
+    private static function parse($url)
+    {
+        // If IPv6
+        $prefix = '';
+        if (\preg_match('%^(.*://\\[[0-9:a-f]+\\])(.*?)$%', $url, $matches)) {
+            $prefix = $matches[1];
+            $url = $matches[2];
+        }
+        $encodedUrl = \preg_replace_callback('%[^:/@?&=#]+%usD', static function ($matches) {
+            return \urlencode($matches[0]);
+        }, $url);
+        $result = \parse_url($prefix . $encodedUrl);
+        if ($result === \false) {
+            return \false;
+        }
+        return \array_map('urldecode', $result);
     }
     public function __toString()
     {
@@ -110,7 +144,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      *
      * @return bool
      */
-    public static function isDefaultPort(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri)
+    public static function isDefaultPort(UriInterface $uri)
     {
         return $uri->getPort() === null || isset(self::$defaultPorts[$uri->getScheme()]) && $uri->getPort() === self::$defaultPorts[$uri->getScheme()];
     }
@@ -127,12 +161,13 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      * @param UriInterface $uri
      *
      * @return bool
+     *
      * @see Uri::isNetworkPathReference
      * @see Uri::isAbsolutePathReference
      * @see Uri::isRelativePathReference
      * @link https://tools.ietf.org/html/rfc3986#section-4
      */
-    public static function isAbsolute(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri)
+    public static function isAbsolute(UriInterface $uri)
     {
         return $uri->getScheme() !== '';
     }
@@ -144,9 +179,10 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      * @param UriInterface $uri
      *
      * @return bool
+     *
      * @link https://tools.ietf.org/html/rfc3986#section-4.2
      */
-    public static function isNetworkPathReference(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri)
+    public static function isNetworkPathReference(UriInterface $uri)
     {
         return $uri->getScheme() === '' && $uri->getAuthority() !== '';
     }
@@ -158,9 +194,10 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      * @param UriInterface $uri
      *
      * @return bool
+     *
      * @link https://tools.ietf.org/html/rfc3986#section-4.2
      */
-    public static function isAbsolutePathReference(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri)
+    public static function isAbsolutePathReference(UriInterface $uri)
     {
         return $uri->getScheme() === '' && $uri->getAuthority() === '' && isset($uri->getPath()[0]) && $uri->getPath()[0] === '/';
     }
@@ -172,9 +209,10 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      * @param UriInterface $uri
      *
      * @return bool
+     *
      * @link https://tools.ietf.org/html/rfc3986#section-4.2
      */
-    public static function isRelativePathReference(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri)
+    public static function isRelativePathReference(UriInterface $uri)
     {
         return $uri->getScheme() === '' && $uri->getAuthority() === '' && (!isset($uri->getPath()[0]) || $uri->getPath()[0] !== '/');
     }
@@ -189,12 +227,13 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      * @param UriInterface|null $base An optional base URI to compare against
      *
      * @return bool
+     *
      * @link https://tools.ietf.org/html/rfc3986#section-4.4
      */
-    public static function isSameDocumentReference(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri, \PrefixedByPoP\Psr\Http\Message\UriInterface $base = null)
+    public static function isSameDocumentReference(UriInterface $uri, UriInterface $base = null)
     {
         if ($base !== null) {
-            $uri = \PrefixedByPoP\GuzzleHttp\Psr7\UriResolver::resolve($base, $uri);
+            $uri = UriResolver::resolve($base, $uri);
             return $uri->getScheme() === $base->getScheme() && $uri->getAuthority() === $base->getAuthority() && $uri->getPath() === $base->getPath() && $uri->getQuery() === $base->getQuery();
         }
         return $uri->getScheme() === '' && $uri->getAuthority() === '' && $uri->getPath() === '' && $uri->getQuery() === '';
@@ -211,7 +250,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      */
     public static function removeDotSegments($path)
     {
-        return \PrefixedByPoP\GuzzleHttp\Psr7\UriResolver::removeDotSegments($path);
+        return UriResolver::removeDotSegments($path);
     }
     /**
      * Converts the relative URI into a new URI that is resolved against the base URI.
@@ -224,12 +263,12 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      * @deprecated since version 1.4. Use UriResolver::resolve instead.
      * @see UriResolver::resolve
      */
-    public static function resolve(\PrefixedByPoP\Psr\Http\Message\UriInterface $base, $rel)
+    public static function resolve(UriInterface $base, $rel)
     {
-        if (!$rel instanceof \PrefixedByPoP\Psr\Http\Message\UriInterface) {
+        if (!$rel instanceof UriInterface) {
             $rel = new self($rel);
         }
-        return \PrefixedByPoP\GuzzleHttp\Psr7\UriResolver::resolve($base, $rel);
+        return UriResolver::resolve($base, $rel);
     }
     /**
      * Creates a new URI with a specific query string value removed.
@@ -242,7 +281,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      *
      * @return UriInterface
      */
-    public static function withoutQueryValue(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri, $key)
+    public static function withoutQueryValue(UriInterface $uri, $key)
     {
         $result = self::getFilteredQueryString($uri, [$key]);
         return $uri->withQuery(\implode('&', $result));
@@ -262,7 +301,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      *
      * @return UriInterface
      */
-    public static function withQueryValue(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri, $key, $value)
+    public static function withQueryValue(UriInterface $uri, $key, $value)
     {
         $result = self::getFilteredQueryString($uri, [$key]);
         $result[] = self::generateQueryString($key, $value);
@@ -278,7 +317,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      *
      * @return UriInterface
      */
-    public static function withQueryValues(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri, array $keyValueArray)
+    public static function withQueryValues(UriInterface $uri, array $keyValueArray)
     {
         $result = self::getFilteredQueryString($uri, \array_keys($keyValueArray));
         foreach ($keyValueArray as $key => $value) {
@@ -292,6 +331,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
      * @param array $parts
      *
      * @return UriInterface
+     *
      * @link http://php.net/manual/en/function.parse-url.php
      *
      * @throws \InvalidArgumentException If the components do not form a valid URI.
@@ -453,7 +493,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
         if (!\is_string($scheme)) {
             throw new \InvalidArgumentException('Scheme must be a string');
         }
-        return \strtolower($scheme);
+        return \strtr($scheme, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
     }
     /**
      * @param string $component
@@ -481,7 +521,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
         if (!\is_string($host)) {
             throw new \InvalidArgumentException('Host must be a string');
         }
-        return \strtolower($host);
+        return \strtr($host, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
     }
     /**
      * @param int|null $port
@@ -504,10 +544,10 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
     /**
      * @param UriInterface $uri
      * @param array        $keys
-     * 
+     *
      * @return array
      */
-    private static function getFilteredQueryString(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri, array $keys)
+    private static function getFilteredQueryString(UriInterface $uri, array $keys)
     {
         $current = $uri->getQuery();
         if ($current === '') {
@@ -521,7 +561,7 @@ class Uri implements \PrefixedByPoP\Psr\Http\Message\UriInterface
     /**
      * @param string      $key
      * @param string|null $value
-     * 
+     *
      * @return string
      */
     private static function generateQueryString($key, $value)

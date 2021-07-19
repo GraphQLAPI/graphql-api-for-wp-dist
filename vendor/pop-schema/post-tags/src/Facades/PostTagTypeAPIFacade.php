@@ -7,12 +7,12 @@ use PoPSchema\PostTags\TypeAPIs\PostTagTypeAPIInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class PostTagTypeAPIFacade
 {
-    public static function getInstance() : \PoPSchema\PostTags\TypeAPIs\PostTagTypeAPIInterface
+    public static function getInstance() : PostTagTypeAPIInterface
     {
         /**
          * @var PostTagTypeAPIInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\PostTags\TypeAPIs\PostTagTypeAPIInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(PostTagTypeAPIInterface::class);
         return $service;
     }
 }

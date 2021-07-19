@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
  *
  * @author Stéphane Escandell <stephane.escandell@gmail.com>
  */
-class AccessException extends \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\RuntimeException
+class AccessException extends RuntimeException
 {
 }

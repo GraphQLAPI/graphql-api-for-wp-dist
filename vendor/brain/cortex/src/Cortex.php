@@ -42,7 +42,7 @@ class Cortex
      * @return bool
      * @throws \Exception
      */
-    public static function boot(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request = null)
+    public static function boot(RequestInterface $request = null)
     {
         try {
             if (self::$booted) {
@@ -87,7 +87,7 @@ class Cortex
      * @param  \Psr\Http\Message\RequestInterface|null $request
      * @return bool
      */
-    private function doBoot(\WP $wp, $do, \PrefixedByPoP\Psr\Http\Message\RequestInterface $request = null)
+    private function doBoot(\WP $wp, $do, RequestInterface $request = null)
     {
         $uri = $this->factoryUri($request);
         $method = $this->getMethod($request);
@@ -125,13 +125,13 @@ class Cortex
      * @param  \Psr\Http\Message\RequestInterface $request
      * @return \Brain\Cortex\Uri\UriInterface
      */
-    private function factoryUri(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request = null)
+    private function factoryUri(RequestInterface $request = null)
     {
         $psrUri = \is_null($request) ? null : $request->getUri();
         /** @var UriInterface $uri */
-        $uri = $this->factoryByHook('uri', \PrefixedByPoP\Brain\Cortex\Uri\UriInterface::class, function () use($psrUri) {
-            \is_null($psrUri) and $psrUri = new \PrefixedByPoP\Brain\Cortex\Uri\PsrUri();
-            return new \PrefixedByPoP\Brain\Cortex\Uri\WordPressUri($psrUri);
+        $uri = $this->factoryByHook('uri', UriInterface::class, function () use($psrUri) {
+            \is_null($psrUri) and $psrUri = new PsrUri();
+            return new WordPressUri($psrUri);
         });
         return $uri;
     }
@@ -139,7 +139,7 @@ class Cortex
      * @param  \Psr\Http\Message\RequestInterface|null $request
      * @return string
      */
-    private function getMethod(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request = null)
+    private function getMethod(RequestInterface $request = null)
     {
         if ($request) {
             return $request->getMethod();
@@ -152,8 +152,8 @@ class Cortex
     private function factoryGroups()
     {
         /** @var \Brain\Cortex\Group\GroupCollectionInterface $groups */
-        $groups = $this->factoryByHook('group-collection', \PrefixedByPoP\Brain\Cortex\Group\GroupCollectionInterface::class, function () {
-            return new \PrefixedByPoP\Brain\Cortex\Group\GroupCollection();
+        $groups = $this->factoryByHook('group-collection', GroupCollectionInterface::class, function () {
+            return new GroupCollection();
         });
         do_action('cortex.groups', $groups);
         return $groups;
@@ -163,11 +163,11 @@ class Cortex
      * @param  string                         $method
      * @return \Brain\Cortex\Route\RouteCollectionInterface
      */
-    private function factoryRoutes(\PrefixedByPoP\Brain\Cortex\Uri\UriInterface $uri, $method)
+    private function factoryRoutes(UriInterface $uri, $method)
     {
         /** @var \Brain\Cortex\Route\RouteCollectionInterface $routes */
-        $routes = $this->factoryByHook('route-collection', \PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface::class, function () {
-            return new \PrefixedByPoP\Brain\Cortex\Route\PriorityRouteCollection();
+        $routes = $this->factoryByHook('route-collection', RouteCollectionInterface::class, function () {
+            return new PriorityRouteCollection();
         });
         do_action('cortex.routes', $routes, $uri, $method);
         return $routes;
@@ -177,11 +177,11 @@ class Cortex
      * @param  \Brain\Cortex\Group\GroupCollectionInterface $groups
      * @return \Brain\Cortex\Router\RouterInterface
      */
-    private function factoryRouter(\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $routes, \PrefixedByPoP\Brain\Cortex\Group\GroupCollectionInterface $groups)
+    private function factoryRouter(RouteCollectionInterface $routes, GroupCollectionInterface $groups)
     {
         /** @var \Brain\Cortex\Router\RouterInterface $router */
-        $router = $this->factoryByHook('router', \PrefixedByPoP\Brain\Cortex\Router\RouterInterface::class, function () use($routes, $groups) {
-            return new \PrefixedByPoP\Brain\Cortex\Router\Router($routes, $groups);
+        $router = $this->factoryByHook('router', RouterInterface::class, function () use($routes, $groups) {
+            return new Router($routes, $groups);
         });
         return $router;
     }
@@ -191,8 +191,8 @@ class Cortex
     private function factoryHandler()
     {
         /** @var ResultHandlerInterface $handler */
-        $handler = $this->factoryByHook('result-handler', \PrefixedByPoP\Brain\Cortex\Router\ResultHandlerInterface::class, function () {
-            return new \PrefixedByPoP\Brain\Cortex\Router\ResultHandler();
+        $handler = $this->factoryByHook('result-handler', ResultHandlerInterface::class, function () {
+            return new ResultHandler();
         });
         return $handler;
     }

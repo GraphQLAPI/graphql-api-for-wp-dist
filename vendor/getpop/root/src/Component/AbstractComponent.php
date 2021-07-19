@@ -7,7 +7,7 @@ use PoP\Root\Component\ComponentInterface;
 /**
  * Initialize component
  */
-abstract class AbstractComponent implements \PoP\Root\Component\ComponentInterface
+abstract class AbstractComponent implements ComponentInterface
 {
     use InitializeContainerServicesInComponentTrait;
     /**
@@ -35,19 +35,15 @@ abstract class AbstractComponent implements \PoP\Root\Component\ComponentInterfa
     }
     /**
      * Initialize services for the system container
-     *
-     * @param array<string, mixed> $configuration
      */
-    public static final function initializeSystem(array $configuration = []) : void
+    public static final function initializeSystem() : void
     {
-        static::initializeSystemContainerServices($configuration);
+        static::initializeSystemContainerServices();
     }
     /**
      * Initialize services for the system container
-     *
-     * @param array<string, mixed> $configuration
      */
-    protected static function initializeSystemContainerServices(array $configuration = []) : void
+    protected static function initializeSystemContainerServices() : void
     {
         // Override
     }
@@ -67,11 +63,11 @@ abstract class AbstractComponent implements \PoP\Root\Component\ComponentInterfa
         return [];
     }
     /**
-     * All migration plugins that this component depends upon, to initialize them
+     * Compiler Passes for the System Container
      *
      * @return string[]
      */
-    public static function getDependedMigrationPlugins() : array
+    public static function getSystemContainerCompilerPassClasses() : array
     {
         return [];
     }
@@ -91,25 +87,25 @@ abstract class AbstractComponent implements \PoP\Root\Component\ComponentInterfa
     {
     }
     /**
+     * Function called by the Bootloader when booting the system
+     */
+    public static function bootSystem() : void
+    {
+    }
+    /**
      * Function called by the Bootloader after all components have been loaded
-     *
-     * @return void
      */
     public static function beforeBoot() : void
     {
     }
     /**
      * Function called by the Bootloader when booting the system
-     *
-     * @return void
      */
     public static function boot() : void
     {
     }
     /**
      * Function called by the Bootloader when booting the system
-     *
-     * @return void
      */
     public static function afterBoot() : void
     {

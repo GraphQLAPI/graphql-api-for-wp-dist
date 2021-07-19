@@ -13,7 +13,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
 /**
  * Thrown when a definition cannot be autowired.
  */
-class AutowiringFailedException extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException
+class AutowiringFailedException extends RuntimeException
 {
     private $serviceId;
     private $messageCallback;

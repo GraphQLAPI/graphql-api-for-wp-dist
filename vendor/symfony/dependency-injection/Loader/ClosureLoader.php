@@ -19,12 +19,13 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class ClosureLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader\Loader
+class ClosureLoader extends Loader
 {
     private $container;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function __construct(ContainerBuilder $container, string $env = null)
     {
         $this->container = $container;
+        parent::__construct($env);
     }
     /**
      * {@inheritdoc}
@@ -32,12 +33,13 @@ class ClosureLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader\Loade
      */
     public function load($resource, $type = null)
     {
-        $resource($this->container);
+        $resource($this->container, $this->env);
     }
     /**
      * {@inheritdoc}
+     * @param string $type
      */
-    public function supports($resource, string $type = null)
+    public function supports($resource, $type = null)
     {
         return $resource instanceof \Closure;
     }

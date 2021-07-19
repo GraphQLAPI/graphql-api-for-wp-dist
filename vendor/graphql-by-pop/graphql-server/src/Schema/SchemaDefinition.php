@@ -5,7 +5,9 @@ namespace GraphQLByPoP\GraphQLServer\Schema;
 
 class SchemaDefinition
 {
+    const TYPE_ANY_SCALAR = 'AnyScalar';
     const TYPE_MIXED = 'Mixed';
+    const TYPE_ARRAY_KEY = 'ArrayKey';
     const TYPE_ID = 'ID';
     const TYPE_STRING = 'String';
     const TYPE_INT = 'Int';
@@ -18,6 +20,5 @@ class SchemaDefinition
     const TYPE_EMAIL = 'Email';
     const TYPE_IP = 'IP';
     const TYPE_ENUM = 'Enum';
-    const TYPE_ARRAY = 'Array';
     const TYPE_INPUT_OBJECT = 'InputObject';
 }

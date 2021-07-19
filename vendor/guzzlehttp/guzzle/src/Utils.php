@@ -27,7 +27,7 @@ final class Utils
      *
      * @internal
      */
-    public static function idnUriConvert(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri, $options = 0)
+    public static function idnUriConvert(UriInterface $uri, $options = 0)
     {
         if ($uri->getHost()) {
             $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
@@ -46,7 +46,7 @@ final class Utils
                 if ($errors) {
                     $errorMessage .= ' (errors: ' . \implode(', ', $errors) . ')';
                 }
-                throw new \PrefixedByPoP\GuzzleHttp\Exception\InvalidArgumentException($errorMessage);
+                throw new InvalidArgumentException($errorMessage);
             } else {
                 if ($uri->getHost() !== $asciiHost) {
                     // Replace URI only if the ASCII version is different
@@ -74,8 +74,8 @@ final class Utils
         /*
          * The Idn class is marked as @internal. Verify that class and method exists.
          */
-        if (\method_exists(\PrefixedByPoP\Symfony\Polyfill\Intl\Idn\Idn::class, 'idn_to_ascii')) {
-            return \PrefixedByPoP\Symfony\Polyfill\Intl\Idn\Idn::idn_to_ascii($domain, $options, \PrefixedByPoP\Symfony\Polyfill\Intl\Idn\Idn::INTL_IDNA_VARIANT_UTS46, $info);
+        if (\method_exists(Idn::class, 'idn_to_ascii')) {
+            return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
         }
         throw new \RuntimeException('ext-intl or symfony/polyfill-intl-idn not loaded or too old');
     }

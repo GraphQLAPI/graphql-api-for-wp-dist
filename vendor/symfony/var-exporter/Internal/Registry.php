@@ -55,13 +55,13 @@ class Registry
     public static function getClassReflector($class, $instantiableWithoutConstructor = \false, $cloneable = null)
     {
         if (!($isClass = \class_exists($class)) && !\interface_exists($class, \false) && !\trait_exists($class, \false)) {
-            throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\ClassNotFoundException($class);
+            throw new ClassNotFoundException($class);
         }
         $reflector = new \ReflectionClass($class);
         if ($instantiableWithoutConstructor) {
             $proto = $reflector->newInstanceWithoutConstructor();
         } elseif (!$isClass || $reflector->isAbstract()) {
-            throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\NotInstantiableTypeException($class);
+            throw new NotInstantiableTypeException($class);
         } elseif ($reflector->name !== $class) {
             $reflector = self::$reflectors[$name = $reflector->name] ?? self::getClassReflector($name, \false, $cloneable);
             self::$cloneable[$class] = self::$cloneable[$name];
@@ -83,10 +83,10 @@ class Registry
                         if (__FILE__ !== $e->getFile()) {
                             throw $e;
                         }
-                        throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\NotInstantiableTypeException($class, $e);
+                        throw new NotInstantiableTypeException($class, $e);
                     }
                     if (\false === $proto) {
-                        throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\NotInstantiableTypeException($class);
+                        throw new NotInstantiableTypeException($class);
                     }
                 }
             }
@@ -94,13 +94,13 @@ class Registry
                 try {
                     \serialize($proto);
                 } catch (\Exception $e) {
-                    throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\NotInstantiableTypeException($class, $e);
+                    throw new NotInstantiableTypeException($class, $e);
                 }
             }
         }
         if (null === $cloneable) {
             if (($proto instanceof \Reflector || $proto instanceof \ReflectionGenerator || $proto instanceof \ReflectionType || $proto instanceof \IteratorIterator || $proto instanceof \RecursiveIteratorIterator) && (!$proto instanceof \Serializable && !\method_exists($proto, '__wakeup') && (\PHP_VERSION_ID < 70400 || !\method_exists($class, '__unserialize')))) {
-                throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\NotInstantiableTypeException($class);
+                throw new NotInstantiableTypeException($class);
             }
             $cloneable = $reflector->isCloneable() && !$reflector->hasMethod('__clone');
         }

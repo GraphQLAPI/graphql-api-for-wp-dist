@@ -3,7 +3,7 @@
 namespace PrefixedByPoP\FastRoute\Dispatcher;
 
 use PrefixedByPoP\FastRoute\Dispatcher;
-abstract class RegexBasedAbstract implements \PrefixedByPoP\FastRoute\Dispatcher
+abstract class RegexBasedAbstract implements Dispatcher
 {
     protected $staticRouteMap;
     protected $variableRouteData;

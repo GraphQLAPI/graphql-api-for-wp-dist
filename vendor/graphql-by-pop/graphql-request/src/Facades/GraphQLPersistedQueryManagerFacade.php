@@ -7,12 +7,12 @@ use GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInt
 use PoP\Root\Container\ContainerBuilderFactory;
 class GraphQLPersistedQueryManagerFacade
 {
-    public static function getInstance() : \GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface
+    public static function getInstance() : GraphQLPersistedQueryManagerInterface
     {
         /**
          * @var GraphQLPersistedQueryManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(GraphQLPersistedQueryManagerInterface::class);
         return $service;
     }
 }

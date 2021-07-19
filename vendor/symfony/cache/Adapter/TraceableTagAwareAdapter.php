@@ -14,9 +14,9 @@ use PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface;
 /**
  * @author Robin Chalas <robin.chalas@gmail.com>
  */
-class TraceableTagAwareAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\TagAwareAdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface
+class TraceableTagAwareAdapter extends TraceableAdapter implements TagAwareAdapterInterface, TagAwareCacheInterface
 {
-    public function __construct(\PrefixedByPoP\Symfony\Component\Cache\Adapter\TagAwareAdapterInterface $pool)
+    public function __construct(TagAwareAdapterInterface $pool)
     {
         parent::__construct($pool);
     }

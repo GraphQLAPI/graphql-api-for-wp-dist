@@ -9,7 +9,7 @@ use PoP\Root\Component\CanDisableComponentTrait;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     use CanDisableComponentTrait;
     /**
@@ -21,12 +21,6 @@ class Component extends \PoP\Root\Component\AbstractComponent
     {
         return [\PoP\APIMirrorQuery\Component::class];
     }
-    public static function getDependedMigrationPlugins() : array
-    {
-        $packageName = \basename(\dirname(__DIR__));
-        $folder = \dirname(__DIR__, 2);
-        return [$folder . '/migrate-' . $packageName . '/initialize.php'];
-    }
     /**
      * Initialize services
      *
@@ -36,12 +30,11 @@ class Component extends \PoP\Root\Component\AbstractComponent
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
         if (self::isEnabled()) {
-            parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-            self::initYAMLServices(\dirname(__DIR__));
+            self::initServices(\dirname(__DIR__));
         }
     }
-    protected static function resolveEnabled()
+    protected static function resolveEnabled() : bool
     {
-        return \PoP\API\Component::isEnabled() && !\PoP\GraphQLAPI\Environment::disableGraphQLAPI();
+        return APIComponent::isEnabled() && !\PoP\GraphQLAPI\Environment::disableGraphQLAPI();
     }
 }

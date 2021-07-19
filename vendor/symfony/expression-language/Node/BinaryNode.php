@@ -16,15 +16,15 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class BinaryNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class BinaryNode extends Node
 {
     private const OPERATORS = ['~' => '.', 'and' => '&&', 'or' => '||'];
     private const FUNCTIONS = ['**' => 'pow', '..' => 'range', 'in' => 'in_array', 'not in' => '!in_array'];
-    public function __construct(string $operator, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $left, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $right)
+    public function __construct(string $operator, Node $left, Node $right)
     {
         parent::__construct(['left' => $left, 'right' => $right], ['operator' => $operator]);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $operator = $this->attributes['operator'];
         if ('matches' == $operator) {

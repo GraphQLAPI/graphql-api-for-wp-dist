@@ -10,9 +10,10 @@ interface PipelineBuilderInterface
      *
      * @return self
      */
-    public function add(callable $stage) : \PrefixedByPoP\League\Pipeline\PipelineBuilderInterface;
+    public function add(callable $stage) : PipelineBuilderInterface;
     /**
      * Build a new Pipeline object.
+     * @param \League\Pipeline\ProcessorInterface $processor
      */
-    public function build(\PrefixedByPoP\League\Pipeline\ProcessorInterface $processor = null) : \PrefixedByPoP\League\Pipeline\PipelineInterface;
+    public function build($processor = null) : PipelineInterface;
 }

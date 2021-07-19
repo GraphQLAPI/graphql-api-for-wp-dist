@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace PoP\Root\Container;
 
+use PoP\Root\Services\AutomaticallyInstantiatedServiceInterface;
 /**
  * Collect the services that must be automatically instantiated,
  * i.e. that no piece of code will explicitly reference, but whose
@@ -10,6 +11,10 @@ namespace PoP\Root\Container;
  */
 interface ServiceInstantiatorInterface
 {
-    public function addServiceDefinition(string $serviceDefinition) : void;
-    public function initializeServices() : void;
+    public function addService(AutomaticallyInstantiatedServiceInterface $service) : void;
+    /**
+     * The SystemContainer requires no events => pass null
+     * The ApplicationContainer has 3 events (beforeBoot, boot, afterBoot)
+     */
+    public function initializeServices(?string $event = null) : void;
 }

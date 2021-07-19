@@ -7,12 +7,12 @@ use PoP\Engine\ErrorHandling\ErrorManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class ErrorManagerFacade
 {
-    public static function getInstance() : \PoP\Engine\ErrorHandling\ErrorManagerInterface
+    public static function getInstance() : ErrorManagerInterface
     {
         /**
          * @var ErrorManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\Engine\ErrorHandling\ErrorManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(ErrorManagerInterface::class);
         return $service;
     }
 }

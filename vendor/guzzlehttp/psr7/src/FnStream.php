@@ -8,8 +8,10 @@ use PrefixedByPoP\Psr\Http\Message\StreamInterface;
  *
  * Allows for easy testing and extension of a provided stream without needing
  * to create a concrete class for a simple extension point.
+ *
+ * @final
  */
-class FnStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
+class FnStream implements StreamInterface
 {
     /** @var array */
     private $methods;
@@ -46,6 +48,7 @@ class FnStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
     }
     /**
      * An unserialize would allow the __destruct to run when the unserialized value goes out of scope.
+     *
      * @throws \LogicException
      */
     public function __wakeup()
@@ -61,7 +64,7 @@ class FnStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
      *
      * @return FnStream
      */
-    public static function decorate(\PrefixedByPoP\Psr\Http\Message\StreamInterface $stream, array $methods)
+    public static function decorate(StreamInterface $stream, array $methods)
     {
         // If any of the required methods were not provided, then simply
         // proxy to the decorated stream.

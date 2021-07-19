@@ -7,12 +7,12 @@ use PoPSchema\Pages\TypeAPIs\PageTypeAPIInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class PageTypeAPIFacade
 {
-    public static function getInstance() : \PoPSchema\Pages\TypeAPIs\PageTypeAPIInterface
+    public static function getInstance() : PageTypeAPIInterface
     {
         /**
          * @var PageTypeAPIInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\Pages\TypeAPIs\PageTypeAPIInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(PageTypeAPIInterface::class);
         return $service;
     }
 }

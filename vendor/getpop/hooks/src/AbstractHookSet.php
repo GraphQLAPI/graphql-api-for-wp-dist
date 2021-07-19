@@ -4,9 +4,10 @@ declare (strict_types=1);
 namespace PoP\Hooks;
 
 use PoP\Hooks\HooksAPIInterface;
-use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 use PoP\Translation\TranslationAPIInterface;
-abstract class AbstractHookSet extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
+abstract class AbstractHookSet extends AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var \PoP\Hooks\HooksAPIInterface
@@ -16,10 +17,15 @@ abstract class AbstractHookSet extends \PoP\Root\Services\AbstractAutomaticallyI
      * @var \PoP\Translation\TranslationAPIInterface
      */
     protected $translationAPI;
-    public function __construct(\PoP\Hooks\HooksAPIInterface $hooksAPI, \PoP\Translation\TranslationAPIInterface $translationAPI)
+    /**
+     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     */
+    protected $instanceManager;
+    public function __construct(HooksAPIInterface $hooksAPI, TranslationAPIInterface $translationAPI, InstanceManagerInterface $instanceManager)
     {
         $this->hooksAPI = $hooksAPI;
         $this->translationAPI = $translationAPI;
+        $this->instanceManager = $instanceManager;
     }
     public final function initialize() : void
     {
@@ -28,8 +34,6 @@ abstract class AbstractHookSet extends \PoP\Root\Services\AbstractAutomaticallyI
     }
     /**
      * Initialize the hooks
-     *
-     * @return void
      */
-    protected abstract function init();
+    protected abstract function init() : void;
 }

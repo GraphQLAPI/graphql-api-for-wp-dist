@@ -3,84 +3,88 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\TypeResolvers;
 
-use PoP\ComponentModel\ErrorHandling\Error;
-use PoP\FieldQuery\QueryUtils;
-use PoP\FieldQuery\QuerySyntax;
-use PoP\FieldQuery\QueryHelpers;
-use PoP\ComponentModel\ErrorUtils;
-use PoP\ComponentModel\Environment;
+use Exception;
 use PrefixedByPoP\League\Pipeline\PipelineBuilder;
-use PoP\Hooks\Facades\HooksAPIFacade;
-use PoP\ComponentModel\Feedback\Tokens;
-use PoP\ComponentModel\Schema\SchemaHelpers;
-use PoP\ComponentModel\Schema\FieldQueryUtils;
-use PoP\ComponentModel\State\ApplicationState;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\ComponentModel\TypeResolvers\FieldHelpers;
-use PoP\ComponentModel\TypeResolvers\UnionTypeHelpers;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
-use PoP\ComponentModel\Facades\Engine\DataloadingEngineFacade;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-use PoP\ComponentModel\DirectivePipeline\DirectivePipelineDecorator;
-use PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade;
-use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
 use PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups;
+use PoP\ComponentModel\ComponentConfiguration;
+use PoP\ComponentModel\DirectivePipeline\DirectivePipelineDecorator;
+use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
+use PoP\ComponentModel\Environment;
+use PoP\ComponentModel\ErrorHandling\Error;
+use PoP\ComponentModel\ErrorHandling\ErrorProviderInterface;
 use PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade;
-abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers\TypeResolverInterface
+use PoP\ComponentModel\Facades\Engine\DataloadingEngineFacade;
+use PoP\ComponentModel\Feedback\Tokens;
+use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface;
+use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\ComponentModel\Schema\FeedbackMessageStoreInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\ComponentModel\Schema\FieldQueryUtils;
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface;
+use PoP\ComponentModel\Schema\SchemaHelpers;
+use PoP\ComponentModel\State\ApplicationState;
+use PoP\ComponentModel\TypeResolverDecorators\TypeResolverDecoratorInterface;
+use PoP\ComponentModel\TypeResolvers\FieldHelpers;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\ComponentModel\TypeResolvers\UnionTypeHelpers;
+use PoP\FieldQuery\QueryHelpers;
+use PoP\FieldQuery\QuerySyntax;
+use PoP\FieldQuery\QueryUtils;
+use PoP\Hooks\HooksAPIInterface;
+use PoP\Translation\TranslationAPIInterface;
+abstract class AbstractTypeResolver implements TypeResolverInterface
 {
     public const OPTION_VALIDATE_SCHEMA_ON_RESULT_ITEM = 'validateSchemaOnResultItem';
     /**
      * Cache of which fieldResolvers will process the given field
      *
-     * @var FieldResolverInterface[]
+     * @var array<string, FieldResolverInterface[]>
      */
     protected $fieldResolvers = [];
     /**
      * @var array<string, array>
      */
-    protected $schemaDefinition = null;
+    protected $schemaDefinition;
     /**
-     * @var array<string, array>|null
+     * @var array<string,DirectiveResolverInterface[]>|null
      */
-    protected $directiveNameClasses = null;
+    protected $directiveNameResolvers;
     /**
      * @var array<string, FieldResolverInterface>|null
      */
-    protected $schemaFieldResolvers = null;
+    protected $schemaFieldResolvers;
     /**
      * @var string[]|null
      */
-    protected $typeResolverDecoratorClasses = null;
+    protected $typeResolverDecorators;
     /**
      * @var array<string, array>|null
      */
-    protected $mandatoryDirectivesForFields = null;
+    protected $mandatoryDirectivesForFields;
     /**
      * @var array<string, array>|null
      */
-    protected $precedingMandatoryDirectivesForDirectives = null;
+    protected $precedingMandatoryDirectivesForDirectives;
     /**
      * @var array<string, array>|null
      */
-    protected $succeedingMandatoryDirectivesForDirectives = null;
+    protected $succeedingMandatoryDirectivesForDirectives;
     /**
      * @var string[]|null
      */
-    protected $interfaceClasses = null;
+    protected $interfaceClasses;
     /**
      * @var array<FieldInterfaceResolverInterface>|null
      */
-    protected $interfaceResolverInstances = null;
+    protected $interfaceResolverInstances;
     /**
      * @var array<string, array>
      */
     private $fieldDirectiveIDFields = [];
     /**
-     * @var array<string, array>
+     * @var array<string, string>
      */
     private $fieldDirectivesFromFieldCache = [];
     /**
@@ -95,17 +99,55 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
      * @var array<string, array>
      */
     private $fieldNamesResolvedByFieldResolver = [];
+    /**
+     * @var \PoP\Translation\TranslationAPIInterface
+     */
+    protected $translationAPI;
+    /**
+     * @var \PoP\Hooks\HooksAPIInterface
+     */
+    protected $hooksAPI;
+    /**
+     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     */
+    protected $instanceManager;
+    /**
+     * @var \PoP\ComponentModel\Schema\FeedbackMessageStoreInterface
+     */
+    protected $feedbackMessageStore;
+    /**
+     * @var \PoP\ComponentModel\Schema\FieldQueryInterpreterInterface
+     */
+    protected $fieldQueryInterpreter;
+    /**
+     * @var \PoP\ComponentModel\ErrorHandling\ErrorProviderInterface
+     */
+    protected $errorProvider;
+    /**
+     * @var \PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface
+     */
+    protected $schemaDefinitionService;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FeedbackMessageStoreInterface $feedbackMessageStore, FieldQueryInterpreterInterface $fieldQueryInterpreter, ErrorProviderInterface $errorProvider, SchemaDefinitionServiceInterface $schemaDefinitionService)
+    {
+        $this->translationAPI = $translationAPI;
+        $this->hooksAPI = $hooksAPI;
+        $this->instanceManager = $instanceManager;
+        $this->feedbackMessageStore = $feedbackMessageStore;
+        $this->fieldQueryInterpreter = $fieldQueryInterpreter;
+        $this->errorProvider = $errorProvider;
+        $this->schemaDefinitionService = $schemaDefinitionService;
+    }
     public function getNamespace() : string
     {
-        return \PoP\ComponentModel\Schema\SchemaHelpers::getSchemaNamespace(\get_called_class());
+        return SchemaHelpers::getSchemaNamespace(\get_called_class());
     }
     public final function getNamespacedTypeName() : string
     {
-        return \PoP\ComponentModel\Schema\SchemaHelpers::getSchemaNamespacedName($this->getNamespace(), $this->getTypeName());
+        return SchemaHelpers::getSchemaNamespacedName($this->getNamespace(), $this->getTypeName());
     }
     public final function getMaybeNamespacedTypeName() : string
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         return $vars['namespace-types-and-interfaces'] ? $this->getNamespacedTypeName() : $this->getTypeName();
     }
     public function getTypeOutputName() : string
@@ -117,23 +159,30 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     {
         return null;
     }
-    public function getDirectiveNameClasses() : array
+    /**
+     * @return array<string,DirectiveResolverInterface[]>
+     */
+    public function getDirectiveNameResolvers() : array
     {
-        if (\is_null($this->directiveNameClasses)) {
-            $this->directiveNameClasses = $this->calculateFieldDirectiveNameClasses();
+        if (\is_null($this->directiveNameResolvers)) {
+            $this->directiveNameResolvers = $this->calculateFieldDirectiveNameResolvers();
         }
-        return $this->directiveNameClasses;
+        return $this->directiveNameResolvers;
     }
     public function getIdFieldTypeResolverClass() : string
     {
         return \get_called_class();
     }
+    /**
+     * @param string|int|array<string|int> $dbObjectIDOrIDs
+     * @return string|int|mixed[]
+     */
     public function getQualifiedDBObjectIDOrIDs($dbObjectIDOrIDs)
     {
         // Add the type before the ID
         $dbObjectIDs = \is_array($dbObjectIDOrIDs) ? $dbObjectIDOrIDs : [$dbObjectIDOrIDs];
         $qualifiedDBObjectIDs = \array_map(function ($id) {
-            return \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::getDBObjectComposedTypeAndID($this, $id);
+            return UnionTypeHelpers::getDBObjectComposedTypeAndID($this, $id);
         }, $dbObjectIDs);
         return \is_array($dbObjectIDOrIDs) ? $qualifiedDBObjectIDs : $qualifiedDBObjectIDs[0];
     }
@@ -151,10 +200,9 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
      */
     protected function getMandatoryDirectives()
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        $dataloadingEngine = \PoP\ComponentModel\Facades\Engine\DataloadingEngineFacade::getInstance();
-        return \array_map(function ($directiveResolver) use($fieldQueryInterpreter) {
-            return $fieldQueryInterpreter->listFieldDirective($directiveResolver::getDirectiveName());
+        $dataloadingEngine = DataloadingEngineFacade::getInstance();
+        return \array_map(function ($directiveResolver) {
+            return $this->fieldQueryInterpreter->listFieldDirective($directiveResolver->getDirectiveName());
         }, $dataloadingEngine->getMandatoryDirectiveResolvers());
     }
     /**
@@ -162,19 +210,9 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
      * 1. the directiveResolverInstance
      * 2. its fieldDirective
      * 3. the fields it affects
-     *
-     * @param array $fieldDirectives
-     * @param array $fieldDirectiveFields
-     * @param array $schemaErrors
-     * @param array $schemaWarnings
-     * @param array $schemaDeprecations
-     * @param array $schemaNotices
-     * @param array $schemaTraces
-     * @return array
      */
     public function resolveDirectivesIntoPipelineData(array $fieldDirectives, array &$fieldDirectiveFields, bool $areNestedDirectives, array &$variables, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : array
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         /**
          * All directives are placed somewhere in the pipeline. There are 5 positions:
          * 1. At the beginning
@@ -192,46 +230,62 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             // In the case of an error, Maybe prepend the field(s) containing the directive.
             // Eg: when the directive name doesn't exist: /?query=id<skipanga>
             foreach ($directiveSchemaErrors as $directiveSchemaError) {
-                $directive = $directiveSchemaError[\PoP\ComponentModel\Feedback\Tokens::PATH][0];
+                $directive = $directiveSchemaError[Tokens::PATH][0];
                 if ($directiveFields = $fieldDirectiveFields[$directive] ?? null) {
-                    $fields = \implode($translationAPI->__(', '), $directiveFields);
-                    $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => \array_merge([$fields], $directiveSchemaError[\PoP\ComponentModel\Feedback\Tokens::PATH]), \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $directiveSchemaError[\PoP\ComponentModel\Feedback\Tokens::MESSAGE]];
+                    foreach ($directiveFields as $directiveField) {
+                        $schemaError = $directiveSchemaError;
+                        \array_unshift($schemaError[Tokens::PATH], $directiveField);
+                        $this->prependPathOnNestedErrors($schemaError, $directiveField);
+                        $schemaErrors[] = $schemaError;
+                    }
                 } else {
                     $schemaErrors[] = $directiveSchemaError;
                 }
             }
             foreach ($directiveSchemaWarnings as $directiveSchemaWarning) {
-                $directive = $directiveSchemaWarning[\PoP\ComponentModel\Feedback\Tokens::PATH][0];
+                $directive = $directiveSchemaWarning[Tokens::PATH][0];
                 if ($directiveFields = $fieldDirectiveFields[$directive] ?? null) {
-                    $fields = \implode($translationAPI->__(', '), $directiveFields);
-                    $schemaWarnings[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => \array_merge([$fields], $directiveSchemaWarning[\PoP\ComponentModel\Feedback\Tokens::PATH]), \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $directiveSchemaWarning[\PoP\ComponentModel\Feedback\Tokens::MESSAGE]];
+                    foreach ($directiveFields as $directiveField) {
+                        $schemaWarning = $directiveSchemaWarning;
+                        \array_unshift($schemaWarning[Tokens::PATH], $directiveField);
+                        $schemaWarnings[] = $schemaWarning;
+                    }
                 } else {
                     $schemaWarnings[] = $directiveSchemaWarning;
                 }
             }
             foreach ($directiveSchemaDeprecations as $directiveSchemaDeprecation) {
-                $directive = $directiveSchemaDeprecation[\PoP\ComponentModel\Feedback\Tokens::PATH][0];
+                $directive = $directiveSchemaDeprecation[Tokens::PATH][0];
                 if ($directiveFields = $fieldDirectiveFields[$directive] ?? null) {
-                    $fields = \implode($translationAPI->__(', '), $directiveFields);
-                    $schemaDeprecations[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => \array_merge([$fields], $directiveSchemaDeprecation[\PoP\ComponentModel\Feedback\Tokens::PATH]), \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $directiveSchemaDeprecation[\PoP\ComponentModel\Feedback\Tokens::MESSAGE]];
+                    foreach ($directiveFields as $directiveField) {
+                        $schemaDeprecation = $directiveSchemaDeprecation;
+                        \array_unshift($schemaDeprecation[Tokens::PATH], $directiveField);
+                        $schemaDeprecations[] = $schemaDeprecation;
+                    }
                 } else {
                     $schemaDeprecations[] = $directiveSchemaDeprecation;
                 }
             }
             foreach ($directiveSchemaNotices as $directiveSchemaNotice) {
-                $directive = $directiveSchemaNotice[\PoP\ComponentModel\Feedback\Tokens::PATH][0];
+                $directive = $directiveSchemaNotice[Tokens::PATH][0];
                 if ($directiveFields = $fieldDirectiveFields[$directive] ?? null) {
-                    $fields = \implode($translationAPI->__(', '), $directiveFields);
-                    $schemaNotices[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => \array_merge([$fields], $directiveSchemaNotice[\PoP\ComponentModel\Feedback\Tokens::PATH]), \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $directiveSchemaNotice[\PoP\ComponentModel\Feedback\Tokens::MESSAGE]];
+                    foreach ($directiveFields as $directiveField) {
+                        $schemaNotice = $directiveSchemaNotice;
+                        \array_unshift($schemaNotice[Tokens::PATH], $directiveField);
+                        $schemaNotices[] = $schemaNotice;
+                    }
                 } else {
                     $schemaNotices[] = $directiveSchemaNotice;
                 }
             }
             foreach ($directiveSchemaTraces as $directiveSchemaTrace) {
-                $directive = $directiveSchemaTrace[\PoP\ComponentModel\Feedback\Tokens::PATH][0];
+                $directive = $directiveSchemaTrace[Tokens::PATH][0];
                 if ($directiveFields = $fieldDirectiveFields[$directive] ?? null) {
-                    $fields = \implode($translationAPI->__(', '), $directiveFields);
-                    $schemaTraces[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => \array_merge([$fields], $directiveSchemaTrace[\PoP\ComponentModel\Feedback\Tokens::PATH]), \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $directiveSchemaTrace[\PoP\ComponentModel\Feedback\Tokens::MESSAGE]];
+                    foreach ($directiveFields as $directiveField) {
+                        $schemaTrace = $directiveSchemaTrace;
+                        \array_unshift($schemaTrace[Tokens::PATH], $directiveField);
+                        $schemaTraces[] = $schemaTrace;
+                    }
                 } else {
                     $schemaTraces[] = $directiveSchemaTrace;
                 }
@@ -262,30 +316,36 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
         }
         return $pipelineData;
     }
-    public function getDirectivePipeline(array $directiveResolverInstances) : \PoP\ComponentModel\DirectivePipeline\DirectivePipelineDecorator
+    /**
+     * Add the field(s) to the head of the error path, for all nested errors
+     */
+    protected function prependPathOnNestedErrors(array &$directiveSchemaError, string $directiveField) : void
+    {
+        if (isset($directiveSchemaError[Tokens::EXTENSIONS][Tokens::NESTED])) {
+            foreach ($directiveSchemaError[Tokens::EXTENSIONS][Tokens::NESTED] as &$nestedDirectiveSchemaError) {
+                \array_unshift($nestedDirectiveSchemaError[Tokens::PATH], $directiveField);
+                $this->prependPathOnNestedErrors($nestedDirectiveSchemaError, $directiveField);
+            }
+        }
+    }
+    public function getDirectivePipeline(array $directiveResolverInstances) : DirectivePipelineDecorator
     {
         // From the ordered directives, create the pipeline
-        $pipelineBuilder = new \PrefixedByPoP\League\Pipeline\PipelineBuilder();
+        $pipelineBuilder = new PipelineBuilder();
         foreach ($directiveResolverInstances as $directiveResolverInstance) {
             $pipelineBuilder->add($directiveResolverInstance);
         }
-        $directivePipeline = new \PoP\ComponentModel\DirectivePipeline\DirectivePipelineDecorator($pipelineBuilder->build());
+        $directivePipeline = new DirectivePipelineDecorator($pipelineBuilder->build());
         return $directivePipeline;
     }
     protected function validateAndResolveInstances(array $fieldDirectives, array $fieldDirectiveFields, array &$variables, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : array
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        // Check if, once a directive fails, the continuing directives must execute or not
-        $stopDirectivePipelineExecutionIfDirectiveFailed = \PoP\ComponentModel\Environment::stopDirectivePipelineExecutionIfDirectiveFailed();
-        if ($stopDirectivePipelineExecutionIfDirectiveFailed) {
-            $stopDirectivePipelineExecutionPlaceholder = $translationAPI->__('Because directive \'%s\' failed, the succeeding directives in the pipeline have not been executed', 'pop-component-model');
-        }
         $instances = [];
         // Count how many times each directive is added
         $directiveFieldTrack = [];
         $directiveResolverInstanceFields = [];
-        for ($i = 0; $i < \count($fieldDirectives); $i++) {
+        $fieldDirectivesCount = \count($fieldDirectives);
+        for ($i = 0; $i < $fieldDirectivesCount; $i++) {
             // Because directives can be repeated inside a field (eg: <resize(50%),resize(50%)>),
             // then we deal with 2 variables:
             // 1. $fieldDirective: the actual directive
@@ -294,7 +354,7 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             // For everything else, we use $fieldDirective
             $enqueuedFieldDirective = $fieldDirectives[$i];
             // Check if it is a repeated directive: if it has the "|" symbol
-            $counterSeparatorPos = \PoP\FieldQuery\QueryUtils::findLastSymbolPosition($enqueuedFieldDirective, \PoP\ComponentModel\TypeResolvers\FieldSymbols::REPEATED_DIRECTIVE_COUNTER_SEPARATOR, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING], \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING);
+            $counterSeparatorPos = QueryUtils::findLastSymbolPosition($enqueuedFieldDirective, \PoP\ComponentModel\TypeResolvers\FieldSymbols::REPEATED_DIRECTIVE_COUNTER_SEPARATOR, [QuerySyntax::SYMBOL_FIELDARGS_OPENING, QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING], [QuerySyntax::SYMBOL_FIELDARGS_CLOSING, QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING]);
             $isRepeatedFieldDirective = $counterSeparatorPos !== \false;
             if ($isRepeatedFieldDirective) {
                 // Remove the "|counter" bit from the fieldDirective
@@ -303,33 +363,21 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 $fieldDirective = $enqueuedFieldDirective;
             }
             $fieldDirectiveResolverInstances = $this->getDirectiveResolverInstanceForDirective($fieldDirective, $fieldDirectiveFields[$enqueuedFieldDirective], $variables);
-            $directiveName = $fieldQueryInterpreter->getFieldDirectiveName($fieldDirective);
+            $directiveName = $this->fieldQueryInterpreter->getFieldDirectiveName($fieldDirective);
             // If there is no directive with this name, show an error and skip it
             if (\is_null($fieldDirectiveResolverInstances)) {
-                $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('No DirectiveResolver resolves directive with name \'%s\'', 'pop-component-model'), $directiveName)];
-                if ($stopDirectivePipelineExecutionIfDirectiveFailed) {
-                    $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($stopDirectivePipelineExecutionPlaceholder, $fieldDirective)];
-                    break;
-                }
+                $schemaErrors[] = [Tokens::PATH => [$fieldDirective], Tokens::MESSAGE => \sprintf($this->translationAPI->__('No DirectiveResolver resolves directive with name \'%s\'', 'pop-component-model'), $directiveName)];
                 continue;
             }
-            $directiveArgs = $fieldQueryInterpreter->extractStaticDirectiveArguments($fieldDirective);
+            $directiveArgs = $this->fieldQueryInterpreter->extractStaticDirectiveArguments($fieldDirective);
             if (empty($fieldDirectiveResolverInstances)) {
-                $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('No DirectiveResolver processes directive with name \'%s\' and arguments \'%s\' in field(s) \'%s\'', 'pop-component-model'), $directiveName, \json_encode($directiveArgs), \implode($translationAPI->__('\', \'', 'pop-component-model'), $fieldDirectiveFields[$fieldDirective]))];
-                if ($stopDirectivePipelineExecutionIfDirectiveFailed) {
-                    $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($stopDirectivePipelineExecutionPlaceholder, $fieldDirective)];
-                    break;
-                }
+                $schemaErrors[] = [Tokens::PATH => [$fieldDirective], Tokens::MESSAGE => \sprintf($this->translationAPI->__('No DirectiveResolver processes directive with name \'%s\' and arguments \'%s\' in field(s) \'%s\'', 'pop-component-model'), $directiveName, \json_encode($directiveArgs), \implode($this->translationAPI->__('\', \'', 'pop-component-model'), $fieldDirectiveFields[$fieldDirective]))];
                 continue;
             }
             foreach ($fieldDirectiveFields[$enqueuedFieldDirective] as $field) {
                 $directiveResolverInstance = $fieldDirectiveResolverInstances[$field];
                 if (\is_null($directiveResolverInstance)) {
-                    $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('No DirectiveResolver processes directive with name \'%s\' and arguments \'%s\' in field \'%s\'', 'pop-component-model'), $directiveName, \json_encode($directiveArgs), $field)];
-                    if ($stopDirectivePipelineExecutionIfDirectiveFailed) {
-                        $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($stopDirectivePipelineExecutionPlaceholder, $fieldDirective)];
-                        break;
-                    }
+                    $schemaErrors[] = [Tokens::PATH => [$fieldDirective], Tokens::MESSAGE => \sprintf($this->translationAPI->__('No DirectiveResolver processes directive with name \'%s\' and arguments \'%s\' in field \'%s\'', 'pop-component-model'), $directiveName, \json_encode($directiveArgs), $field)];
                     continue;
                 }
                 // Consolidate the same directiveResolverInstances for different fields,
@@ -355,7 +403,7 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             if ($isRepeatedFieldDirective) {
                 // If there is an existing error, then skip adding this resolver to the pipeline
                 if (!empty(\array_filter($schemaErrors, function ($schemaError) use($fieldDirective) {
-                    return $schemaError[\PoP\ComponentModel\Feedback\Tokens::PATH][0] == $fieldDirective;
+                    return $schemaError[Tokens::PATH][0] == $fieldDirective;
                 }))) {
                     continue;
                 }
@@ -363,49 +411,37 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 // Validate schema (eg of error in schema: ?query=posts<include(if:this-field-doesnt-exist())>)
                 $fieldSchemaErrors = [];
                 list($validFieldDirective, $directiveName, $directiveArgs, ) = $directiveResolverInstance->dissectAndValidateDirectiveForSchema($this, $fieldDirectiveFields, $variables, $fieldSchemaErrors, $schemaWarnings, $schemaDeprecations, $schemaNotices, $schemaTraces);
+                /** @phpstan-ignore-next-line */
                 if ($fieldSchemaErrors) {
                     $schemaErrors = \array_merge($schemaErrors, $fieldSchemaErrors);
-                    // Because there were schema errors, skip this directive
-                    if ($stopDirectivePipelineExecutionIfDirectiveFailed) {
-                        $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($stopDirectivePipelineExecutionPlaceholder, $fieldDirective)];
-                        break;
-                    }
                     continue;
                 }
                 // Validate against the directiveResolver
                 if ($maybeErrors = $directiveResolverInstance->resolveSchemaValidationErrorDescriptions($this, $directiveName, $directiveArgs)) {
                     foreach ($maybeErrors as $error) {
-                        $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $error];
-                    }
-                    if ($stopDirectivePipelineExecutionIfDirectiveFailed) {
-                        $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($stopDirectivePipelineExecutionPlaceholder, $fieldDirective)];
-                        break;
+                        $schemaErrors[] = [Tokens::PATH => [$fieldDirective], Tokens::MESSAGE => $error];
                     }
                     continue;
                 }
                 // Check for warnings
                 if ($warningDescription = $directiveResolverInstance->resolveSchemaDirectiveWarningDescription($this)) {
-                    $schemaWarnings[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $warningDescription];
+                    $schemaWarnings[] = [Tokens::PATH => [$fieldDirective], Tokens::MESSAGE => $warningDescription];
                 }
                 // Check for deprecations
                 if ($deprecationDescription = $directiveResolverInstance->getSchemaDirectiveDeprecationDescription($this)) {
-                    $schemaDeprecations[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $deprecationDescription];
+                    $schemaDeprecations[] = [Tokens::PATH => [$fieldDirective], Tokens::MESSAGE => $deprecationDescription];
                 }
             }
             // Validate if the directive can be executed multiple times on each field
             if (!$directiveResolverInstance->isRepeatable()) {
                 // Check if the directive is already processing any of the fields
-                $directiveName = $fieldQueryInterpreter->getFieldDirectiveName($fieldDirective);
+                $directiveName = $this->fieldQueryInterpreter->getFieldDirectiveName($fieldDirective);
                 $alreadyProcessingFields = \array_intersect($directiveFieldTrack[$directiveName] ?? [], $directiveResolverFields);
                 $directiveFieldTrack[$directiveName] = \array_unique(\array_merge($directiveFieldTrack[$directiveName] ?? [], $directiveResolverFields));
                 if ($alreadyProcessingFields) {
                     // Remove the fields from this iteration, and add an error
                     $directiveResolverFields = \array_diff($directiveResolverFields, $alreadyProcessingFields);
-                    $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Directive \'%s\' can be executed only once for field(s) \'%s\'', 'component-model'), $fieldDirective, \implode('\', \'', $alreadyProcessingFields))];
-                    if ($stopDirectivePipelineExecutionIfDirectiveFailed) {
-                        $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$fieldDirective], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($stopDirectivePipelineExecutionPlaceholder, $fieldDirective)];
-                        break;
-                    }
+                    $schemaErrors[] = [Tokens::PATH => [$fieldDirective], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Directive \'%s\' can be executed only once for field(s) \'%s\'', 'component-model'), $fieldDirective, \implode('\', \'', $alreadyProcessingFields))];
                     // If after removing the duplicated fields there are still others, process them
                     // Otherwise, skip
                     if (!$directiveResolverFields) {
@@ -422,25 +458,25 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     }
     public function getDirectiveResolverInstanceForDirective(string $fieldDirective, array $fieldDirectiveFields, array &$variables) : ?array
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        $directiveName = $fieldQueryInterpreter->getFieldDirectiveName($fieldDirective);
-        $directiveArgs = $fieldQueryInterpreter->extractStaticDirectiveArguments($fieldDirective);
-        $directiveNameClasses = $this->getDirectiveNameClasses();
-        $directiveClasses = $directiveNameClasses[$directiveName];
-        if (\is_null($directiveClasses)) {
+        $directiveName = $this->fieldQueryInterpreter->getFieldDirectiveName($fieldDirective);
+        $directiveArgs = $this->fieldQueryInterpreter->extractStaticDirectiveArguments($fieldDirective);
+        $directiveNameResolvers = $this->getDirectiveNameResolvers();
+        $directiveResolvers = $directiveNameResolvers[$directiveName] ?? null;
+        if ($directiveResolvers === null) {
             return null;
         }
         // Calculate directives per field
         $fieldDirectiveResolverInstances = [];
         foreach ($fieldDirectiveFields as $field) {
             // Check that at least one class which deals with this directiveName can satisfy the directive (for instance, validating that a required directiveArg is present)
-            $fieldName = $fieldQueryInterpreter->getFieldName($field);
-            foreach ($directiveClasses as $directiveClass) {
-                $directiveSupportedFieldNames = $directiveClass::getFieldNamesToApplyTo();
+            $fieldName = $this->fieldQueryInterpreter->getFieldName($field);
+            foreach ($directiveResolvers as $directiveResolver) {
+                $directiveSupportedFieldNames = $directiveResolver->getFieldNamesToApplyTo();
                 // If this field is not supported by the directive, skip
                 if ($directiveSupportedFieldNames && !\in_array($fieldName, $directiveSupportedFieldNames)) {
                     continue;
                 }
+                $directiveClass = \get_class($directiveResolver);
                 // Get the instance from the cache if it exists, or create it if not
                 if (!isset($this->directiveResolverInstanceCache[$directiveClass][$fieldDirective])) {
                     $this->directiveResolverInstanceCache[$directiveClass][$fieldDirective] = new $directiveClass($fieldDirective);
@@ -458,39 +494,39 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     /**
      * By default, do nothing
      *
-     * @param string $field
      * @param array<string, mixed> $fieldArgs
-     * @param array $schemaErrors
-     * @param array $schemaWarnings
-     * @param array $schemaDeprecations
-     * @return array
      */
     public function validateFieldArgumentsForSchema(string $field, array $fieldArgs, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations) : array
     {
         return $fieldArgs;
     }
-    protected function getIDsToQuery(array $ids_data_fields)
+    /**
+     * @return mixed[]
+     */
+    protected function getIDsToQuery(array $ids_data_fields) : array
     {
         return \array_keys($ids_data_fields);
     }
+    /**
+     * @param string|int $resultItemID
+     */
     protected function getUnresolvedResultItemIDError($resultItemID)
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return new \PoP\ComponentModel\ErrorHandling\Error('unresolved-resultitem-id', \sprintf($translationAPI->__('The DataLoader can\'t load data for object of type \'%s\' with ID \'%s\'', 'pop-component-model'), $this->getTypeOutputName(), $resultItemID));
+        return new Error('unresolved-resultitem-id', \sprintf($this->translationAPI->__('The DataLoader can\'t load data for object of type \'%s\' with ID \'%s\'', 'pop-component-model'), $this->getTypeOutputName(), $resultItemID));
     }
     public function fillResultItems(array $ids_data_fields, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : array
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         // Obtain the data for the required object IDs
         $resultIDItems = [];
         $ids = $this->getIDsToQuery($ids_data_fields);
         $typeDataLoaderClass = $this->getTypeDataLoaderClass();
-        $typeDataLoader = $instanceManager->getInstance($typeDataLoaderClass);
-        foreach ($typeDataLoader->getObjects($ids) as $resultItem) {
+        $typeDataLoader = $this->instanceManager->getInstance($typeDataLoaderClass);
+        // If any ID cannot be resolved, the resultItem will be null
+        $resultItems = \array_filter($typeDataLoader->getObjects($ids));
+        foreach ($resultItems as $resultItem) {
             $resultItemID = $this->getID($resultItem);
             // If the UnionTypeResolver doesn't have a TypeResolver to process this element, the ID will be null, and an error will be show below
-            if (\is_null($resultItemID)) {
+            if ($resultItemID === null) {
                 continue;
             }
             $resultIDItems[$resultItemID] = $resultItem;
@@ -503,7 +539,9 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             // If a UnionTypeResolver fails to load an object, the fields will be NULL
             $failedFields = $ids_data_fields[$unresolvedResultItemID]['direct'] ?? [];
             // Add in $schemaErrors instead of $dbErrors because in the latter one it will attempt to fetch the ID from the object, which it can't do
-            $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [\implode($translationAPI->__('\', \''), $failedFields)], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $error->getErrorMessage()];
+            foreach ($failedFields as $failedField) {
+                $schemaErrors[] = [Tokens::PATH => [$failedField], Tokens::MESSAGE => $error->getMessageOrCode()];
+            }
             // Indicate that this ID must be removed from the results
             $unresolvedResultItemIDs[] = $unresolvedResultItemID;
         }
@@ -528,18 +566,14 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
      * Eg: a directive `@validateDoesUserHaveCapability` must be preceded by a directive `@validateIsUserLoggedIn`
      *
      * The process is recursive: mandatory directives can have their own mandatory directives, and these are added too
-     *
-     * @param array $directives
-     * @return array
      */
     protected function addMandatoryDirectivesForDirectives(array $directives) : array
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         $precedingMandatoryDirectivesForDirectives = $this->getAllPrecedingMandatoryDirectivesForDirectives();
         $succeedingMandatoryDirectivesForDirectives = $this->getAllSucceedingMandatoryDirectivesForDirectives();
         $allDirectives = [];
         foreach ($directives as $directive) {
-            $directiveName = $fieldQueryInterpreter->getDirectiveName($directive);
+            $directiveName = $this->fieldQueryInterpreter->getDirectiveName($directive);
             // Add preceding mandatory directives
             if ($mandatoryDirectivesForDirective = \array_merge($precedingMandatoryDirectivesForDirectives[\PoP\ComponentModel\TypeResolvers\FieldSymbols::ANY_FIELD] ?? [], $precedingMandatoryDirectivesForDirectives[$directiveName] ?? [])) {
                 $allDirectives = \array_merge($allDirectives, $this->addMandatoryDirectivesForDirectives($mandatoryDirectivesForDirective));
@@ -556,22 +590,18 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     /**
      * Execute a hook to allow to disable directives (eg: to implement a private schema)
      *
-     * @param array $directiveNameClasses
-     * @return array
+     * @param array<string,DirectiveResolverInterface[]> $directiveNameResolvers
+     * @return array<string,DirectiveResolverInterface[]> $directiveNameResolvers
      */
-    protected function filterDirectiveNameClasses(array $directiveNameClasses) : array
+    protected function filterDirectiveNameResolvers(array $directiveNameResolvers) : array
     {
         // Execute a hook, allowing to filter them out (eg: removing fieldNames from a private schema)
-        $hooksAPI = \PoP\Hooks\Facades\HooksAPIFacade::getInstance();
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        return \array_filter($directiveNameClasses, function ($directiveName) use($hooksAPI, $directiveNameClasses, $instanceManager) {
-            $directiveResolverClasses = $directiveNameClasses[$directiveName];
-            foreach ($directiveResolverClasses as $directiveResolverClass) {
-                /** @var DirectiveResolverInterface */
-                $directiveResolver = $instanceManager->getInstance($directiveResolverClass);
+        return \array_filter($directiveNameResolvers, function ($directiveName) use($directiveNameResolvers) {
+            $directiveResolvers = $directiveNameResolvers[$directiveName];
+            foreach ($directiveResolvers as $directiveResolver) {
                 // Execute 2 filters: a generic one, and a specific one
-                if ($hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterDirective(), \true, $this, $directiveResolver, $directiveName)) {
-                    return $hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterDirective($directiveName), \true, $this, $directiveResolver, $directiveName);
+                if ($this->hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterDirective(), \true, $this, $directiveResolver, $directiveName)) {
+                    return $this->hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterDirective($directiveName), \true, $this, $directiveResolver, $directiveName);
                 }
                 return \false;
             }
@@ -579,104 +609,78 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
         }, \ARRAY_FILTER_USE_KEY);
     }
     /**
-     * Is this a Union Type? By default it is not
+     * Watch out! This function will be overridden for the UnionTypeResolver
      *
-     * @return bool
-     */
-    public function isUnionType() : bool
-    {
-        return \false;
-    }
-    /**
      * Collect all directives for all fields, and then build a single directive pipeline for all fields,
      * including all directives, even if they don't apply to all fields
      * Eg: id|title<skip>|excerpt<translate> will produce a pipeline [Skip, Translate] where they apply
      * to different fields. After producing the pipeline, add the mandatory items
-     *
-     * @param array $ids_data_fields
-     * @param array $resultIDItems
-     * @return void
      */
-    public function enqueueFillingResultItemsFromIDs(array $ids_data_fields)
+    public function enqueueFillingResultItemsFromIDs(array $ids_data_fields) : void
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        // Watch out! The UnionType must obtain the mandatoryDirectivesForFields
-        // from each of its target types!
-        // This is mandatory, because the UnionType doesn't have fields by itself.
-        // Otherwise, TypeResolverDecorators can't have their defined ACL rules
-        // work when querying a union type (eg: "customPosts")
-        if ($this->isUnionType()) {
-            $targetTypeResolverClassMandatoryDirectivesForFields = [];
-            $targetTypeResolverClasses = $this->getTargetTypeResolverClasses();
-            foreach ($targetTypeResolverClasses as $targetTypeResolverClass) {
-                $targetTypeResolver = $instanceManager->getInstance($targetTypeResolverClass);
-                $targetTypeResolverClassMandatoryDirectivesForFields[$targetTypeResolverClass] = $targetTypeResolver->getAllMandatoryDirectivesForFields();
-            }
-            // If the type data resolver is union, the dbKey where the value is stored
-            // is contained in the ID itself, with format dbKey/ID.
-            // Remove this information, and get purely the ID
-            $resultItemIDs = \array_map(function ($composedID) {
-                list($dbKey, $id) = \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::extractDBObjectTypeAndID($composedID);
-                return $id;
-            }, \array_keys($ids_data_fields));
-            $resultItemIDTargetTypeResolvers = $this->getResultItemIDTargetTypeResolvers($resultItemIDs);
-        } else {
-            $mandatoryDirectivesForFields = $this->getAllMandatoryDirectivesForFields();
-        }
+        $mandatoryDirectivesForFields = $this->getAllMandatoryDirectivesForFields();
         $mandatorySystemDirectives = $this->getMandatoryDirectives();
-        $fieldDirectiveCounter = [];
         foreach ($ids_data_fields as $id => $data_fields) {
-            $fields = $data_fields['direct'];
-            // Watch out: If there are conditional fields, these will be processed by this directive too
-            // Hence, collect all these fields, and add them as if they were direct
-            $conditionalFields = \PoP\ComponentModel\TypeResolvers\FieldHelpers::extractConditionalFields($data_fields);
-            $fields = \array_unique(\array_merge($fields, $conditionalFields));
-            if ($this->isUnionType()) {
-                list($dbKey, $resultItemID) = \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::extractDBObjectTypeAndID($id);
-                $resultItemIDTargetTypeResolver = $resultItemIDTargetTypeResolvers[$resultItemID];
-                $mandatoryDirectivesForFields = $targetTypeResolverClassMandatoryDirectivesForFields[\get_class($resultItemIDTargetTypeResolver)];
-            }
-            foreach ($fields as $field) {
-                if (!isset($this->fieldDirectivesFromFieldCache[$field])) {
-                    // Get the directives from the field
-                    $directives = $fieldQueryInterpreter->getDirectives($field);
-                    // Add the mandatory directives defined for this field or for any field in this typeResolver
-                    $fieldName = $fieldQueryInterpreter->getFieldName($field);
-                    if ($mandatoryDirectivesForField = \array_merge($mandatoryDirectivesForFields[\PoP\ComponentModel\TypeResolvers\FieldSymbols::ANY_FIELD] ?? [], $mandatoryDirectivesForFields[$fieldName] ?? [])) {
-                        // The mandatory directives must be placed first!
-                        $directives = \array_merge($mandatoryDirectivesForField, $directives);
-                    }
-                    // Place the mandatory "system" directives at the beginning of the list, then they will be added to their needed position in the pipeline
-                    $directives = \array_merge($mandatorySystemDirectives, $directives);
-                    // If the directives must be preceded by other directives, add them now
-                    $directives = $this->addMandatoryDirectivesForDirectives($directives);
-                    // Convert from directive to fieldDirective
-                    $fieldDirectives = \implode(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_SEPARATOR, \array_map([$fieldQueryInterpreter, 'convertDirectiveToFieldDirective'], $directives));
-                    // Assign in the cache
-                    $this->fieldDirectivesFromFieldCache[$field] = $fieldDirectives;
+            $fields = $this->getFieldsToEnqueueFillingResultItemsFromIDs($data_fields);
+            $this->doEnqueueFillingResultItemsFromIDs($fields, $mandatoryDirectivesForFields, $mandatorySystemDirectives, $id, $data_fields);
+        }
+    }
+    /**
+     * Split function, so it can be invoked both from here and from the UnionTypeResolver
+     */
+    protected function getFieldsToEnqueueFillingResultItemsFromIDs(array $data_fields)
+    {
+        $fields = $data_fields['direct'];
+        // Watch out: If there are conditional fields, these will be processed by this directive too
+        // Hence, collect all these fields, and add them as if they were direct
+        $conditionalFields = FieldHelpers::extractConditionalFields($data_fields);
+        return \array_unique(\array_merge($fields, $conditionalFields));
+    }
+    /**
+     * Split function, so it can be invoked both from here and from the UnionTypeResolver
+     */
+    public function doEnqueueFillingResultItemsFromIDs(array $fields, array $mandatoryDirectivesForFields, array $mandatorySystemDirectives, $id, array $data_fields)
+    {
+        $fieldDirectiveCounter = [];
+        foreach ($fields as $field) {
+            if (!isset($this->fieldDirectivesFromFieldCache[$field])) {
+                // Get the directives from the field
+                $directives = $this->fieldQueryInterpreter->getDirectives($field);
+                // Add the mandatory directives defined for this field or for any field in this typeResolver
+                $fieldName = $this->fieldQueryInterpreter->getFieldName($field);
+                if ($mandatoryDirectivesForField = \array_merge($mandatoryDirectivesForFields[\PoP\ComponentModel\TypeResolvers\FieldSymbols::ANY_FIELD] ?? [], $mandatoryDirectivesForFields[$fieldName] ?? [])) {
+                    // The mandatory directives must be placed first!
+                    $directives = \array_merge($mandatoryDirectivesForField, $directives);
                 }
-                // Extract all the directives, and store which fields they process
-                foreach (\PoP\FieldQuery\QueryHelpers::splitFieldDirectives($this->fieldDirectivesFromFieldCache[$field]) as $fieldDirective) {
-                    // Watch out! Directives can be repeated, and then they must be executed multiple times
-                    // Eg: resizing a pic to 25%: <resize(50%),resize(50%)>
-                    // However, because we are adding the $idsDataFields under key $fieldDirective, when the 2nd occurrence of the directive is found,
-                    // adding data would just override the previous entry, and we can't keep track that it's another iteration
-                    // Then, as solution, change the name of the $fieldDirective, adding "|counter". This is an artificial construction,
-                    // in which the "|" symbol could not be part of the field naturally
-                    if (isset($fieldDirectiveCounter[$field][(string) $id][$fieldDirective])) {
-                        // Increase counter and add to $fieldDirective
-                        $fieldDirective .= \PoP\ComponentModel\TypeResolvers\FieldSymbols::REPEATED_DIRECTIVE_COUNTER_SEPARATOR . ++$fieldDirectiveCounter[$field][(string) $id][$fieldDirective];
-                    } else {
-                        $fieldDirectiveCounter[$field][(string) $id][$fieldDirective] = 0;
-                    }
-                    // Store which ID/field this directive must process
-                    if (\in_array($field, $data_fields['direct'])) {
-                        $this->fieldDirectiveIDFields[$fieldDirective][(string) $id]['direct'][] = $field;
-                    }
-                    if ($conditionalFields = $data_fields['conditional'][$field] ?? null) {
-                        $this->fieldDirectiveIDFields[$fieldDirective][(string) $id]['conditional'][$field] = \array_merge_recursive($this->fieldDirectiveIDFields[$fieldDirective][(string) $id]['conditional'][$field] ?? [], $conditionalFields);
-                    }
+                // Place the mandatory "system" directives at the beginning of the list, then they will be added to their needed position in the pipeline
+                $directives = \array_merge($mandatorySystemDirectives, $directives);
+                // If the directives must be preceded by other directives, add them now
+                $directives = $this->addMandatoryDirectivesForDirectives($directives);
+                // Convert from directive to fieldDirective
+                $fieldDirectives = \implode(QuerySyntax::SYMBOL_FIELDDIRECTIVE_SEPARATOR, \array_map([$this->fieldQueryInterpreter, 'convertDirectiveToFieldDirective'], $directives));
+                // Assign in the cache
+                $this->fieldDirectivesFromFieldCache[$field] = $fieldDirectives;
+            }
+            // Extract all the directives, and store which fields they process
+            foreach (QueryHelpers::splitFieldDirectives($this->fieldDirectivesFromFieldCache[$field]) as $fieldDirective) {
+                // Watch out! Directives can be repeated, and then they must be executed multiple times
+                // Eg: resizing a pic to 25%: <resize(50%),resize(50%)>
+                // However, because we are adding the $idsDataFields under key $fieldDirective, when the 2nd occurrence of the directive is found,
+                // adding data would just override the previous entry, and we can't keep track that it's another iteration
+                // Then, as solution, change the name of the $fieldDirective, adding "|counter". This is an artificial construction,
+                // in which the "|" symbol could not be part of the field naturally
+                if (isset($fieldDirectiveCounter[$field][(string) $id][$fieldDirective])) {
+                    // Increase counter and add to $fieldDirective
+                    $fieldDirective .= \PoP\ComponentModel\TypeResolvers\FieldSymbols::REPEATED_DIRECTIVE_COUNTER_SEPARATOR . ++$fieldDirectiveCounter[$field][(string) $id][$fieldDirective];
+                } else {
+                    $fieldDirectiveCounter[$field][(string) $id][$fieldDirective] = 0;
+                }
+                // Store which ID/field this directive must process
+                if (\in_array($field, $data_fields['direct'])) {
+                    $this->fieldDirectiveIDFields[$fieldDirective][(string) $id]['direct'][] = $field;
+                }
+                if ($conditionalFields = $data_fields['conditional'][$field] ?? null) {
+                    $this->fieldDirectiveIDFields[$fieldDirective][(string) $id]['conditional'][$field] = \array_merge_recursive($this->fieldDirectiveIDFields[$fieldDirective][(string) $id]['conditional'][$field] ?? [], $conditionalFields);
                 }
             }
         }
@@ -697,8 +701,8 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             foreach ($fieldDirectives as $fieldDirective) {
                 foreach ($fieldDirectiveIDFields[$fieldDirective] as $id => $dataFields) {
                     $fieldDirectiveDirectFields = \array_merge($fieldDirectiveDirectFields, $dataFields['direct']);
-                    $conditionalFields = \PoP\ComponentModel\TypeResolvers\FieldHelpers::extractConditionalFields($dataFields);
-                    $idFieldDirectiveIDFields = \array_merge($dataFields['direct'], $conditionalFields);
+                    $conditionalFields = FieldHelpers::extractConditionalFields($dataFields);
+                    $idFieldDirectiveIDFields = \array_unique(\array_merge($dataFields['direct'], $conditionalFields));
                     $fieldDirectiveFields[$fieldDirective] = \array_merge($fieldDirectiveFields[$fieldDirective] ?? [], $idFieldDirectiveIDFields);
                     // Also transpose the array to match field to IDs later on
                     foreach ($idFieldDirectiveIDFields as $field) {
@@ -708,9 +712,30 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 $fieldDirectiveFields[$fieldDirective] = \array_unique($fieldDirectiveFields[$fieldDirective]);
             }
             $fieldDirectiveDirectFields = \array_unique($fieldDirectiveDirectFields);
-            $idFieldDirectiveIDFields = \array_unique($idFieldDirectiveIDFields);
             // Validate and resolve the directives into instances and fields they operate on
-            $directivePipelineData = $this->resolveDirectivesIntoPipelineData($fieldDirectives, $fieldDirectiveFields, \false, $variables, $schemaErrors, $schemaWarnings, $schemaDeprecations, $schemaNotices, $schemaTraces);
+            $directivePipelineSchemaErrors = [];
+            $directivePipelineData = $this->resolveDirectivesIntoPipelineData($fieldDirectives, $fieldDirectiveFields, \false, $variables, $directivePipelineSchemaErrors, $schemaWarnings, $schemaDeprecations, $schemaNotices, $schemaTraces);
+            $schemaErrors = \array_merge($schemaErrors, $directivePipelineSchemaErrors);
+            // If any directive failed validation and the field must be set to `null`,
+            // then skip processing that field altogether
+            $schemaErrorFailingFields = [];
+            if (!empty($directivePipelineSchemaErrors) && ComponentConfiguration::removeFieldIfDirectiveFailed()) {
+                // Extract the failing fields from the path of the thrown error
+                foreach ($directivePipelineSchemaErrors as $directivePipelineSchemaError) {
+                    $schemaErrorFailingFields[] = $directivePipelineSchemaError[Tokens::PATH][0];
+                }
+                $schemaErrorFailingFields = \array_unique($schemaErrorFailingFields);
+                // Set those fields as null
+                foreach ($fieldDirectives as $fieldDirective) {
+                    foreach ($fieldDirectiveIDFields[$fieldDirective] as $id => $dataFields) {
+                        $failingFields = \array_intersect($dataFields['direct'], $schemaErrorFailingFields);
+                        foreach ($failingFields as $field) {
+                            $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
+                            $dbItems[(string) $id][$fieldOutputKey] = null;
+                        }
+                    }
+                }
+            }
             // From the fields, reconstitute the $idsDataFields for each directive,
             // and build the array to pass to the pipeline, for each directive (stage)
             $directiveResolverInstances = $pipelineIDsDataFields = [];
@@ -720,6 +745,8 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 $directiveFields = $pipelineStageData['fields'];
                 // Only process the direct fields
                 $directiveDirectFields = \array_intersect($directiveFields, $fieldDirectiveDirectFields);
+                // Remove those fields which have a failing directive
+                $directiveDirectFields = \array_diff($directiveDirectFields, $schemaErrorFailingFields);
                 // From the fields, reconstitute the $idsDataFields for each directive, and build the array to pass to the pipeline, for each directive (stage)
                 $directiveIDFields = [];
                 foreach ($directiveDirectFields as $field) {
@@ -736,9 +763,55 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 $pipelineIDsDataFields[] = $directiveIDFields;
                 $directiveResolverInstances[] = $directiveResolverInstance;
             }
+            $directivePipelineSchemaErrors = $directivePipelineIDDBErrors = [];
             // We can finally resolve the pipeline, passing along an array with the ID and fields for each directive
             $directivePipeline = $this->getDirectivePipeline($directiveResolverInstances);
-            $directivePipeline->resolveDirectivePipeline($this, $pipelineIDsDataFields, $directiveResolverInstances, $resultIDItems, $unionDBKeyIDs, $dbItems, $previousDBItems, $variables, $messages, $dbErrors, $dbWarnings, $dbDeprecations, $dbNotices, $dbTraces, $schemaErrors, $schemaWarnings, $schemaDeprecations, $schemaNotices, $schemaTraces);
+            $directivePipeline->resolveDirectivePipeline($this, $pipelineIDsDataFields, $directiveResolverInstances, $resultIDItems, $unionDBKeyIDs, $dbItems, $previousDBItems, $variables, $messages, $directivePipelineIDDBErrors, $dbWarnings, $dbDeprecations, $dbNotices, $dbTraces, $directivePipelineSchemaErrors, $schemaWarnings, $schemaDeprecations, $schemaNotices, $schemaTraces);
+            // If any directive failed execution, then prepend the path on the error
+            if ($directivePipelineSchemaErrors) {
+                // Extract the failing fields from the path of the thrown error
+                $failingFieldSchemaErrors = [];
+                foreach ($directivePipelineSchemaErrors as $directivePipelineSchemaError) {
+                    $schemaErrorFailingField = $directivePipelineSchemaError[Tokens::PATH][0];
+                    if ($failingFields = $fieldDirectiveFields[$schemaErrorFailingField] ?? []) {
+                        foreach ($failingFields as $failingField) {
+                            $schemaError = $directivePipelineSchemaError;
+                            \array_unshift($schemaError[Tokens::PATH], $failingField);
+                            $this->prependPathOnNestedErrors($schemaError, $failingField);
+                            $failingFieldSchemaErrors[$failingField][] = $schemaError;
+                        }
+                    } else {
+                        $schemaErrors[] = $directivePipelineSchemaError;
+                    }
+                }
+                foreach ($failingFieldSchemaErrors as $failingField => $failingSchemaErrors) {
+                    $schemaErrors[] = [Tokens::PATH => [$failingField], Tokens::MESSAGE => $this->translationAPI->__('This field can\'t be executed due to errors from its directives', 'component-model'), Tokens::EXTENSIONS => [Tokens::NESTED => $failingSchemaErrors]];
+                }
+            }
+            if ($directivePipelineIDDBErrors) {
+                // Extract the failing fields from the path of the thrown error
+                $failingFieldIDDBErrors = [];
+                foreach ($directivePipelineIDDBErrors as $id => $directivePipelineDBErrors) {
+                    foreach ($directivePipelineDBErrors as $directivePipelineDBError) {
+                        $dbErrorFailingField = $directivePipelineDBError[Tokens::PATH][0];
+                        if ($failingFields = $fieldDirectiveFields[$dbErrorFailingField] ?? []) {
+                            foreach ($failingFields as $failingField) {
+                                $dbError = $directivePipelineDBError;
+                                \array_unshift($dbError[Tokens::PATH], $failingField);
+                                $this->prependPathOnNestedErrors($dbError, $failingField);
+                                $failingFieldIDDBErrors[$failingField][$id][] = $dbError;
+                            }
+                        } else {
+                            $dbErrors[$id][] = $directivePipelineDBError;
+                        }
+                    }
+                }
+                foreach ($failingFieldIDDBErrors as $failingField => $failingIDDBErrors) {
+                    foreach ($failingIDDBErrors as $id => $failingDBErrors) {
+                        $dbErrors[$id][] = [Tokens::PATH => [$failingField], Tokens::MESSAGE => $this->translationAPI->__('This field can\'t be executed due to errors from its directives', 'component-model'), Tokens::EXTENSIONS => [Tokens::NESTED => $failingDBErrors]];
+                    }
+                }
+            }
         }
     }
     protected function dissectFieldForSchema(string $field) : ?array
@@ -750,67 +823,72 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     }
     protected function doDissectFieldForSchema(string $field) : ?array
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        return $fieldQueryInterpreter->extractFieldArgumentsForSchema($this, $field);
+        return $this->fieldQueryInterpreter->extractFieldArgumentsForSchema($this, $field);
     }
-    public function resolveSchemaValidationErrorDescriptions(string $field, array &$variables = null) : array
+    /**
+     * @param mixed[] $variables
+     */
+    public function resolveSchemaValidationErrorDescriptions(string $field, &$variables = null) : array
     {
         // Get the value from a fieldResolver, from the first one that resolves it
         list($validField, $fieldName, $fieldArgs, $schemaErrors, ) = $this->dissectFieldForSchema($field);
         if ($fieldResolvers = $this->getFieldResolversForField($field)) {
             if ($maybeErrors = $fieldResolvers[0]->resolveSchemaValidationErrorDescriptions($this, $fieldName, $fieldArgs)) {
                 foreach ($maybeErrors as $error) {
-                    $schemaErrors[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $error];
+                    $schemaErrors[] = [Tokens::PATH => [$field], Tokens::MESSAGE => $error];
                 }
             }
             return $schemaErrors;
         }
         // If we reach here, no fieldResolver processes this field, which is an error
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         /**
          * If the error happened from requesting a version that doesn't exist, show an appropriate error message
          */
-        if (\PoP\ComponentModel\Environment::enableSemanticVersionConstraints()) {
-            if ($versionConstraint = $fieldArgs[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_VERSION_CONSTRAINT] ?? null) {
-                $errorMessage = \sprintf($translationAPI->__('No FieldResolver resolves field \'%s\' and version constraint \'%s\' for type \'%s\'', 'pop-component-model'), $fieldName, $versionConstraint, $this->getMaybeNamespacedTypeName());
+        if (Environment::enableSemanticVersionConstraints()) {
+            if ($versionConstraint = $fieldArgs[SchemaDefinition::ARGNAME_VERSION_CONSTRAINT] ?? null) {
+                $errorMessage = \sprintf($this->translationAPI->__('There is no field \'%s\' on type \'%s\' satisfying version constraint \'%s\'', 'pop-component-model'), $fieldName, $this->getMaybeNamespacedTypeName(), $versionConstraint);
             }
         }
         if (!isset($errorMessage)) {
-            $errorMessage = \sprintf($translationAPI->__('No FieldResolver resolves field \'%s\' for type \'%s\'', 'pop-component-model'), $fieldName, $this->getMaybeNamespacedTypeName());
+            $errorMessage = \sprintf($this->translationAPI->__('There is no field \'%s\' on type \'%s\'', 'pop-component-model'), $fieldName, $this->getMaybeNamespacedTypeName());
         }
-        return [[\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $errorMessage]];
+        return [[Tokens::PATH => [$field], Tokens::MESSAGE => $errorMessage]];
     }
-    public function resolveSchemaValidationWarningDescriptions(string $field, array &$variables = null) : array
+    /**
+     * @param mixed[] $variables
+     */
+    public function resolveSchemaValidationWarningDescriptions(string $field, &$variables = null) : array
     {
         // Get the value from a fieldResolver, from the first one that resolves it
         if ($fieldResolvers = $this->getFieldResolversForField($field)) {
             list($validField, $fieldName, $fieldArgs, $schemaErrors, $schemaWarnings, ) = $this->dissectFieldForSchema($field);
             if ($maybeWarnings = $fieldResolvers[0]->resolveSchemaValidationWarningDescriptions($this, $fieldName, $fieldArgs)) {
-                // $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
-                // $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
+                // $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
                 foreach ($maybeWarnings as $warning) {
-                    $schemaWarnings[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $warning];
+                    $schemaWarnings[] = [Tokens::PATH => [$field], Tokens::MESSAGE => $warning];
                 }
             }
             return $schemaWarnings;
         }
         return [];
     }
-    public function resolveSchemaDeprecationDescriptions(string $field, array &$variables = null) : array
+    /**
+     * @param mixed[] $variables
+     */
+    public function resolveSchemaDeprecationDescriptions(string $field, &$variables = null) : array
     {
         // Get the value from a fieldResolver, from the first one that resolves it
         if ($fieldResolvers = $this->getFieldResolversForField($field)) {
             list($validField, $fieldName, $fieldArgs, $schemaErrors, $schemaWarnings, $schemaDeprecations, ) = $this->dissectFieldForSchema($field);
             $fieldSchemaDefinition = $fieldResolvers[0]->getSchemaDefinitionForField($this, $fieldName, $fieldArgs);
-            if ($fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATED] ?? null) {
-                // $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
-                // $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
-                $schemaDeprecations[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION]];
+            if ($fieldSchemaDefinition[SchemaDefinition::ARGNAME_DEPRECATED] ?? null) {
+                // $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
+                $schemaDeprecations[] = [Tokens::PATH => [$field], Tokens::MESSAGE => $fieldSchemaDefinition[SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION]];
             }
             // Check for deprecations in the enums
             if ($maybeDeprecations = $fieldResolvers[0]->resolveSchemaValidationDeprecationDescriptions($this, $fieldName, $fieldArgs)) {
                 foreach ($maybeDeprecations as $deprecation) {
-                    $schemaDeprecations[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $deprecation];
+                    $schemaDeprecations[] = [Tokens::PATH => [$field], Tokens::MESSAGE => $deprecation];
                 }
             }
             return $schemaDeprecations;
@@ -821,11 +899,10 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     {
         // Get the value from a fieldResolver, from the first one that resolves it
         if ($fieldResolvers = $this->getFieldResolversForField($field)) {
-            $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-            $fieldName = $fieldQueryInterpreter->getFieldName($field);
-            $fieldArgs = $fieldQueryInterpreter->extractStaticFieldArguments($field);
+            $fieldName = $this->fieldQueryInterpreter->getFieldName($field);
+            $fieldArgs = $this->fieldQueryInterpreter->extractStaticFieldArguments($field);
             $fieldSchemaDefinition = $fieldResolvers[0]->getSchemaDefinitionForField($this, $fieldName, $fieldArgs);
-            return $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ARGS] ?? [];
+            return $fieldSchemaDefinition[SchemaDefinition::ARGNAME_ARGS] ?? [];
         }
         return [];
     }
@@ -833,8 +910,7 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     {
         // Get the value from a fieldResolver, from the first one that resolves it
         if ($fieldResolvers = $this->getFieldResolversForField($field)) {
-            $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-            $fieldName = $fieldQueryInterpreter->getFieldName($field);
+            $fieldName = $this->fieldQueryInterpreter->getFieldName($field);
             return $fieldResolvers[0]->enableOrderedSchemaFieldArgs($this, $fieldName);
         }
         return \false;
@@ -857,19 +933,17 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
      */
     public function resolveValue($resultItem, string $field, ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         // Get the value from a fieldResolver, from the first one who can deliver the value
         // (The fact that they resolve the fieldName doesn't mean that they will always resolve it for that specific $resultItem)
         if ($fieldResolvers = $this->getFieldResolversForField($field)) {
-            $feedbackMessageStore = \PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance();
             // Important: $validField becomes $field: remove all invalid fieldArgs before executing `resolveValue` on the fieldResolver
-            list($field, $fieldName, $fieldArgs, $schemaErrors, ) = $this->dissectFieldForSchema($field);
-            // // Store the warnings to be read if needed
-            // if ($schemaWarnings) {
-            //     $feedbackMessageStore->addSchemaWarnings($schemaWarnings);
-            // }
+            list($field, $fieldName, $fieldArgs, $schemaErrors, $schemaWarnings, ) = $this->dissectFieldForSchema($field);
+            // Store the warnings to be read if needed
+            if ($schemaWarnings) {
+                $this->feedbackMessageStore->addSchemaWarnings($schemaWarnings);
+            }
             if ($schemaErrors) {
-                return \PoP\ComponentModel\ErrorUtils::getNestedSchemaErrorsFieldError($schemaErrors, $fieldName);
+                return $this->errorProvider->getNestedSchemaErrorsFieldError($schemaErrors, $fieldName);
             }
             // Important: calculate 'isAnyFieldArgumentValueDynamic' before resolving the args for the resultItem
             // That is because if when resolving there is an error, the fieldArgValue will be removed completely, then we don't know that we must validate the schema again
@@ -881,83 +955,153 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             // For instance: ?query=posts(limit:3),post(id:$id).id|title&id=112
             // We can also force it through an option. This is needed when the field is created on runtime.
             // Eg: through the <transform> directive, in which case no parameter is dynamic anymore by the time it reaches here, yet it was not validated statically either
-            $validateSchemaOnResultItem = ($options[self::OPTION_VALIDATE_SCHEMA_ON_RESULT_ITEM] ?? null) || \PoP\ComponentModel\Schema\FieldQueryUtils::isAnyFieldArgumentValueDynamic(\array_values($fieldQueryInterpreter->extractFieldArguments($this, $field)));
+            $validateSchemaOnResultItem = ($options[self::OPTION_VALIDATE_SCHEMA_ON_RESULT_ITEM] ?? null) || FieldQueryUtils::isAnyFieldArgumentValueDynamic(\array_values($this->fieldQueryInterpreter->extractFieldArguments($this, $field)));
             // Once again, the $validField becomes the $field
-            list($field, $fieldName, $fieldArgs, $dbErrors, $dbWarnings) = $fieldQueryInterpreter->extractFieldArgumentsForResultItem($this, $resultItem, $field, $variables, $expressions);
+            list($field, $fieldName, $fieldArgs, $dbErrors, $dbWarnings) = $this->fieldQueryInterpreter->extractFieldArgumentsForResultItem($this, $resultItem, $field, $variables, $expressions);
             // Store the warnings to be read if needed
             if ($dbWarnings) {
-                $feedbackMessageStore->addDBWarnings($dbWarnings);
+                $this->feedbackMessageStore->addDBWarnings($dbWarnings);
             }
             if ($dbErrors) {
-                return \PoP\ComponentModel\ErrorUtils::getNestedDBErrorsFieldError($dbErrors, $fieldName);
+                return $this->errorProvider->getNestedDBErrorsFieldError($dbErrors, $fieldName);
             }
             foreach ($fieldResolvers as $fieldResolver) {
                 // Also send the typeResolver along, as to get the id of the $resultItem being passed
                 if ($fieldResolver->resolveCanProcessResultItem($this, $resultItem, $fieldName, $fieldArgs)) {
                     if ($validateSchemaOnResultItem) {
                         if ($maybeErrors = $fieldResolver->resolveSchemaValidationErrorDescriptions($this, $fieldName, $fieldArgs)) {
-                            return \PoP\ComponentModel\ErrorUtils::getValidationFailedError($fieldName, $fieldArgs, $maybeErrors);
+                            return $this->errorProvider->getValidationFailedError($fieldName, $fieldArgs, $maybeErrors);
                         }
                         if ($maybeDeprecations = $fieldResolver->resolveSchemaValidationDeprecationDescriptions($this, $fieldName, $fieldArgs)) {
                             $id = $this->getID($resultItem);
                             foreach ($maybeDeprecations as $deprecation) {
-                                $dbDeprecations[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$field], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $deprecation];
+                                $dbDeprecations[(string) $id][] = [Tokens::PATH => [$field], Tokens::MESSAGE => $deprecation];
                             }
-                            $feedbackMessageStore->addDBDeprecations($dbDeprecations);
+                            $this->feedbackMessageStore->addDBDeprecations($dbDeprecations);
                         }
                     }
                     if ($validationErrorDescriptions = $fieldResolver->getValidationErrorDescriptions($this, $resultItem, $fieldName, $fieldArgs)) {
-                        return \PoP\ComponentModel\ErrorUtils::getValidationFailedError($fieldName, $fieldArgs, $validationErrorDescriptions);
+                        return $this->errorProvider->getValidationFailedError($fieldName, $fieldArgs, $validationErrorDescriptions);
                     }
-                    // Resolve the value
-                    $value = $fieldResolver->resolveValue($this, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
-                    // If it is null and the field is nonNullable, return an error
-                    if (\is_null($value)) {
+                    // Resolve the value. If the field resolver throws an Exception,
+                    // catch it and return the equivalent GraphQL error
+                    try {
+                        $value = $fieldResolver->resolveValue($this, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
+                    } catch (Exception $e) {
+                        return new Error('exception', \sprintf($this->translationAPI->__('Resolving field \'%s\' produced an exception, with message: \'%s\'', 'component-model'), $field, $e->getMessage()));
+                    }
+                    /**
+                     * Validate that the value is what was defined in the schema, or throw a corresponding error.
+                     *
+                     * Items being validated:
+                     *
+                     * - Is it null?
+                     * - Is it an array when it should be?
+                     * - Is it not an array when it should not be?
+                     *
+                     * Items NOT being validated:
+                     *
+                     * - Is the returned type (String, Int, some Object, etc) the expected one?
+                     *
+                     * According to the GraphQL speck, checking if a non-null field returns null
+                     * is handled always:
+                     *
+                     *   If the result of resolving a field is null (either because the function
+                     *   to resolve the field returned null or because a field error was raised),
+                     *   and that field is of a Non-Null type, then a field error is raised.
+                     *   The error must be added to the "errors" list in the response.
+                     *
+                     * @see https://spec.graphql.org/draft/#sec-Handling-Field-Errors
+                     *
+                     * All other conditions, check them when enabled by configuration.
+                     */
+                    if ($value === null) {
                         $fieldSchemaDefinition = $fieldResolver->getSchemaDefinitionForField($this, $fieldName, $fieldArgs);
-                        if ($fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NON_NULLABLE] ?? null) {
-                            return \PoP\ComponentModel\ErrorUtils::getNonNullableFieldError($fieldName);
+                        if ($fieldSchemaDefinition[SchemaDefinition::ARGNAME_NON_NULLABLE] ?? \false) {
+                            return $this->errorProvider->getNonNullableFieldError($fieldName);
+                        }
+                    } elseif (ComponentConfiguration::validateFieldTypeResponseWithSchemaDefinition()) {
+                        $fieldSchemaDefinition = $fieldResolver->getSchemaDefinitionForField($this, $fieldName, $fieldArgs);
+                        // If may be array or not, then there's no validation to do
+                        $fieldType = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE];
+                        $fieldMayBeArrayType = \in_array($fieldType, [SchemaDefinition::TYPE_INPUT_OBJECT, SchemaDefinition::TYPE_OBJECT, SchemaDefinition::TYPE_MIXED]);
+                        if (!$fieldMayBeArrayType) {
+                            $fieldIsArrayType = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY] ?? \false;
+                            if (!$fieldIsArrayType && \is_array($value)) {
+                                return $this->errorProvider->getMustNotBeArrayFieldError($fieldName, $value);
+                            }
+                            if ($fieldIsArrayType && !\is_array($value)) {
+                                return $this->errorProvider->getMustBeArrayFieldError($fieldName, $value);
+                            }
+                            $fieldIsNonNullArrayItemsType = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY] ?? \false;
+                            if ($fieldIsNonNullArrayItemsType && \is_array($value) && \array_filter($value, function ($arrayItem) {
+                                return $arrayItem === null;
+                            })) {
+                                return $this->errorProvider->getArrayMustNotHaveNullItemsFieldError($fieldName, $value);
+                            }
+                            $fieldIsArrayOfArraysType = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY_OF_ARRAYS] ?? \false;
+                            if (!$fieldIsArrayOfArraysType && \is_array($value) && \array_filter($value, function ($arrayItem) {
+                                return \is_array($arrayItem);
+                            })) {
+                                return $this->errorProvider->getMustNotBeArrayOfArraysFieldError($fieldName, $value);
+                            }
+                            if ($fieldIsArrayOfArraysType && \is_array($value) && \array_filter(
+                                $value,
+                                // `null` could be accepted as an array! (Validation against null comes next)
+                                function ($arrayItem) {
+                                    return !\is_array($arrayItem) && $arrayItem !== null;
+                                }
+                            )) {
+                                return $this->errorProvider->getMustBeArrayOfArraysFieldError($fieldName, $value);
+                            }
+                            $fieldIsNonNullArrayOfArraysItemsType = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY_OF_ARRAYS] ?? \false;
+                            if ($fieldIsNonNullArrayOfArraysItemsType && \is_array($value) && \array_filter($value, function (?array $arrayItem) use($arrayItemItem) {
+                                return $arrayItem === null ? \false : \array_filter($arrayItem, function ($arrayItemItem) {
+                                    return $arrayItemItem === null;
+                                }) !== [];
+                            })) {
+                                return $this->errorProvider->getArrayOfArraysMustNotHaveNullItemsFieldError($fieldName, $value);
+                            }
                         }
                     }
                     // Everything is good, return the value (which could also be an Error!)
                     return $value;
                 }
             }
-            return \PoP\ComponentModel\ErrorUtils::getNoFieldResolverProcessesFieldError($this->getID($resultItem), $fieldName, $fieldArgs);
+            return $this->errorProvider->getNoFieldResolverProcessesFieldError($this->getID($resultItem), $fieldName, $fieldArgs);
         }
         // Return an error to indicate that no fieldResolver processes this field, which is different than returning a null value.
         // Needed for compatibility with CustomPostUnionTypeResolver (so that data-fields aimed for another post_type are not retrieved)
-        $fieldName = $fieldQueryInterpreter->getFieldName($field);
-        return \PoP\ComponentModel\ErrorUtils::getNoFieldError($fieldName);
+        $fieldName = $this->fieldQueryInterpreter->getFieldName($field);
+        return $this->errorProvider->getNoFieldError($this->getID($resultItem), $fieldName, $this->getMaybeNamespacedTypeName());
     }
     protected function processFlatShapeSchemaDefinition(array $options = [])
     {
-        $schemaDefinitionService = \PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
-        $typeSchemaKey = $schemaDefinitionService->getTypeSchemaKey($this);
+        $typeSchemaKey = $this->schemaDefinitionService->getTypeSchemaKey($this);
         // By now, we have the schema definition
-        if (isset($this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_CONNECTIONS])) {
-            $connections =& $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_CONNECTIONS];
+        if (isset($this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS])) {
+            $connections =& $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS];
             foreach ($connections as &$connection) {
                 // If it is a recursion or repeated there will be no schema
-                if (isset($connection[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE_SCHEMA])) {
+                if (isset($connection[SchemaDefinition::ARGNAME_TYPE_SCHEMA])) {
                     // Remove the typeSchema entry
-                    unset($connection[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE_SCHEMA]);
+                    unset($connection[SchemaDefinition::ARGNAME_TYPE_SCHEMA]);
                 }
             }
         }
     }
     public function getSchemaDefinition(array $stackMessages, array &$generalMessages, array $options = []) : array
     {
-        $schemaDefinitionService = \PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
-        $typeSchemaKey = $schemaDefinitionService->getTypeSchemaKey($this);
+        $typeSchemaKey = $this->schemaDefinitionService->getTypeSchemaKey($this);
         // Stop recursion
         $class = \get_called_class();
         if (\in_array($class, $stackMessages['processed'])) {
-            return [$typeSchemaKey => [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_RECURSION => \true]];
+            return [$typeSchemaKey => [SchemaDefinition::ARGNAME_RECURSION => \true]];
         }
-        $isFlatShape = isset($options['shape']) && $options['shape'] == \PoP\ComponentModel\Schema\SchemaDefinition::ARGVALUE_SCHEMA_SHAPE_FLAT;
+        $isFlatShape = isset($options['shape']) && $options['shape'] == SchemaDefinition::ARGVALUE_SCHEMA_SHAPE_FLAT;
         // If "compressed" or printing a flat shape, and the resolver has already been added to the schema, then skip it
         if (($isFlatShape || ($options['compressed'] ?? null)) && \in_array($class, $generalMessages['processed'])) {
-            return [$typeSchemaKey => [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_REPEATED => \true]];
+            return [$typeSchemaKey => [SchemaDefinition::ARGNAME_REPEATED => \true]];
         }
         $stackMessages['processed'][] = $class;
         $generalMessages['processed'][] = $class;
@@ -969,56 +1113,54 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             if ($isFlatShape) {
                 $this->processFlatShapeSchemaDefinition($options);
                 // Add the type to the list of all types, displayed when doing "shape=>flat"
-                $generalMessages[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey] = $this->schemaDefinition[$typeSchemaKey];
+                /** @phpstan-ignore-next-line */
+                $generalMessages[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey] = $this->schemaDefinition[$typeSchemaKey];
             }
         }
         return $this->schemaDefinition;
     }
-    protected function getDirectiveSchemaDefinition(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver, array $options = []) : array
+    protected function getDirectiveSchemaDefinition(DirectiveResolverInterface $directiveResolver, array $options = []) : array
     {
         $directiveSchemaDefinition = $directiveResolver->getSchemaDefinitionForDirective($this);
         return $directiveSchemaDefinition;
     }
     protected function addSchemaDefinition(array $stackMessages, array &$generalMessages, array $options = [])
     {
-        $schemaDefinitionService = \PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
-        $typeSchemaKey = $schemaDefinitionService->getTypeSchemaKey($this);
+        $typeSchemaKey = $this->schemaDefinitionService->getTypeSchemaKey($this);
         $typeName = $this->getMaybeNamespacedTypeName();
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME] = $typeName;
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAMESPACED_NAME] = $this->getNamespacedTypeName();
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ELEMENT_NAME] = $this->getTypeName();
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_NAME] = $typeName;
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_NAMESPACED_NAME] = $this->getNamespacedTypeName();
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_ELEMENT_NAME] = $this->getTypeName();
         // Properties
         if ($description = $this->getSchemaTypeDescription()) {
-            $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+            $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
         }
         // Add the directives (non-global)
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DIRECTIVES] = [];
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_DIRECTIVES] = [];
         $schemaDirectiveResolvers = $this->getSchemaDirectiveResolvers(\false);
         foreach ($schemaDirectiveResolvers as $directiveName => $directiveResolver) {
-            $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DIRECTIVES][$directiveName] = $this->getDirectiveSchemaDefinition($directiveResolver, $options);
+            $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_DIRECTIVES][$directiveName] = $this->getDirectiveSchemaDefinition($directiveResolver, $options);
         }
         // Add the fields (non-global)
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_FIELDS] = [];
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_FIELDS] = [];
         $schemaFieldResolvers = $this->getSchemaFieldResolvers(\false);
         foreach ($schemaFieldResolvers as $fieldName => $fieldResolver) {
             $this->addFieldSchemaDefinition($fieldResolver, $fieldName, $stackMessages, $generalMessages, $options);
         }
         // Add all the implemented interfaces
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $schemaDefinitionService = \PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
         $typeInterfaceDefinitions = [];
         foreach ($this->getAllImplementedInterfaceResolverInstances() as $interfaceInstance) {
-            $interfaceSchemaKey = $schemaDefinitionService->getInterfaceSchemaKey($interfaceInstance);
+            $interfaceSchemaKey = $this->schemaDefinitionService->getInterfaceSchemaKey($interfaceInstance);
             // Conveniently get the fields from the schema, which have already been calculated above
             // since they also include their interface fields
-            $interfaceFieldNames = $interfaceInstance::getFieldNamesToImplement();
+            $interfaceFieldNames = $interfaceInstance->getFieldNamesToImplement();
             // The Interface fields may be implemented as either FieldResolver fields or FieldResolver connections,
             // Eg: Interface "Elemental" has field "id" and connection "self"
             // Merge both cases into interface fields
-            $interfaceFields = \array_filter($this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_FIELDS], function ($fieldName) use($interfaceFieldNames) {
+            $interfaceFields = \array_filter($this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_FIELDS], function ($fieldName) use($interfaceFieldNames) {
                 return \in_array($fieldName, $interfaceFieldNames);
             }, \ARRAY_FILTER_USE_KEY);
-            $interfaceConnections = \array_filter($this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_CONNECTIONS], function ($connectionName) use($interfaceFieldNames) {
+            $interfaceConnections = \array_filter($this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS], function ($connectionName) use($interfaceFieldNames) {
                 return \in_array($connectionName, $interfaceFieldNames);
             }, \ARRAY_FILTER_USE_KEY);
             $interfaceFields = \array_merge($interfaceFields, $interfaceConnections);
@@ -1031,18 +1173,18 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 // since the field could've been removed through an ACL
                 if ($interfaceFields[$interfaceFieldName]) {
                     if ($description = $interfaceInstance->getSchemaFieldDescription($interfaceFieldName)) {
-                        $interfaceFields[$interfaceFieldName][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+                        $interfaceFields[$interfaceFieldName][SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
                     } else {
                         // Do not keep the description from the fieldResolver
-                        unset($interfaceFields[$interfaceFieldName][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION]);
+                        unset($interfaceFields[$interfaceFieldName][SchemaDefinition::ARGNAME_DESCRIPTION]);
                     }
                 }
             }
             // An interface can itself implement interfaces!
             $interfaceImplementedInterfaceNames = [];
-            if ($interfaceImplementedInterfaceClasses = $interfaceInstance::getImplementedInterfaceClasses()) {
+            if ($interfaceImplementedInterfaceClasses = $interfaceInstance->getImplementedFieldInterfaceResolverClasses()) {
                 foreach ($interfaceImplementedInterfaceClasses as $interfaceImplementedInterfaceClass) {
-                    $interfaceImplementedInterfaceInstance = $instanceManager->getInstance($interfaceImplementedInterfaceClass);
+                    $interfaceImplementedInterfaceInstance = $this->instanceManager->getInstance($interfaceImplementedInterfaceClass);
                     $interfaceImplementedInterfaceNames[] = $interfaceImplementedInterfaceInstance->getMaybeNamespacedInterfaceName();
                 }
             }
@@ -1064,34 +1206,31 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             // Add this type to the list of implemented types for this interface
             $interfacePossibleTypes[] = $typeName;
             $typeInterfaceDefinitions[$interfaceSchemaKey] = [
-                \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => $interfaceName,
-                \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAMESPACED_NAME => $interfaceInstance->getNamespacedInterfaceName(),
-                \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ELEMENT_NAME => $interfaceInstance->getInterfaceName(),
-                \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $interfaceInstance->getSchemaInterfaceDescription(),
-                \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_FIELDS => $interfaceFields,
-                \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_INTERFACES => $interfaceImplementedInterfaceNames,
+                SchemaDefinition::ARGNAME_NAME => $interfaceName,
+                SchemaDefinition::ARGNAME_NAMESPACED_NAME => $interfaceInstance->getNamespacedInterfaceName(),
+                SchemaDefinition::ARGNAME_ELEMENT_NAME => $interfaceInstance->getInterfaceName(),
+                SchemaDefinition::ARGNAME_DESCRIPTION => $interfaceInstance->getSchemaInterfaceDescription(),
+                SchemaDefinition::ARGNAME_FIELDS => $interfaceFields,
+                SchemaDefinition::ARGNAME_INTERFACES => $interfaceImplementedInterfaceNames,
                 // The list of types that implement this interface
-                \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_POSSIBLE_TYPES => &$interfacePossibleTypes,
+                SchemaDefinition::ARGNAME_POSSIBLE_TYPES => &$interfacePossibleTypes,
             ];
         }
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_INTERFACES] = $typeInterfaceDefinitions;
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_INTERFACES] = $typeInterfaceDefinitions;
     }
     protected function getSchemaDirectiveResolvers(bool $global) : array
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         $directiveResolverInstances = [];
-        $directiveNameClasses = $this->getDirectiveNameClasses();
-        foreach ($directiveNameClasses as $directiveName => $directiveClasses) {
-            foreach ($directiveClasses as $directiveClass) {
-                /** @var DirectiveResolverInterface */
-                $directiveResolverInstance = $instanceManager->getInstance($directiveClass);
+        $directiveNameResolvers = $this->getDirectiveNameResolvers();
+        foreach ($directiveNameResolvers as $directiveName => $directiveResolvers) {
+            foreach ($directiveResolvers as $directiveResolver) {
                 // A directive can decide to not be added to the schema, eg: when it is repeated/implemented several times
-                if ($directiveResolverInstance->skipAddingToSchemaDefinition()) {
+                if ($directiveResolver->skipAddingToSchemaDefinition()) {
                     continue;
                 }
-                $isGlobal = $directiveResolverInstance->isGlobal($this);
+                $isGlobal = $directiveResolver->isGlobal($this);
                 if ($global && $isGlobal || !$global && !$isGlobal) {
-                    $directiveResolverInstances[$directiveName] = $directiveResolverInstance;
+                    $directiveResolverInstances[$directiveName] = $directiveResolver;
                 }
             }
         }
@@ -1110,7 +1249,7 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
         }
         return $schemaFieldResolvers;
     }
-    protected function addFieldSchemaDefinition(\PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, string $fieldName, array $stackMessages, array &$generalMessages, array $options = [])
+    protected function addFieldSchemaDefinition(FieldResolverInterface $fieldResolver, string $fieldName, array $stackMessages, array &$generalMessages, array $options = [])
     {
         /**
          * Fields may not be directly visible in the schema
@@ -1118,84 +1257,92 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
         if ($fieldResolver->skipAddingToSchemaDefinition($this, $fieldName)) {
             return;
         }
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         // Watch out! We are passing empty $fieldArgs to generate the schema!
         $fieldSchemaDefinition = $fieldResolver->getSchemaDefinitionForField($this, $fieldName, []);
         // Add subfield schema if it is deep, and this typeResolver has not been processed yet
         if ($options['deep'] ?? null) {
             // If this field is relational, then add its own schema
             if ($fieldTypeResolverClass = $this->resolveFieldTypeResolverClass($fieldName)) {
-                $fieldTypeResolver = $instanceManager->getInstance($fieldTypeResolverClass);
-                $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE_SCHEMA] = $fieldTypeResolver->getSchemaDefinition($stackMessages, $generalMessages, $options);
+                $fieldTypeResolver = $this->instanceManager->getInstance($fieldTypeResolverClass);
+                $fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE_SCHEMA] = $fieldTypeResolver->getSchemaDefinition($stackMessages, $generalMessages, $options);
             }
         }
         // Convert the field type from its internal representation (eg: "array:id") to the type (eg: "array:Post")
         if ($options['useTypeName'] ?? null) {
-            if ($type = $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE] ?? null) {
-                $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE] = \PoP\ComponentModel\Schema\SchemaHelpers::convertTypeIDToTypeName($type, $this, $fieldName);
-            }
+            // The type is mandatory. If not provided, use the default one
+            $type = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE] ?? $this->schemaDefinitionService->getDefaultType();
+            $fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE] = SchemaHelpers::convertTypeIDToTypeName($type, $this, $fieldName);
         } else {
             // Display the type under entry "referencedType"
-            if ($types = $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE_SCHEMA] ?? null) {
+            if ($types = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE_SCHEMA] ?? null) {
                 $typeNames = \array_keys($types);
-                $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_REFERENCED_TYPE] = $typeNames[0];
+                $fieldSchemaDefinition[SchemaDefinition::ARGNAME_REFERENCED_TYPE] = $typeNames[0];
             }
         }
         $isGlobal = $fieldResolver->isGlobal($this, $fieldName);
-        $isConnection = isset($fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_RELATIONAL]) && $fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_RELATIONAL];
+        $isConnection = isset($fieldSchemaDefinition[SchemaDefinition::ARGNAME_RELATIONAL]) && $fieldSchemaDefinition[SchemaDefinition::ARGNAME_RELATIONAL];
         if ($isGlobal) {
             // If it is relational, it is a global connection
             if ($isConnection) {
-                $entry = \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS;
+                $entry = SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS;
                 // Remove the "types"
                 if ($options['useTypeName'] ?? null) {
-                    unset($fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE_SCHEMA]);
+                    unset($fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE_SCHEMA]);
                 }
             } else {
-                $entry = \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_GLOBAL_FIELDS;
+                $entry = SchemaDefinition::ARGNAME_GLOBAL_FIELDS;
             }
         } else {
             // Split the results into "fields" and "connections"
-            $entry = $isConnection ? \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_CONNECTIONS : \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_FIELDS;
+            $entry = $isConnection ? SchemaDefinition::ARGNAME_CONNECTIONS : SchemaDefinition::ARGNAME_FIELDS;
         }
         // Can remove attribute "relational"
         if ($isConnection) {
-            unset($fieldSchemaDefinition[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_RELATIONAL]);
+            unset($fieldSchemaDefinition[SchemaDefinition::ARGNAME_RELATIONAL]);
         }
-        $schemaDefinitionService = \PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
-        $typeSchemaKey = $schemaDefinitionService->getTypeSchemaKey($this);
+        $typeSchemaKey = $this->schemaDefinitionService->getTypeSchemaKey($this);
         $this->schemaDefinition[$typeSchemaKey][$entry][$fieldName] = $fieldSchemaDefinition;
     }
-    protected function isFieldNameResolvedByFieldResolver(\PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, string $fieldName, array $fieldInterfaceResolverClasses) : bool
+    protected function isFieldNameResolvedByFieldResolver(FieldResolverInterface $fieldResolver, string $fieldName, array $fieldInterfaceResolverClasses) : bool
     {
         // Calculate all the interfaces that define this fieldName
         $fieldInterfaceResolverClassesForField = \array_values(\array_filter($fieldInterfaceResolverClasses, function ($fieldInterfaceResolverClass) use($fieldName) : bool {
-            return \in_array($fieldName, $fieldInterfaceResolverClass::getFieldNamesToImplement());
+            /** @var FieldInterfaceResolverInterface */
+            $fieldInterfaceResolver = $this->instanceManager->getInstance($fieldInterfaceResolverClass);
+            return \in_array($fieldName, $fieldInterfaceResolver->getFieldNamesToImplement());
         }));
         // Execute 2 filters: a generic one, and a specific one
-        $hooksAPI = \PoP\Hooks\Facades\HooksAPIFacade::getInstance();
-        if ($hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterField(), \true, $this, $fieldResolver, $fieldInterfaceResolverClassesForField, $fieldName)) {
-            return $hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterField($fieldName), \true, $this, $fieldResolver, $fieldInterfaceResolverClassesForField, $fieldName);
+        if ($this->hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterField(), \true, $this, $fieldResolver, $fieldInterfaceResolverClassesForField, $fieldName)) {
+            return $this->hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\HookHelpers::getHookNameToFilterField($fieldName), \true, $this, $fieldResolver, $fieldInterfaceResolverClassesForField, $fieldName);
         }
         return \false;
     }
     /**
      * Return the fieldNames resolved by the fieldResolverClass, adding a hook to disable each of them (eg: to implement a private schema)
      *
-     * @param string $extensionClass
-     * @return array
+     * @return string[]
      */
-    protected function getFieldNamesResolvedByFieldResolver(string $fieldResolverClass) : array
+    protected function getFieldNamesResolvedByFieldResolver(FieldResolverInterface $fieldResolver) : array
     {
+        $fieldResolverClass = \get_class($fieldResolver);
         if (!isset($this->fieldNamesResolvedByFieldResolver[$fieldResolverClass])) {
             // Merge the fieldNames resolved by this field resolver class, and the interfaces it implements
-            $fieldNames = \array_merge($fieldResolverClass::getFieldNamesToResolve(), $fieldResolverClass::getFieldNamesFromInterfaces());
+            $fieldNames = \array_merge($fieldResolver->getFieldNamesToResolve(), $fieldResolver->getFieldNamesFromInterfaces());
+            // Enable to exclude fieldNames, so they are not added to the schema.
+            $excludedFieldNames = [];
+            // Whenever:
+            // 1. Exclude the admin fields, if "Admin" Schema is not enabled
+            if (!ComponentConfiguration::enableAdminSchema()) {
+                $excludedFieldNames = $fieldResolver->getAdminFieldNames();
+            }
+            // 2. By filter hook
+            $excludedFieldNames = $this->hooksAPI->applyFilters(\PoP\ComponentModel\TypeResolvers\Hooks::EXCLUDE_FIELDNAMES, $excludedFieldNames, $fieldResolver, $fieldNames);
+            if ($excludedFieldNames !== []) {
+                $fieldNames = \array_values(\array_diff($fieldNames, $excludedFieldNames));
+            }
             // Execute a hook, allowing to filter them out (eg: removing fieldNames from a private schema)
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-            /** @var FieldResolverInterface */
-            $fieldResolver = $instanceManager->getInstance($fieldResolverClass);
             // Also pass the implemented interfaces defining the field
-            $fieldInterfaceResolverClasses = $fieldResolver::getImplementedInterfaceClasses();
+            $fieldInterfaceResolverClasses = $fieldResolver->getImplementedFieldInterfaceResolverClasses();
             $fieldNames = \array_filter($fieldNames, function ($fieldName) use($fieldResolver, $fieldInterfaceResolverClasses) {
                 return $this->isFieldNameResolvedByFieldResolver($fieldResolver, $fieldName, $fieldInterfaceResolverClasses);
             });
@@ -1216,7 +1363,7 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     }
     protected function calculateAllFieldResolvers() : array
     {
-        $attachableExtensionManager = \PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade::getInstance();
+        $attachableExtensionManager = AttachableExtensionManagerFacade::getInstance();
         $schemaFieldResolvers = [];
         // Get the fieldResolvers attached to this typeResolver and to all the interfaces it implements
         $classStack = [$this->getTypeResolverClassToCalculateSchema()];
@@ -1224,10 +1371,12 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
             $class = \array_shift($classStack);
             // Iterate classes from the current class towards the parent classes until finding typeResolver that satisfies processing this field
             do {
-                foreach ($attachableExtensionManager->getExtensionClasses($class, \PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::FIELDRESOLVERS) as $extensionClass => $extensionPriority) {
+                /** @var FieldResolverInterface[] */
+                $attachedFieldResolvers = $attachableExtensionManager->getAttachedExtensions($class, AttachableExtensionGroups::FIELDRESOLVERS);
+                foreach ($attachedFieldResolvers as $fieldResolver) {
                     // Process the fields which have not been processed yet
-                    $extensionClassFieldNames = $this->getFieldNamesResolvedByFieldResolver($extensionClass);
-                    foreach (\array_diff($extensionClassFieldNames, \array_keys($schemaFieldResolvers)) as $fieldName) {
+                    $extensionFieldNames = $this->getFieldNamesResolvedByFieldResolver($fieldResolver);
+                    foreach (\array_diff($extensionFieldNames, \array_keys($schemaFieldResolvers)) as $fieldName) {
                         // Watch out here: no fieldArgs!!!! So this deals with the base case (static), not with all cases (runtime)
                         // If using an ACL to remove a field from an interface,
                         // getting the fieldResolvers for that field will be empty
@@ -1237,7 +1386,7 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                         }
                     }
                     // The interfaces implemented by the FieldResolver can have, themselves, fieldResolvers attached to them
-                    $classStack = \array_values(\array_unique(\array_merge($classStack, $extensionClass::getImplementedInterfaceClasses())));
+                    $classStack = \array_values(\array_unique(\array_merge($classStack, $fieldResolver->getImplementedFieldInterfaceResolverClasses())));
                 }
                 // Otherwise, continue iterating for the class parents
             } while ($class = \get_parent_class($class));
@@ -1254,13 +1403,11 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     protected function calculateAllMandatoryDirectivesForFields() : array
     {
         $mandatoryDirectivesForFields = [];
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $typeResolverDecoratorClasses = $this->getAllTypeResolverDecoratorClassess();
-        foreach ($typeResolverDecoratorClasses as $typeResolverDecoratorClass) {
-            $typeResolverDecoratorInstance = $instanceManager->getInstance($typeResolverDecoratorClass);
+        $typeResolverDecorators = $this->getAllTypeResolverDecorators();
+        foreach ($typeResolverDecorators as $typeResolverDecorator) {
             // array_merge_recursive so that if 2 different decorators add a directive for the same field, the results are merged together, not override each other
-            if ($typeResolverDecoratorInstance->enabled($this)) {
-                $mandatoryDirectivesForFields = \array_merge_recursive($mandatoryDirectivesForFields, $typeResolverDecoratorInstance->getMandatoryDirectivesForFields($this));
+            if ($typeResolverDecorator->enabled($this)) {
+                $mandatoryDirectivesForFields = \array_merge_recursive($mandatoryDirectivesForFields, $typeResolverDecorator->getMandatoryDirectivesForFields($this));
             }
         }
         return $mandatoryDirectivesForFields;
@@ -1275,13 +1422,11 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     protected function calculateAllPrecedingMandatoryDirectivesForDirectives() : array
     {
         $precedingMandatoryDirectivesForDirectives = [];
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $typeResolverDecoratorClasses = $this->getAllTypeResolverDecoratorClassess();
-        foreach ($typeResolverDecoratorClasses as $typeResolverDecoratorClass) {
-            $typeResolverDecoratorInstance = $instanceManager->getInstance($typeResolverDecoratorClass);
+        $typeResolverDecorators = $this->getAllTypeResolverDecorators();
+        foreach ($typeResolverDecorators as $typeResolverDecorator) {
             // array_merge_recursive so that if 2 different decorators add a directive for the same directive, the results are merged together, not override each other
-            if ($typeResolverDecoratorInstance->enabled($this)) {
-                $precedingMandatoryDirectivesForDirectives = \array_merge_recursive($precedingMandatoryDirectivesForDirectives, $typeResolverDecoratorInstance->getPrecedingMandatoryDirectivesForDirectives($this));
+            if ($typeResolverDecorator->enabled($this)) {
+                $precedingMandatoryDirectivesForDirectives = \array_merge_recursive($precedingMandatoryDirectivesForDirectives, $typeResolverDecorator->getPrecedingMandatoryDirectivesForDirectives($this));
             }
         }
         return $precedingMandatoryDirectivesForDirectives;
@@ -1296,54 +1441,60 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     protected function calculateAllSucceedingMandatoryDirectivesForDirectives() : array
     {
         $succeedingMandatoryDirectivesForDirectives = [];
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $typeResolverDecoratorClasses = $this->getAllTypeResolverDecoratorClassess();
-        foreach ($typeResolverDecoratorClasses as $typeResolverDecoratorClass) {
-            $typeResolverDecoratorInstance = $instanceManager->getInstance($typeResolverDecoratorClass);
+        $typeResolverDecorators = $this->getAllTypeResolverDecorators();
+        foreach ($typeResolverDecorators as $typeResolverDecorator) {
             // array_merge_recursive so that if 2 different decorators add a directive for the same directive, the results are merged together, not override each other
-            if ($typeResolverDecoratorInstance->enabled($this)) {
-                $succeedingMandatoryDirectivesForDirectives = \array_merge_recursive($succeedingMandatoryDirectivesForDirectives, $typeResolverDecoratorInstance->getSucceedingMandatoryDirectivesForDirectives($this));
+            if ($typeResolverDecorator->enabled($this)) {
+                $succeedingMandatoryDirectivesForDirectives = \array_merge_recursive($succeedingMandatoryDirectivesForDirectives, $typeResolverDecorator->getSucceedingMandatoryDirectivesForDirectives($this));
             }
         }
         return $succeedingMandatoryDirectivesForDirectives;
     }
-    protected function getAllTypeResolverDecoratorClassess() : array
+    protected function getAllTypeResolverDecorators() : array
     {
-        if (\is_null($this->typeResolverDecoratorClasses)) {
-            $this->typeResolverDecoratorClasses = $this->calculateAllTypeResolverDecoratorClasses();
+        if (\is_null($this->typeResolverDecorators)) {
+            $this->typeResolverDecorators = $this->calculateAllTypeResolverDecorators();
         }
-        return $this->typeResolverDecoratorClasses;
+        return $this->typeResolverDecorators;
     }
-    protected function calculateAllTypeResolverDecoratorClasses() : array
+    protected function calculateAllTypeResolverDecorators() : array
     {
-        $decoratorClasses = [];
+        $typeResolverDecorators = [];
         /**
          * Also get the decorators for the implemented interfaces
          */
         $classes = \array_merge([$this->getTypeResolverClassToCalculateSchema()], $this->getAllImplementedInterfaceClasses());
         foreach ($classes as $class) {
-            $decoratorClasses = \array_merge($decoratorClasses, $this->calculateAllTypeResolverDecoratorClassesForTypeOrInterfaceClass($class));
+            $typeResolverDecorators = \array_merge($typeResolverDecorators, $this->calculateAllTypeResolverDecoratorsForTypeOrInterfaceClass($class));
         }
-        return $decoratorClasses;
+        return $typeResolverDecorators;
     }
-    protected function calculateAllTypeResolverDecoratorClassesForTypeOrInterfaceClass(string $class) : array
+    /**
+     * @return TypeResolverDecoratorInterface[]
+     */
+    protected function calculateAllTypeResolverDecoratorsForTypeOrInterfaceClass(string $class) : array
     {
-        $attachableExtensionManager = \PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade::getInstance();
-        $decoratorClasses = [];
+        $attachableExtensionManager = AttachableExtensionManagerFacade::getInstance();
+        $typeResolverDecorators = [];
         // Iterate classes from the current class towards the parent classes until finding typeResolver that satisfies processing this field
         do {
             // Important: do array_reverse to enable more specific hooks, which are initialized later on in the project, to be the chosen ones (if their priority is the same)
-            $extensionClassPriorities = \array_reverse($attachableExtensionManager->getExtensionClasses($class, \PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::TYPERESOLVERDECORATORS));
+            /** @var TypeResolverDecoratorInterface[] */
+            $attachedTypeResolverDecorators = \array_reverse($attachableExtensionManager->getAttachedExtensions($class, AttachableExtensionGroups::TYPERESOLVERDECORATORS));
             // Order them by priority: higher priority are evaluated first
-            $extensionClasses = \array_keys($extensionClassPriorities);
-            $extensionPriorities = \array_values($extensionClassPriorities);
-            \array_multisort($extensionPriorities, \SORT_DESC, \SORT_NUMERIC, $extensionClasses);
+            $extensionPriorities = \array_map(function (TypeResolverDecoratorInterface $typeResolverDecorator) {
+                return $typeResolverDecorator->getPriorityToAttachToClasses();
+            }, $attachedTypeResolverDecorators);
+            \array_multisort($extensionPriorities, \SORT_DESC, \SORT_NUMERIC, $attachedTypeResolverDecorators);
             // Add them to the results
-            $decoratorClasses = \array_merge($decoratorClasses, $extensionClasses);
+            $typeResolverDecorators = \array_merge($typeResolverDecorators, $attachedTypeResolverDecorators);
             // Continue iterating for the class parents
         } while ($class = \get_parent_class($class));
-        return $decoratorClasses;
+        return $typeResolverDecorators;
     }
+    /**
+     * @return FieldInterfaceResolverInterface[]
+     */
     public function getAllImplementedInterfaceResolverInstances() : array
     {
         if (\is_null($this->interfaceResolverInstances)) {
@@ -1353,9 +1504,8 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
     }
     protected function calculateAllImplementedInterfaceResolverInstances() : array
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        return \array_map(function ($interfaceClass) use($instanceManager) {
-            return $instanceManager->getInstance($interfaceClass);
+        return \array_map(function ($interfaceClass) {
+            return $this->instanceManager->getInstance($interfaceClass);
         }, $this->getAllImplementedInterfaceClasses());
     }
     public function getAllImplementedInterfaceClasses() : array
@@ -1374,12 +1524,15 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 $fieldResolverClass = \get_class($fieldResolver);
                 if (!\in_array($fieldResolverClass, $processedFieldResolverClasses)) {
                     $processedFieldResolverClasses[] = $fieldResolverClass;
-                    $interfaceClasses = \array_merge($interfaceClasses, $fieldResolver::getImplementedInterfaceClasses());
+                    $interfaceClasses = \array_merge($interfaceClasses, $fieldResolver->getImplementedFieldInterfaceResolverClasses());
                 }
             }
         }
         return \array_values(\array_unique($interfaceClasses));
     }
+    /**
+     * @return FieldResolverInterface[]
+     */
     protected function getFieldResolversForField(string $field) : array
     {
         // Calculate the fieldResolver to process this field if not already in the cache
@@ -1404,11 +1557,9 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
         //     $fieldName,
         //     $fieldArgs,
         // ) = $this->dissectFieldForSchema($field);
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        $fieldName = $fieldQueryInterpreter->getFieldName($field);
-        $fieldArgs = $fieldQueryInterpreter->extractStaticFieldArguments($field);
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $attachableExtensionManager = \PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade::getInstance();
+        $fieldName = $this->fieldQueryInterpreter->getFieldName($field);
+        $fieldArgs = $this->fieldQueryInterpreter->extractStaticFieldArguments($field);
+        $attachableExtensionManager = AttachableExtensionManagerFacade::getInstance();
         $fieldResolvers = [];
         // Get the fieldResolvers attached to this typeResolver and to all the interfaces it implements
         $classStack = [$this->getTypeResolverClassToCalculateSchema()];
@@ -1420,19 +1571,20 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
                 $classTypeResolverPriorities = [];
                 $classFieldResolvers = [];
                 // Important: do array_reverse to enable more specific hooks, which are initialized later on in the project, to be the chosen ones (if their priority is the same)
-                foreach (\array_reverse($attachableExtensionManager->getExtensionClasses($class, \PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::FIELDRESOLVERS)) as $extensionClass => $extensionPriority) {
-                    // Check if this fieldResolver can process this field, and if its priority is bigger than the previous found instance attached to the same class
-                    $extensionClassFieldNames = $this->getFieldNamesResolvedByFieldResolver($extensionClass);
-                    if (\in_array($fieldName, $extensionClassFieldNames)) {
+                /** @var FieldResolverInterface[] */
+                $attachedFieldResolvers = \array_reverse($attachableExtensionManager->getAttachedExtensions($class, AttachableExtensionGroups::FIELDRESOLVERS));
+                foreach ($attachedFieldResolvers as $fieldResolver) {
+                    $extensionFieldNames = $this->getFieldNamesResolvedByFieldResolver($fieldResolver);
+                    if (\in_array($fieldName, $extensionFieldNames)) {
                         // Check that the fieldResolver can handle the field based on other parameters (eg: "version" in the fieldArgs)
-                        $fieldResolver = $instanceManager->getInstance($extensionClass);
                         if ($fieldResolver->resolveCanProcess($this, $fieldName, $fieldArgs)) {
+                            $extensionPriority = $fieldResolver->getPriorityToAttachToClasses();
                             $classTypeResolverPriorities[] = $extensionPriority;
                             $classFieldResolvers[] = $fieldResolver;
                         }
                     }
                     // The interfaces implemented by the FieldResolver can have, themselves, fieldResolvers attached to them
-                    $classStack = \array_values(\array_unique(\array_merge($classStack, $extensionClass::getImplementedInterfaceClasses())));
+                    $classStack = \array_values(\array_unique(\array_merge($classStack, $fieldResolver->getImplementedFieldInterfaceResolverClasses())));
                 }
                 // Sort the found units by their priority, and then add to the stack of all units, for all classes
                 // Higher priority means they execute first!
@@ -1444,46 +1596,50 @@ abstract class AbstractTypeResolver implements \PoP\ComponentModel\TypeResolvers
         // Return all the units that resolve the fieldName
         return $fieldResolvers;
     }
-    protected function calculateFieldDirectiveNameClasses() : array
+    protected function calculateFieldDirectiveNameResolvers() : array
     {
-        $attachableExtensionManager = \PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade::getInstance();
-        $directiveNameClasses = [];
+        $attachableExtensionManager = AttachableExtensionManagerFacade::getInstance();
+        $directiveNameResolvers = [];
         // Directives can also be attached to the interface implemented by this typeResolver
         $classes = \array_merge([$this->getTypeResolverClassToCalculateSchema()], $this->getAllImplementedInterfaceClasses());
         foreach ($classes as $class) {
             // Iterate classes from the current class towards the parent classes until finding typeResolver that satisfies processing this field
             do {
                 // Important: do array_reverse to enable more specific hooks, which are initialized later on in the project, to be the chosen ones (if their priority is the same)
-                $extensionClassPriorities = \array_reverse($attachableExtensionManager->getExtensionClasses($class, \PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::DIRECTIVERESOLVERS));
+                /** @var DirectiveResolverInterface[] */
+                $attachedDirectiveResolvers = \array_reverse($attachableExtensionManager->getAttachedExtensions($class, AttachableExtensionGroups::DIRECTIVERESOLVERS));
                 // Order them by priority: higher priority are evaluated first
-                $extensionClasses = \array_keys($extensionClassPriorities);
-                $extensionPriorities = \array_values($extensionClassPriorities);
-                \array_multisort($extensionPriorities, \SORT_DESC, \SORT_NUMERIC, $extensionClasses);
+                $extensionPriorities = \array_map(function (DirectiveResolverInterface $directiveResolver) {
+                    return $directiveResolver->getPriorityToAttachToClasses();
+                }, $attachedDirectiveResolvers);
+                \array_multisort($extensionPriorities, \SORT_DESC, \SORT_NUMERIC, $attachedDirectiveResolvers);
                 // Add them to the results. We keep the list of all resolvers, so that if the first one cannot process the directive (eg: through `resolveCanProcess`, the next one can do it)
-                foreach ($extensionClasses as $extensionClass) {
-                    $directiveName = $extensionClass::getDirectiveName();
-                    $directiveNameClasses[$directiveName][] = $extensionClass;
+                foreach ($attachedDirectiveResolvers as $directiveResolver) {
+                    $directiveName = $directiveResolver->getDirectiveName();
+                    $directiveNameResolvers[$directiveName][] = $directiveResolver;
                 }
                 // Continue iterating for the class parents
             } while ($class = \get_parent_class($class));
         }
         // Validate that the user has access to the directives (eg: can remove access to them for non logged-in users)
-        $directiveNameClasses = $this->filterDirectiveNameClasses($directiveNameClasses);
-        return $directiveNameClasses;
+        $directiveNameResolvers = $this->filterDirectiveNameResolvers($directiveNameResolvers);
+        return $directiveNameResolvers;
     }
     protected function calculateFieldNamesToResolve() : array
     {
-        $attachableExtensionManager = \PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade::getInstance();
-        $ret = [];
+        $attachableExtensionManager = AttachableExtensionManagerFacade::getInstance();
+        $fieldNames = [];
         // Iterate classes from the current class towards the parent classes until finding typeResolver that satisfies processing this field
         $class = $this->getTypeResolverClassToCalculateSchema();
         do {
-            foreach ($attachableExtensionManager->getExtensionClasses($class, \PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::FIELDRESOLVERS) as $extensionClass => $extensionPriority) {
-                $extensionClassFieldNames = $this->getFieldNamesResolvedByFieldResolver($extensionClass);
-                $ret = \array_merge($ret, $extensionClassFieldNames);
+            /** @var FieldResolverInterface[] */
+            $attachedFieldResolvers = $attachableExtensionManager->getAttachedExtensions($class, AttachableExtensionGroups::FIELDRESOLVERS);
+            foreach ($attachedFieldResolvers as $fieldResolver) {
+                $extensionFieldNames = $this->getFieldNamesResolvedByFieldResolver($fieldResolver);
+                $fieldNames = \array_merge($fieldNames, $extensionFieldNames);
             }
             // Continue iterating for the class parents
         } while ($class = \get_parent_class($class));
-        return \array_values(\array_unique($ret));
+        return \array_values(\array_unique($fieldNames));
     }
 }

@@ -16,7 +16,7 @@ use PrefixedByPoP\Psr\Http\Message\UriInterface as PsrUriInterface;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class WordPressUri implements \PrefixedByPoP\Brain\Cortex\Uri\UriInterface
+final class WordPressUri implements UriInterface
 {
     /**
      * @var \Psr\Http\Message\UriInterface
@@ -27,7 +27,7 @@ final class WordPressUri implements \PrefixedByPoP\Brain\Cortex\Uri\UriInterface
      *
      * @param \Psr\Http\Message\UriInterface $uri
      */
-    public function __construct(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri)
+    public function __construct(PsrUriInterface $uri)
     {
         $this->uri = $uri;
     }

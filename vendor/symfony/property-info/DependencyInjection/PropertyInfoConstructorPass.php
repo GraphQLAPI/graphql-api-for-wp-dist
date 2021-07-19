@@ -19,26 +19,29 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
  *
  * @author Dmitrii Poddubnyi <dpoddubny@gmail.com>
  */
-final class PropertyInfoConstructorPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+final class PropertyInfoConstructorPass implements CompilerPassInterface
 {
     use PriorityTaggedServiceTrait;
     private $service;
     private $tag;
     public function __construct(string $service = 'property_info.constructor_extractor', string $tag = 'property_info.constructor_extractor')
     {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/property-info', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
         $this->service = $service;
         $this->tag = $tag;
     }
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         if (!$container->hasDefinition($this->service)) {
             return;
         }
         $definition = $container->getDefinition($this->service);
         $listExtractors = $this->findAndSortTaggedServices($this->tag, $container);
-        $definition->replaceArgument(0, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument($listExtractors));
+        $definition->replaceArgument(0, new IteratorArgument($listExtractors));
     }
 }

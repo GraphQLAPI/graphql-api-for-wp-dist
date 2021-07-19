@@ -10,7 +10,7 @@ class CompilerPassRegistry implements \PoP\Root\Registries\CompilerPassRegistryI
      * @var CompilerPassInterface[]
      */
     protected $compilerPasses = [];
-    public function addCompilerPass(\PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface $compilerPass) : void
+    public function addCompilerPass(CompilerPassInterface $compilerPass) : void
     {
         $this->compilerPasses[] = $compilerPass;
     }

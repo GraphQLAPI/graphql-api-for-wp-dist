@@ -4,12 +4,12 @@ declare (strict_types=1);
 namespace PoPSchema\PostTags;
 
 use PoP\Root\Component\AbstractComponent;
-use PoP\Routing\DefinitionGroups;
-use PoP\Definitions\Facades\DefinitionManagerFacade;
+use PoP\RESTAPI\Component as RESTAPIComponent;
+use PoP\API\Component as APIComponent;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     /**
      * Classes from PoP components that must be initialized before this component
@@ -22,18 +22,10 @@ class Component extends \PoP\Root\Component\AbstractComponent
     }
     /**
      * All conditional component classes that this component depends upon, to initialize them
-     *
-     * @return array
      */
     public static function getDependedConditionalComponentClasses() : array
     {
         return [\PoP\API\Component::class, \PoP\RESTAPI\Component::class];
-    }
-    public static function getDependedMigrationPlugins() : array
-    {
-        $packageName = \basename(\dirname(__DIR__));
-        $folder = \dirname(__DIR__, 2);
-        return [$folder . '/migrate-' . $packageName . '/initialize.php'];
     }
     /**
      * Initialize services
@@ -43,24 +35,14 @@ class Component extends \PoP\Root\Component\AbstractComponent
      */
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
         \PoPSchema\PostTags\ComponentConfiguration::setConfiguration($configuration);
-        self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
-        if (\class_exists('\\PoP\\API\\Component') && \PoP\API\Component::isEnabled()) {
-            self::initYAMLServices(\dirname(__DIR__), '/Conditional/API');
+        self::initServices(\dirname(__DIR__));
+        self::initSchemaServices(\dirname(__DIR__), $skipSchema);
+        if (\class_exists(APIComponent::class) && APIComponent::isEnabled()) {
+            self::initServices(\dirname(__DIR__), '/ConditionalOnComponent/API');
         }
-        if (\class_exists('\\PoP\\RESTAPI\\Component') && \PoP\RESTAPI\Component::isEnabled()) {
-            self::initYAMLServices(\dirname(__DIR__), '/Conditional/RESTAPI');
-        }
-    }
-    /**
-     * Define runtime constants
-     */
-    protected static function defineRuntimeConstants(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
-    {
-        if (!\defined('POP_POSTTAGS_ROUTE_POSTTAGS')) {
-            $definitionManager = \PoP\Definitions\Facades\DefinitionManagerFacade::getInstance();
-            \define('POP_POSTTAGS_ROUTE_POSTTAGS', $definitionManager->getUniqueDefinition('post-tags', \PoP\Routing\DefinitionGroups::ROUTES));
+        if (\class_exists(RESTAPIComponent::class) && RESTAPIComponent::isEnabled()) {
+            self::initServices(\dirname(__DIR__), '/ConditionalOnComponent/RESTAPI');
         }
     }
 }

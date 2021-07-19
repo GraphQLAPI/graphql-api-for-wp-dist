@@ -85,7 +85,7 @@ class Definition
     /**
      * Sets a factory.
      *
-     * @param string|array|Reference $factory A PHP function, reference or an array containing a class/Reference and a method to call
+     * @param string|array|Reference|null $factory A PHP function, reference or an array containing a class/Reference and a method to call
      *
      * @return $this
      */
@@ -94,7 +94,7 @@ class Definition
         $this->changes['factory'] = \true;
         if (\is_string($factory) && \false !== \strpos($factory, '::')) {
             $factory = \explode('::', $factory, 2);
-        } elseif ($factory instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference) {
+        } elseif ($factory instanceof Reference) {
             $factory = [$factory, '__invoke'];
         }
         $this->factory = $factory;
@@ -119,17 +119,17 @@ class Definition
      *
      * @throws InvalidArgumentException in case the decorated service id and the new decorated service id are equals
      */
-    public function setDecoratedService(?string $id, ?string $renamedId = null, int $priority = 0, int $invalidBehavior = \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE)
+    public function setDecoratedService(?string $id, ?string $renamedId = null, int $priority = 0, int $invalidBehavior = ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE)
     {
         if ($renamedId && $id === $renamedId) {
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\sprintf('The decorated service inner name for "%s" must be different than the service name itself.', $id));
+            throw new InvalidArgumentException(\sprintf('The decorated service inner name for "%s" must be different than the service name itself.', $id));
         }
         $this->changes['decorated_service'] = \true;
         if (null === $id) {
             $this->decoratedService = null;
         } else {
             $this->decoratedService = [$id, $renamedId, (int) $priority];
-            if (\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE !== $invalidBehavior) {
+            if (ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE !== $invalidBehavior) {
                 $this->decoratedService[] = $invalidBehavior;
             }
         }
@@ -230,13 +230,13 @@ class Definition
     public function replaceArgument($index, $argument)
     {
         if (0 === \count($this->arguments)) {
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\OutOfBoundsException('Cannot replace arguments if none have been configured yet.');
+            throw new OutOfBoundsException('Cannot replace arguments if none have been configured yet.');
         }
         if (\is_int($index) && ($index < 0 || $index > \count($this->arguments) - 1)) {
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\OutOfBoundsException(\sprintf('The index "%d" is not in the range [0, %d].', $index, \count($this->arguments) - 1));
+            throw new OutOfBoundsException(\sprintf('The index "%d" is not in the range [0, %d].', $index, \count($this->arguments) - 1));
         }
         if (!\array_key_exists($index, $this->arguments)) {
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\OutOfBoundsException(\sprintf('The argument "%s" doesn\'t exist.', $index));
+            throw new OutOfBoundsException(\sprintf('The argument "%s" doesn\'t exist.', $index));
         }
         $this->arguments[$index] = $argument;
         return $this;
@@ -275,7 +275,7 @@ class Definition
     public function getArgument($index)
     {
         if (!\array_key_exists($index, $this->arguments)) {
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\OutOfBoundsException(\sprintf('The argument "%s" doesn\'t exist.', $index));
+            throw new OutOfBoundsException(\sprintf('The argument "%s" doesn\'t exist.', $index));
         }
         return $this->arguments[$index];
     }
@@ -306,7 +306,7 @@ class Definition
     public function addMethodCall(string $method, array $arguments = [], bool $returnsClone = \false)
     {
         if (empty($method)) {
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException('Method name cannot be empty.');
+            throw new InvalidArgumentException('Method name cannot be empty.');
         }
         $this->calls[] = $returnsClone ? [$method, $arguments, \true] : [$method, $arguments];
         return $this;
@@ -321,7 +321,6 @@ class Definition
         foreach ($this->calls as $i => $call) {
             if ($call[0] === $method) {
                 unset($this->calls[$i]);
-                break;
             }
         }
         return $this;
@@ -632,10 +631,10 @@ class Definition
         }
         if ('' !== $message) {
             if (\preg_match('#[\\r\\n]|\\*/#', $message)) {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException('Invalid characters found in deprecation template.');
+                throw new InvalidArgumentException('Invalid characters found in deprecation template.');
             }
             if (\false === \strpos($message, '%service_id%')) {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException('The deprecation template must contain the "%service_id%" placeholder.');
+                throw new InvalidArgumentException('The deprecation template must contain the "%service_id%" placeholder.');
             }
         }
         $this->changes['deprecated'] = \true;
@@ -685,7 +684,7 @@ class Definition
         $this->changes['configurator'] = \true;
         if (\is_string($configurator) && \false !== \strpos($configurator, '::')) {
             $configurator = \explode('::', $configurator, 2);
-        } elseif ($configurator instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference) {
+        } elseif ($configurator instanceof Reference) {
             $configurator = [$configurator, '__invoke'];
         }
         $this->configurator = $configurator;
@@ -745,8 +744,8 @@ class Definition
                 unset($bindings[$key]);
                 $bindings[$key = $k] = $binding;
             }
-            if (!$binding instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\BoundArgument) {
-                $bindings[$key] = new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\BoundArgument($binding);
+            if (!$binding instanceof BoundArgument) {
+                $bindings[$key] = new BoundArgument($binding);
             }
         }
         $this->bindings = $bindings;

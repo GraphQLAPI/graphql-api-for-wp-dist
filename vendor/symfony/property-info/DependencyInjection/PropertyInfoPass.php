@@ -19,7 +19,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
-class PropertyInfoPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+class PropertyInfoPass implements CompilerPassInterface
 {
     use PriorityTaggedServiceTrait;
     private $propertyInfoService;
@@ -30,6 +30,9 @@ class PropertyInfoPass implements \PrefixedByPoP\Symfony\Component\DependencyInj
     private $initializableExtractorTag;
     public function __construct(string $propertyInfoService = 'property_info', string $listExtractorTag = 'property_info.list_extractor', string $typeExtractorTag = 'property_info.type_extractor', string $descriptionExtractorTag = 'property_info.description_extractor', string $accessExtractorTag = 'property_info.access_extractor', string $initializableExtractorTag = 'property_info.initializable_extractor')
     {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/property-info', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
         $this->propertyInfoService = $propertyInfoService;
         $this->listExtractorTag = $listExtractorTag;
         $this->typeExtractorTag = $typeExtractorTag;
@@ -40,21 +43,21 @@ class PropertyInfoPass implements \PrefixedByPoP\Symfony\Component\DependencyInj
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         if (!$container->hasDefinition($this->propertyInfoService)) {
             return;
         }
         $definition = $container->getDefinition($this->propertyInfoService);
         $listExtractors = $this->findAndSortTaggedServices($this->listExtractorTag, $container);
-        $definition->replaceArgument(0, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument($listExtractors));
+        $definition->replaceArgument(0, new IteratorArgument($listExtractors));
         $typeExtractors = $this->findAndSortTaggedServices($this->typeExtractorTag, $container);
-        $definition->replaceArgument(1, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument($typeExtractors));
+        $definition->replaceArgument(1, new IteratorArgument($typeExtractors));
         $descriptionExtractors = $this->findAndSortTaggedServices($this->descriptionExtractorTag, $container);
-        $definition->replaceArgument(2, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument($descriptionExtractors));
+        $definition->replaceArgument(2, new IteratorArgument($descriptionExtractors));
         $accessExtractors = $this->findAndSortTaggedServices($this->accessExtractorTag, $container);
-        $definition->replaceArgument(3, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument($accessExtractors));
+        $definition->replaceArgument(3, new IteratorArgument($accessExtractors));
         $initializableExtractors = $this->findAndSortTaggedServices($this->initializableExtractorTag, $container);
-        $definition->setArgument(4, new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument($initializableExtractors));
+        $definition->setArgument(4, new IteratorArgument($initializableExtractors));
     }
 }

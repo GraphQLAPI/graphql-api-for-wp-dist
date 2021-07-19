@@ -12,6 +12,6 @@ class DisableDirectivesIfUserIsNotLoggedInConfigurableAccessControlForDirectives
     }
     protected function getRequiredEntryValue() : ?string
     {
-        return \PoPSchema\UserStateAccessControl\ConfigurationEntries\UserStates::IN;
+        return UserStates::IN;
     }
 }

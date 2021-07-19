@@ -28,32 +28,29 @@ use PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException;
  *
  * @throws ExceptionInterface
  */
-class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnicodeString
+class UnicodeString extends AbstractUnicodeString
 {
     public function __construct(string $string = '')
     {
         $this->string = \normalizer_is_normalized($string) ? $string : \normalizer_normalize($string);
         if (\false === $this->string) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Invalid UTF-8 string.');
+            throw new InvalidArgumentException('Invalid UTF-8 string.');
         }
     }
-    /**
-     * @return \Symfony\Component\String\AbstractString
-     */
-    public function append(string ...$suffix) : self
+    public function append(string ...$suffix) : AbstractString
     {
         $str = clone $this;
         $str->string = $this->string . (1 >= \count($suffix) ? $suffix[0] ?? '' : \implode('', $suffix));
         \normalizer_is_normalized($str->string) ?: ($str->string = \normalizer_normalize($str->string));
         if (\false === $str->string) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Invalid UTF-8 string.');
+            throw new InvalidArgumentException('Invalid UTF-8 string.');
         }
         return $str;
     }
     public function chunk(int $length = 1) : array
     {
         if (1 > $length) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('The chunk length must be greater than zero.');
+            throw new InvalidArgumentException('The chunk length must be greater than zero.');
         }
         if ('' === $this->string) {
             return [];
@@ -74,7 +71,7 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
     }
     public function endsWith($suffix) : bool
     {
-        if ($suffix instanceof \PrefixedByPoP\Symfony\Component\String\AbstractString) {
+        if ($suffix instanceof AbstractString) {
             $suffix = $suffix->string;
         } elseif (\is_array($suffix) || $suffix instanceof \Traversable) {
             return parent::endsWith($suffix);
@@ -93,7 +90,7 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
     }
     public function equalsTo($string) : bool
     {
-        if ($string instanceof \PrefixedByPoP\Symfony\Component\String\AbstractString) {
+        if ($string instanceof AbstractString) {
             $string = $string->string;
         } elseif (\is_array($string) || $string instanceof \Traversable) {
             return parent::equalsTo($string);
@@ -109,7 +106,7 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
     }
     public function indexOf($needle, int $offset = 0) : ?int
     {
-        if ($needle instanceof \PrefixedByPoP\Symfony\Component\String\AbstractString) {
+        if ($needle instanceof AbstractString) {
             $needle = $needle->string;
         } elseif (\is_array($needle) || $needle instanceof \Traversable) {
             return parent::indexOf($needle, $offset);
@@ -130,7 +127,7 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
     }
     public function indexOfLast($needle, int $offset = 0) : ?int
     {
-        if ($needle instanceof \PrefixedByPoP\Symfony\Component\String\AbstractString) {
+        if ($needle instanceof AbstractString) {
             $needle = $needle->string;
         } elseif (\is_array($needle) || $needle instanceof \Traversable) {
             return parent::indexOfLast($needle, $offset);
@@ -153,10 +150,7 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
         $i = $this->ignoreCase ? \grapheme_strripos($string, $needle, $offset) : \grapheme_strrpos($string, $needle, $offset);
         return \false === $i ? null : $i;
     }
-    /**
-     * @return \Symfony\Component\String\AbstractString
-     */
-    public function join(array $strings, string $lastGlue = null) : parent
+    public function join(array $strings, string $lastGlue = null) : AbstractString
     {
         $str = parent::join($strings, $lastGlue);
         \normalizer_is_normalized($str->string) ?: ($str->string = \normalizer_normalize($str->string));
@@ -169,36 +163,30 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
     /**
      * @return mixed
      */
-    public function normalize(int $form = self::NFC) : self
+    public function normalize(int $form = self::NFC)
     {
         $str = clone $this;
         if (\in_array($form, [self::NFC, self::NFKC], \true)) {
             \normalizer_is_normalized($str->string, $form) ?: ($str->string = \normalizer_normalize($str->string, $form));
         } elseif (!\in_array($form, [self::NFD, self::NFKD], \true)) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Unsupported normalization form.');
+            throw new InvalidArgumentException('Unsupported normalization form.');
         } elseif (!\normalizer_is_normalized($str->string, $form)) {
             $str->string = \normalizer_normalize($str->string, $form);
             $str->ignoreCase = null;
         }
         return $str;
     }
-    /**
-     * @return \Symfony\Component\String\AbstractString
-     */
-    public function prepend(string ...$prefix) : self
+    public function prepend(string ...$prefix) : AbstractString
     {
         $str = clone $this;
         $str->string = (1 >= \count($prefix) ? $prefix[0] ?? '' : \implode('', $prefix)) . $this->string;
         \normalizer_is_normalized($str->string) ?: ($str->string = \normalizer_normalize($str->string));
         if (\false === $str->string) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Invalid UTF-8 string.');
+            throw new InvalidArgumentException('Invalid UTF-8 string.');
         }
         return $str;
     }
-    /**
-     * @return \Symfony\Component\String\AbstractString
-     */
-    public function replace(string $from, string $to) : self
+    public function replace(string $from, string $to) : AbstractString
     {
         $str = clone $this;
         \normalizer_is_normalized($from) ?: ($from = \normalizer_normalize($from));
@@ -214,24 +202,18 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
             $str->string = $result . $tail;
             \normalizer_is_normalized($str->string) ?: ($str->string = \normalizer_normalize($str->string));
             if (\false === $str->string) {
-                throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Invalid UTF-8 string.');
+                throw new InvalidArgumentException('Invalid UTF-8 string.');
             }
         }
         return $str;
     }
-    /**
-     * @return \Symfony\Component\String\AbstractString
-     */
-    public function replaceMatches(string $fromRegexp, $to) : parent
+    public function replaceMatches(string $fromRegexp, $to) : AbstractString
     {
         $str = parent::replaceMatches($fromRegexp, $to);
         \normalizer_is_normalized($str->string) ?: ($str->string = \normalizer_normalize($str->string));
         return $str;
     }
-    /**
-     * @return \Symfony\Component\String\AbstractString
-     */
-    public function slice(int $start = 0, int $length = null) : self
+    public function slice(int $start = 0, int $length = null) : AbstractString
     {
         $str = clone $this;
         if (\PHP_VERSION_ID < 80000 && 0 > $start && \grapheme_strlen($this->string) < -$start) {
@@ -240,10 +222,7 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
         $str->string = (string) \grapheme_substr($this->string, $start, $length ?? 2147483647);
         return $str;
     }
-    /**
-     * @return \Symfony\Component\String\AbstractString
-     */
-    public function splice(string $replacement, int $start = 0, int $length = null) : self
+    public function splice(string $replacement, int $start = 0, int $length = null) : AbstractString
     {
         $str = clone $this;
         if (\PHP_VERSION_ID < 80000 && 0 > $start && \grapheme_strlen($this->string) < -$start) {
@@ -254,24 +233,24 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
         $str->string = \substr_replace($this->string, $replacement, $start, $length ?? 2147483647);
         \normalizer_is_normalized($str->string) ?: ($str->string = \normalizer_normalize($str->string));
         if (\false === $str->string) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Invalid UTF-8 string.');
+            throw new InvalidArgumentException('Invalid UTF-8 string.');
         }
         return $str;
     }
     public function split(string $delimiter, int $limit = null, int $flags = null) : array
     {
         if (1 > ($limit = $limit ?? 2147483647)) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Split limit must be a positive integer.');
+            throw new InvalidArgumentException('Split limit must be a positive integer.');
         }
         if ('' === $delimiter) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Split delimiter is empty.');
+            throw new InvalidArgumentException('Split delimiter is empty.');
         }
         if (null !== $flags) {
             return parent::split($delimiter . 'u', $limit, $flags);
         }
         \normalizer_is_normalized($delimiter) ?: ($delimiter = \normalizer_normalize($delimiter));
         if (\false === $delimiter) {
-            throw new \PrefixedByPoP\Symfony\Component\String\Exception\InvalidArgumentException('Split delimiter is not a valid UTF-8 string.');
+            throw new InvalidArgumentException('Split delimiter is not a valid UTF-8 string.');
         }
         $str = clone $this;
         $tail = $this->string;
@@ -289,7 +268,7 @@ class UnicodeString extends \PrefixedByPoP\Symfony\Component\String\AbstractUnic
     }
     public function startsWith($prefix) : bool
     {
-        if ($prefix instanceof \PrefixedByPoP\Symfony\Component\String\AbstractString) {
+        if ($prefix instanceof AbstractString) {
             $prefix = $prefix->string;
         } elseif (\is_array($prefix) || $prefix instanceof \Traversable) {
             return parent::startsWith($prefix);

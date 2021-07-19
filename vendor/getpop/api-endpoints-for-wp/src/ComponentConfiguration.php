@@ -12,8 +12,14 @@ class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
 
-    private static $isNativeAPIEndpointDisabled;
-    private static $getNativeAPIEndpoint;
+    /**
+     * @var bool
+     */
+    private static $isNativeAPIEndpointDisabled = false;
+    /**
+     * @var string
+     */
+    private static $getNativeAPIEndpoint = '/api/';
 
     public static function isNativeAPIEndpointDisabled(): bool
     {
@@ -24,7 +30,12 @@ class ComponentConfiguration
         $callback = [EnvironmentValueHelpers::class, 'toBool'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 
@@ -37,7 +48,12 @@ class ComponentConfiguration
         $callback = [EndpointUtils::class, 'slashURI'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 }

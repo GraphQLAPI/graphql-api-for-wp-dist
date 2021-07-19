@@ -7,12 +7,12 @@ use PoP\LooseContracts\NameResolverInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class NameResolverFacade
 {
-    public static function getInstance() : \PoP\LooseContracts\NameResolverInterface
+    public static function getInstance() : NameResolverInterface
     {
         /**
          * @var NameResolverInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\LooseContracts\NameResolverInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(NameResolverInterface::class);
         return $service;
     }
 }

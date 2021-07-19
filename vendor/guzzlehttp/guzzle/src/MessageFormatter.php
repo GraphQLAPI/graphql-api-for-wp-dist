@@ -60,7 +60,7 @@ class MessageFormatter
      *
      * @return string
      */
-    public function format(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request, \PrefixedByPoP\Psr\Http\Message\ResponseInterface $response = null, \Exception $error = null)
+    public function format(RequestInterface $request, ResponseInterface $response = null, \Exception $error = null)
     {
         $cache = [];
         return \preg_replace_callback('/{\\s*([A-Za-z_\\-\\.0-9]+)\\s*}/', function (array $matches) use($request, $response, $error, &$cache) {
@@ -70,10 +70,10 @@ class MessageFormatter
             $result = '';
             switch ($matches[1]) {
                 case 'request':
-                    $result = \PrefixedByPoP\GuzzleHttp\Psr7\str($request);
+                    $result = Psr7\str($request);
                     break;
                 case 'response':
-                    $result = $response ? \PrefixedByPoP\GuzzleHttp\Psr7\str($response) : '';
+                    $result = $response ? Psr7\str($response) : '';
                     break;
                 case 'req_headers':
                     $result = \trim($request->getMethod() . ' ' . $request->getRequestTarget()) . ' HTTP/' . $request->getProtocolVersion() . "\r\n" . $this->headers($request);
@@ -145,7 +145,7 @@ class MessageFormatter
      *
      * @return string
      */
-    private function headers(\PrefixedByPoP\Psr\Http\Message\MessageInterface $message)
+    private function headers(MessageInterface $message)
     {
         $result = '';
         foreach ($message->getHeaders() as $name => $values) {

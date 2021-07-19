@@ -7,12 +7,12 @@ use PoP\ComponentModel\AttachableExtensions\AttachExtensionServiceInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class AttachExtensionServiceFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\AttachableExtensions\AttachExtensionServiceInterface
+    public static function getInstance() : AttachExtensionServiceInterface
     {
         /**
          * @var AttachExtensionServiceInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\AttachableExtensions\AttachExtensionServiceInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(AttachExtensionServiceInterface::class);
         return $service;
     }
 }

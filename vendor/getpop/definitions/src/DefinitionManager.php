@@ -26,10 +26,10 @@ class DefinitionManager implements \PoP\Definitions\DefinitionManagerInterface
     /**
      * @var \PoP\Definitions\DefinitionPersistenceInterface|null
      */
-    protected $definition_persistence = null;
+    protected $definition_persistence;
     public function isEnabled() : bool
     {
-        return !\PoP\Definitions\Environment::disableDefinitions() && \PoP\Definitions\Configuration\Request::isMangled();
+        return !Environment::disableDefinitions() && Request::isMangled();
     }
     /**
      * @return array<string, DefinitionResolverInterface>

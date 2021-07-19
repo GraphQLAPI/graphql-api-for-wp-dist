@@ -7,8 +7,10 @@ use PrefixedByPoP\Psr\Http\Message\StreamInterface;
  * Reads from multiple streams, one after the other.
  *
  * This is a read-only stream decorator.
+ *
+ * @final
  */
-class AppendStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
+class AppendStream implements StreamInterface
 {
     /** @var StreamInterface[] Streams being decorated */
     private $streams = [];
@@ -41,7 +43,7 @@ class AppendStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
      *
      * @throws \InvalidArgumentException if the stream is not readable
      */
-    public function addStream(\PrefixedByPoP\Psr\Http\Message\StreamInterface $stream)
+    public function addStream(StreamInterface $stream)
     {
         if (!$stream->isReadable()) {
             throw new \InvalidArgumentException('Each stream must be readable');
@@ -54,7 +56,7 @@ class AppendStream implements \PrefixedByPoP\Psr\Http\Message\StreamInterface
     }
     public function getContents()
     {
-        return \PrefixedByPoP\GuzzleHttp\Psr7\Utils::copyToString($this);
+        return Utils::copyToString($this);
     }
     /**
      * Closes each attached stream.

@@ -7,12 +7,12 @@ use PoP\Translation\TranslationAPIInterface;
 use PoP\Root\Container\SystemContainerBuilderFactory;
 class SystemTranslationAPIFacade
 {
-    public static function getInstance() : \PoP\Translation\TranslationAPIInterface
+    public static function getInstance() : TranslationAPIInterface
     {
         /**
          * @var TranslationAPIInterface
          */
-        $service = \PoP\Root\Container\SystemContainerBuilderFactory::getInstance()->get(\PoP\Translation\TranslationAPIInterface::class);
+        $service = SystemContainerBuilderFactory::getInstance()->get(TranslationAPIInterface::class);
         return $service;
     }
 }

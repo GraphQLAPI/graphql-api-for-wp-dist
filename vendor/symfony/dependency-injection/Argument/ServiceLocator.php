@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ServiceLocator as BaseSe
  *
  * @internal
  */
-class ServiceLocator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\ServiceLocator
+class ServiceLocator extends BaseServiceLocator
 {
     private $factory;
     private $serviceMap;

@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class EnvParameterException extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+class EnvParameterException extends InvalidArgumentException
 {
     public function __construct(array $envs, \Throwable $previous = null, string $message = 'Incompatible use of dynamic environment variables "%s" found in parameters.')
     {

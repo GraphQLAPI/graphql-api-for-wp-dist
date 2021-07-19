@@ -10,6 +10,6 @@
  */
 namespace PrefixedByPoP\Symfony\Component\String\Exception;
 
-class InvalidArgumentException extends \InvalidArgumentException implements \PrefixedByPoP\Symfony\Component\String\Exception\ExceptionInterface
+class InvalidArgumentException extends \InvalidArgumentException implements ExceptionInterface
 {
 }

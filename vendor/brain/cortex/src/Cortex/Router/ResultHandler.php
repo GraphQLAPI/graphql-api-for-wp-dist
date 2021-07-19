@@ -16,17 +16,17 @@ use PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class ResultHandler implements \PrefixedByPoP\Brain\Cortex\Router\ResultHandlerInterface
+final class ResultHandler implements ResultHandlerInterface
 {
     /**
      * @inheritdoc
      */
-    public function handle(\PrefixedByPoP\Brain\Cortex\Router\MatchingResult $result, \WP $wp, $doParseRequest)
+    public function handle(MatchingResult $result, \WP $wp, $doParseRequest)
     {
         /** @var \Brain\Cortex\Router\MatchingResult $result */
         $result = apply_filters('cortex.match.done', $result, $wp, $doParseRequest);
         $handlerResult = $doParseRequest;
-        if (!$result instanceof \PrefixedByPoP\Brain\Cortex\Router\MatchingResult) {
+        if (!$result instanceof MatchingResult) {
             return $result;
         }
         /** @var \Brain\Cortex\Router\MatchingResult $result */
@@ -66,7 +66,7 @@ final class ResultHandler implements \PrefixedByPoP\Brain\Cortex\Router\ResultHa
         if (\is_callable($handler)) {
             $built = $handler;
         }
-        if (!$built && $handler instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface) {
+        if (!$built && $handler instanceof ControllerInterface) {
             $built = function (array $vars, \WP $wp, $template) use($handler) {
                 return $handler->run($vars, $wp, $template);
             };

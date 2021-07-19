@@ -57,13 +57,13 @@ final class Instantiator
      */
     public static function instantiate(string $class, array $properties = [], array $privateProperties = [])
     {
-        $reflector = \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry::$reflectors[$class] ?? \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry::getClassReflector($class);
-        if (\PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry::$cloneable[$class]) {
-            $wrappedInstance = [clone \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry::$prototypes[$class]];
-        } elseif (\PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry::$instantiableWithoutConstructor[$class]) {
+        $reflector = Registry::$reflectors[$class] ?? Registry::getClassReflector($class);
+        if (Registry::$cloneable[$class]) {
+            $wrappedInstance = [clone Registry::$prototypes[$class]];
+        } elseif (Registry::$instantiableWithoutConstructor[$class]) {
             $wrappedInstance = [$reflector->newInstanceWithoutConstructor()];
-        } elseif (null === \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Registry::$prototypes[$class]) {
-            throw new \PrefixedByPoP\Symfony\Component\VarExporter\Exception\NotInstantiableTypeException($class);
+        } elseif (null === Registry::$prototypes[$class]) {
+            throw new NotInstantiableTypeException($class);
         } elseif ($reflector->implementsInterface('Serializable') && (\PHP_VERSION_ID < 70400 || !\method_exists($class, '__unserialize'))) {
             $wrappedInstance = [\unserialize('C:' . \strlen($class) . ':"' . $class . '":0:{}')];
         } else {
@@ -81,7 +81,7 @@ final class Instantiator
                 // deal with array of instances, so we need to wrap values
                 $properties[$name] = [$value];
             }
-            (\PrefixedByPoP\Symfony\Component\VarExporter\Internal\Hydrator::$hydrators[$class] ?? \PrefixedByPoP\Symfony\Component\VarExporter\Internal\Hydrator::getHydrator($class))($properties, $wrappedInstance);
+            (Hydrator::$hydrators[$class] ?? Hydrator::getHydrator($class))($properties, $wrappedInstance);
         }
         return $wrappedInstance[0];
     }

@@ -19,18 +19,21 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ResolveHotPathPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class ResolveHotPathPass extends AbstractRecursivePass
 {
     private $tagName;
     private $resolvedIds = [];
     public function __construct(string $tagName = 'container.hot_path')
     {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/dependency-injection', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
         $this->tagName = $tagName;
     }
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         try {
             parent::process($container);
@@ -41,14 +44,13 @@ class ResolveHotPathPass extends \PrefixedByPoP\Symfony\Component\DependencyInje
     }
     /**
      * {@inheritdoc}
-     * @param bool $isRoot
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ArgumentInterface) {
+        if ($value instanceof ArgumentInterface) {
             return $value;
         }
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition && $isRoot) {
+        if ($value instanceof Definition && $isRoot) {
             if ($value->isDeprecated()) {
                 return $value->clearTag($this->tagName);
             }
@@ -57,7 +59,7 @@ class ResolveHotPathPass extends \PrefixedByPoP\Symfony\Component\DependencyInje
                 return $value;
             }
         }
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference && \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder::IGNORE_ON_UNINITIALIZED_REFERENCE !== $value->getInvalidBehavior() && $this->container->hasDefinition($id = (string) $value)) {
+        if ($value instanceof Reference && ContainerBuilder::IGNORE_ON_UNINITIALIZED_REFERENCE !== $value->getInvalidBehavior() && $this->container->hasDefinition($id = (string) $value)) {
             $definition = $this->container->getDefinition($id);
             if ($definition->isDeprecated() || $definition->hasTag($this->tagName)) {
                 return $value;

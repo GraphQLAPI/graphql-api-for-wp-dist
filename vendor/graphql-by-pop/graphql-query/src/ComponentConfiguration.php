@@ -8,15 +8,21 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
-    private static $enableVariablesAsExpressions;
-    private static $enableComposableDirectives;
+    /**
+     * @var bool
+     */
+    private static $enableVariablesAsExpressions = \false;
+    /**
+     * @var bool
+     */
+    private static $enableComposableDirectives = \false;
     public static function enableVariablesAsExpressions() : bool
     {
         // Define properties
         $envVariable = \GraphQLByPoP\GraphQLQuery\Environment::ENABLE_VARIABLES_AS_EXPRESSIONS;
         $selfProperty =& self::$enableVariablesAsExpressions;
         $defaultValue = \false;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -27,7 +33,7 @@ class ComponentConfiguration
         $envVariable = \GraphQLByPoP\GraphQLQuery\Environment::ENABLE_COMPOSABLE_DIRECTIVES;
         $selfProperty =& self::$enableComposableDirectives;
         $defaultValue = \false;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

@@ -11,12 +11,12 @@ abstract class AbstractCRUDComponentMutationResolverBridge extends \PoP\Componen
         return \true;
     }
     /**
-     * @param mixed $result_id Maybe an int, maybe a string
+     * @param string|int $result_id
      */
     protected function modifyDataProperties(array &$data_properties, $result_id) : void
     {
         parent::modifyDataProperties($data_properties, $result_id);
         // Modify the block-data-settings, saying to select the id of the newly created post
-        $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS]['include'] = array($result_id);
+        $data_properties[DataloadingConstants::QUERYARGS]['include'] = array($result_id);
     }
 }

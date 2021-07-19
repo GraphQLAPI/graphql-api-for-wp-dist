@@ -7,7 +7,7 @@ use PoP\Hooks\HooksAPIInterface;
 use PoP\LooseContracts\LooseContractManagerInterface;
 use PoP\LooseContracts\NameResolverInterface;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
-abstract class AbstractLooseContractResolutionSet extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
+abstract class AbstractLooseContractResolutionSet extends AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var \PoP\LooseContracts\LooseContractManagerInterface
@@ -21,7 +21,7 @@ abstract class AbstractLooseContractResolutionSet extends \PoP\Root\Services\Abs
      * @var \PoP\Hooks\HooksAPIInterface
      */
     protected $hooksAPI;
-    public function __construct(\PoP\LooseContracts\LooseContractManagerInterface $looseContractManager, \PoP\LooseContracts\NameResolverInterface $nameResolver, \PoP\Hooks\HooksAPIInterface $hooksAPI)
+    public function __construct(LooseContractManagerInterface $looseContractManager, NameResolverInterface $nameResolver, HooksAPIInterface $hooksAPI)
     {
         $this->looseContractManager = $looseContractManager;
         $this->nameResolver = $nameResolver;
@@ -33,8 +33,6 @@ abstract class AbstractLooseContractResolutionSet extends \PoP\Root\Services\Abs
     }
     /**
      * Function to execute all code to satisfy the contracts
-     *
-     * @return void
      */
-    protected abstract function resolveContracts();
+    protected abstract function resolveContracts() : void;
 }

@@ -16,7 +16,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
  * @author Nicolas Grekas <p@tchwork.com>
  * @author Julien Maulny <jmaulny@darkmira.fr>
  */
-class InvalidParameterTypeException extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+class InvalidParameterTypeException extends InvalidArgumentException
 {
     public function __construct(string $serviceId, string $type, \ReflectionParameter $parameter)
     {

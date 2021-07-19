@@ -6,5 +6,5 @@ namespace PoP\API\Schema;
 use PoP\API\Schema\FieldQuerySet;
 interface FieldQueryConvertorInterface
 {
-    public function convertAPIQuery(string $dotNotation, ?array $fragments = null) : \PoP\API\Schema\FieldQuerySet;
+    public function convertAPIQuery(string $dotNotation, ?array $fragments = null) : FieldQuerySet;
 }

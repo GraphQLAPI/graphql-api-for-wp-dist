@@ -3,24 +3,23 @@
 declare (strict_types=1);
 namespace PoPSchema\Tags\TypeResolvers;
 
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
 use PoPSchema\Tags\ComponentContracts\TagAPIRequestedContractTrait;
-abstract class AbstractTagTypeResolver extends \PoP\ComponentModel\TypeResolvers\AbstractTypeResolver
+use PoPSchema\Taxonomies\TypeResolvers\AbstractTaxonomyTypeResolver;
+abstract class AbstractTagTypeResolver extends AbstractTaxonomyTypeResolver
 {
     use TagAPIRequestedContractTrait;
     public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('Representation of a tag, added to a custo post', 'tags');
+        return $this->translationAPI->__('Representation of a tag, added to a custom post', 'tags');
     }
     /**
+     * @return string|int|null
      * @param object $resultItem
      */
     public function getID($resultItem)
     {
-        $cmstagsresolver = $this->getObjectPropertyAPI();
+        $tagTypeAPI = $this->getTypeAPI();
         $tag = $resultItem;
-        return $cmstagsresolver->getTagID($tag);
+        return $tagTypeAPI->getTagID($tag);
     }
 }

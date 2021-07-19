@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class Compiler implements \PrefixedByPoP\Symfony\Contracts\Service\ResetInterface
+class Compiler implements ResetInterface
 {
     private $source;
     private $functions;
@@ -47,12 +47,12 @@ class Compiler implements \PrefixedByPoP\Symfony\Contracts\Service\ResetInterfac
      *
      * @return $this
      */
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $node)
+    public function compile(Node\Node $node)
     {
         $node->compile($this);
         return $this;
     }
-    public function subcompile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $node)
+    public function subcompile(Node\Node $node)
     {
         $current = $this->source;
         $this->source = '';
@@ -78,7 +78,7 @@ class Compiler implements \PrefixedByPoP\Symfony\Contracts\Service\ResetInterfac
      */
     public function string(string $value)
     {
-        $this->source .= \sprintf('"%s"', \addcslashes($value, "\0\t\"\$\\"));
+        $this->source .= \sprintf('"%s"', \addcslashes($value, "\x00\t\"\$\\"));
         return $this;
     }
     /**

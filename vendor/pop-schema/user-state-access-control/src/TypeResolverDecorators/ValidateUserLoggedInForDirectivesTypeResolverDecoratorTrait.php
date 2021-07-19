@@ -9,10 +9,10 @@ trait ValidateUserLoggedInForDirectivesTypeResolverDecoratorTrait
 {
     protected function getRequiredEntryValue() : ?string
     {
-        return \PoPSchema\UserStateAccessControl\ConfigurationEntries\UserStates::IN;
+        return UserStates::IN;
     }
     protected function getValidateUserStateDirectiveResolverClass() : string
     {
-        return \PoPSchema\UserStateAccessControl\DirectiveResolvers\ValidateIsUserLoggedInForDirectivesDirectiveResolver::class;
+        return ValidateIsUserLoggedInForDirectivesDirectiveResolver::class;
     }
 }

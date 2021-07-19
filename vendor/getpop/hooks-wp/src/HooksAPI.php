@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PoP\HooksWP;
 
 use PoP\Hooks\HooksAPIInterface;
+
 class HooksAPI implements HooksAPIInterface
 {
     public function addFilter(string $tag, callable $function_to_add, int $priority = 10, int $accepted_args = 1): void

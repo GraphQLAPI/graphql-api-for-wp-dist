@@ -25,7 +25,7 @@ use PrefixedByPoP\FastRoute\RouteParser\Std;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
+final class Router implements RouterInterface
 {
     /**
      * @var \Brain\Cortex\Group\GroupCollectionInterface
@@ -59,39 +59,39 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
      * @param \FastRoute\RouteCollector                    $collector
      * @param callable                                     $dispatcherFactory
      */
-    public function __construct(\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $routes, \PrefixedByPoP\Brain\Cortex\Group\GroupCollectionInterface $groups, \PrefixedByPoP\FastRoute\RouteCollector $collector = null, callable $dispatcherFactory = null)
+    public function __construct(RouteCollectionInterface $routes, GroupCollectionInterface $groups, RouteCollector $collector = null, callable $dispatcherFactory = null)
     {
         $this->groups = $groups;
         $this->routes = $routes;
-        $this->collector = $collector ?: new \PrefixedByPoP\FastRoute\RouteCollector(new \PrefixedByPoP\FastRoute\RouteParser\Std(), new \PrefixedByPoP\FastRoute\DataGenerator\GroupCountBased());
+        $this->collector = $collector ?: new RouteCollector(new Std(), new DefDataGenerator());
         $this->dispatcherFactory = $dispatcherFactory;
     }
     /**
      * @inheritdoc
      */
-    public function match(\PrefixedByPoP\Brain\Cortex\Uri\UriInterface $uri, $httpMethod)
+    public function match(UriInterface $uri, $httpMethod)
     {
-        if ($this->results instanceof \PrefixedByPoP\Brain\Cortex\Router\MatchingResult) {
+        if ($this->results instanceof MatchingResult) {
             return $this->results;
         }
         if (!\count($this->routes) || !$this->parseRoutes($uri, $httpMethod)) {
-            $this->results = new \PrefixedByPoP\Brain\Cortex\Router\MatchingResult(['route' => null]);
+            $this->results = new MatchingResult(['route' => null]);
             return $this->results;
         }
         // in case of exact match, no need to go further
-        if ($this->results instanceof \PrefixedByPoP\Brain\Cortex\Router\MatchingResult) {
+        if ($this->results instanceof MatchingResult) {
             return $this->results;
         }
         $dispatcher = $this->buildDispatcher($this->collector->getData());
         unset($this->collector);
         $uriPath = '/' . \trim($uri->path(), '/');
         $routeInfo = $dispatcher->dispatch($httpMethod, $uriPath ?: '/');
-        if ($routeInfo[0] === \PrefixedByPoP\FastRoute\Dispatcher::FOUND) {
+        if ($routeInfo[0] === Dispatcher::FOUND) {
             $route = $this->parsedRoutes[$routeInfo[1]];
             $vars = $routeInfo[2];
             $this->results = $this->finalizeRoute($route, $vars, $uri);
         }
-        $this->results or $this->results = new \PrefixedByPoP\Brain\Cortex\Router\MatchingResult(['route' => null]);
+        $this->results or $this->results = new MatchingResult(['route' => null]);
         unset($this->parsedRoutes);
         return $this->results;
     }
@@ -100,9 +100,9 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
      * @param  string                         $httpMethod
      * @return int
      */
-    private function parseRoutes(\PrefixedByPoP\Brain\Cortex\Uri\UriInterface $uri, $httpMethod)
+    private function parseRoutes(UriInterface $uri, $httpMethod)
     {
-        $iterator = new \PrefixedByPoP\Brain\Cortex\Router\RouteFilterIterator($this->routes, $uri);
+        $iterator = new RouteFilterIterator($this->routes, $uri);
         $parsed = 0;
         /** @var \Brain\Cortex\Route\RouteInterface $route */
         foreach ($iterator as $route) {
@@ -130,7 +130,7 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
      * @param  string                             $httpMethod
      * @return \Brain\Cortex\Route\RouteInterface
      */
-    private function sanitizeRouteMethod(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route, $httpMethod)
+    private function sanitizeRouteMethod(RouteInterface $route, $httpMethod)
     {
         if (empty($route['method']) || !(\is_string($route['method']) || \is_array($route['method']))) {
             $route['method'] = $httpMethod;
@@ -148,12 +148,12 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
      * @param                                     $httpMethod
      * @return bool
      */
-    private function validateRoute(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route, $httpMethod)
+    private function validateRoute(RouteInterface $route, $httpMethod)
     {
         $id = $route->id();
         $path = \trim($route['path'], '/');
         $handler = $route['handler'];
-        return \is_string($id) && $id && \filter_var($path, \FILTER_SANITIZE_URL) === $path && \in_array($httpMethod, (array) $route['method'], \true) && (\is_callable($handler) || $handler instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface);
+        return \is_string($id) && $id && \filter_var($path, \FILTER_SANITIZE_URL) === $path && \in_array($httpMethod, (array) $route['method'], \true) && (\is_callable($handler) || $handler instanceof ControllerInterface);
     }
     /**
      * @param  array $data
@@ -166,7 +166,7 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
             $factory = $this->dispatcherFactory;
             $dispatcher = $factory($data);
         }
-        $dispatcher instanceof \PrefixedByPoP\FastRoute\Dispatcher or $dispatcher = new \PrefixedByPoP\FastRoute\Dispatcher\GroupCountBased($data);
+        $dispatcher instanceof Dispatcher or $dispatcher = new DefDispatcher($data);
         return $dispatcher;
     }
     /**
@@ -175,7 +175,7 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
      * @param  \Brain\Cortex\Uri\UriInterface     $uri
      * @return \Brain\Cortex\Router\MatchingResult
      */
-    private function finalizeRoute(\PrefixedByPoP\Brain\Cortex\Route\RouteInterface $route, array $vars, \PrefixedByPoP\Brain\Cortex\Uri\UriInterface $uri)
+    private function finalizeRoute(RouteInterface $route, array $vars, UriInterface $uri)
     {
         \is_null($route['merge_query_string']) and $route['merge_query_string'] = \true;
         $merge = \filter_var($route['merge_query_string'], \FILTER_VALIDATE_BOOLEAN);
@@ -190,16 +190,16 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
                 $cb = $route['vars'];
                 $routeVars = $cb($vars, $uri);
                 \is_array($routeVars) and $vars = $routeVars;
-                $routeVars instanceof \PrefixedByPoP\Brain\Cortex\Router\MatchingResult and $result = $routeVars;
+                $routeVars instanceof MatchingResult and $result = $routeVars;
                 break;
             case \is_array($route['vars']):
                 $vars = \array_merge($route['vars'], $vars);
                 break;
-            case $route['vars'] instanceof \PrefixedByPoP\Brain\Cortex\Router\MatchingResult:
+            case $route['vars'] instanceof MatchingResult:
                 $result = $route['vars'];
                 break;
         }
-        if ($result instanceof \PrefixedByPoP\Brain\Cortex\Router\MatchingResult) {
+        if ($result instanceof MatchingResult) {
             return $result;
         }
         if (!empty($route['default_vars']) && \is_array($route['default_vars'])) {
@@ -208,7 +208,7 @@ final class Router implements \PrefixedByPoP\Brain\Cortex\Router\RouterInterface
         $vars = $this->ensurePreviewVars($vars, $uriVars);
         $vars = apply_filters('cortex.matched-vars', $vars, $route, $uri);
         $noTemplate = \filter_var($route['no_template'], \FILTER_VALIDATE_BOOLEAN);
-        return new \PrefixedByPoP\Brain\Cortex\Router\MatchingResult(['vars' => (array) $vars, 'matches' => (array) $varsOriginal, 'route' => $route->id(), 'path' => $route['path'], 'handler' => $route['handler'], 'before' => $route['before'], 'after' => $route['after'], 'template' => $noTemplate ? \false : $route['template']]);
+        return new MatchingResult(['vars' => (array) $vars, 'matches' => (array) $varsOriginal, 'route' => $route->id(), 'path' => $route['path'], 'handler' => $route['handler'], 'before' => $route['before'], 'after' => $route['after'], 'template' => $noTemplate ? \false : $route['template']]);
     }
     /**
      * To ensure preview works, we need to merge preview-related query string

@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Admin\Tables;
 
-use GraphQLAPI\GraphQLAPI\General\RequestParams;
-use GraphQLAPI\GraphQLAPI\Facades\ModuleRegistryFacade;
-use GraphQLAPI\GraphQLAPI\ConditionalOnEnvironment\Admin\Services\MenuPages\ModulesMenuPage;
-use GraphQLAPI\GraphQLAPI\ConditionalOnEnvironment\Admin\Services\MenuPages\SettingsMenuPage;
-use GraphQLAPI\GraphQLAPI\Facades\ModuleTypeRegistryFacade;
+use GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\SystemServices\TableActions\ModuleListTableAction;
+use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
+use GraphQLAPI\GraphQLAPI\Facades\Registries\ModuleRegistryFacade;
+use GraphQLAPI\GraphQLAPI\Facades\Registries\ModuleTypeRegistryFacade;
+use GraphQLAPI\GraphQLAPI\PluginManagement\MainPluginManager;
+use GraphQLAPI\GraphQLAPI\Services\MenuPages\ModulesMenuPage;
+use GraphQLAPI\GraphQLAPI\Services\MenuPages\SettingsMenuPage;
 use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use GraphQLAPI\GraphQLAPI\Admin\TableActions\ModuleListTableAction;
+use PoP\ComponentModel\Facades\Instances\SystemInstanceManagerFacade;
 
 /**
  * Module Table
@@ -21,8 +23,6 @@ class ModuleListTable extends AbstractItemListTable
 
     /**
      * Singular name of the listed records
-     *
-     * @return string
      */
     public function getItemSingularName(): string
     {
@@ -31,8 +31,6 @@ class ModuleListTable extends AbstractItemListTable
 
     /**
      * Plural name of the listed records
-     *
-     * @return string
      */
     public function getItemPluralName(): string
     {
@@ -81,8 +79,6 @@ class ModuleListTable extends AbstractItemListTable
 
     /**
      * Gets the current filtering view
-     *
-     * @return string
      */
     protected function getCurrentView(): string
     {
@@ -101,10 +97,18 @@ class ModuleListTable extends AbstractItemListTable
         $currentView = $this->getCurrentView();
 
         // Module page URL
-        $url = admin_url(sprintf('admin.php?page=%s', esc_attr($_REQUEST['page'] ?? '')));
+        $url = admin_url(sprintf(
+            'admin.php?page=%s',
+            esc_attr($_REQUEST['page'] ?? '')
+        ));
 
         // All entries
-        $views['all'] = sprintf('<a href="%s" class="%s">%s</a>', $url, $currentView == '' ? 'current' : '', \__('All', 'graphql-api'));
+        $views['all'] = sprintf(
+            '<a href="%s" class="%s">%s</a>',
+            $url,
+            $currentView == '' ? 'current' : '',
+            \__('All', 'graphql-api')
+        );
 
         // Entries for every module type: retrieve the moduleType from all modules
         $moduleRegistry = ModuleRegistryFacade::getInstance();
@@ -119,7 +123,12 @@ class ModuleListTable extends AbstractItemListTable
         foreach ($moduleTypes as $moduleType) {
             $moduleTypeResolver = $moduleTypeRegistry->getModuleTypeResolver($moduleType);
             $moduleTypeSlug = $moduleTypeResolver->getSlug($moduleType);
-            $views[$moduleTypeSlug] = sprintf('<a href="%s" class="%s">%s</a>', \add_query_arg(self::URL_PARAM_MODULE_TYPE, $moduleTypeSlug, $url), 'module-type-view module-type-' . $moduleTypeSlug . ($currentView == $moduleTypeSlug ? ' current' : ''), $moduleTypeResolver->getName($moduleType));
+            $views[$moduleTypeSlug] = sprintf(
+                '<a href="%s" class="%s">%s</a>',
+                \add_query_arg(self::URL_PARAM_MODULE_TYPE, $moduleTypeSlug, $url),
+                'module-type-view module-type-' . $moduleTypeSlug . ($currentView == $moduleTypeSlug ? ' current' : ''),
+                $moduleTypeResolver->getName($moduleType)
+            );
         }
 
         return $views;
@@ -130,13 +139,16 @@ class ModuleListTable extends AbstractItemListTable
      *
      * @param int $per_page
      * @param int $page_number
-     *
      * @return mixed
      */
     public function getItems($per_page = 5, $page_number = 1)
     {
         $results = $this->getAllItems();
-        return array_splice($results, ($page_number - 1) * $per_page, $per_page);
+        return array_splice(
+            $results,
+            ($page_number - 1) * $per_page,
+            $per_page
+        );
     }
 
     /**
@@ -174,10 +186,27 @@ class ModuleListTable extends AbstractItemListTable
                  */
                 $modulesMenuPage = $instanceManager->getInstance(ModulesMenuPage::class);
                 if ($item['has-docs']) {
-                    $url = \admin_url(sprintf('admin.php?page=%s&%s=%s&%s=%s&TB_iframe=true&width=600&height=550', $modulesMenuPage->getScreenID(), RequestParams::TAB, RequestParams::TAB_DOCS, RequestParams::MODULE, urlencode($item['module'])));
-                    $actions['docs'] = \sprintf('<a href="%s" class="%s" data-title="%s">%s</a>', \esc_url($url), 'thickbox open-plugin-details-modal', \esc_attr($item['name']), \__('View details', 'graphql-api'));
+                    $url = \admin_url(sprintf(
+                        'admin.php?page=%s&%s=%s&%s=%s&TB_iframe=true&width=600&height=550',
+                        $modulesMenuPage->getScreenID(),
+                        RequestParams::TAB,
+                        RequestParams::TAB_DOCS,
+                        RequestParams::MODULE,
+                        urlencode($item['module'])
+                    ));
+                    $actions['docs'] = \sprintf(
+                        '<a href="%s" class="%s" data-title="%s">%s</a>',
+                        \esc_url($url),
+                        'thickbox open-plugin-details-modal',
+                        \esc_attr($item['name']),
+                        \__('View details', 'graphql-api')
+                    );
                 }
-                return sprintf('<div class="plugin-description"><p>%s</p></div><div class="second">%s</div>', $item['description'], $this->row_actions($actions, true));
+                return sprintf(
+                    '<div class="plugin-description"><p>%s</p></div><div class="second">%s</div>',
+                    $item['description'],
+                    $this->row_actions($actions, true)
+                );
             case 'depends-on':
                 // Output the list with AND lists of dependencies
                 // Each list is an OR list of depended modules
@@ -195,29 +224,48 @@ class ModuleListTable extends AbstractItemListTable
                     if (!$dependedModuleList) {
                         continue;
                     }
-                    $dependedModuleListNames = array_map(function ($dependedModule) use ($moduleRegistry) {
-                        $after = '';
-                        // Check if it has the "inverse" token at the beginning,
-                        // then it depends on the module being disabled, not enabled
-                        if ($moduleRegistry->isInverseDependency($dependedModule)) {
-                            // Revert to the normal module
-                            $dependedModule = $moduleRegistry->getInverseDependency($dependedModule);
-                            $after = \__('⇠ as disabled', 'graphql-api');
-                        }
-                        $moduleResolver = $moduleRegistry->getModuleResolver($dependedModule);
-                        return sprintf('%1$s %2$s %3$s', '▹', $moduleResolver->getName($dependedModule), $after);
-                    }, $dependedModuleList);
+                    $dependedModuleListNames = array_map(
+                        function ($dependedModule) use ($moduleRegistry) {
+                            $after = '';
+                            // Check if it has the "inverse" token at the beginning,
+                            // then it depends on the module being disabled, not enabled
+                            if ($moduleRegistry->isInverseDependency($dependedModule)) {
+                                // Revert to the normal module
+                                $dependedModule = $moduleRegistry->getInverseDependency($dependedModule);
+                                $after = \__('⇠ as disabled', 'graphql-api');
+                            }
+                            $moduleResolver = $moduleRegistry->getModuleResolver($dependedModule);
+                            return sprintf(
+                                '%1$s %2$s %3$s',
+                                '▹',
+                                $moduleResolver->getName($dependedModule),
+                                $after
+                            );
+                        },
+                        $dependedModuleList
+                    );
                     if (count($dependedModuleListNames) >= 2) {
                         $lastElem = array_pop($dependedModuleListNames);
-                        $commaElems = implode(\__(', ', 'graphql-api'), $dependedModuleListNames);
-                        $items[] = sprintf(\__('%s or %s', 'graphql-api'), $commaElems, $lastElem);
+                        $commaElems = implode(
+                            \__(', ', 'graphql-api'),
+                            $dependedModuleListNames
+                        );
+                        $items[] = sprintf(
+                            \__('%s or %s', 'graphql-api'),
+                            $commaElems,
+                            $lastElem
+                        );
                     } else {
                         $items[] = $dependedModuleListNames[0];
                     }
                 }
                 return implode('<br/>', $items);
             case 'enabled':
-                return \sprintf('<span role="img" aria-label="%s">%s</span>', $item['is-enabled'] ? \__('Yes', 'graphql-api') : \__('No', 'graphql-api'), $item['is-enabled'] ? '✅' : '❌');
+                return \sprintf(
+                    '<span role="img" aria-label="%s">%s</span>',
+                    $item['is-enabled'] ? \__('Yes', 'graphql-api') : \__('No', 'graphql-api'),
+                    $item['is-enabled'] ? '✅' : '❌'
+                );
         }
         return '';
     }
@@ -237,7 +285,11 @@ class ModuleListTable extends AbstractItemListTable
          * @var array<string, mixed>
          */
         $item = $item;
-        return sprintf('<input type="checkbox" name="%s[]" value="%s" />', ModuleListTableAction::INPUT_BULK_ACTION_IDS, $item['id']);
+        return sprintf(
+            '<input type="checkbox" name="%s[]" value="%s" />',
+            ModuleListTableAction::INPUT_BULK_ACTION_IDS,
+            $item['id']
+        );
     }
 
     /**
@@ -261,7 +313,14 @@ class ModuleListTable extends AbstractItemListTable
             // If it is enabled, offer to disable it
             // Unless the module cannot be disabled
             if ($item['can-be-disabled']) {
-                $actions['disable'] = \sprintf($linkPlaceholder, $page, ModuleListTableAction::ACTION_DISABLE, $item['id'], $nonce, \__('Disable', 'graphql-api'));
+                $actions['disable'] = \sprintf(
+                    $linkPlaceholder,
+                    $page,
+                    ModuleListTableAction::ACTION_DISABLE,
+                    $item['id'],
+                    $nonce,
+                    \__('Disable', 'graphql-api')
+                );
             } else {
                 $actions['enabled'] = \__('Enabled', 'graphql-api');
             }
@@ -273,11 +332,28 @@ class ModuleListTable extends AbstractItemListTable
                  * @var SettingsMenuPage
                  */
                 $settingsMenuPage = $instanceManager->getInstance(SettingsMenuPage::class);
-                $actions['settings'] = \sprintf('<a href="%s">%s</a>', sprintf(\admin_url(sprintf('admin.php?page=%s&tab=%s', $settingsMenuPage->getScreenID(), $item['id']))), \__('Settings', 'graphql-api'));
+                $actions['settings'] = \sprintf(
+                    '<a href="%s">%s</a>',
+                    sprintf(
+                        \admin_url(sprintf(
+                            'admin.php?page=%1$s&tab=%2$s#%2$s',
+                            $settingsMenuPage->getScreenID(),
+                            $item['id']
+                        ))
+                    ),
+                    \__('Settings', 'graphql-api')
+                );
             }
         } elseif ($item['can-be-enabled']) {
             // If not enabled and can be enabled, offer to do it
-            $actions['enable'] = \sprintf($linkPlaceholder, $page, ModuleListTableAction::ACTION_ENABLE, $item['id'], $nonce, \__('Enable', 'graphql-api'));
+            $actions['enable'] = \sprintf(
+                $linkPlaceholder,
+                $page,
+                ModuleListTableAction::ACTION_ENABLE,
+                $item['id'],
+                $nonce,
+                \__('Enable', 'graphql-api')
+            );
         } else {
             // Not enabled and can't be enabled, mention requirements not met
             // Not enabled for "striped" table style because, without a link, color contrast is not good:
@@ -286,7 +362,7 @@ class ModuleListTable extends AbstractItemListTable
             $actions['disabled'] = \__('Disabled', 'graphql-api');
             // }
         }
-        return $title . $this->row_actions($actions);
+        return $title . $this->row_actions($actions/*, $this->usePluginTableStyle()*/);
     }
 
     /**
@@ -305,17 +381,21 @@ class ModuleListTable extends AbstractItemListTable
      */
     public function get_columns()
     {
-        return array_merge([
-            'cb' => '<input type="checkbox" />',
-            'name' => \__('Module', 'graphql-api'),
-        ], $this->usePluginTableStyle() ?
-            [] :
+        return array_merge(
             [
-                'enabled' => \__('Enabled', 'graphql-api'),
-            ], [
-            'desc' => \__('Description', 'graphql-api'),
-            'depends-on' => \__('Depends on', 'graphql-api'),
-        ]);
+                'cb' => '<input type="checkbox" />',
+                'name' => \__('Module', 'graphql-api'),
+            ],
+            $this->usePluginTableStyle() ?
+                [] :
+                [
+                    'enabled' => \__('Enabled', 'graphql-api'),
+                ],
+            [
+                'desc' => \__('Description', 'graphql-api'),
+                'depends-on' => \__('Depends on', 'graphql-api'),
+            ]
+        );
     }
 
     /**
@@ -351,9 +431,12 @@ class ModuleListTable extends AbstractItemListTable
         if ($this->usePluginTableStyle()) {
             return array( 'widefat', 'plugins', $this->_args['plural'] );
         }
-        return array_diff(parent::get_table_classes(), [
-            'fixed'
-        ]);
+        return array_diff(
+            parent::get_table_classes(),
+            [
+                'fixed'
+            ]
+        );
     }
 
     /**
@@ -368,7 +451,10 @@ class ModuleListTable extends AbstractItemListTable
          * @var array<string, mixed>
          */
         $item = $item;
-        return sprintf('module-%s', $item['module-type']);
+        return sprintf(
+            'module-%s',
+            $item['module-type']
+        );
     }
 
     /**
@@ -388,8 +474,15 @@ class ModuleListTable extends AbstractItemListTable
          */
         $arrayItem = $item;
         if ($this->usePluginTableStyle()) {
-            $classnames = sprintf('%s %s', $this->getTableStyleRowClassnames($item), $arrayItem['is-enabled'] ? 'active' : 'inactive');
-            echo sprintf('<tr class="%s">', $classnames);
+            $classnames = sprintf(
+                '%s %s',
+                $this->getTableStyleRowClassnames($item),
+                $arrayItem['is-enabled'] ? 'active' : 'inactive'
+            );
+            echo sprintf(
+                '<tr class="%s">',
+                $classnames
+            );
             $this->single_row_columns($item);
             echo '</tr>';
         } else {
@@ -407,15 +500,22 @@ class ModuleListTable extends AbstractItemListTable
     {
         $this->_column_headers = $this->get_column_info();
 
+        /**
+         * Watch out! ModuleListTableAction is registered in the SystemContainer,
+         * not in the ApplicationContainer
+         */
         /** Process bulk or single action */
-        $instanceManager = InstanceManagerFacade::getInstance();
+        $systemInstanceManager = SystemInstanceManagerFacade::getInstance();
         /**
          * @var ModuleListTableAction
          */
-        $tableAction = $instanceManager->getInstance(ModuleListTableAction::class);
+        $tableAction = $systemInstanceManager->getInstance(ModuleListTableAction::class);
         $tableAction->maybeProcessAction();
 
-        $per_page = $this->get_items_per_page($this->getItemsPerPageOptionName(), $this->getDefaultItemsPerPage());
+        $per_page = $this->get_items_per_page(
+            $this->getItemsPerPageOptionName(),
+            $this->getDefaultItemsPerPage()
+        );
         $current_page = $this->get_pagenum();
         $total_items  = $this->getRecordCount();
 
@@ -429,17 +529,23 @@ class ModuleListTable extends AbstractItemListTable
 
     /**
      * Enqueue the required assets
-     *
-     * @return void
      */
     public function enqueueAssets(): void
     {
         parent::enqueueAssets();
 
+        $mainPluginURL = (string) MainPluginManager::getConfig('url');
+        $mainPluginVersion = (string) MainPluginManager::getConfig('version');
+
         /**
          * Fix the issues with the WP List Table
          */
-        \wp_enqueue_style('graphql-api-module-list-table', \GRAPHQL_API_URL . 'assets/css/module-list-table.css', array(), \GRAPHQL_API_VERSION);
+        \wp_enqueue_style(
+            'graphql-api-module-list-table',
+            $mainPluginURL . 'assets/css/module-list-table.css',
+            array(),
+            $mainPluginVersion
+        );
     }
 
     /**

@@ -13,13 +13,13 @@ namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
 use PrefixedByPoP\Symfony\Component\Cache\CacheItem;
 // Help opcache.preload discover always-needed symbols
-\class_exists(\PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+\class_exists(CacheItem::class);
 /**
  * Interface for adapters managing instances of Symfony's CacheItem.
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
-interface AdapterInterface extends \PrefixedByPoP\Psr\Cache\CacheItemPoolInterface
+interface AdapterInterface extends CacheItemPoolInterface
 {
     /**
      * {@inheritdoc}
@@ -37,6 +37,7 @@ interface AdapterInterface extends \PrefixedByPoP\Psr\Cache\CacheItemPoolInterfa
      * {@inheritdoc}
      *
      * @return bool
+     * @param string $prefix
      */
-    public function clear(string $prefix = '');
+    public function clear($prefix = '');
 }

@@ -2,7 +2,7 @@
 
 namespace PrefixedByPoP\FastRoute\Dispatcher;
 
-class GroupPosBased extends \PrefixedByPoP\FastRoute\Dispatcher\RegexBasedAbstract
+class GroupPosBased extends RegexBasedAbstract
 {
     public function __construct($data)
     {

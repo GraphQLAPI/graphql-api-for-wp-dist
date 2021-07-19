@@ -3,13 +3,17 @@
 declare (strict_types=1);
 namespace PoP\Root;
 
+use PoP\Root\Component\ApplicationEvents;
 use PoP\Root\Component\AbstractComponent;
+use PoP\Root\Container\HybridCompilerPasses\AutomaticallyInstantiatedServiceCompilerPass;
 use PoP\Root\Container\ContainerBuilderFactory;
+use PoP\Root\Container\SystemContainerBuilderFactory;
 use PoP\Root\Container\ServiceInstantiatorInterface;
+use PoP\Root\Container\SystemCompilerPasses\RegisterSystemCompilerPassServiceCompilerPass;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     /**
      * Classes from PoP components that must be initialized before this component
@@ -21,16 +25,25 @@ class Component extends \PoP\Root\Component\AbstractComponent
         return [];
     }
     /**
-     * Initialize services for the system container
+     * Compiler Passes for the System Container
      *
-     * @param array<string, mixed> $configuration
-     * @param string[] $skipSchemaComponentClasses
+     * @return string[]
      */
-    protected static function initializeSystemContainerServices(array $configuration = []) : void
+    public static function getSystemContainerCompilerPassClasses() : array
     {
-        parent::initializeSystemContainerServices($configuration);
-        // Only after initializing the containerBuilder, can inject a service
-        self::initYAMLSystemContainerServices(\dirname(__DIR__));
+        return [
+            RegisterSystemCompilerPassServiceCompilerPass::class,
+            // Needed to initialize ModuleListTableAction
+            AutomaticallyInstantiatedServiceCompilerPass::class,
+        ];
+    }
+    /**
+     * Initialize services for the system container
+     */
+    protected static function initializeSystemContainerServices() : void
+    {
+        self::initSystemServices(\dirname(__DIR__), '', 'hybrid-services.yaml');
+        self::initSystemServices(\dirname(__DIR__));
     }
     /**
      * Initialize services
@@ -40,14 +53,22 @@ class Component extends \PoP\Root\Component\AbstractComponent
      */
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-        // Only after initializing the containerBuilder, can inject a service
-        self::initYAMLServices(\dirname(__DIR__));
+        self::initServices(\dirname(__DIR__), '', 'hybrid-services.yaml');
+    }
+    /**
+     * Function called by the Bootloader after initializing the SystemContainer
+     */
+    public static function bootSystem() : void
+    {
+        // Initialize container services through AutomaticallyInstantiatedServiceCompilerPass
+        /**
+         * @var ServiceInstantiatorInterface
+         */
+        $serviceInstantiator = SystemContainerBuilderFactory::getInstance()->get(ServiceInstantiatorInterface::class);
+        $serviceInstantiator->initializeServices();
     }
     /**
      * Function called by the Bootloader after all components have been loaded
-     *
-     * @return void
      */
     public static function beforeBoot() : void
     {
@@ -55,7 +76,31 @@ class Component extends \PoP\Root\Component\AbstractComponent
         /**
          * @var ServiceInstantiatorInterface
          */
-        $serviceInstantiator = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\Root\Container\ServiceInstantiatorInterface::class);
-        $serviceInstantiator->initializeServices();
+        $serviceInstantiator = ContainerBuilderFactory::getInstance()->get(ServiceInstantiatorInterface::class);
+        $serviceInstantiator->initializeServices(ApplicationEvents::BEFORE_BOOT);
+    }
+    /**
+     * Function called by the Bootloader after all components have been loaded
+     */
+    public static function boot() : void
+    {
+        // Initialize container services through AutomaticallyInstantiatedServiceCompilerPass
+        /**
+         * @var ServiceInstantiatorInterface
+         */
+        $serviceInstantiator = ContainerBuilderFactory::getInstance()->get(ServiceInstantiatorInterface::class);
+        $serviceInstantiator->initializeServices(ApplicationEvents::BOOT);
+    }
+    /**
+     * Function called by the Bootloader after all components have been loaded
+     */
+    public static function afterBoot() : void
+    {
+        // Initialize container services through AutomaticallyInstantiatedServiceCompilerPass
+        /**
+         * @var ServiceInstantiatorInterface
+         */
+        $serviceInstantiator = ContainerBuilderFactory::getInstance()->get(ServiceInstantiatorInterface::class);
+        $serviceInstantiator->initializeServices(ApplicationEvents::AFTER_BOOT);
     }
 }

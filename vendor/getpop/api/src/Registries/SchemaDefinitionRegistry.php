@@ -12,7 +12,7 @@ use PoP\API\Registries\SchemaDefinitionRegistryInterface;
 use PoP\ComponentModel\Facades\Cache\PersistentCacheFacade;
 use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-class SchemaDefinitionRegistry implements \PoP\API\Registries\SchemaDefinitionRegistryInterface
+class SchemaDefinitionRegistry implements SchemaDefinitionRegistryInterface
 {
     /**
      * @var array<string, array>
@@ -22,8 +22,6 @@ class SchemaDefinitionRegistry implements \PoP\API\Registries\SchemaDefinitionRe
      * Create a key from the arrays, to cache the results
      *
      * @param array<string, mixed> $fieldArgs
-     * @param array|null $options
-     * @return string
      */
     protected function getArgumentKey(?array $fieldArgs, ?array $options) : string
     {
@@ -33,10 +31,6 @@ class SchemaDefinitionRegistry implements \PoP\API\Registries\SchemaDefinitionRe
      * Produce the schema definition. It can store the value in the cache.
      * Use cache with care: if the schema is dynamic, it should not be cached.
      * Public schema: can cache, Private schema: cannot cache.
-     *
-     * @param array|null $fieldArgs
-     * @param array|null $options
-     * @return array
      */
     public function &getSchemaDefinition(?array $fieldArgs = [], ?array $options = []) : array
     {
@@ -44,12 +38,12 @@ class SchemaDefinitionRegistry implements \PoP\API\Registries\SchemaDefinitionRe
         $key = $this->getArgumentKey($fieldArgs, $options);
         if (!isset($this->schemaInstances[$key])) {
             // Attempt to retrieve from the cache, if enabled
-            if ($useCache = \PoP\API\ComponentConfiguration::useSchemaDefinitionCache()) {
-                $persistentCache = \PoP\ComponentModel\Facades\Cache\PersistentCacheFacade::getInstance();
+            if ($useCache = ComponentConfiguration::useSchemaDefinitionCache()) {
+                $persistentCache = PersistentCacheFacade::getInstance();
                 // Use different caches for the normal and namespaced schemas,  or
                 // it throws exception if switching without deleting the cache (eg: when passing ?use_namespace=1)
-                $cacheType = \PoP\API\Cache\CacheTypes::SCHEMA_DEFINITION;
-                $cacheKeyComponents = \PoP\API\Cache\CacheUtils::getSchemaCacheKeyComponents();
+                $cacheType = CacheTypes::SCHEMA_DEFINITION;
+                $cacheKeyComponents = CacheUtils::getSchemaCacheKeyComponents();
                 // For the persistentCache, use a hash to remove invalid characters (such as "()")
                 $cacheKey = \hash('md5', $key . '|' . \json_encode($cacheKeyComponents));
             }
@@ -61,13 +55,13 @@ class SchemaDefinitionRegistry implements \PoP\API\Registries\SchemaDefinitionRe
             }
             // If either not using cache, or using but the value had not been cached, then calculate the value
             if ($schemaDefinition === null) {
-                $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+                $instanceManager = InstanceManagerFacade::getInstance();
                 /**
                  * @var RootTypeResolver
                  */
-                $rootTypeResolver = $instanceManager->getInstance(\PoP\Engine\TypeResolvers\RootTypeResolver::class);
-                $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-                $root = \PoP\Engine\ObjectFacades\RootObjectFacade::getInstance();
+                $rootTypeResolver = $instanceManager->getInstance(RootTypeResolver::class);
+                $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+                $root = RootObjectFacade::getInstance();
                 $schemaDefinition = $rootTypeResolver->resolveValue($root, $fieldQueryInterpreter->getField('fullSchema', $fieldArgs ?? []), null, null, $options);
                 // Store in the cache
                 if ($useCache) {

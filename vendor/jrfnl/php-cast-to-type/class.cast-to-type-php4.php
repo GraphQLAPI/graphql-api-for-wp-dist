@@ -75,12 +75,12 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
             switch ($type) {
                 case 'bool':
                 case 'boolean':
-                    return \PrefixedByPoP\CastToType::_bool($value, $array2null, $allow_empty);
+                    return CastToType::_bool($value, $array2null, $allow_empty);
                 case 'integer':
                 case 'int':
-                    return \PrefixedByPoP\CastToType::_int($value, $array2null, $allow_empty);
+                    return CastToType::_int($value, $array2null, $allow_empty);
                 case 'float':
-                    return \PrefixedByPoP\CastToType::_float($value, $array2null, $allow_empty);
+                    return CastToType::_float($value, $array2null, $allow_empty);
                 case 'num':
                     if (\is_numeric($value)) {
                         $value = (float) $value != (int) $value ? (float) $value : (int) $value;
@@ -89,11 +89,11 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
                     }
                     return $value;
                 case 'string':
-                    return \PrefixedByPoP\CastToType::_string($value, $array2null, $allow_empty);
+                    return CastToType::_string($value, $array2null, $allow_empty);
                 case 'array':
-                    return \PrefixedByPoP\CastToType::_array($value, $allow_empty);
+                    return CastToType::_array($value, $allow_empty);
                 case 'object':
-                    return \PrefixedByPoP\CastToType::_object($value, $allow_empty);
+                    return CastToType::_object($value, $allow_empty);
                 case 'null':
                 default:
                     return null;
@@ -132,7 +132,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
                     return null;
                 }
             } elseif ($array2null === \false && \is_array($value)) {
-                return \PrefixedByPoP\CastToType::recurse($value, '_bool', $allow_empty);
+                return CastToType::recurse($value, '_bool', $allow_empty);
             } elseif (\is_object($value) && \get_class($value) === 'SplBool') {
                 if ($value == \true) {
                     return \true;
@@ -142,7 +142,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
                     return null;
                 }
             } elseif (\is_object($value) && \get_parent_class($value) === 'SplType') {
-                return \PrefixedByPoP\CastToType::spl_helper($value, '_bool', $array2null, $allow_empty);
+                return CastToType::spl_helper($value, '_bool', $array2null, $allow_empty);
             }
             return null;
         }
@@ -181,7 +181,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
                     return null;
                 }
             } elseif ($array2null === \false && \is_array($value)) {
-                return \PrefixedByPoP\CastToType::recurse($value, '_int', $allow_empty);
+                return CastToType::recurse($value, '_int', $allow_empty);
             } elseif (\is_object($value) && \get_class($value) === 'SplInt') {
                 if ((int) $value == $value) {
                     return (int) $value;
@@ -189,7 +189,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
                     return null;
                 }
             } elseif (\is_object($value) && (\get_class($value) === 'SplBool' || \get_class($value) === 'SplFloat' || \get_class($value) === 'SplString')) {
-                return \PrefixedByPoP\CastToType::spl_helper($value, '_int', $array2null, $allow_empty);
+                return CastToType::spl_helper($value, '_int', $array2null, $allow_empty);
             }
             return null;
         }
@@ -211,7 +211,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
             if (\is_float($value)) {
                 return $value;
             } elseif ($array2null === \false && \is_array($value)) {
-                return \PrefixedByPoP\CastToType::recurse($value, '_float', $allow_empty);
+                return CastToType::recurse($value, '_float', $allow_empty);
             } elseif (\is_scalar($value) && (\is_numeric(\trim($value)) && \floatval($value) == \trim($value))) {
                 return \floatval($value);
             } elseif (\is_object($value) && \get_class($value) === 'SplFloat') {
@@ -221,7 +221,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
                     return null;
                 }
             } elseif (\is_object($value) && (\get_class($value) === 'SplBool' || \get_class($value) === 'SplInt' || \get_class($value) === 'SplString')) {
-                return \PrefixedByPoP\CastToType::spl_helper($value, '_float', $array2null, $allow_empty);
+                return CastToType::spl_helper($value, '_float', $array2null, $allow_empty);
             }
             return null;
         }
@@ -244,7 +244,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
             } elseif (\is_int($value) || \is_float($value)) {
                 return \strval($value);
             } elseif ($array2null === \false && \is_array($value)) {
-                return \PrefixedByPoP\CastToType::recurse($value, '_string', $allow_empty);
+                return CastToType::recurse($value, '_string', $allow_empty);
             } elseif (\is_object($value) && \get_parent_class($value) === 'SplType') {
                 if ((string) $value == $value) {
                     return (string) $value;
@@ -362,7 +362,7 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
                     }
                 } else {
                     foreach ($value as $k => $v) {
-                        $value[$k] = \PrefixedByPoP\CastToType::$method($v, \false, $allow_empty);
+                        $value[$k] = CastToType::$method($v, \false, $allow_empty);
                     }
                     return $value;
                 }
@@ -389,13 +389,13 @@ if (!\class_exists('PrefixedByPoP\\CastToType')) {
         {
             switch (\get_class($value)) {
                 case 'SplBool':
-                    return \PrefixedByPoP\CastToType::$method((bool) $value, $array2null, $allow_empty);
+                    return CastToType::$method((bool) $value, $array2null, $allow_empty);
                 case 'SplInt':
-                    return \PrefixedByPoP\CastToType::$method((int) $value, $array2null, $allow_empty);
+                    return CastToType::$method((int) $value, $array2null, $allow_empty);
                 case 'SplFloat':
-                    return \PrefixedByPoP\CastToType::$method((float) $value, $array2null, $allow_empty);
+                    return CastToType::$method((float) $value, $array2null, $allow_empty);
                 case 'SplString':
-                    return \PrefixedByPoP\CastToType::$method((string) $value, $array2null, $allow_empty);
+                    return CastToType::$method((string) $value, $array2null, $allow_empty);
                 default:
                     return null;
             }

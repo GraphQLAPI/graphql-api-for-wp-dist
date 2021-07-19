@@ -21,7 +21,7 @@ use PrefixedByPoP\Symfony\Component\Finder\Glob;
  *
  * @final
  */
-class GlobResource implements \IteratorAggregate, \PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceInterface
+class GlobResource implements \IteratorAggregate, SelfCheckingResourceInterface
 {
     private $prefix;
     private $pattern;
@@ -59,7 +59,7 @@ class GlobResource implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
      */
     public function __toString() : string
     {
-        return 'glob.' . $this->prefix . (int) $this->recursive . $this->pattern . (int) $this->forExclusion . \implode("\0", $this->excludedPrefixes);
+        return 'glob.' . $this->prefix . (int) $this->recursive . $this->pattern . (int) $this->forExclusion . \implode("\x00", $this->excludedPrefixes);
     }
     /**
      * {@inheritdoc}
@@ -142,11 +142,11 @@ class GlobResource implements \IteratorAggregate, \PrefixedByPoP\Symfony\Compone
             }
             return;
         }
-        if (!\class_exists(\PrefixedByPoP\Symfony\Component\Finder\Finder::class)) {
+        if (!\class_exists(Finder::class)) {
             throw new \LogicException(\sprintf('Extended glob pattern "%s" cannot be used as the Finder component is not installed.', $this->pattern));
         }
-        $finder = new \PrefixedByPoP\Symfony\Component\Finder\Finder();
-        $regex = \PrefixedByPoP\Symfony\Component\Finder\Glob::toRegex($this->pattern);
+        $finder = new Finder();
+        $regex = Glob::toRegex($this->pattern);
         if ($this->recursive) {
             $regex = \substr_replace($regex, '(/|$)', -2, 1);
         }

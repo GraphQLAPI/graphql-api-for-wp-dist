@@ -5,7 +5,7 @@ namespace PrefixedByPoP\FastRoute\DataGenerator;
 use PrefixedByPoP\FastRoute\DataGenerator;
 use PrefixedByPoP\FastRoute\BadRouteException;
 use PrefixedByPoP\FastRoute\Route;
-abstract class RegexBasedAbstract implements \PrefixedByPoP\FastRoute\DataGenerator
+abstract class RegexBasedAbstract implements DataGenerator
 {
     protected $staticRoutes = [];
     protected $methodToRegexToRoutesMap = [];
@@ -49,12 +49,12 @@ abstract class RegexBasedAbstract implements \PrefixedByPoP\FastRoute\DataGenera
     {
         $routeStr = $routeData[0];
         if (isset($this->staticRoutes[$httpMethod][$routeStr])) {
-            throw new \PrefixedByPoP\FastRoute\BadRouteException(\sprintf('Cannot register two routes matching "%s" for method "%s"', $routeStr, $httpMethod));
+            throw new BadRouteException(\sprintf('Cannot register two routes matching "%s" for method "%s"', $routeStr, $httpMethod));
         }
         if (isset($this->methodToRegexToRoutesMap[$httpMethod])) {
             foreach ($this->methodToRegexToRoutesMap[$httpMethod] as $route) {
                 if ($route->matches($routeStr)) {
-                    throw new \PrefixedByPoP\FastRoute\BadRouteException(\sprintf('Static route "%s" is shadowed by previously defined variable route "%s" for method "%s"', $routeStr, $route->regex, $httpMethod));
+                    throw new BadRouteException(\sprintf('Static route "%s" is shadowed by previously defined variable route "%s" for method "%s"', $routeStr, $route->regex, $httpMethod));
                 }
             }
         }
@@ -64,9 +64,9 @@ abstract class RegexBasedAbstract implements \PrefixedByPoP\FastRoute\DataGenera
     {
         list($regex, $variables) = $this->buildRegexForRoute($routeData);
         if (isset($this->methodToRegexToRoutesMap[$httpMethod][$regex])) {
-            throw new \PrefixedByPoP\FastRoute\BadRouteException(\sprintf('Cannot register two routes matching "%s" for method "%s"', $regex, $httpMethod));
+            throw new BadRouteException(\sprintf('Cannot register two routes matching "%s" for method "%s"', $regex, $httpMethod));
         }
-        $this->methodToRegexToRoutesMap[$httpMethod][$regex] = new \PrefixedByPoP\FastRoute\Route($httpMethod, $handler, $regex, $variables);
+        $this->methodToRegexToRoutesMap[$httpMethod][$regex] = new Route($httpMethod, $handler, $regex, $variables);
     }
     private function buildRegexForRoute($routeData)
     {
@@ -79,10 +79,10 @@ abstract class RegexBasedAbstract implements \PrefixedByPoP\FastRoute\DataGenera
             }
             list($varName, $regexPart) = $part;
             if (isset($variables[$varName])) {
-                throw new \PrefixedByPoP\FastRoute\BadRouteException(\sprintf('Cannot use the same placeholder "%s" twice', $varName));
+                throw new BadRouteException(\sprintf('Cannot use the same placeholder "%s" twice', $varName));
             }
             if ($this->regexHasCapturingGroups($regexPart)) {
-                throw new \PrefixedByPoP\FastRoute\BadRouteException(\sprintf('Regex "%s" for parameter "%s" contains a capturing group', $regexPart, $varName));
+                throw new BadRouteException(\sprintf('Regex "%s" for parameter "%s" contains a capturing group', $regexPart, $varName));
             }
             $variables[$varName] = $varName;
             $regex .= '(' . $regexPart . ')';

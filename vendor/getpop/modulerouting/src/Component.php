@@ -7,7 +7,7 @@ use PoP\Root\Component\AbstractComponent;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     /**
      * Classes from PoP components that must be initialized before this component
@@ -20,12 +20,9 @@ class Component extends \PoP\Root\Component\AbstractComponent
     }
     /**
      * Initialize services for the system container
-     *
-     * @param array<string, mixed> $configuration
      */
-    protected static function initializeSystemContainerServices(array $configuration = []) : void
+    protected static function initializeSystemContainerServices() : void
     {
-        parent::initializeSystemContainerServices($configuration);
-        self::initYAMLSystemContainerServices(\dirname(__DIR__));
+        self::initSystemServices(\dirname(__DIR__));
     }
 }

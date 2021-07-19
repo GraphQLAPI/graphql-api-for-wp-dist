@@ -377,11 +377,11 @@ final class Dotenv
             if ('\\' === \DIRECTORY_SEPARATOR) {
                 throw new \LogicException('Resolving commands is not supported on Windows.');
             }
-            if (!\class_exists(\PrefixedByPoP\Symfony\Component\Process\Process::class)) {
+            if (!\class_exists(Process::class)) {
                 throw new \LogicException('Resolving commands requires the Symfony Process component.');
             }
-            $process = \method_exists(\PrefixedByPoP\Symfony\Component\Process\Process::class, 'fromShellCommandline') ? \PrefixedByPoP\Symfony\Component\Process\Process::fromShellCommandline('echo ' . $matches[0]) : new \PrefixedByPoP\Symfony\Component\Process\Process('echo ' . $matches[0]);
-            if (!\method_exists(\PrefixedByPoP\Symfony\Component\Process\Process::class, 'fromShellCommandline') && \method_exists(\PrefixedByPoP\Symfony\Component\Process\Process::class, 'inheritEnvironmentVariables')) {
+            $process = \method_exists(Process::class, 'fromShellCommandline') ? Process::fromShellCommandline('echo ' . $matches[0]) : new Process('echo ' . $matches[0]);
+            if (!\method_exists(Process::class, 'fromShellCommandline') && \method_exists(Process::class, 'inheritEnvironmentVariables')) {
                 // Symfony 3.4 does not inherit env vars by default:
                 $process->inheritEnvironmentVariables();
             }
@@ -394,7 +394,7 @@ final class Dotenv
             $process->setEnv($env);
             try {
                 $process->mustRun();
-            } catch (\PrefixedByPoP\Symfony\Component\Process\Exception\ExceptionInterface $e) {
+            } catch (ProcessException $e) {
                 throw $this->createFormatException(\sprintf('Issue expanding a command (%s)', $process->getErrorOutput()));
             }
             return \preg_replace('/[\\r\\n]+$/', '', $process->getOutput());
@@ -461,15 +461,15 @@ final class Dotenv
         $this->cursor += \strlen($text);
         $this->lineno += \substr_count($text, "\n");
     }
-    private function createFormatException(string $message) : \PrefixedByPoP\Symfony\Component\Dotenv\Exception\FormatException
+    private function createFormatException(string $message) : FormatException
     {
-        return new \PrefixedByPoP\Symfony\Component\Dotenv\Exception\FormatException($message, new \PrefixedByPoP\Symfony\Component\Dotenv\Exception\FormatExceptionContext($this->data, $this->path, $this->lineno, $this->cursor));
+        return new FormatException($message, new FormatExceptionContext($this->data, $this->path, $this->lineno, $this->cursor));
     }
     private function doLoad(bool $overrideExistingVars, array $paths) : void
     {
         foreach ($paths as $path) {
             if (!\is_readable($path) || \is_dir($path)) {
-                throw new \PrefixedByPoP\Symfony\Component\Dotenv\Exception\PathException($path);
+                throw new PathException($path);
             }
             $this->populate($this->parse(\file_get_contents($path), $path), $overrideExistingVars);
         }

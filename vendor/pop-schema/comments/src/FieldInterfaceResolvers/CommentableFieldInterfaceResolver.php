@@ -3,48 +3,45 @@
 declare (strict_types=1);
 namespace PoPSchema\Comments\FieldInterfaceResolvers;
 
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Schema\TypeCastingHelpers;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoPSchema\Comments\TypeDataLoaders\CommentTypeDataLoader;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\FieldInterfaceResolvers\AbstractQueryableSchemaFieldInterfaceResolver;
-class CommentableFieldInterfaceResolver extends \PoP\ComponentModel\FieldInterfaceResolvers\AbstractQueryableSchemaFieldInterfaceResolver
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+use PoPSchema\Comments\TypeDataLoaders\CommentTypeDataLoader;
+class CommentableFieldInterfaceResolver extends AbstractQueryableSchemaFieldInterfaceResolver
 {
-    public const NAME = 'Commentable';
     public function getInterfaceName() : string
     {
-        return self::NAME;
+        return 'Commentable';
     }
     public function getSchemaInterfaceDescription() : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('The entity can receive comments', 'comments');
+        return $this->translationAPI->__('The entity can receive comments', 'comments');
     }
-    public static function getFieldNamesToImplement() : array
+    public function getFieldNamesToImplement() : array
     {
         return ['areCommentsOpen', 'commentCount', 'hasComments', 'comments'];
     }
-    public function getSchemaFieldType(string $fieldName) : ?string
+    public function getSchemaFieldType(string $fieldName) : string
     {
-        $types = ['areCommentsOpen' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_BOOL, 'commentCount' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_INT, 'hasComments' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_BOOL, 'comments' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID)];
+        $types = ['areCommentsOpen' => SchemaDefinition::TYPE_BOOL, 'commentCount' => SchemaDefinition::TYPE_INT, 'hasComments' => SchemaDefinition::TYPE_BOOL, 'comments' => SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(string $fieldName) : ?int
     {
         switch ($fieldName) {
             case 'areCommentsOpen':
             case 'commentCount':
             case 'hasComments':
+                return SchemaTypeModifiers::NON_NULLABLE;
             case 'comments':
-                return \true;
+                return SchemaTypeModifiers::NON_NULLABLE | SchemaTypeModifiers::IS_ARRAY;
+            default:
+                return parent::getSchemaFieldTypeModifiers($fieldName);
         }
-        return parent::isSchemaFieldResponseNonNullable($fieldName);
     }
     public function getSchemaFieldDescription(string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['areCommentsOpen' => $translationAPI->__('Are comments open to be added to the custom post', 'pop-comments'), 'commentCount' => $translationAPI->__('Number of comments added to the custom post', 'pop-comments'), 'hasComments' => $translationAPI->__('Does the custom post have comments?', 'pop-comments'), 'comments' => $translationAPI->__('Comments added to the custom post', 'pop-comments')];
+        $descriptions = ['areCommentsOpen' => $this->translationAPI->__('Are comments open to be added to the custom post', 'pop-comments'), 'commentCount' => $this->translationAPI->__('Number of comments added to the custom post', 'pop-comments'), 'hasComments' => $this->translationAPI->__('Does the custom post have comments?', 'pop-comments'), 'comments' => $this->translationAPI->__('Comments added to the custom post', 'pop-comments')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($fieldName);
     }
     public function getSchemaFieldArgs(string $fieldName) : array
@@ -53,11 +50,10 @@ class CommentableFieldInterfaceResolver extends \PoP\ComponentModel\FieldInterfa
         switch ($fieldName) {
             case 'comments':
                 // Retrieve the module to filter for comments from the DataLoader
-                $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
                 /**
                  * @var CommentTypeDataLoader
                  */
-                $commentTypeDataLoader = $instanceManager->getInstance(\PoPSchema\Comments\TypeDataLoaders\CommentTypeDataLoader::class);
+                $commentTypeDataLoader = $this->instanceManager->getInstance(CommentTypeDataLoader::class);
                 if ($filterDataloadingModule = $commentTypeDataLoader->getFilterDataloadingModule()) {
                     // Retrieve all the schema definitions for the filter inputs
                     return \array_merge($schemaFieldArgs, $this->getFilterSchemaDefinitionItems($filterDataloadingModule));

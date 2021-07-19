@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader;
  *
  * @author Sebastien Lavoie <seb@wemakecustom.com>
  */
-class DirectoryLoader extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\FileLoader
+class DirectoryLoader extends FileLoader
 {
     /**
      * {@inheritdoc}
@@ -39,8 +39,9 @@ class DirectoryLoader extends \PrefixedByPoP\Symfony\Component\DependencyInjecti
     }
     /**
      * {@inheritdoc}
+     * @param string $type
      */
-    public function supports($resource, string $type = null)
+    public function supports($resource, $type = null)
     {
         if ('directory' === $type) {
             return \true;

@@ -3,32 +3,46 @@
 declare (strict_types=1);
 namespace PoPSchema\CustomPostMedia\FieldResolvers;
 
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
-use PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver;
 use PoP\ComponentModel\FieldResolvers\FieldSchemaDefinitionResolverInterface;
+use PoP\ComponentModel\HelperServices\SemverHelperServiceInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Engine\CMS\CMSServiceInterface;
+use PoP\Hooks\HooksAPIInterface;
+use PoP\LooseContracts\NameResolverInterface;
+use PoP\Translation\TranslationAPIInterface;
 use PoPSchema\CustomPostMedia\FieldInterfaceResolvers\SupportingFeaturedImageFieldInterfaceResolver;
-class CustomPostFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+use PoPSchema\CustomPostMedia\TypeAPIs\CustomPostMediaTypeAPIInterface;
+use PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver;
+class CustomPostFieldResolver extends AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    /**
+     * @var \PoPSchema\CustomPostMedia\TypeAPIs\CustomPostMediaTypeAPIInterface
+     */
+    protected $customPostMediaTypeAPI;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FieldQueryInterpreterInterface $fieldQueryInterpreter, NameResolverInterface $nameResolver, CMSServiceInterface $cmsService, SemverHelperServiceInterface $semverHelperService, CustomPostMediaTypeAPIInterface $customPostMediaTypeAPI)
     {
-        return [\PoPSchema\CustomPosts\FieldInterfaceResolvers\IsCustomPostFieldInterfaceResolver::class];
+        $this->customPostMediaTypeAPI = $customPostMediaTypeAPI;
+        parent::__construct($translationAPI, $hooksAPI, $instanceManager, $fieldQueryInterpreter, $nameResolver, $cmsService, $semverHelperService);
     }
-    public static function getImplementedInterfaceClasses() : array
+    public function getClassesToAttachTo() : array
     {
-        return [\PoPSchema\CustomPostMedia\FieldInterfaceResolvers\SupportingFeaturedImageFieldInterfaceResolver::class];
+        return [IsCustomPostFieldInterfaceResolver::class];
     }
-    public static function getFieldNamesToResolve() : array
+    public function getImplementedFieldInterfaceResolverClasses() : array
+    {
+        return [SupportingFeaturedImageFieldInterfaceResolver::class];
+    }
+    public function getFieldNamesToResolve() : array
     {
         return ['hasFeaturedImage', 'featuredImage'];
     }
     /**
      * By returning `null`, the schema definition comes from the interface
-     *
-     * @return void
      */
-    public function getSchemaDefinitionResolver(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?\PoP\ComponentModel\FieldResolvers\FieldSchemaDefinitionResolverInterface
+    public function getSchemaDefinitionResolver(TypeResolverInterface $typeResolver) : ?FieldSchemaDefinitionResolverInterface
     {
         return null;
     }
@@ -40,27 +54,25 @@ class CustomPostFieldResolver extends \PoP\ComponentModel\FieldResolvers\Abstrac
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $cmsmediapostsapi = \PoPSchema\Media\PostsFunctionAPIFactory::getInstance();
         $post = $resultItem;
         switch ($fieldName) {
             case 'hasFeaturedImage':
-                return $cmsmediapostsapi->hasCustomPostThumbnail($typeResolver->getID($post));
+                return $this->customPostMediaTypeAPI->hasCustomPostThumbnail($typeResolver->getID($post));
             case 'featuredImage':
-                return $cmsmediapostsapi->getCustomPostThumbnailID($typeResolver->getID($post));
+                return $this->customPostMediaTypeAPI->getCustomPostThumbnailID($typeResolver->getID($post));
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'featuredImage':
-                $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
                 /**
                  * @var SupportingFeaturedImageFieldInterfaceResolver
                  */
-                $fieldInterfaceResolver = $instanceManager->getInstance(\PoPSchema\CustomPostMedia\FieldInterfaceResolvers\SupportingFeaturedImageFieldInterfaceResolver::class);
+                $fieldInterfaceResolver = $this->instanceManager->getInstance(SupportingFeaturedImageFieldInterfaceResolver::class);
                 return $fieldInterfaceResolver->getFieldTypeResolverClass($fieldName);
         }
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);

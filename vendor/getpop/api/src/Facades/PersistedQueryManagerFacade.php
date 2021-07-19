@@ -7,12 +7,12 @@ use PoP\API\PersistedQueries\PersistedQueryManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class PersistedQueryManagerFacade
 {
-    public static function getInstance() : \PoP\API\PersistedQueries\PersistedQueryManagerInterface
+    public static function getInstance() : PersistedQueryManagerInterface
     {
         /**
          * @var PersistedQueryManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\API\PersistedQueries\PersistedQueryManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(PersistedQueryManagerInterface::class);
         return $service;
     }
 }

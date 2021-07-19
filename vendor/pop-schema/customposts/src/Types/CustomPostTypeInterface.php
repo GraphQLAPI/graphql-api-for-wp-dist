@@ -7,18 +7,44 @@ interface CustomPostTypeInterface
 {
     /**
      * Return the object's ID
-     *
-     * @param [type] $object
-     * @return void
+     * @return string|int
+     * @param object $customPostObject
      */
-    public function getID($object);
-    public function getContent($id) : ?string;
-    public function getPlainTextContent($objectOrID) : string;
-    public function getPermalink($objectOrID) : ?string;
-    public function getSlug($postObjectOrID) : ?string;
-    public function getStatus($objectOrID) : ?string;
-    public function getPublishedDate($objectOrID) : ?string;
-    public function getModifiedDate($objectOrID) : ?string;
-    public function getTitle($id) : ?string;
-    public function getExcerpt($objectOrID) : ?string;
+    public function getID($customPostObject);
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getContent($customPostObjectOrID) : ?string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getPlainTextContent($customPostObjectOrID) : string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getPermalink($customPostObjectOrID) : ?string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getSlug($customPostObjectOrID) : ?string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getStatus($customPostObjectOrID) : ?string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getPublishedDate($customPostObjectOrID) : ?string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getModifiedDate($customPostObjectOrID) : ?string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getTitle($customPostObjectOrID) : ?string;
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function getExcerpt($customPostObjectOrID) : ?string;
 }

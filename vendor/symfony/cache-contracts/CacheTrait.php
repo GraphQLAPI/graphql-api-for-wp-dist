@@ -14,7 +14,7 @@ use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
 use PrefixedByPoP\Psr\Cache\InvalidArgumentException;
 use PrefixedByPoP\Psr\Log\LoggerInterface;
 // Help opcache.preload discover always-needed symbols
-\class_exists(\PrefixedByPoP\Psr\Cache\InvalidArgumentException::class);
+\class_exists(InvalidArgumentException::class);
 /**
  * An implementation of CacheInterface for PSR-6 CacheItemPoolInterface classes.
  *
@@ -25,7 +25,7 @@ trait CacheTrait
     /**
      * {@inheritdoc}
      */
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
+    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
     {
         return $this->doGet($this, $key, $callback, $beta, $metadata);
     }
@@ -36,19 +36,19 @@ trait CacheTrait
     {
         return $this->deleteItem($key);
     }
-    private function doGet(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $pool, string $key, callable $callback, ?float $beta, array &$metadata = null, \PrefixedByPoP\Psr\Log\LoggerInterface $logger = null)
+    private function doGet(CacheItemPoolInterface $pool, string $key, callable $callback, ?float $beta, array &$metadata = null, LoggerInterface $logger = null)
     {
         if (0 > ($beta = $beta ?? 1.0)) {
-            throw new class(\sprintf('Argument "$beta" provided to "%s::get()" must be a positive number, %f given.', static::class, $beta)) extends \InvalidArgumentException implements \PrefixedByPoP\Psr\Cache\InvalidArgumentException
+            throw new class(\sprintf('Argument "$beta" provided to "%s::get()" must be a positive number, %f given.', static::class, $beta)) extends \InvalidArgumentException implements InvalidArgumentException
             {
             };
         }
         $item = $pool->getItem($key);
         $recompute = !$item->isHit() || \INF === $beta;
-        $metadata = $item instanceof \PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface ? $item->getMetadata() : [];
+        $metadata = $item instanceof ItemInterface ? $item->getMetadata() : [];
         if (!$recompute && $metadata) {
-            $expiry = $metadata[\PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface::METADATA_EXPIRY] ?? \false;
-            $ctime = $metadata[\PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface::METADATA_CTIME] ?? \false;
+            $expiry = $metadata[ItemInterface::METADATA_EXPIRY] ?? \false;
+            $ctime = $metadata[ItemInterface::METADATA_CTIME] ?? \false;
             if ($recompute = $ctime && $expiry && $expiry <= ($now = \microtime(\true)) - $ctime / 1000 * $beta * \log(\random_int(1, \PHP_INT_MAX) / \PHP_INT_MAX)) {
                 // force applying defaultLifetime to expiry
                 $item->expiresAt(null);

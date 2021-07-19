@@ -3,7 +3,7 @@
 declare (strict_types=1);
 namespace PrefixedByPoP\League\Pipeline;
 
-class InterruptibleProcessor implements \PrefixedByPoP\League\Pipeline\ProcessorInterface
+class InterruptibleProcessor implements ProcessorInterface
 {
     /**
      * @var callable

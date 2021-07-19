@@ -4,9 +4,9 @@ namespace PrefixedByPoP\GuzzleHttp\Psr7;
 
 use InvalidArgumentException;
 use PrefixedByPoP\Psr\Http\Message\ServerRequestInterface;
-use PrefixedByPoP\Psr\Http\Message\UriInterface;
 use PrefixedByPoP\Psr\Http\Message\StreamInterface;
 use PrefixedByPoP\Psr\Http\Message\UploadedFileInterface;
+use PrefixedByPoP\Psr\Http\Message\UriInterface;
 /**
  * Server-side HTTP request
  *
@@ -21,7 +21,7 @@ use PrefixedByPoP\Psr\Http\Message\UploadedFileInterface;
  * implemented such that they retain the internal state of the current
  * message and return a new instance that contains the changed state.
  */
-class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \PrefixedByPoP\Psr\Http\Message\ServerRequestInterface
+class ServerRequest extends Request implements ServerRequestInterface
 {
     /**
      * @var array
@@ -32,7 +32,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
      */
     private $cookieParams = [];
     /**
-     * @var null|array|object
+     * @var array|object|null
      */
     private $parsedBody;
     /**
@@ -51,7 +51,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
      * @param string                               $method       HTTP method
      * @param string|UriInterface                  $uri          URI
      * @param array                                $headers      Request headers
-     * @param string|null|resource|StreamInterface $body         Request body
+     * @param string|resource|StreamInterface|null $body         Request body
      * @param string                               $version      Protocol version
      * @param array                                $serverParams Typically the $_SERVER superglobal
      */
@@ -73,7 +73,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
     {
         $normalized = [];
         foreach ($files as $key => $value) {
-            if ($value instanceof \PrefixedByPoP\Psr\Http\Message\UploadedFileInterface) {
+            if ($value instanceof UploadedFileInterface) {
                 $normalized[$key] = $value;
             } elseif (\is_array($value) && isset($value['tmp_name'])) {
                 $normalized[$key] = self::createUploadedFileFromSpec($value);
@@ -81,7 +81,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
                 $normalized[$key] = self::normalizeFiles($value);
                 continue;
             } else {
-                throw new \InvalidArgumentException('Invalid value in files specification');
+                throw new InvalidArgumentException('Invalid value in files specification');
             }
         }
         return $normalized;
@@ -93,6 +93,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
      * delegate to normalizeNestedFileSpec() and return that return value.
      *
      * @param array $value $_FILES struct
+     *
      * @return array|UploadedFileInterface
      */
     private static function createUploadedFileFromSpec(array $value)
@@ -100,7 +101,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
         if (\is_array($value['tmp_name'])) {
             return self::normalizeNestedFileSpec($value);
         }
-        return new \PrefixedByPoP\GuzzleHttp\Psr7\UploadedFile($value['tmp_name'], (int) $value['size'], (int) $value['error'], $value['name'], $value['type']);
+        return new UploadedFile($value['tmp_name'], (int) $value['size'], (int) $value['error'], $value['name'], $value['type']);
     }
     /**
      * Normalize an array of file specifications.
@@ -109,6 +110,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
      * UploadedFileInterface instances.
      *
      * @param array $files
+     *
      * @return UploadedFileInterface[]
      */
     private static function normalizeNestedFileSpec(array $files = [])
@@ -135,9 +137,9 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
         $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
         $headers = \getallheaders();
         $uri = self::getUriFromGlobals();
-        $body = new \PrefixedByPoP\GuzzleHttp\Psr7\CachingStream(new \PrefixedByPoP\GuzzleHttp\Psr7\LazyOpenStream('php://input', 'r+'));
+        $body = new CachingStream(new LazyOpenStream('php://input', 'r+'));
         $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? \str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
-        $serverRequest = new \PrefixedByPoP\GuzzleHttp\Psr7\ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
+        $serverRequest = new ServerRequest($method, $uri, $headers, $body, $protocol, $_SERVER);
         return $serverRequest->withCookieParams($_COOKIE)->withQueryParams($_GET)->withParsedBody($_POST)->withUploadedFiles(self::normalizeFiles($_FILES));
     }
     private static function extractHostAndPortFromAuthority($authority)
@@ -158,7 +160,7 @@ class ServerRequest extends \PrefixedByPoP\GuzzleHttp\Psr7\Request implements \P
      */
     public static function getUriFromGlobals()
     {
-        $uri = new \PrefixedByPoP\GuzzleHttp\Psr7\Uri('');
+        $uri = new Uri('');
         $uri = $uri->withScheme(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http');
         $hasPort = \false;
         if (isset($_SERVER['HTTP_HOST'])) {

@@ -7,7 +7,7 @@ use PoP\Root\Component\AbstractComponent;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     /**
      * Classes from PoP components that must be initialized before this component
@@ -18,10 +18,14 @@ class Component extends \PoP\Root\Component\AbstractComponent
     {
         return [\PoP\Engine\Component::class, \PoPSchema\SchemaCommons\Component::class];
     }
-    public static function getDependedMigrationPlugins() : array
+    /**
+     * Initialize services
+     *
+     * @param array<string, mixed> $configuration
+     * @param string[] $skipSchemaComponentClasses
+     */
+    protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        $packageName = \basename(\dirname(__DIR__));
-        $folder = \dirname(__DIR__, 2);
-        return [$folder . '/migrate-' . $packageName . '/initialize.php'];
+        self::initSchemaServices(\dirname(__DIR__), $skipSchema);
     }
 }

@@ -53,19 +53,19 @@ class FieldQueryInterpreter extends \PoP\ComponentModel\Schema\FieldQueryInterpr
     {
         $fieldOrDirectiveArgValues = [];
         // Remove the opening and closing brackets
-        $fieldOrDirectiveArgsStr = \substr($fieldOrDirectiveArgsStr, \strlen(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING), \strlen($fieldOrDirectiveArgsStr) - \strlen(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING) - \strlen(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING));
+        $fieldOrDirectiveArgsStr = \substr($fieldOrDirectiveArgsStr, \strlen(QuerySyntax::SYMBOL_FIELDARGS_OPENING), \strlen($fieldOrDirectiveArgsStr) - \strlen(QuerySyntax::SYMBOL_FIELDARGS_OPENING) - \strlen(QuerySyntax::SYMBOL_FIELDARGS_CLOSING));
         // Remove the white spaces before and after
         if ($fieldOrDirectiveArgsStr = \trim($fieldOrDirectiveArgsStr)) {
             // Iterate all the elements, and extract them into the array
-            if ($fieldArgElems = $this->queryParser->splitElements($fieldOrDirectiveArgsStr, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGSEPARATOR, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_CLOSING], \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING)) {
+            if ($fieldArgElems = $this->queryParser->splitElements($fieldOrDirectiveArgsStr, QuerySyntax::SYMBOL_FIELDARGS_ARGSEPARATOR, [QuerySyntax::SYMBOL_FIELDARGS_OPENING, QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_OPENING], [QuerySyntax::SYMBOL_FIELDARGS_CLOSING, QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_CLOSING], QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING)) {
                 for ($i = 0; $i < \count($fieldArgElems); $i++) {
                     $fieldArg = $fieldArgElems[$i];
                     // If there is no separator, then the element is the value
-                    $separatorPos = \PoP\FieldQuery\QueryUtils::findFirstSymbolPosition($fieldArg, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGKEYVALUESEPARATOR, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_CLOSING], \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING);
+                    $separatorPos = QueryUtils::findFirstSymbolPosition($fieldArg, QuerySyntax::SYMBOL_FIELDARGS_ARGKEYVALUESEPARATOR, [QuerySyntax::SYMBOL_FIELDARGS_OPENING, QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_OPENING], [QuerySyntax::SYMBOL_FIELDARGS_CLOSING, QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_CLOSING]);
                     if ($separatorPos === \false) {
                         $fieldArgValue = $fieldArg;
                     } else {
-                        $fieldArgValue = \trim(\substr($fieldArg, $separatorPos + \strlen(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGKEYVALUESEPARATOR)));
+                        $fieldArgValue = \trim(\substr($fieldArg, $separatorPos + \strlen(QuerySyntax::SYMBOL_FIELDARGS_ARGKEYVALUESEPARATOR)));
                     }
                     $fieldOrDirectiveArgValues[] = $fieldArgValue;
                 }

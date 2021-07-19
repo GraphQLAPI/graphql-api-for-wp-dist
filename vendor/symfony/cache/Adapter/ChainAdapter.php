@@ -27,12 +27,13 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
  *
  * @author Kévin Dunglas <dunglas@gmail.com>
  */
-class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface, \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class ChainAdapter implements AdapterInterface, CacheInterface, PruneableInterface, ResettableInterface
 {
     use ContractsTrait;
     private $adapters = [];
     private $adapterCount;
-    private $syncItem;
+    private $defaultLifetime;
+    private static $syncItem;
     /**
      * @param CacheItemPoolInterface[] $adapters        The ordered list of adapters used to fetch cached items
      * @param int                      $defaultLifetime The default lifetime of items propagated from lower adapters to upper ones
@@ -40,58 +41,61 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
     public function __construct(array $adapters, int $defaultLifetime = 0)
     {
         if (!$adapters) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException('At least one adapter must be specified.');
+            throw new InvalidArgumentException('At least one adapter must be specified.');
         }
         foreach ($adapters as $adapter) {
-            if (!$adapter instanceof \PrefixedByPoP\Psr\Cache\CacheItemPoolInterface) {
-                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('The class "%s" does not implement the "%s" interface.', \get_debug_type($adapter), \PrefixedByPoP\Psr\Cache\CacheItemPoolInterface::class));
+            if (!$adapter instanceof CacheItemPoolInterface) {
+                throw new InvalidArgumentException(\sprintf('The class "%s" does not implement the "%s" interface.', \get_debug_type($adapter), CacheItemPoolInterface::class));
             }
-            if (\in_array(\PHP_SAPI, ['cli', 'phpdbg'], \true) && $adapter instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\ApcuAdapter && !\filter_var(\ini_get('apc.enable_cli'), \FILTER_VALIDATE_BOOLEAN)) {
+            if (\in_array(\PHP_SAPI, ['cli', 'phpdbg'], \true) && $adapter instanceof ApcuAdapter && !\filter_var(\ini_get('apc.enable_cli'), \FILTER_VALIDATE_BOOLEAN)) {
                 continue;
                 // skip putting APCu in the chain when the backend is disabled
             }
-            if ($adapter instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+            if ($adapter instanceof AdapterInterface) {
                 $this->adapters[] = $adapter;
             } else {
-                $this->adapters[] = new \PrefixedByPoP\Symfony\Component\Cache\Adapter\ProxyAdapter($adapter);
+                $this->adapters[] = new ProxyAdapter($adapter);
             }
         }
         $this->adapterCount = \count($this->adapters);
-        $this->syncItem = \Closure::bind(static function ($sourceItem, $item, $sourceMetadata = null) use($defaultLifetime) {
+        $this->defaultLifetime = $defaultLifetime;
+        self::$syncItem ?? (self::$syncItem = \Closure::bind(static function ($sourceItem, $item, $defaultLifetime, $sourceMetadata = null) {
             $sourceItem->isTaggable = \false;
             $sourceMetadata = $sourceMetadata ?? $sourceItem->metadata;
-            unset($sourceMetadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS]);
+            unset($sourceMetadata[CacheItem::METADATA_TAGS]);
             $item->value = $sourceItem->value;
             $item->isHit = $sourceItem->isHit;
             $item->metadata = $item->newMetadata = $sourceItem->metadata = $sourceMetadata;
-            if (isset($item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY])) {
-                $item->expiresAt(\DateTime::createFromFormat('U.u', \sprintf('%.6F', $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY])));
+            if (isset($item->metadata[CacheItem::METADATA_EXPIRY])) {
+                $item->expiresAt(\DateTime::createFromFormat('U.u', \sprintf('%.6F', $item->metadata[CacheItem::METADATA_EXPIRY])));
             } elseif (0 < $defaultLifetime) {
                 $item->expiresAfter($defaultLifetime);
             }
             return $item;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+        }, null, CacheItem::class));
     }
     /**
      * {@inheritdoc}
+     * @param float $beta
+     * @param mixed[] $metadata
      */
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
+    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
     {
         $lastItem = null;
         $i = 0;
-        $wrap = function (\PrefixedByPoP\Symfony\Component\Cache\CacheItem $item = null) use($key, $callback, $beta, &$wrap, &$i, &$lastItem, &$metadata) {
+        $wrap = function (CacheItem $item = null) use($key, $callback, $beta, &$wrap, &$i, &$lastItem, &$metadata) {
             $adapter = $this->adapters[$i];
             if (isset($this->adapters[++$i])) {
                 $callback = $wrap;
                 $beta = \INF === $beta ? \INF : 0;
             }
-            if ($adapter instanceof \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface) {
+            if ($adapter instanceof CacheInterface) {
                 $value = $adapter->get($key, $callback, $beta, $metadata);
             } else {
                 $value = $this->doGet($adapter, $key, $callback, $beta, $metadata);
             }
             if (null !== $item) {
-                ($this->syncItem)($lastItem = $lastItem ?? $item, $item, $metadata);
+                (self::$syncItem)($lastItem = $lastItem ?? $item, $item, $this->defaultLifetime, $metadata);
             }
             return $value;
         };
@@ -102,13 +106,13 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      */
     public function getItem($key)
     {
-        $syncItem = $this->syncItem;
+        $syncItem = self::$syncItem;
         $misses = [];
         foreach ($this->adapters as $i => $adapter) {
             $item = $adapter->getItem($key);
             if ($item->isHit()) {
                 while (0 <= --$i) {
-                    $this->adapters[$i]->save($syncItem($item, $misses[$i]));
+                    $this->adapters[$i]->save($syncItem($item, $misses[$i], $this->defaultLifetime));
                 }
                 return $item;
             }
@@ -138,12 +142,12 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
             }
         }
         if ($missing) {
-            $syncItem = $this->syncItem;
+            $syncItem = self::$syncItem;
             $adapter = $this->adapters[$adapterIndex];
             $items = $this->generateItems($nextAdapter->getItems($missing), $nextAdapterIndex);
             foreach ($items as $k => $item) {
                 if ($item->isHit()) {
-                    $adapter->save($syncItem($item, $misses[$k]));
+                    $adapter->save($syncItem($item, $misses[$k], $this->defaultLifetime));
                 }
                 (yield $k => $item);
             }
@@ -167,13 +171,14 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      * {@inheritdoc}
      *
      * @return bool
+     * @param string $prefix
      */
-    public function clear(string $prefix = '')
+    public function clear($prefix = '')
     {
         $cleared = \true;
         $i = $this->adapterCount;
         while ($i--) {
-            if ($this->adapters[$i] instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+            if ($this->adapters[$i] instanceof AdapterInterface) {
                 $cleared = $this->adapters[$i]->clear($prefix) && $cleared;
             } else {
                 $cleared = $this->adapters[$i]->clear() && $cleared;
@@ -214,7 +219,7 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      *
      * @return bool
      */
-    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function save(CacheItemInterface $item)
     {
         $saved = \true;
         $i = $this->adapterCount;
@@ -228,7 +233,7 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      *
      * @return bool
      */
-    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item)
     {
         $saved = \true;
         $i = $this->adapterCount;
@@ -258,7 +263,7 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
     {
         $pruned = \true;
         foreach ($this->adapters as $adapter) {
-            if ($adapter instanceof \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface) {
+            if ($adapter instanceof PruneableInterface) {
                 $pruned = $adapter->prune() && $pruned;
             }
         }
@@ -270,7 +275,7 @@ class ChainAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
     public function reset()
     {
         foreach ($this->adapters as $adapter) {
-            if ($adapter instanceof \PrefixedByPoP\Symfony\Contracts\Service\ResetInterface) {
+            if ($adapter instanceof ResetInterface) {
                 $adapter->reset();
             }
         }

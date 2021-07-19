@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Admin\Tables;
 
+use GraphQLAPI\GraphQLAPI\PluginManagement\MainPluginManager;
 use WP_List_Table;
 
 /**
@@ -40,15 +41,11 @@ abstract class AbstractItemListTable extends WP_List_Table
 
     /**
      * Singular name of the listed records
-     *
-     * @return string
      */
     abstract public function getItemSingularName(): string;
 
     /**
      * Plural name of the listed records
-     *
-     * @return string
      */
     abstract public function getItemPluralName(): string;
 
@@ -61,8 +58,14 @@ abstract class AbstractItemListTable extends WP_List_Table
             'ajax' => false,
         ]);
 
-        \add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
-        add_action('admin_head', [$this, 'printStyles']);
+        \add_action(
+            'admin_enqueue_scripts',
+            [$this, 'enqueueAssets']
+        );
+        add_action(
+            'admin_head',
+            [$this, 'printStyles']
+        );
     }
 
     /**
@@ -75,15 +78,21 @@ abstract class AbstractItemListTable extends WP_List_Table
 
     /**
      * Enqueue the required assets
-     *
-     * @return void
      */
     public function enqueueAssets(): void
     {
+        $mainPluginURL = (string) MainPluginManager::getConfig('url');
+        $mainPluginVersion = (string) MainPluginManager::getConfig('version');
+
         /**
          * Fix the issues with the WP List Table
          */
-        \wp_enqueue_style('graphql-api-wp-list-table-fix', \GRAPHQL_API_URL . 'assets/css/wp-list-table-fix.css', array(), \GRAPHQL_API_VERSION);
+        \wp_enqueue_style(
+            'graphql-api-wp-list-table-fix',
+            $mainPluginURL . 'assets/css/wp-list-table-fix.css',
+            array(),
+            $mainPluginVersion
+        );
     }
 
     /**

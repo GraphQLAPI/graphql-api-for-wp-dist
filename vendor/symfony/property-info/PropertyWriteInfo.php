@@ -52,7 +52,10 @@ final class PropertyWriteInfo
         }
         return $this->name;
     }
-    public function setAdderInfo(self $adderInfo) : void
+    /**
+     * @param $this $adderInfo
+     */
+    public function setAdderInfo($adderInfo) : void
     {
         $this->adderInfo = $adderInfo;
     }
@@ -66,7 +69,10 @@ final class PropertyWriteInfo
         }
         return $this->adderInfo;
     }
-    public function setRemoverInfo(self $removerInfo) : void
+    /**
+     * @param $this $removerInfo
+     */
+    public function setRemoverInfo($removerInfo) : void
     {
         $this->removerInfo = $removerInfo;
     }

@@ -3,8 +3,17 @@
 declare (strict_types=1);
 namespace PoP\ModuleRouting;
 
+use PoP\Hooks\HooksAPIInterface;
 abstract class AbstractRouteModuleProcessor
 {
+    /**
+     * @var \PoP\Hooks\HooksAPIInterface
+     */
+    protected $hooksAPI;
+    public function __construct(HooksAPIInterface $hooksAPI)
+    {
+        $this->hooksAPI = $hooksAPI;
+    }
     /**
      * @return string[]
      */
@@ -27,7 +36,7 @@ abstract class AbstractRouteModuleProcessor
         return array();
     }
     /**
-     * @return array<string, string[]>
+     * @return array<array<string, string[]>>
      */
     public function getModulesVarsProperties() : array
     {

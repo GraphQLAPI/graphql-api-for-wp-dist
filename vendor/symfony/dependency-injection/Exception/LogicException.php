@@ -13,6 +13,6 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
 /**
  * Base LogicException for Dependency Injection component.
  */
-class LogicException extends \LogicException implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ExceptionInterface
+class LogicException extends \LogicException implements ExceptionInterface
 {
 }

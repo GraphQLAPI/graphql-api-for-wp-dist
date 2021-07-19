@@ -20,8 +20,7 @@ class ApplicationStateUtils
      * The requested query is used to display the data, for instance for GraphQL.
      * It's saved under "requested-query" in $vars, and it's optional: if empty,
      * requested = executable => the executable query from $vars['query'] can be used
-     *
-     * @param array|string $query
+     * @param mixed[]|string $query
      */
     public static function maybeConvertQueryAndAddToVars(array &$vars, $query) : void
     {
@@ -29,7 +28,7 @@ class ApplicationStateUtils
         if (\is_array($query)) {
             $vars['query'] = $query;
         } elseif (\is_string($query)) {
-            $fieldQueryConvertor = \PoP\API\Facades\FieldQueryConvertorFacade::getInstance();
+            $fieldQueryConvertor = FieldQueryConvertorFacade::getInstance();
             $fieldQuerySet = $fieldQueryConvertor->convertAPIQuery($query);
             $vars['query'] = $fieldQuerySet->getExecutableFieldQuery();
             if ($fieldQuerySet->areRequestedAndExecutableFieldQueriesDifferent()) {

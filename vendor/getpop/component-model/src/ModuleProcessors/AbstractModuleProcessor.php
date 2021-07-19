@@ -3,27 +3,29 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\ModuleProcessors;
 
-use PoP\ComponentModel\Constants\Props;
-use PoP\ComponentModel\Constants\DataSources;
 use PoP\ComponentModel\Constants\DataLoading;
+use PoP\ComponentModel\Constants\DataSources;
 use PoP\ComponentModel\Constants\Params;
-use PoP\ComponentModel\DataloadUtils;
-use PoP\Hooks\Facades\HooksAPIFacade;
+use PoP\ComponentModel\Constants\Props;
+use PoP\ComponentModel\HelperServices\DataloadHelperServiceInterface;
+use PoP\ComponentModel\HelperServices\RequestHelperServiceInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use PoP\ComponentModel\Misc\GeneralUtils;
-use PoP\ComponentModel\Misc\RequestUtils;
-use PoP\ComponentModel\Modules\ModuleUtils;
-use PoP\Definitions\Configuration\Request;
-use PoP\ComponentModel\State\ApplicationState;
-use PoP\ComponentModel\ModuleFilters\ModulePaths;
-use PoP\ComponentModel\Settings\SettingsManagerFactory;
 use PoP\ComponentModel\ModuleFiltering\ModuleFilterManager;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface;
+use PoP\ComponentModel\ModuleFilters\ModulePaths;
+use PoP\ComponentModel\ModulePath\ModulePathHelpersInterface;
 use PoP\ComponentModel\ModuleProcessors\DataloadingConstants;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use PoP\ComponentModel\Facades\ModulePath\ModulePathHelpersFacade;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-use PoP\ComponentModel\Facades\ModuleFiltering\ModuleFilterManagerFacade;
-use PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade;
+use PoP\ComponentModel\ModuleProcessors\ModuleProcessorManagerInterface;
+use PoP\ComponentModel\Modules\ModuleUtils;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\ComponentModel\State\ApplicationState;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Definitions\Configuration\Request;
+use PoP\Engine\CMS\CMSServiceInterface;
+use PoP\Hooks\HooksAPIInterface;
+use PoP\LooseContracts\NameResolverInterface;
+use PoP\Translation\TranslationAPIInterface;
 abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProcessors\ModuleProcessorInterface
 {
     use ModulePathProcessorTrait;
@@ -34,6 +36,64 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     protected const MODULECOMPONENT_DOMAINSWITCHINGSUBMODULES = 'domain-switching-submodules';
     protected const MODULECOMPONENT_CONDITIONALONDATAFIELDSUBMODULES = 'conditional-on-data-field-submodules';
     protected const MODULECOMPONENT_CONDITIONALONDATAFIELDDOMAINSWITCHINGSUBMODULES = 'conditional-on-data-field-domain-switching-submodules';
+    /**
+     * @var \PoP\Translation\TranslationAPIInterface
+     */
+    protected $translationAPI;
+    /**
+     * @var \PoP\Hooks\HooksAPIInterface
+     */
+    protected $hooksAPI;
+    /**
+     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     */
+    protected $instanceManager;
+    /**
+     * @var \PoP\ComponentModel\Schema\FieldQueryInterpreterInterface
+     */
+    protected $fieldQueryInterpreter;
+    /**
+     * @var \PoP\ComponentModel\ModulePath\ModulePathHelpersInterface
+     */
+    protected $modulePathHelpers;
+    /**
+     * @var \PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface
+     */
+    protected $moduleFilterManager;
+    /**
+     * @var \PoP\ComponentModel\ModuleProcessors\ModuleProcessorManagerInterface
+     */
+    protected $moduleProcessorManager;
+    /**
+     * @var \PoP\Engine\CMS\CMSServiceInterface
+     */
+    protected $cmsService;
+    /**
+     * @var \PoP\LooseContracts\NameResolverInterface
+     */
+    protected $nameResolver;
+    /**
+     * @var \PoP\ComponentModel\HelperServices\DataloadHelperServiceInterface
+     */
+    protected $dataloadHelperService;
+    /**
+     * @var \PoP\ComponentModel\HelperServices\RequestHelperServiceInterface
+     */
+    protected $requestHelperService;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FieldQueryInterpreterInterface $fieldQueryInterpreter, ModulePathHelpersInterface $modulePathHelpers, ModuleFilterManagerInterface $moduleFilterManager, ModuleProcessorManagerInterface $moduleProcessorManager, CMSServiceInterface $cmsService, NameResolverInterface $nameResolver, DataloadHelperServiceInterface $dataloadHelperService, RequestHelperServiceInterface $requestHelperService)
+    {
+        $this->translationAPI = $translationAPI;
+        $this->hooksAPI = $hooksAPI;
+        $this->instanceManager = $instanceManager;
+        $this->fieldQueryInterpreter = $fieldQueryInterpreter;
+        $this->modulePathHelpers = $modulePathHelpers;
+        $this->moduleFilterManager = $moduleFilterManager;
+        $this->moduleProcessorManager = $moduleProcessorManager;
+        $this->cmsService = $cmsService;
+        $this->nameResolver = $nameResolver;
+        $this->dataloadHelperService = $dataloadHelperService;
+        $this->requestHelperService = $requestHelperService;
+    }
     public function getSubmodules(array $module) : array
     {
         return array();
@@ -49,11 +109,10 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     //-------------------------------------------------
     // New PUBLIC Functions: Atts
     //-------------------------------------------------
-    public function executeInitPropsModuletree($eval_self_fn, $get_props_for_descendant_modules_fn, $get_props_for_descendant_datasetmodules_fn, $propagate_fn, array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate)
+    public function executeInitPropsModuletree(callable $eval_self_fn, callable $get_props_for_descendant_modules_fn, callable $get_props_for_descendant_datasetmodules_fn, string $propagate_fn, array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate) : void
     {
         // Convert the module to its string representation to access it in the array
-        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
-        $moduleFullName = \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($module);
+        $moduleFullName = ModuleUtils::getModuleFullName($module);
         // Initialize. If this module had been added props, then use them already
         // 1st element to merge: the general props for this module passed down the line
         // 2nd element to merge: the props set exactly to the path. They have more priority, that's why they are 2nd
@@ -66,39 +125,38 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             $this->setProp($module, $module_props, $key, $value);
         }
         // Before initiating the current level, set the children attributes on the array, so that doing ->setProp, ->appendProp, etc, keeps working
-        $module_props[$moduleFullName][\PoP\ComponentModel\Constants\Props::DESCENDANT_ATTRIBUTES] = \array_merge($module_props[$moduleFullName][\PoP\ComponentModel\Constants\Props::DESCENDANT_ATTRIBUTES] ?? array(), $targetted_props_to_propagate ?? array());
+        $module_props[$moduleFullName][Props::DESCENDANT_ATTRIBUTES] = \array_merge($module_props[$moduleFullName][Props::DESCENDANT_ATTRIBUTES] ?? array(), $targetted_props_to_propagate ?? array());
         // Initiate the current level.
-        $this->{$eval_self_fn}($module, $module_props);
+        $eval_self_fn($module, $module_props);
         // Immediately after initiating the current level, extract all child attributes out from the $props, and place it on the other variable
-        $targetted_props_to_propagate = $module_props[$moduleFullName][\PoP\ComponentModel\Constants\Props::DESCENDANT_ATTRIBUTES];
-        unset($module_props[$moduleFullName][\PoP\ComponentModel\Constants\Props::DESCENDANT_ATTRIBUTES]);
+        $targetted_props_to_propagate = $module_props[$moduleFullName][Props::DESCENDANT_ATTRIBUTES];
+        unset($module_props[$moduleFullName][Props::DESCENDANT_ATTRIBUTES]);
         // But because modules can't repeat themselves down the line (or it would generate an infinite loop), then can remove the current module from the targeted props
         unset($targetted_props_to_propagate[$moduleFullName]);
         // Allow the $module to add general props for all its descendant modules
-        $wildcard_props_to_propagate = \array_merge($wildcard_props_to_propagate, $this->{$get_props_for_descendant_modules_fn}($module, $module_props));
+        $wildcard_props_to_propagate = \array_merge($wildcard_props_to_propagate, $get_props_for_descendant_modules_fn($module, $module_props));
         // Propagate
-        $modulefilter_manager = \PoP\ComponentModel\Facades\ModuleFiltering\ModuleFilterManagerFacade::getInstance();
         $submodules = $this->getAllSubmodules($module);
-        $submodules = $modulefilter_manager->removeExcludedSubmodules($module, $submodules);
+        $submodules = $this->moduleFilterManager->removeExcludedSubmodules($module, $submodules);
         // This function must be called always, to register matching modules into requestmeta.filtermodules even when the module has no submodules
-        $modulefilter_manager->prepareForPropagation($module, $props);
+        $this->moduleFilterManager->prepareForPropagation($module, $props);
         if ($submodules) {
-            $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES] = $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES] ?? array();
+            $props[$moduleFullName][Props::SUBMODULES] = $props[$moduleFullName][Props::SUBMODULES] ?? array();
             foreach ($submodules as $submodule) {
-                $submodule_processor = $moduleprocessor_manager->getProcessor($submodule);
+                $submodule_processor = $this->moduleProcessorManager->getProcessor($submodule);
                 $submodule_wildcard_props_to_propagate = $wildcard_props_to_propagate;
                 // If the submodule belongs to the same dataset, then set the shared attributies for the same-dataset modules
                 if (!$submodule_processor->startDataloadingSection($submodule)) {
-                    $submodule_wildcard_props_to_propagate = \array_merge($submodule_wildcard_props_to_propagate, $this->{$get_props_for_descendant_datasetmodules_fn}($module, $module_props));
+                    $submodule_wildcard_props_to_propagate = \array_merge($submodule_wildcard_props_to_propagate, $get_props_for_descendant_datasetmodules_fn($module, $module_props));
                 }
-                $submodule_processor->{$propagate_fn}($submodule, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES], $submodule_wildcard_props_to_propagate, $targetted_props_to_propagate);
+                $submodule_processor->{$propagate_fn}($submodule, $props[$moduleFullName][Props::SUBMODULES], $submodule_wildcard_props_to_propagate, $targetted_props_to_propagate);
             }
         }
-        $modulefilter_manager->restoreFromPropagation($module, $props);
+        $this->moduleFilterManager->restoreFromPropagation($module, $props);
     }
-    public function initModelPropsModuletree(array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate)
+    public function initModelPropsModuletree(array $module, array &$props, array $wildcard_props_to_propagate, array $targetted_props_to_propagate) : void
     {
-        $this->executeInitPropsModuletree('initModelProps', 'getModelPropsForDescendantModules', 'getModelPropsForDescendantDatasetmodules', __FUNCTION__, $module, $props, $wildcard_props_to_propagate, $targetted_props_to_propagate);
+        $this->executeInitPropsModuletree([$this, 'initModelProps'], [$this, 'getModelPropsForDescendantModules'], [$this, 'getModelPropsForDescendantDatasetmodules'], __FUNCTION__, $module, $props, $wildcard_props_to_propagate, $targetted_props_to_propagate);
     }
     public function getModelPropsForDescendantModules(array $module, array &$props) : array
     {
@@ -119,7 +177,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     {
         return [];
     }
-    public function initModelProps(array $module, array &$props)
+    public function initModelProps(array $module, array &$props) : void
     {
         // Set property "succeeding-typeResolver" on every module, so they know which is their typeResolver, needed to calculate the subcomponent data-fields when using typeResolver "*"
         if ($typeResolver_class = $this->getTypeResolverClass($module)) {
@@ -133,13 +191,12 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             foreach ($this->getSubmodules($module) as $submodule) {
                 $this->setProp($submodule, $props, 'succeeding-typeResolver', $typeResolver_class);
             }
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
             /**
              * @var TypeResolverInterface
              */
-            $typeResolver = $instanceManager->getInstance($typeResolver_class);
+            $typeResolver = $this->instanceManager->getInstance($typeResolver_class);
             foreach ($this->getDomainSwitchingSubmodules($module) as $subcomponent_data_field => $subcomponent_modules) {
-                if ($subcomponent_typeResolver_class = \PoP\ComponentModel\DataloadUtils::getTypeResolverClassFromSubcomponentDataField($typeResolver, $subcomponent_data_field)) {
+                if ($subcomponent_typeResolver_class = $this->dataloadHelperService->getTypeResolverClassFromSubcomponentDataField($typeResolver, $subcomponent_data_field)) {
                     foreach ($subcomponent_modules as $subcomponent_module) {
                         $this->setProp($subcomponent_module, $props, 'succeeding-typeResolver', $subcomponent_typeResolver_class);
                     }
@@ -152,7 +209,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             }
             foreach ($this->getConditionalOnDataFieldDomainSwitchingSubmodules($module) as $conditionDataField => $dataFieldTypeResolverOptionsConditionalSubmodules) {
                 foreach ($dataFieldTypeResolverOptionsConditionalSubmodules as $conditionalDataField => $conditionalSubmodules) {
-                    if ($subcomponentTypeResolverClass = \PoP\ComponentModel\DataloadUtils::getTypeResolverClassFromSubcomponentDataField($typeResolver, $conditionalDataField)) {
+                    if ($subcomponentTypeResolverClass = $this->dataloadHelperService->getTypeResolverClassFromSubcomponentDataField($typeResolver, $conditionalDataField)) {
                         foreach ($conditionalSubmodules as $conditionalSubmodule) {
                             $this->setProp($conditionalSubmodule, $props, 'succeeding-typeResolver', $subcomponentTypeResolverClass);
                         }
@@ -163,11 +220,11 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         /**
          * Allow to add more stuff
          */
-        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->doAction(self::HOOK_INIT_MODEL_PROPS, array(&$props), $module, $this);
+        $this->hooksAPI->doAction(self::HOOK_INIT_MODEL_PROPS, array(&$props), $module, $this);
     }
-    public function initRequestPropsModuletree(array $module, array &$props, $wildcard_props_to_propagate, $targetted_props_to_propagate)
+    public function initRequestPropsModuletree(array $module, array &$props, array $wildcard_props_to_propagate, array $targetted_props_to_propagate) : void
     {
-        $this->executeInitPropsModuletree('initRequestProps', 'getRequestPropsForDescendantModules', 'getRequestPropsForDescendantDatasetmodules', __FUNCTION__, $module, $props, $wildcard_props_to_propagate, $targetted_props_to_propagate);
+        $this->executeInitPropsModuletree([$this, 'initRequestProps'], [$this, 'getRequestPropsForDescendantModules'], [$this, 'getRequestPropsForDescendantDatasetmodules'], __FUNCTION__, $module, $props, $wildcard_props_to_propagate, $targetted_props_to_propagate);
     }
     public function getRequestPropsForDescendantModules(array $module, array &$props) : array
     {
@@ -177,12 +234,12 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     {
         return array();
     }
-    public function initRequestProps(array $module, array &$props)
+    public function initRequestProps(array $module, array &$props) : void
     {
         /**
          * Allow to add more stuff
          */
-        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->doAction(self::HOOK_INIT_REQUEST_PROPS, array(&$props), $module, $this);
+        $this->hooksAPI->doAction(self::HOOK_INIT_REQUEST_PROPS, array(&$props), $module, $this);
     }
     //-------------------------------------------------
     // PRIVATE Functions: Atts
@@ -209,7 +266,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             $moduleFullName = $this->getPathHeadModule($props);
             // If the module were we are adding the att, is this same module, then we are already at the path
             // If it is not, then go down one level to that module
-            return $moduleFullName !== \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($module_or_modulepath);
+            return $moduleFullName !== ModuleUtils::getModuleFullName($module_or_modulepath);
         }
         return \false;
     }
@@ -226,7 +283,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         $ret = array($moduleFullName);
         // If it is an array, then we're passing the path to find the module to which to add the att
         if ($this->isModulePath($module_or_modulepath)) {
-            $ret = \array_merge($ret, \array_map([\PoP\ComponentModel\Modules\ModuleUtils::class, 'getModuleFullName'], $module_or_modulepath));
+            $ret = \array_merge($ret, \array_map([ModuleUtils::class, 'getModuleFullName'], $module_or_modulepath));
         }
         return $ret;
     }
@@ -235,7 +292,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         // Iterate down to the submodule, which must be an array of modules
         if ($starting_from_modulepath) {
             // Convert it to string
-            $startingFromModulepathFullNames = \array_map([\PoP\ComponentModel\Modules\ModuleUtils::class, 'getModuleFullName'], $starting_from_modulepath);
+            $startingFromModulepathFullNames = \array_map([ModuleUtils::class, 'getModuleFullName'], $starting_from_modulepath);
             // Attach the current module, which is not included on "starting_from", to step down this level too
             $moduleFullName = $this->getPathHeadModule($props);
             \array_unshift($startingFromModulepathFullNames, $moduleFullName);
@@ -244,8 +301,8 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             foreach ($startingFromModulepathFullNames as $pathlevelModuleFullName) {
                 $last_module_props =& $module_props;
                 $lastModuleFullName = $pathlevelModuleFullName;
-                $module_props[$pathlevelModuleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES] = $module_props[$pathlevelModuleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES] ?? array();
-                $module_props =& $module_props[$pathlevelModuleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES];
+                $module_props[$pathlevelModuleFullName][Props::SUBMODULES] = $module_props[$pathlevelModuleFullName][Props::SUBMODULES] ?? array();
+                $module_props =& $module_props[$pathlevelModuleFullName][Props::SUBMODULES];
             }
             // This is the new $props, so it starts from here
             // Save the current $props, and restore later, to make sure this array has only one key, otherwise it will not work
@@ -258,12 +315,12 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         if ($this->isDescendantModule($module_or_modulepath, $props)) {
             // It is a child module
             $att_module = $module_or_modulepath;
-            $attModuleFullName = \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($att_module);
+            $attModuleFullName = ModuleUtils::getModuleFullName($att_module);
             // From the root of the $props we obtain the current module
             $moduleFullName = $this->getPathHeadModule($props);
             // Set the child attributes under a different entry
-            $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::DESCENDANT_ATTRIBUTES] = $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::DESCENDANT_ATTRIBUTES] ?? array();
-            $module_props =& $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::DESCENDANT_ATTRIBUTES];
+            $props[$moduleFullName][Props::DESCENDANT_ATTRIBUTES] = $props[$moduleFullName][Props::DESCENDANT_ATTRIBUTES] ?? array();
+            $module_props =& $props[$moduleFullName][Props::DESCENDANT_ATTRIBUTES];
         } else {
             // Calculate the path to iterate down
             $modulepath = $this->getModulepath($module_or_modulepath, $props);
@@ -272,8 +329,8 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             // Descend into the path to find the module for which to add the att
             $module_props =& $props;
             foreach ($modulepath as $pathlevelFullName) {
-                $module_props[$pathlevelFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES] = $module_props[$pathlevelFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES] ?? array();
-                $module_props =& $module_props[$pathlevelFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES];
+                $module_props[$pathlevelFullName][Props::SUBMODULES] = $module_props[$pathlevelFullName][Props::SUBMODULES] ?? array();
+                $module_props =& $module_props[$pathlevelFullName][Props::SUBMODULES];
             }
         }
         // Now can proceed to add the att
@@ -307,6 +364,9 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             $props = $current_props;
         }
     }
+    /**
+     * @return mixed
+     */
     protected function getPropGroupField(string $group, array $module, array &$props, string $field, array $starting_from_modulepath = array())
     {
         $group = $this->getPropGroup($group, $module, $props, $starting_from_modulepath);
@@ -319,10 +379,10 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         }
         $module_props =& $props;
         foreach ($starting_from_modulepath as $pathlevelModule) {
-            $pathlevelModuleFullName = \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($pathlevelModule);
-            $module_props =& $module_props[$pathlevelModuleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES];
+            $pathlevelModuleFullName = ModuleUtils::getModuleFullName($pathlevelModule);
+            $module_props =& $module_props[$pathlevelModuleFullName][Props::SUBMODULES];
         }
-        $moduleFullName = \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($module);
+        $moduleFullName = ModuleUtils::getModuleFullName($module);
         return $module_props[$moduleFullName][$group] ?? array();
     }
     protected function addGroupProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
@@ -331,7 +391,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     }
     public function setProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
-        $this->addGroupProp(\PoP\ComponentModel\Constants\Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
+        $this->addGroupProp(Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
     }
     public function appendGroupProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
@@ -339,7 +399,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     }
     public function appendProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
-        $this->appendGroupProp(\PoP\ComponentModel\Constants\Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
+        $this->appendGroupProp(Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
     }
     public function mergeGroupProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
@@ -347,15 +407,21 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     }
     public function mergeProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
-        $this->mergeGroupProp(\PoP\ComponentModel\Constants\Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
+        $this->mergeGroupProp(Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
     }
+    /**
+     * @return mixed
+     */
     public function getGroupProp(string $group, array $module, array &$props, string $field, array $starting_from_modulepath = array())
     {
         return $this->getPropGroupField($group, $module, $props, $field, $starting_from_modulepath);
     }
+    /**
+     * @return mixed
+     */
     public function getProp(array $module, array &$props, string $field, array $starting_from_modulepath = array())
     {
-        return $this->getGroupProp(\PoP\ComponentModel\Constants\Props::ATTRIBUTES, $module, $props, $field, $starting_from_modulepath);
+        return $this->getGroupProp(Props::ATTRIBUTES, $module, $props, $field, $starting_from_modulepath);
     }
     public function mergeGroupIterateKeyProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
@@ -363,7 +429,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     }
     public function mergeIterateKeyProp(array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
-        $this->mergeGroupIterateKeyProp(\PoP\ComponentModel\Constants\Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
+        $this->mergeGroupIterateKeyProp(Props::ATTRIBUTES, $module_or_modulepath, $props, $field, $value, $starting_from_modulepath);
     }
     public function pushProp(string $group, array $module_or_modulepath, array &$props, string $field, $value, array $starting_from_modulepath = array()) : void
     {
@@ -375,12 +441,11 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     public function getDatabaseKeys(array $module, array &$props) : array
     {
         $ret = array();
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         if ($typeResolver_class = $this->getTypeResolverClass($module)) {
             /**
              * @var TypeResolverInterface
              */
-            $typeResolver = $instanceManager->getInstance((string) $typeResolver_class);
+            $typeResolver = $this->instanceManager->getInstance((string) $typeResolver_class);
             if ($dbkey = $typeResolver->getTypeOutputName()) {
                 // Place it under "id" because it is for fetching the current object from the DB, which is found through dbObject.id
                 $ret['id'] = $dbkey;
@@ -391,23 +456,23 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             /**
              * @var TypeResolverInterface
              */
-            $typeResolver = $instanceManager->getInstance($typeResolver_class);
+            $typeResolver = $this->instanceManager->getInstance($typeResolver_class);
             foreach (\array_keys($this->getDomainSwitchingSubmodules($module)) as $subcomponent_data_field) {
                 // If passing a subcomponent fieldname that doesn't exist to the API, then $subcomponent_typeResolver_class will be empty
-                if ($subcomponent_typeResolver_class = \PoP\ComponentModel\DataloadUtils::getTypeResolverClassFromSubcomponentDataField($typeResolver, $subcomponent_data_field)) {
-                    $subcomponent_typeResolver = $instanceManager->getInstance($subcomponent_typeResolver_class);
+                if ($subcomponent_typeResolver_class = $this->dataloadHelperService->getTypeResolverClassFromSubcomponentDataField($typeResolver, $subcomponent_data_field)) {
+                    $subcomponent_typeResolver = $this->instanceManager->getInstance($subcomponent_typeResolver_class);
                     // If there is an alias, store the results under this. Otherwise, on the fieldName+fieldArgs
-                    $subcomponent_data_field_outputkey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($subcomponent_data_field);
+                    $subcomponent_data_field_outputkey = $this->fieldQueryInterpreter->getFieldOutputKey($subcomponent_data_field);
                     $ret[$subcomponent_data_field_outputkey] = $subcomponent_typeResolver->getTypeOutputName();
                 }
             }
             foreach ($this->getConditionalOnDataFieldDomainSwitchingSubmodules($module) as $conditionDataField => $dataFieldTypeResolverOptionsConditionalSubmodules) {
                 foreach (\array_keys($dataFieldTypeResolverOptionsConditionalSubmodules) as $conditionalDataField) {
                     // If passing a subcomponent fieldname that doesn't exist to the API, then $subcomponentTypeResolverClass will be empty
-                    if ($subcomponentTypeResolverClass = \PoP\ComponentModel\DataloadUtils::getTypeResolverClassFromSubcomponentDataField($typeResolver, $conditionalDataField)) {
-                        $subcomponent_typeResolver = $instanceManager->getInstance($subcomponentTypeResolverClass);
+                    if ($subcomponentTypeResolverClass = $this->dataloadHelperService->getTypeResolverClassFromSubcomponentDataField($typeResolver, $conditionalDataField)) {
+                        $subcomponent_typeResolver = $this->instanceManager->getInstance($subcomponentTypeResolverClass);
                         // If there is an alias, store the results under this. Otherwise, on the fieldName+fieldArgs
-                        $subcomponent_data_field_outputkey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($conditionalDataField);
+                        $subcomponent_data_field_outputkey = $this->fieldQueryInterpreter->getFieldOutputKey($conditionalDataField);
                         $ret[$subcomponent_data_field_outputkey] = $subcomponent_typeResolver->getTypeOutputName();
                     }
                 }
@@ -436,44 +501,42 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         // Add the current module's dbkeys
         $dbkeys = $this->getDatabaseKeys($module, $props);
         foreach ($dbkeys as $field => $dbkey) {
-            $field_outputkey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($field);
+            $field_outputkey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
             $ret[\implode('.', \array_merge($path, [$field_outputkey]))] = $dbkey;
         }
         // Propagate to all submodules which have no typeResolver
-        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
-        $moduleFullName = \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($module);
-        $modulefilter_manager = \PoP\ComponentModel\Facades\ModuleFiltering\ModuleFilterManagerFacade::getInstance();
-        $modulefilter_manager->prepareForPropagation($module, $props);
+        $moduleFullName = ModuleUtils::getModuleFullName($module);
+        $this->moduleFilterManager->prepareForPropagation($module, $props);
         foreach ($this->getDomainSwitchingSubmodules($module) as $subcomponent_data_field => $subcomponent_modules) {
-            $subcomponent_data_field_outputkey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($subcomponent_data_field);
+            $subcomponent_data_field_outputkey = $this->fieldQueryInterpreter->getFieldOutputKey($subcomponent_data_field);
             // Only modules which do not load data
-            $subcomponent_modules = \array_filter($subcomponent_modules, function ($submodule) use($moduleprocessor_manager) {
-                return !$moduleprocessor_manager->getProcessor($submodule)->startDataloadingSection($submodule);
+            $subcomponent_modules = \array_filter($subcomponent_modules, function ($submodule) {
+                return !$this->moduleProcessorManager->getProcessor($submodule)->startDataloadingSection($submodule);
             });
             foreach ($subcomponent_modules as $subcomponent_module) {
-                $moduleprocessor_manager->getProcessor($subcomponent_module)->addToDatasetDatabaseKeys($subcomponent_module, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES], \array_merge($path, [$subcomponent_data_field_outputkey]), $ret);
+                $this->moduleProcessorManager->getProcessor($subcomponent_module)->addToDatasetDatabaseKeys($subcomponent_module, $props[$moduleFullName][Props::SUBMODULES], \array_merge($path, [$subcomponent_data_field_outputkey]), $ret);
             }
         }
         foreach ($this->getConditionalOnDataFieldDomainSwitchingSubmodules($module) as $conditionDataField => $dataFieldTypeResolverOptionsConditionalSubmodules) {
             foreach ($dataFieldTypeResolverOptionsConditionalSubmodules as $conditionalDataField => $subcomponent_modules) {
-                $subcomponent_data_field_outputkey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($conditionalDataField);
+                $subcomponent_data_field_outputkey = $this->fieldQueryInterpreter->getFieldOutputKey($conditionalDataField);
                 // Only modules which do not load data
-                $subcomponent_modules = \array_filter($subcomponent_modules, function ($submodule) use($moduleprocessor_manager) {
-                    return !$moduleprocessor_manager->getProcessor($submodule)->startDataloadingSection($submodule);
+                $subcomponent_modules = \array_filter($subcomponent_modules, function ($submodule) {
+                    return !$this->moduleProcessorManager->getProcessor($submodule)->startDataloadingSection($submodule);
                 });
                 foreach ($subcomponent_modules as $subcomponent_module) {
-                    $moduleprocessor_manager->getProcessor($subcomponent_module)->addToDatasetDatabaseKeys($subcomponent_module, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES], \array_merge($path, [$subcomponent_data_field_outputkey]), $ret);
+                    $this->moduleProcessorManager->getProcessor($subcomponent_module)->addToDatasetDatabaseKeys($subcomponent_module, $props[$moduleFullName][Props::SUBMODULES], \array_merge($path, [$subcomponent_data_field_outputkey]), $ret);
                 }
             }
         }
         // Only modules which do not load data
-        $submodules = \array_filter($this->getSubmodules($module), function ($submodule) use($moduleprocessor_manager) {
-            return !$moduleprocessor_manager->getProcessor($submodule)->startDataloadingSection($submodule);
+        $submodules = \array_filter($this->getSubmodules($module), function ($submodule) {
+            return !$this->moduleProcessorManager->getProcessor($submodule)->startDataloadingSection($submodule);
         });
         foreach ($submodules as $submodule) {
-            $moduleprocessor_manager->getProcessor($submodule)->addToDatasetDatabaseKeys($submodule, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES], $path, $ret);
+            $this->moduleProcessorManager->getProcessor($submodule)->addToDatasetDatabaseKeys($submodule, $props[$moduleFullName][Props::SUBMODULES], $path, $ret);
         }
-        $modulefilter_manager->restoreFromPropagation($module, $props);
+        $this->moduleFilterManager->restoreFromPropagation($module, $props);
     }
     public function getDatasetDatabaseKeys(array $module, array &$props) : array
     {
@@ -488,8 +551,11 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     {
         // Each module can only return one piece of data, and it must be indicated if it static or mutableonrequest
         // Retrieving only 1 piece is needed so that its children do not get confused what data their getDataFields applies to
-        return \PoP\ComponentModel\Constants\DataSources::MUTABLEONREQUEST;
+        return DataSources::MUTABLEONREQUEST;
     }
+    /**
+     * @return string|int|mixed[]
+     */
     public function getDBObjectIDOrIDs(array $module, array &$props, &$data_properties)
     {
         return array();
@@ -510,7 +576,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     {
         return null;
     }
-    public function prepareDataPropertiesAfterActionexecution(array $module, array &$props, &$data_properties)
+    public function prepareDataPropertiesAfterMutationExecution(array $module, array &$props, array &$data_properties) : void
     {
         // Do nothing
     }
@@ -548,7 +614,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             // And then, only for the top node, add its extra properties
             $properties = \array_merge($this->getDatasetmoduletreeSectionFlattenedDataFields($module, $props), $this->getImmutableHeaddatasetmoduleDataProperties($module, $props));
             if ($properties) {
-                $ret[\PoP\ComponentModel\Constants\DataLoading::DATA_PROPERTIES] = $properties;
+                $ret[DataLoading::DATA_PROPERTIES] = $properties;
             }
         }
         return $ret;
@@ -579,9 +645,8 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         // $this->flattenDatasetmoduletreeModules(__FUNCTION__, $ret, $module);
         // Exclude the subcomponent modules here
         if ($submodules = $this->getModulesToPropagateDataProperties($module)) {
-            $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
             foreach ($submodules as $submodule) {
-                $submodule_processor = $moduleprocessor_manager->getProcessor($submodule);
+                $submodule_processor = $this->moduleProcessorManager->getProcessor($submodule);
                 // Propagate only if the submodule doesn't load data. If it does, this is the end of the data line, and the submodule is the beginning of a new datasetmoduletree
                 if (!$submodule_processor->startDataloadingSection($submodule)) {
                     $submodule_processor->addDatasetmoduletreeSectionFlattenedModules($ret, $submodule);
@@ -593,9 +658,8 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     // {
     //     // Exclude the subcomponent modules here
     //     if ($submodules = $this->getModulesToPropagateDataProperties($module)) {
-    //         $moduleprocessor_manager = ModuleProcessorManagerFacade::getInstance();
     //         foreach ($submodules as $submodule) {
-    //             $submodule_processor = $moduleprocessor_manager->getProcessor($submodule);
+    //             $submodule_processor = $this->moduleProcessorManager->getProcessor($submodule);
     //             // Propagate only if the submodule doesn't have a typeResolver. If it does, this is the end of the data line, and the submodule is the beginning of a new datasetmoduletree
     //             if (!$submodule_processor->startDataloadingSection($submodule)) {
     //                 if ($submodule_ret = $submodule_processor->$propagate_fn($submodule)) {
@@ -614,9 +678,9 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         $ret = array();
         // From the State property we find out if it's Static of Stateful
         $datasource = $this->getDatasource($module, $props);
-        $ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::DATASOURCE] = $datasource;
+        $ret[DataloadingConstants::DATASOURCE] = $datasource;
         // Add the properties below either as static or mutableonrequest
-        if ($datasource == \PoP\ComponentModel\Constants\DataSources::IMMUTABLE) {
+        if ($datasource == DataSources::IMMUTABLE) {
             $this->addHeaddatasetmoduleDataProperties($ret, $module, $props);
         }
         return $ret;
@@ -626,7 +690,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         /**
          * Allow to add more stuff
          */
-        \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->doAction(self::HOOK_ADD_HEADDATASETMODULE_DATAPROPERTIES, array(&$ret), $module, array(&$props), $this);
+        $this->hooksAPI->doAction(self::HOOK_ADD_HEADDATASETMODULE_DATAPROPERTIES, array(&$ret), $module, array(&$props), $this);
     }
     public function getMutableonmodelDataPropertiesDatasetmoduletree(array $module, array &$props) : array
     {
@@ -639,7 +703,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         if ($this->moduleLoadsData($module)) {
             $properties = $this->getMutableonmodelHeaddatasetmoduleDataProperties($module, $props);
             if ($properties) {
-                $ret[\PoP\ComponentModel\Constants\DataLoading::DATA_PROPERTIES] = $properties;
+                $ret[DataLoading::DATA_PROPERTIES] = $properties;
             }
         }
         return $ret;
@@ -649,13 +713,13 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         $ret = array();
         // Add the properties below either as static or mutableonrequest
         $datasource = $this->getDatasource($module, $props);
-        if ($datasource == \PoP\ComponentModel\Constants\DataSources::MUTABLEONMODEL) {
+        if ($datasource == DataSources::MUTABLEONMODEL) {
             $this->addHeaddatasetmoduleDataProperties($ret, $module, $props);
         }
         // Fetch params from request?
         $ignore_params_from_request = $this->getProp($module, $props, 'ignore-request-params');
         if (!\is_null($ignore_params_from_request)) {
-            $ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::IGNOREREQUESTPARAMS] = $ignore_params_from_request;
+            $ret[DataloadingConstants::IGNOREREQUESTPARAMS] = $ignore_params_from_request;
         }
         return $ret;
     }
@@ -676,7 +740,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             // );
             $properties = $this->getMutableonrequestHeaddatasetmoduleDataProperties($module, $props);
             if ($properties) {
-                $ret[\PoP\ComponentModel\Constants\DataLoading::DATA_PROPERTIES] = $properties;
+                $ret[DataLoading::DATA_PROPERTIES] = $properties;
             }
         }
         return $ret;
@@ -686,31 +750,21 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
         $ret = array();
         // Add the properties below either as static or mutableonrequest
         $datasource = $this->getDatasource($module, $props);
-        if ($datasource == \PoP\ComponentModel\Constants\DataSources::MUTABLEONREQUEST) {
+        if ($datasource == DataSources::MUTABLEONREQUEST) {
             $this->addHeaddatasetmoduleDataProperties($ret, $module, $props);
         }
         if ($dataload_source = $this->getDataloadSource($module, $props)) {
-            $ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::SOURCE] = $dataload_source;
+            $ret[DataloadingConstants::SOURCE] = $dataload_source;
         }
         // When loading data or execution an action, check if to validate checkpoints?
         // This is in MUTABLEONREQUEST instead of STATIC because the checkpoints can change depending on doingPost()
         // (such as done to set-up checkpoint configuration for POP_USERSTANCE_ROUTE_ADDOREDITSTANCE, or within POPUSERLOGIN_CHECKPOINTCONFIGURATION_REQUIREUSERSTATEONDOINGPOST)
-        // if ($checkpoint_configuration = $this->getDataaccessCheckpointConfiguration($module, $props)) {
-        if ($checkpoints = $this->getDataaccessCheckpoints($module, $props)) {
-            // if (RequestUtils::checkpointValidationRequired($checkpoint_configuration)) {
-            // Pass info for PoP Engine
-            // $ret[\PoP\ComponentModel\Constants\DataLoading::DATA_ACCESS_CHECKPOINTS] = $checkpoint_configuration['checkpoints'];
-            $ret[\PoP\ComponentModel\Constants\DataLoading::DATA_ACCESS_CHECKPOINTS] = $checkpoints;
-            // }
+        if ($checkpoints = $this->getDataAccessCheckpoints($module, $props)) {
+            $ret[DataLoading::DATA_ACCESS_CHECKPOINTS] = $checkpoints;
         }
         // To trigger the actionexecuter, its own checkpoints must be successful
-        // if ($checkpoint_configuration = $this->getActionexecutionCheckpointConfiguration($module, $props)) {
-        if ($checkpoints = $this->getActionexecutionCheckpoints($module, $props)) {
-            // if (RequestUtils::checkpointValidationRequired($checkpoint_configuration)) {
-            // Pass info for PoP Engine
-            // $ret[\PoP\ComponentModel\Constants\DataLoading::ACTION_EXECUTION_CHECKPOINTS] = $checkpoint_configuration['checkpoints'];
-            $ret[\PoP\ComponentModel\Constants\DataLoading::ACTION_EXECUTION_CHECKPOINTS] = $checkpoints;
-            // }
+        if ($checkpoints = $this->getActionExecutionCheckpoints($module, $props)) {
+            $ret[DataLoading::ACTION_EXECUTION_CHECKPOINTS] = $checkpoints;
         }
         return $ret;
     }
@@ -725,7 +779,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     {
         $ret = array();
         if ($feedback = $this->getDataFeedback($module, $props, $data_properties, $dataaccess_checkpoint_validation, $actionexecution_checkpoint_validation, $executed, $dbobjectids)) {
-            $ret[\PoP\ComponentModel\Constants\DataLoading::FEEDBACK] = $feedback;
+            $ret[DataLoading::FEEDBACK] = $feedback;
         }
         return $ret;
     }
@@ -754,7 +808,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     public function getDatasetmeta(array $module, array &$props, array $data_properties, $dataaccess_checkpoint_validation, $actionexecution_checkpoint_validation, $executed, $dbObjectIDOrIDs) : array
     {
         $ret = array();
-        if ($dataload_source = $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::SOURCE] ?? null) {
+        if ($dataload_source = $data_properties[DataloadingConstants::SOURCE] ?? null) {
             $ret['dataloadsource'] = $dataload_source;
         }
         return $ret;
@@ -762,77 +816,52 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     //-------------------------------------------------
     // Others
     //-------------------------------------------------
-    public function getRelevantRoute(array $module, array &$props) : ?string
+    public function getDataAccessCheckpoints(array $module, array &$props) : array
     {
-        return null;
+        return [];
     }
-    public function getRelevantRouteCheckpointTarget(array $module, array &$props) : string
+    public function getActionExecutionCheckpoints(array $module, array &$props) : array
     {
-        return \PoP\ComponentModel\Constants\DataLoading::DATA_ACCESS_CHECKPOINTS;
-    }
-    protected function maybeOverrideCheckpoints($checkpoints)
-    {
-        // Allow URE to add the extra checkpoint condition of the user having the Profile role
-        return \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('ModuleProcessor:checkpoints', $checkpoints);
-    }
-    // function getDataaccessCheckpointConfiguration(array $module, array &$props) {
-    public function getDataaccessCheckpoints(array $module, array &$props) : array
-    {
-        if ($route = $this->getRelevantRoute($module, $props)) {
-            if ($this->getRelevantRouteCheckpointTarget($module, $props) == \PoP\ComponentModel\Constants\DataLoading::DATA_ACCESS_CHECKPOINTS) {
-                return $this->maybeOverrideCheckpoints(\PoP\ComponentModel\Settings\SettingsManagerFactory::getInstance()->getCheckpoints($route));
-            }
-        }
-        // return null;
-        return array();
-    }
-    // function getActionexecutionCheckpointConfiguration(array $module, array &$props) {
-    public function getActionexecutionCheckpoints(array $module, array &$props) : array
-    {
-        if ($route = $this->getRelevantRoute($module, $props)) {
-            if ($this->getRelevantRouteCheckpointTarget($module, $props) == \PoP\ComponentModel\Constants\DataLoading::ACTION_EXECUTION_CHECKPOINTS) {
-                return $this->maybeOverrideCheckpoints(\PoP\ComponentModel\Settings\SettingsManagerFactory::getInstance()->getCheckpoints($route));
-            }
-        }
-        // return null;
-        return array();
+        return [];
     }
     public function shouldExecuteMutation(array $module, array &$props) : bool
     {
         // By default, execute only if the module is targeted for execution and doing POST
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
-        return doingPost() && $vars['actionpath'] == \PoP\ComponentModel\Facades\ModulePath\ModulePathHelpersFacade::getInstance()->getStringifiedModulePropagationCurrentPath($module);
+        $vars = ApplicationState::getVars();
+        return 'POST' == $_SERVER['REQUEST_METHOD'] && $vars['actionpath'] == $this->modulePathHelpers->getStringifiedModulePropagationCurrentPath($module);
     }
     public function getDataloadSource(array $module, array &$props) : string
     {
+        /** @var ModulePaths */
+        $modulePaths = $this->instanceManager->getInstance(ModulePaths::class);
         // Because a component can interact with itself by adding ?modulepaths=...,
         // then, by default, we simply set the dataload source to point to itself!
-        $stringified_module_propagation_current_path = \PoP\ComponentModel\Facades\ModulePath\ModulePathHelpersFacade::getInstance()->getStringifiedModulePropagationCurrentPath($module);
-        $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\ComponentModel\ModuleFiltering\ModuleFilterManager::URLPARAM_MODULEFILTER => \PoP\ComponentModel\ModuleFilters\ModulePaths::NAME, \PoP\ComponentModel\ModuleFilters\ModulePaths::URLPARAM_MODULEPATHS . '[]' => $stringified_module_propagation_current_path], \PoP\ComponentModel\Misc\RequestUtils::getCurrentUrl());
+        $stringified_module_propagation_current_path = $this->modulePathHelpers->getStringifiedModulePropagationCurrentPath($module);
+        $ret = GeneralUtils::addQueryArgs([ModuleFilterManager::URLPARAM_MODULEFILTER => $modulePaths->getName(), ModulePaths::URLPARAM_MODULEPATHS . '[]' => $stringified_module_propagation_current_path], $this->requestHelperService->getCurrentURL());
         // If we are in the API currently, stay in the API
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($scheme = $vars['scheme']) {
-            $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\ComponentModel\Constants\Params::SCHEME => $scheme], $ret);
+            $ret = GeneralUtils::addQueryArgs([Params::SCHEME => $scheme], $ret);
         }
         // Allow to add extra modulepaths set from above
         if ($extra_module_paths = $this->getProp($module, $props, 'dataload-source-add-modulepaths')) {
             foreach ($extra_module_paths as $modulepath) {
-                $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\ComponentModel\ModuleFilters\ModulePaths::URLPARAM_MODULEPATHS . '[]' => \PoP\ComponentModel\Facades\ModulePath\ModulePathHelpersFacade::getInstance()->stringifyModulePath($modulepath)], $ret);
+                $ret = GeneralUtils::addQueryArgs([ModulePaths::URLPARAM_MODULEPATHS . '[]' => $this->modulePathHelpers->stringifyModulePath($modulepath)], $ret);
             }
         }
         // Add the actionpath too
         if ($this->getComponentMutationResolverBridgeClass($module)) {
-            $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\ComponentModel\Constants\Params::ACTION_PATH => $stringified_module_propagation_current_path], $ret);
+            $ret = GeneralUtils::addQueryArgs([Params::ACTION_PATH => $stringified_module_propagation_current_path], $ret);
         }
         // Add the format to the query url
         if ($this instanceof \PoP\ComponentModel\ModuleProcessors\FormattableModuleInterface) {
             if ($format = $this->getFormat($module)) {
-                $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\ComponentModel\Constants\Params::FORMAT => $format], $ret);
+                $ret = GeneralUtils::addQueryArgs([Params::FORMAT => $format], $ret);
             }
         }
         // If mangled, make it mandle
         if ($mangled = $vars['mangled']) {
-            $ret = \PoP\ComponentModel\Misc\GeneralUtils::addQueryArgs([\PoP\Definitions\Configuration\Request::URLPARAM_MANGLED => $mangled], $ret);
+            $ret = GeneralUtils::addQueryArgs([Request::URLPARAM_MANGLED => $mangled], $ret);
         }
         return $ret;
     }
@@ -842,11 +871,9 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     }
     protected function flattenDatasetmoduletreeDataProperties($propagate_fn, &$ret, array $module, array &$props)
     {
-        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
-        $moduleFullName = \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($module);
+        $moduleFullName = ModuleUtils::getModuleFullName($module);
         // Exclude the subcomponent modules here
-        $modulefilter_manager = \PoP\ComponentModel\Facades\ModuleFiltering\ModuleFilterManagerFacade::getInstance();
-        $modulefilter_manager->prepareForPropagation($module, $props);
+        $this->moduleFilterManager->prepareForPropagation($module, $props);
         if ($submodules = $this->getModulesToPropagateDataProperties($module)) {
             // Calculate in 2 steps:
             // First step: The conditional-on-data-field-submodules must have their data-fields added under entry "conditional-data-fields"
@@ -863,10 +890,10 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
                         }
                     }
                     foreach ($conditionalSubmodules as $submodule) {
-                        $submodule_processor = $moduleprocessor_manager->getProcessor($submodule);
+                        $submodule_processor = $this->moduleProcessorManager->getProcessor($submodule);
                         // Propagate only if the submodule doesn't load data. If it does, this is the end of the data line, and the submodule is the beginning of a new datasetmoduletree
-                        if (!$submodule_processor->startDataloadingSection($submodule, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES])) {
-                            if ($submodule_ret = $submodule_processor->{$propagate_fn}($submodule, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES])) {
+                        if (!$submodule_processor->startDataloadingSection($submodule, $props[$moduleFullName][Props::SUBMODULES])) {
+                            if ($submodule_ret = $submodule_processor->{$propagate_fn}($submodule, $props[$moduleFullName][Props::SUBMODULES])) {
                                 // Chain the "data-fields" from the sublevels under the current "conditional-data-fields"
                                 // Move from "data-fields" to "conditional-data-fields"
                                 if ($submodule_ret['data-fields'] ?? null) {
@@ -898,10 +925,10 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             }
             // Second step: all the other submodules can be calculated directly
             foreach ($submodules as $submodule) {
-                $submodule_processor = $moduleprocessor_manager->getProcessor($submodule);
+                $submodule_processor = $this->moduleProcessorManager->getProcessor($submodule);
                 // Propagate only if the submodule doesn't load data. If it does, this is the end of the data line, and the submodule is the beginning of a new datasetmoduletree
-                if (!$submodule_processor->startDataloadingSection($submodule, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES])) {
-                    if ($submodule_ret = $submodule_processor->{$propagate_fn}($submodule, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES])) {
+                if (!$submodule_processor->startDataloadingSection($submodule, $props[$moduleFullName][Props::SUBMODULES])) {
+                    if ($submodule_ret = $submodule_processor->{$propagate_fn}($submodule, $props[$moduleFullName][Props::SUBMODULES])) {
                         // array_merge_recursive => data-fields from different sidebar-components can be integrated all together
                         $ret = \array_merge_recursive($ret, $submodule_ret);
                     }
@@ -912,12 +939,11 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
                 $ret['data-fields'] = \array_values(\array_unique($ret['data-fields']));
             }
         }
-        $modulefilter_manager->restoreFromPropagation($module, $props);
+        $this->moduleFilterManager->restoreFromPropagation($module, $props);
     }
     protected function flattenRelationalDBObjectDataProperties($propagate_fn, &$ret, array $module, array &$props)
     {
-        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
-        $moduleFullName = \PoP\ComponentModel\Modules\ModuleUtils::getModuleFullName($module);
+        $moduleFullName = ModuleUtils::getModuleFullName($module);
         // Combine the direct and conditionalOnDataField modules all together to iterate below
         $domainSwitchingSubmodules = $this->getDomainSwitchingSubmodules($module);
         foreach ($this->getConditionalOnDataFieldDomainSwitchingSubmodules($module) as $conditionDataField => $dataFieldTypeResolverOptionsConditionalSubmodules) {
@@ -926,13 +952,12 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
             }
         }
         // If it has subcomponent modules, integrate them under 'subcomponents'
-        $modulefilter_manager = \PoP\ComponentModel\Facades\ModuleFiltering\ModuleFilterManagerFacade::getInstance();
-        $modulefilter_manager->prepareForPropagation($module, $props);
+        $this->moduleFilterManager->prepareForPropagation($module, $props);
         foreach ($domainSwitchingSubmodules as $subcomponent_data_field => $subcomponent_modules) {
             $subcomponent_modules_data_properties = array('data-fields' => array(), 'conditional-data-fields' => array(), 'subcomponents' => array());
             foreach ($subcomponent_modules as $subcomponent_module) {
-                $subcomponent_processor = $moduleprocessor_manager->getProcessor($subcomponent_module);
-                if ($subcomponent_module_data_properties = $subcomponent_processor->{$propagate_fn}($subcomponent_module, $props[$moduleFullName][\PoP\ComponentModel\Constants\Props::SUBMODULES])) {
+                $subcomponent_processor = $this->moduleProcessorManager->getProcessor($subcomponent_module);
+                if ($subcomponent_module_data_properties = $subcomponent_processor->{$propagate_fn}($subcomponent_module, $props[$moduleFullName][Props::SUBMODULES])) {
                     $subcomponent_modules_data_properties = \array_merge_recursive($subcomponent_modules_data_properties, $subcomponent_module_data_properties);
                 }
             }
@@ -952,7 +977,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
                 $ret['subcomponents'][$subcomponent_data_field]['subcomponents'] = \array_merge_recursive($ret['subcomponents'][$subcomponent_data_field]['subcomponents'], $subcomponent_modules_data_properties['subcomponents']);
             }
         }
-        $modulefilter_manager->restoreFromPropagation($module, $props);
+        $this->moduleFilterManager->restoreFromPropagation($module, $props);
     }
     //-------------------------------------------------
     // New PUBLIC Functions: Static Data
@@ -976,7 +1001,7 @@ abstract class AbstractModuleProcessor implements \PoP\ComponentModel\ModuleProc
     {
         return array();
     }
-    private final function getSubmodulesByGroup(array $module, $components = array()) : array
+    private function getSubmodulesByGroup(array $module, $components = array()) : array
     {
         if (empty($components)) {
             $components = array(self::MODULECOMPONENT_SUBMODULES, self::MODULECOMPONENT_DOMAINSWITCHINGSUBMODULES, self::MODULECOMPONENT_CONDITIONALONDATAFIELDSUBMODULES, self::MODULECOMPONENT_CONDITIONALONDATAFIELDDOMAINSWITCHINGSUBMODULES);

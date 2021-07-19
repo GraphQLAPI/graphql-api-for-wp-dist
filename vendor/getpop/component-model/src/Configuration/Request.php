@@ -9,13 +9,11 @@ class Request
     /**
      * What version constraint to use for the API
      */
-    public const URLPARAM_VERSION_CONSTRAINT = \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_VERSION_CONSTRAINT;
+    public const URLPARAM_VERSION_CONSTRAINT = SchemaDefinition::ARGNAME_VERSION_CONSTRAINT;
     public const URLPARAM_VERSION_CONSTRAINT_FOR_FIELDS = 'fieldVersionConstraints';
     public const URLPARAM_VERSION_CONSTRAINT_FOR_DIRECTIVES = 'directiveVersionConstraints';
     /**
      * Indicates the version constraint for all fields/directives in the query
-     *
-     * @return string|null
      */
     public static function getVersionConstraint() : ?string
     {
@@ -23,8 +21,6 @@ class Request
     }
     /**
      * Indicates the version constraints for specific fields in the schema
-     *
-     * @return string|null
      */
     public static function getVersionConstraintsForFields() : ?array
     {
@@ -32,8 +28,6 @@ class Request
     }
     /**
      * Indicates the version constraints for specific directives in the schema
-     *
-     * @return string|null
      */
     public static function getVersionConstraintsForDirectives() : ?array
     {

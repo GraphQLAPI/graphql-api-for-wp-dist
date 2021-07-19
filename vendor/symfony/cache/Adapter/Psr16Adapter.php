@@ -19,7 +19,7 @@ use PrefixedByPoP\Symfony\Component\Cache\Traits\ProxyTrait;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class Psr16Adapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\AbstractAdapter implements \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class Psr16Adapter extends AbstractAdapter implements PruneableInterface, ResettableInterface
 {
     /**
      * @internal
@@ -27,7 +27,7 @@ class Psr16Adapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstra
     protected const NS_SEPARATOR = '_';
     use ProxyTrait;
     private $miss;
-    public function __construct(\PrefixedByPoP\Psr\SimpleCache\CacheInterface $pool, string $namespace = '', int $defaultLifetime = 0)
+    public function __construct(CacheInterface $pool, string $namespace = '', int $defaultLifetime = 0)
     {
         parent::__construct($namespace, $defaultLifetime);
         $this->pool = $pool;

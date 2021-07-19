@@ -45,7 +45,7 @@ final class RouteFilterIterator extends \FilterIterator
      * @param \Brain\Cortex\Route\RouteCollectionInterface $routes
      * @param \Brain\Cortex\Uri\UriInterface               $uri
      */
-    public function __construct(\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $routes, \PrefixedByPoP\Brain\Cortex\Uri\UriInterface $uri)
+    public function __construct(RouteCollectionInterface $routes, UriInterface $uri)
     {
         parent::__construct($routes);
         $this->uri = $uri;
@@ -57,7 +57,7 @@ final class RouteFilterIterator extends \FilterIterator
     {
         /** @var RouteInterface $route */
         $route = $this->getInnerIterator()->current();
-        if (!$route instanceof \PrefixedByPoP\Brain\Cortex\Route\RouteInterface) {
+        if (!$route instanceof RouteInterface) {
             return \false;
         }
         $scheme = \strtolower((string) $route['scheme']);

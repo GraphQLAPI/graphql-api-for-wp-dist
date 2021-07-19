@@ -4,29 +4,31 @@ declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLQuery\Schema;
 
 use Exception;
-use InvalidArgumentException;
-use PoP\FieldQuery\QuerySyntax;
-use PoP\FieldQuery\QueryHelpers;
-use GraphQLByPoP\GraphQLParser\Parser\Parser;
-use GraphQLByPoP\GraphQLParser\Parser\Ast\Field;
-use GraphQLByPoP\GraphQLParser\Parser\Ast\Query;
-use GraphQLByPoP\GraphQLParser\Execution\Request;
-use PoP\Translation\TranslationAPIInterface;
-use GraphQLByPoP\GraphQLParser\Parser\Ast\FragmentReference;
-use GraphQLByPoP\GraphQLParser\Parser\Ast\TypedFragmentReference;
-use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface;
-use PoP\Engine\DirectiveResolvers\IncludeDirectiveResolver;
-use PoP\ComponentModel\Schema\FeedbackMessageStoreInterface;
-use GraphQLByPoP\GraphQLParser\Validator\RequestValidator\RequestValidator;
 use GraphQLByPoP\GraphQLParser\Exception\Interfaces\LocationableExceptionInterface;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-use GraphQLByPoP\GraphQLQuery\ComponentConfiguration;
-use GraphQLByPoP\GraphQLQuery\Schema\QuerySymbols;
-use GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\VariableReference;
-use GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Variable;
+use GraphQLByPoP\GraphQLParser\Execution\Request;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputList;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputObject;
 use GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Literal;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Variable;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\VariableReference;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\Field;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\FragmentReference;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\Query;
+use GraphQLByPoP\GraphQLParser\Parser\Ast\TypedFragmentReference;
+use GraphQLByPoP\GraphQLParser\Parser\Parser;
+use GraphQLByPoP\GraphQLParser\Validator\RequestValidator\RequestValidator;
+use GraphQLByPoP\GraphQLQuery\ComponentConfiguration;
+use GraphQLByPoP\GraphQLQuery\Schema\QuerySymbols;
+use InvalidArgumentException;
+use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
+use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
+use PoP\ComponentModel\Schema\FeedbackMessageStoreInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\Engine\DirectiveResolvers\IncludeDirectiveResolver;
+use PoP\FieldQuery\QueryHelpers;
+use PoP\FieldQuery\QuerySyntax;
+use PoP\Translation\TranslationAPIInterface;
 class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQLQueryConvertorInterface
 {
     /**
@@ -37,10 +39,15 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
      * @var \PoP\ComponentModel\Schema\FeedbackMessageStoreInterface
      */
     protected $feedbackMessageStore;
-    public function __construct(\PoP\Translation\TranslationAPIInterface $translationAPI, \PoP\ComponentModel\Schema\FeedbackMessageStoreInterface $feedbackMessageStore)
+    /**
+     * @var \PoP\ComponentModel\Schema\FieldQueryInterpreterInterface
+     */
+    protected $fieldQueryInterpreter;
+    public function __construct(TranslationAPIInterface $translationAPI, FeedbackMessageStoreInterface $feedbackMessageStore, FieldQueryInterpreterInterface $fieldQueryInterpreter)
     {
         $this->translationAPI = $translationAPI;
         $this->feedbackMessageStore = $feedbackMessageStore;
+        $this->fieldQueryInterpreter = $fieldQueryInterpreter;
     }
     /**
      * Convert the GraphQL Query to PoP query in its requested form
@@ -54,15 +61,15 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
             $operationFieldQueries = [];
             foreach ($fieldQueryPaths as $fieldQueryLevel) {
                 // Join all connections with "."
-                $operationFieldQueries[] = \implode(\PoP\FieldQuery\QuerySyntax::SYMBOL_RELATIONALFIELDS_NEXTLEVEL, $fieldQueryLevel);
+                $operationFieldQueries[] = \implode(QuerySyntax::SYMBOL_RELATIONALFIELDS_NEXTLEVEL, $fieldQueryLevel);
             }
             // Join all fields at the same level with ","
-            $fieldQueries[] = \implode(\PoP\FieldQuery\QuerySyntax::SYMBOL_QUERYFIELDS_SEPARATOR, $operationFieldQueries);
+            $fieldQueries[] = \implode(QuerySyntax::SYMBOL_QUERYFIELDS_SEPARATOR, $operationFieldQueries);
         }
         return [
             $operationType,
             // Join all operators with a ";"
-            \implode(\PoP\FieldQuery\QuerySyntax::SYMBOL_OPERATIONS_SEPARATOR, $fieldQueries),
+            \implode(QuerySyntax::SYMBOL_OPERATIONS_SEPARATOR, $fieldQueries),
         ];
     }
     /**
@@ -77,11 +84,11 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
             $request = $this->parseAndCreateRequest($graphQLQuery, $variables, $enableMultipleQueryExecution, $operationName);
             // Converting the query could also throw an Exception
             list($operationType, $fieldQueryPaths) = $this->convertRequestToFieldQueryPaths($request);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Save the error
             $errorMessage = $e->getMessage();
             // Retrieve the location of the error
-            $location = $e instanceof \GraphQLByPoP\GraphQLParser\Exception\Interfaces\LocationableExceptionInterface ? $e->getLocation()->toArray() : null;
+            $location = $e instanceof LocationableExceptionInterface ? $e->getLocation()->toArray() : null;
             $extensions = [];
             if (!\is_null($location)) {
                 $extensions['location'] = $location;
@@ -94,36 +101,55 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
     }
     /**
      * Indicates if the variable must be dealt with as an expression: if its name starts with "_"
-     *
-     * @param string $variableName
-     * @return boolean
      */
     public function treatVariableAsExpression(string $variableName) : bool
     {
-        return \substr($variableName, 0, \strlen(\GraphQLByPoP\GraphQLQuery\Schema\QuerySymbols::VARIABLE_AS_EXPRESSION_NAME_PREFIX)) == \GraphQLByPoP\GraphQLQuery\Schema\QuerySymbols::VARIABLE_AS_EXPRESSION_NAME_PREFIX;
+        return \substr($variableName, 0, \strlen(QuerySymbols::VARIABLE_AS_EXPRESSION_NAME_PREFIX)) == QuerySymbols::VARIABLE_AS_EXPRESSION_NAME_PREFIX;
     }
     protected function convertArgumentValue($value)
     {
         /**
          * If the value is of type InputList, then resolve the array with its variables (under `getValue`)
          */
-        if ($value instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\VariableReference && \GraphQLByPoP\GraphQLQuery\ComponentConfiguration::enableVariablesAsExpressions() && $this->treatVariableAsExpression($value->getName())) {
+        if ($value instanceof VariableReference && ComponentConfiguration::enableVariablesAsExpressions() && $this->treatVariableAsExpression($value->getName())) {
             /**
              * If the value is a reference to a variable, and its name starts with "_",
              * then replace it with an expression, so its value can be computed on runtime
              */
-            return \PoP\FieldQuery\QueryHelpers::getExpressionQuery($value->getName());
-        } elseif ($value instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\VariableReference || $value instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Variable || $value instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\Literal) {
+            return QueryHelpers::getExpressionQuery($value->getName());
+        } elseif ($value instanceof VariableReference || $value instanceof Variable | $value instanceof Literal) {
+            if (\is_string($value->getValue())) {
+                return $this->maybeWrapStringInQuotesToAvoidExecutingAsAField($value->getValue());
+            }
             return $value->getValue();
         } elseif (\is_array($value)) {
             /**
              * When coming from the InputList, its `getValue` is an array of Variables
              */
             return \array_map([$this, 'convertArgumentValue'], $value);
-        } elseif ($value instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputList || $value instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\ArgumentValue\InputObject) {
+        } elseif ($value instanceof InputList || $value instanceof InputObject) {
             return \array_map([$this, 'convertArgumentValue'], $value->getValue());
         }
         // Otherwise it may be a scalar value
+        if (\is_string($value)) {
+            return $this->maybeWrapStringInQuotesToAvoidExecutingAsAField($value);
+        }
+        return $value;
+    }
+    /**
+     * If the string ends with "()" it must be wrapped with quotes "", to make
+     * sure it is interpreted as a string, and not as a field.
+     *
+     * eg: `{ posts(searchfor:"hel()") { id } }`
+     * eg: `{ posts(ids:["hel()"]) { id } }`
+     *
+     * @see https://github.com/leoloso/PoP/issues/743
+     */
+    protected function maybeWrapStringInQuotesToAvoidExecutingAsAField(string $value) : string
+    {
+        if ($this->fieldQueryInterpreter->isFieldArgumentValueAField($value)) {
+            return $this->fieldQueryInterpreter->wrapStringInQuotes($value);
+        }
         return $value;
     }
     protected function convertArguments(array $queryArguments) : array
@@ -136,9 +162,8 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
         }
         return $arguments;
     }
-    protected function convertField(\GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\FieldInterface $field) : string
+    protected function convertField(FieldInterface $field) : string
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         // Convert the arguments and directives into an array
         $arguments = $this->convertArguments($field->getArguments());
         $directives = [];
@@ -152,7 +177,7 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
          * In this case, "nestedUnder" indicates the relative position from the directive,
          * to its parent directive (under which it must be nested).
          */
-        $enableComposableDirectives = \GraphQLByPoP\GraphQLQuery\ComponentConfiguration::enableComposableDirectives();
+        $enableComposableDirectives = ComponentConfiguration::enableComposableDirectives();
         /**
          * The first pass goes from right to left, as to enable composable directives:
          * because we can have <directive1<directive2<directive3>>>, represented as
@@ -183,11 +208,11 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
                  * it already has this data
                  */
                 if (isset($composableDirectivesByPosition[$counter])) {
-                    $directiveComposableDirectives = \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING . \implode(\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_SEPARATOR, \array_map([$fieldQueryInterpreter, 'convertDirectiveToFieldDirective'], $composableDirectivesByPosition[$counter])) . \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING;
+                    $directiveComposableDirectives = QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING . \implode(QuerySyntax::SYMBOL_FIELDDIRECTIVE_SEPARATOR, \array_map([$this->fieldQueryInterpreter, 'convertDirectiveToFieldDirective'], $composableDirectivesByPosition[$counter])) . QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING;
                 }
             }
             $directiveName = $directive->getName();
-            $convertedDirective = $fieldQueryInterpreter->getDirective($directiveName, $directiveArgs, $directiveComposableDirectives);
+            $convertedDirective = $this->fieldQueryInterpreter->getDirective($directiveName, $directiveArgs, $directiveComposableDirectives);
             $rootAndComposableDirectives[$counter] = $convertedDirective;
             if ($enableComposableDirectives && $nestedUnder !== null) {
                 if (!\is_int($nestedUnder) || !($nestedUnder < 0)) {
@@ -215,63 +240,63 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
             $rootDirective = $rootAndComposableDirectives[$pos];
             $directives[] = $rootDirective;
         }
-        return $fieldQueryInterpreter->getField($field->getName(), $arguments, $field->getAlias(), \false, $directives);
+        return $this->fieldQueryInterpreter->getField($field->getName(), $arguments, $field->getAlias(), \false, $directives);
     }
     /**
      * Restrain fields to the model through directive <include(if:isType($model))>
-     *
-     * @return array
      */
     protected function restrainFieldsByTypeOrInterface(array $fragmentFieldPaths, string $fragmentModel) : array
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $instanceManager = InstanceManagerFacade::getInstance();
+        /** @var DirectiveResolverInterface */
+        $includeDirectiveResolver = $instanceManager->getInstance(IncludeDirectiveResolver::class);
         // Create the <include> directive, if the fragment references the type or interface
-        $includeDirective = $fieldQueryInterpreter->composeFieldDirective(\PoP\Engine\DirectiveResolvers\IncludeDirectiveResolver::getDirectiveName(), $fieldQueryInterpreter->getFieldArgsAsString(['if' => $fieldQueryInterpreter->getField('or', ['values' => [$fieldQueryInterpreter->getField('isType', ['type' => $fragmentModel]), $fieldQueryInterpreter->getField('implements', ['interface' => $fragmentModel])]])]));
-        $fragmentFieldPaths = \array_map(function (array $fragmentFieldPath) use($includeDirective, $fieldQueryInterpreter) : array {
+        $includeDirective = $this->fieldQueryInterpreter->composeFieldDirective($includeDirectiveResolver->getDirectiveName(), $this->fieldQueryInterpreter->getFieldArgsAsString(['if' => $this->fieldQueryInterpreter->getField('or', ['values' => [$this->fieldQueryInterpreter->getField('isType', ['type' => $fragmentModel]), $this->fieldQueryInterpreter->getField('implements', ['interface' => $fragmentModel])]])]));
+        $fragmentFieldPaths = \array_map(function (array $fragmentFieldPath) use($includeDirective) : array {
             // The field can itself compose other fields. Get the 1st element
             // to apply the directive to the root property only
             $fragmentRootField = $fragmentFieldPath[0];
             // Add the directive to the current directives from the field
-            $rootFieldDirectives = $fieldQueryInterpreter->getFieldDirectives((string) $fragmentRootField);
+            $rootFieldDirectives = $this->fieldQueryInterpreter->getFieldDirectives((string) $fragmentRootField);
             if ($rootFieldDirectives) {
                 // The include directive comes first,
                 // so if it evals to false the upcoming directives are not executed
-                $rootFieldDirectives = $includeDirective . \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_SEPARATOR . $rootFieldDirectives;
+                $rootFieldDirectives = $includeDirective . QuerySyntax::SYMBOL_FIELDDIRECTIVE_SEPARATOR . $rootFieldDirectives;
                 // Also remove the directive from the root field, since it will be added again below
-                list($fieldDirectivesOpeningSymbolPos, ) = \PoP\FieldQuery\QueryHelpers::listFieldDirectivesSymbolPositions($fragmentRootField);
+                list($fieldDirectivesOpeningSymbolPos, ) = QueryHelpers::listFieldDirectivesSymbolPositions($fragmentRootField);
                 $fragmentRootField = \substr($fragmentRootField, 0, $fieldDirectivesOpeningSymbolPos);
             } else {
                 $rootFieldDirectives = $includeDirective;
             }
             // Replace the first element, adding the directive
-            $fragmentFieldPath[0] = $fragmentRootField . \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING . $rootFieldDirectives . \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING;
+            $fragmentFieldPath[0] = $fragmentRootField . QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING . $rootFieldDirectives . QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING;
             return $fragmentFieldPath;
         }, $fragmentFieldPaths);
         return $fragmentFieldPaths;
     }
-    protected function processAndAddFieldPaths(\GraphQLByPoP\GraphQLParser\Execution\Request $request, array &$queryFieldPaths, array $fields, array $queryField = []) : void
+    protected function processAndAddFieldPaths(Request $request, array &$queryFieldPaths, array $fields, array $queryField = []) : void
     {
         // Iterate through the query's fields: properties, connections, fragments
         $queryFieldPath = $queryField;
         foreach ($fields as $field) {
-            if ($field instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\Field) {
+            if ($field instanceof Field) {
                 // Fields are leaves in the graph
                 $queryFieldPaths[] = \array_merge($queryFieldPath, [$this->convertField($field)]);
-            } elseif ($field instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\Query) {
+            } elseif ($field instanceof Query) {
                 // Queries are connections
                 $nestedFieldPaths = $this->getFieldPathsFromQuery($request, $field);
                 foreach ($nestedFieldPaths as $nestedFieldPath) {
                     $queryFieldPaths[] = \array_merge($queryFieldPath, $nestedFieldPath);
                 }
-            } elseif ($field instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\FragmentReference || $field instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\TypedFragmentReference) {
+            } elseif ($field instanceof FragmentReference || $field instanceof TypedFragmentReference) {
                 // Replace the fragment reference with its resolved information
                 $fragmentReference = $field;
-                if ($fragmentReference instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\FragmentReference) {
+                if ($fragmentReference instanceof FragmentReference) {
                     $fragmentName = $fragmentReference->getName();
                     $fragment = $request->getFragment($fragmentName);
                     $fragmentFields = $fragment->getFields();
                     $fragmentType = $fragment->getModel();
-                } elseif ($fragmentReference instanceof \GraphQLByPoP\GraphQLParser\Parser\Ast\TypedFragmentReference) {
+                } else {
                     $fragmentFields = $fragmentReference->getFields();
                     $fragmentType = $fragmentReference->getTypeName();
                 }
@@ -287,7 +312,7 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
             }
         }
     }
-    protected function getFieldPathsFromQuery(\GraphQLByPoP\GraphQLParser\Execution\Request $request, \GraphQLByPoP\GraphQLParser\Parser\Ast\Query $query) : array
+    protected function getFieldPathsFromQuery(Request $request, Query $query) : array
     {
         $queryFieldPaths = [];
         $queryFieldPath = [$this->convertField($query)];
@@ -307,7 +332,7 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
      *
      * @see https://graphql.org/learn/queries/
      */
-    protected function convertRequestToFieldQueryPaths(\GraphQLByPoP\GraphQLParser\Execution\Request $request) : array
+    protected function convertRequestToFieldQueryPaths(Request $request) : array
     {
         $fieldQueryPaths = [];
         // It is either is a query or a mutation
@@ -334,17 +359,13 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
     }
     /**
      * Function copied from youshido/graphql/src/Execution/Processor.php
-     *
-     * @param [type] $payload
-     * @param array $variables
-     * @return void
      */
-    protected function parseAndCreateRequest(string $payload, array $variables, bool $enableMultipleQueryExecution, ?string $operationName = null) : \GraphQLByPoP\GraphQLParser\Execution\Request
+    protected function parseAndCreateRequest(string $payload, array $variables, bool $enableMultipleQueryExecution, ?string $operationName = null) : Request
     {
         if (empty($payload)) {
-            throw new \InvalidArgumentException($this->translationAPI->__('Must provide an operation.', 'graphql-query'));
+            throw new InvalidArgumentException($this->translationAPI->__('Must provide an operation.', 'graphql-query'));
         }
-        $parser = new \GraphQLByPoP\GraphQLParser\Parser\Parser();
+        $parser = new Parser();
         $parsedData = $parser->parse($payload);
         // GraphiQL sends the operationName to execute in the payload, under "operationName"
         // This is required when the payload contains multiple queries
@@ -366,7 +387,7 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
             if (!$enableMultipleQueryExecution) {
                 $operationCount = \count($parsedData['queryOperations']) + \count($parsedData['mutationOperations']);
                 if ($operationCount > 1) {
-                    throw new \InvalidArgumentException(\sprintf($this->translationAPI->__('Feature \'Multiple Query Execution\' is not enabled, so can execute 1 operation only, but %s operations were submitted (\'%s\')', 'graphql-query'), $operationCount, \implode('\', \'', \array_merge(\array_map(function (array $operation) : string {
+                    throw new InvalidArgumentException(\sprintf($this->translationAPI->__('Feature \'Multiple Query Execution\' is not enabled, so can execute 1 operation only, but %s operations were submitted (\'%s\')', 'graphql-query'), $operationCount, \implode('\', \'', \array_merge(\array_map(function (array $operation) : string {
                         return $operation['name'];
                     }, $parsedData['queryOperations']), \array_map(function (array $operation) : string {
                         return $operation['name'];
@@ -441,13 +462,13 @@ class GraphQLQueryConvertor implements \GraphQLByPoP\GraphQLQuery\Schema\GraphQL
                  * @see https://spec.graphql.org/draft/#sel-IANLHCDBDCAACCmB3L
                  */
                 if (empty($parsedData['queries']) && empty($parsedData['mutations'])) {
-                    throw new \InvalidArgumentException(\sprintf($this->translationAPI->__('No operation with name \'%s\' was submitted.', 'graphql-query'), $operationName));
+                    throw new InvalidArgumentException(\sprintf($this->translationAPI->__('No operation with name \'%s\' was submitted.', 'graphql-query'), $operationName));
                 }
             }
         }
-        $request = new \GraphQLByPoP\GraphQLParser\Execution\Request($parsedData, $variables);
+        $request = new Request($parsedData, $variables);
         // If the validation fails, it will throw an exception
-        (new \GraphQLByPoP\GraphQLParser\Validator\RequestValidator\RequestValidator())->validate($request);
+        (new RequestValidator())->validate($request);
         // Return the request
         return $request;
     }

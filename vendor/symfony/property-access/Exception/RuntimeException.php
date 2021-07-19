@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class RuntimeException extends \RuntimeException implements \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\ExceptionInterface
+class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
 }

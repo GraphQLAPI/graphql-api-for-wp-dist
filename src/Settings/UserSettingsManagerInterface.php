@@ -9,8 +9,6 @@ interface UserSettingsManagerInterface
     /**
      * Timestamp of latest executed write to DB, concerning plugin activation,
      * module enabled/disabled, user settings updated
-     *
-     * @return integer
      */
     public function getTimestamp(): int;
     /**
@@ -20,14 +18,10 @@ interface UserSettingsManagerInterface
     public function storeTimestamp(): void;
     /**
      * Remove the timestamp
-     *
-     * @return void
      */
     public function removeTimestamp(): void;
     public function hasSetting(string $item): bool;
     /**
-     * No return type because it could be a bool/int/string
-     *
      * @return mixed
      */
     public function getSetting(string $module, string $option);

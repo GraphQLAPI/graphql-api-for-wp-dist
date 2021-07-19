@@ -5,7 +5,7 @@ namespace PoP\Engine\CheckpointProcessors;
 
 use PoP\ComponentModel\CheckpointProcessors\AbstractCheckpointProcessor;
 use PoP\ComponentModel\ErrorHandling\Error;
-class RequestCheckpointProcessor extends \PoP\ComponentModel\CheckpointProcessors\AbstractCheckpointProcessor
+class RequestCheckpointProcessor extends AbstractCheckpointProcessor
 {
     public const DOING_POST = 'doing-post';
     public function getCheckpointsToProcess()
@@ -16,8 +16,8 @@ class RequestCheckpointProcessor extends \PoP\ComponentModel\CheckpointProcessor
     {
         switch ($checkpoint[1]) {
             case self::DOING_POST:
-                if (!doingPost()) {
-                    return new \PoP\ComponentModel\ErrorHandling\Error('notdoingpost');
+                if ('POST' != $_SERVER['REQUEST_METHOD']) {
+                    return new Error('notdoingpost');
                 }
                 break;
         }

@@ -7,12 +7,12 @@ use GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInter
 use PoP\Root\Container\ContainerBuilderFactory;
 class SchemaDefinitionReferenceRegistryFacade
 {
-    public static function getInstance() : \GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInterface
+    public static function getInstance() : SchemaDefinitionReferenceRegistryInterface
     {
         /**
          * @var SchemaDefinitionReferenceRegistryInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(SchemaDefinitionReferenceRegistryInterface::class);
         return $service;
     }
 }

@@ -18,7 +18,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\UnsetKeyExceptio
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseNode implements \PrefixedByPoP\Symfony\Component\Config\Definition\PrototypeNodeInterface
+class ArrayNode extends BaseNode implements PrototypeNodeInterface
 {
     protected $xmlRemappings = [];
     protected $children = [];
@@ -60,7 +60,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
     /**
      * Retrieves the children of this node.
      *
-     * @return array The children
+     * @return array<string, NodeInterface>
      */
     public function getChildren()
     {
@@ -160,7 +160,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
      * @throws \InvalidArgumentException when the child node has no name
      * @throws \InvalidArgumentException when the child node's name is not unique
      */
-    public function addChild(\PrefixedByPoP\Symfony\Component\Config\Definition\NodeInterface $node)
+    public function addChild(NodeInterface $node)
     {
         $name = $node->getName();
         if (!\strlen($name)) {
@@ -172,11 +172,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
         $this->children[$name] = $node;
     }
     /**
-     * Finalizes the value of this node.
-     *
-     * @param mixed $value
-     *
-     * @return mixed The finalised value
+     * {@inheritdoc}
      *
      * @throws UnsetKeyException
      * @throws InvalidConfigurationException if the node doesn't have enough children
@@ -184,7 +180,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
     protected function finalizeValue($value)
     {
         if (\false === $value) {
-            throw new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\UnsetKeyException(\sprintf('Unsetting key for path "%s", value: %s.', $this->getPath(), \json_encode($value)));
+            throw new UnsetKeyException(\sprintf('Unsetting key for path "%s", value: %s.', $this->getPath(), \json_encode($value)));
         }
         foreach ($this->children as $name => $child) {
             if (!\array_key_exists($name, $value)) {
@@ -195,7 +191,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
                     } else {
                         $message .= '.';
                     }
-                    $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException($message);
+                    $ex = new InvalidConfigurationException($message);
                     $ex->setPath($this->getPath());
                     throw $ex;
                 }
@@ -210,23 +206,19 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
             }
             try {
                 $value[$name] = $child->finalize($value[$name]);
-            } catch (\PrefixedByPoP\Symfony\Component\Config\Definition\Exception\UnsetKeyException $e) {
+            } catch (UnsetKeyException $e) {
                 unset($value[$name]);
             }
         }
         return $value;
     }
     /**
-     * Validates the type of the value.
-     *
-     * @param mixed $value
-     *
-     * @throws InvalidTypeException
+     * {@inheritdoc}
      */
     protected function validateType($value)
     {
         if (!\is_array($value) && (!$this->allowFalse || \false !== $value)) {
-            $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidTypeException(\sprintf('Invalid type for path "%s". Expected "array", but got "%s"', $this->getPath(), \get_debug_type($value)));
+            $ex = new InvalidTypeException(\sprintf('Invalid type for path "%s". Expected "array", but got "%s"', $this->getPath(), \get_debug_type($value)));
             if ($hint = $this->getInfo()) {
                 $ex->addHint($hint);
             }
@@ -235,11 +227,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
         }
     }
     /**
-     * Normalizes the value.
-     *
-     * @param mixed $value The value to normalize
-     *
-     * @return mixed The normalized value
+     * {@inheritdoc}
      *
      * @throws InvalidConfigurationException
      */
@@ -254,7 +242,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
             if (isset($this->children[$name])) {
                 try {
                     $normalized[$name] = $this->children[$name]->normalize($val);
-                } catch (\PrefixedByPoP\Symfony\Component\Config\Definition\Exception\UnsetKeyException $e) {
+                } catch (UnsetKeyException $e) {
                 }
                 unset($value[$name]);
             } elseif (!$this->removeExtraKeys) {
@@ -283,7 +271,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
             } else {
                 $msg .= \sprintf('. Available option%s %s "%s".', 1 === \count($proposals) ? '' : 's', 1 === \count($proposals) ? 'is' : 'are', \implode('", "', $proposals));
             }
-            $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException($msg);
+            $ex = new InvalidConfigurationException($msg);
             $ex->setPath($this->getPath());
             throw $ex;
         }
@@ -300,18 +288,13 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
             if (!isset($value[$singular])) {
                 continue;
             }
-            $value[$plural] = \PrefixedByPoP\Symfony\Component\Config\Definition\Processor::normalizeConfig($value, $singular, $plural);
+            $value[$plural] = Processor::normalizeConfig($value, $singular, $plural);
             unset($value[$singular]);
         }
         return $value;
     }
     /**
-     * Merges values together.
-     *
-     * @param mixed $leftSide  The left side to merge
-     * @param mixed $rightSide The right side to merge
-     *
-     * @return mixed The merged values
+     * {@inheritdoc}
      *
      * @throws InvalidConfigurationException
      * @throws \RuntimeException
@@ -330,7 +313,7 @@ class ArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\BaseN
             // no conflict
             if (!\array_key_exists($k, $leftSide)) {
                 if (!$this->allowNewKeys) {
-                    $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException(\sprintf('You are not allowed to define new elements for path "%s". Please define all elements for this path in one config file. If you are trying to overwrite an element, make sure you redefine it with the same name.', $this->getPath()));
+                    $ex = new InvalidConfigurationException(\sprintf('You are not allowed to define new elements for path "%s". Please define all elements for this path in one config file. If you are trying to overwrite an element, make sure you redefine it with the same name.', $this->getPath()));
                     $ex->setPath($this->getPath());
                     throw $ex;
                 }

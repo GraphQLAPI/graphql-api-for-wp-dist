@@ -16,14 +16,14 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class UnaryNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class UnaryNode extends Node
 {
     private const OPERATORS = ['!' => '!', 'not' => '!', '+' => '+', '-' => '-'];
-    public function __construct(string $operator, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $node)
+    public function __construct(string $operator, Node $node)
     {
         parent::__construct(['node' => $node], ['operator' => $operator]);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $compiler->raw('(')->raw(self::OPERATORS[$this->attributes['operator']])->compile($this->nodes['node'])->raw(')');
     }

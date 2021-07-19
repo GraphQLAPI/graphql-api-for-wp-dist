@@ -7,9 +7,9 @@ use GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot;
 use PoP\Root\Container\ContainerBuilderFactory;
 class QueryRootObjectFacade
 {
-    public static function getInstance() : \GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot
+    public static function getInstance() : QueryRoot
     {
-        $containerBuilderFactory = \PoP\Root\Container\ContainerBuilderFactory::getInstance();
-        return $containerBuilderFactory->get(\GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot::class);
+        $containerBuilderFactory = ContainerBuilderFactory::getInstance();
+        return $containerBuilderFactory->get(QueryRoot::class);
     }
 }

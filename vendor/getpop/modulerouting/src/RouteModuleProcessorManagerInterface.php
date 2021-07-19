@@ -6,11 +6,12 @@ namespace PoP\ModuleRouting;
 use PoP\ModuleRouting\AbstractRouteModuleProcessor;
 interface RouteModuleProcessorManagerInterface
 {
-    public function addRouteModuleProcessor(\PoP\ModuleRouting\AbstractRouteModuleProcessor $processor) : void;
+    public function addRouteModuleProcessor(AbstractRouteModuleProcessor $processor) : void;
     /**
      * @return AbstractRouteModuleProcessor[]
+     * @param string $group
      */
-    public function getProcessors(string $group = null) : array;
+    public function getProcessors($group = null) : array;
     public function getDefaultGroup() : string;
     /**
      * @return array<string, mixed>
@@ -18,6 +19,7 @@ interface RouteModuleProcessorManagerInterface
     public function getVars() : array;
     /**
      * @return string[]|null
+     * @param string $group
      */
-    public function getRouteModuleByMostAllmatchingVarsProperties(string $group = null) : ?array;
+    public function getRouteModuleByMostAllmatchingVarsProperties($group = null) : ?array;
 }

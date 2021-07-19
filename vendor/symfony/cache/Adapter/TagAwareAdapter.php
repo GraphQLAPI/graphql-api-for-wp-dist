@@ -12,6 +12,8 @@ namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 
 use PrefixedByPoP\Psr\Cache\CacheItemInterface;
 use PrefixedByPoP\Psr\Cache\InvalidArgumentException;
+use PrefixedByPoP\Psr\Log\LoggerAwareInterface;
+use PrefixedByPoP\Psr\Log\LoggerAwareTrait;
 use PrefixedByPoP\Symfony\Component\Cache\CacheItem;
 use PrefixedByPoP\Symfony\Component\Cache\PruneableInterface;
 use PrefixedByPoP\Symfony\Component\Cache\ResettableInterface;
@@ -21,40 +23,41 @@ use PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\TagAwareAdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface, \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class TagAwareAdapter implements TagAwareAdapterInterface, TagAwareCacheInterface, PruneableInterface, ResettableInterface, LoggerAwareInterface
 {
-    public const TAGS_PREFIX = "\0tags\0";
+    public const TAGS_PREFIX = "\x00tags\x00";
     use ContractsTrait;
+    use LoggerAwareTrait;
     use ProxyTrait;
     private $deferred = [];
-    private $createCacheItem;
-    private $setCacheItemTags;
-    private $getTagsByKey;
-    private $invalidateTags;
     private $tags;
     private $knownTagVersions = [];
     private $knownTagVersionsTtl;
-    public function __construct(\PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface $itemsPool, \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface $tagsPool = null, float $knownTagVersionsTtl = 0.15)
+    private static $createCacheItem;
+    private static $setCacheItemTags;
+    private static $getTagsByKey;
+    private static $invalidateTags;
+    public function __construct(AdapterInterface $itemsPool, AdapterInterface $tagsPool = null, float $knownTagVersionsTtl = 0.15)
     {
         $this->pool = $itemsPool;
         $this->tags = $tagsPool ?: $itemsPool;
         $this->knownTagVersionsTtl = $knownTagVersionsTtl;
-        $this->createCacheItem = \Closure::bind(static function ($key, $value, \PrefixedByPoP\Symfony\Component\Cache\CacheItem $protoItem) {
-            $item = new \PrefixedByPoP\Symfony\Component\Cache\CacheItem();
+        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key, $value, CacheItem $protoItem) {
+            $item = new CacheItem();
             $item->key = $key;
             $item->value = $value;
             $item->expiry = $protoItem->expiry;
             $item->poolHash = $protoItem->poolHash;
             return $item;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
-        $this->setCacheItemTags = \Closure::bind(static function (\PrefixedByPoP\Symfony\Component\Cache\CacheItem $item, $key, array &$itemTags) {
+        }, null, CacheItem::class));
+        self::$setCacheItemTags ?? (self::$setCacheItemTags = \Closure::bind(static function (CacheItem $item, $key, array &$itemTags) {
             $item->isTaggable = \true;
             if (!$item->isHit) {
                 return $item;
             }
             if (isset($itemTags[$key])) {
                 foreach ($itemTags[$key] as $tag => $version) {
-                    $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS][$tag] = $tag;
+                    $item->metadata[CacheItem::METADATA_TAGS][$tag] = $tag;
                 }
                 unset($itemTags[$key]);
             } else {
@@ -62,21 +65,22 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
                 $item->isHit = \false;
             }
             return $item;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
-        $this->getTagsByKey = \Closure::bind(static function ($deferred) {
+        }, null, CacheItem::class));
+        self::$getTagsByKey ?? (self::$getTagsByKey = \Closure::bind(static function ($deferred) {
             $tagsByKey = [];
             foreach ($deferred as $key => $item) {
-                $tagsByKey[$key] = $item->newMetadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS] ?? [];
+                $tagsByKey[$key] = $item->newMetadata[CacheItem::METADATA_TAGS] ?? [];
+                $item->metadata = $item->newMetadata;
             }
             return $tagsByKey;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
-        $this->invalidateTags = \Closure::bind(static function (\PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface $tagsAdapter, array $tags) {
+        }, null, CacheItem::class));
+        self::$invalidateTags ?? (self::$invalidateTags = \Closure::bind(static function (AdapterInterface $tagsAdapter, array $tags) {
             foreach ($tags as $v) {
                 $v->expiry = 0;
                 $tagsAdapter->saveDeferred($v);
             }
             return $tagsAdapter->commit();
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+        }, null, CacheItem::class));
     }
     /**
      * {@inheritdoc}
@@ -87,7 +91,7 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
         $tagsByKey = [];
         $invalidatedTags = [];
         foreach ($tags as $tag) {
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($tag);
+            \assert('' !== CacheItem::validateKey($tag));
             $invalidatedTags[$tag] = 0;
         }
         if ($this->deferred) {
@@ -98,19 +102,17 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
                     $ok = \false;
                 }
             }
-            $f = $this->getTagsByKey;
-            $tagsByKey = $f($items);
+            $tagsByKey = (self::$getTagsByKey)($items);
             $this->deferred = [];
         }
         $tagVersions = $this->getTagVersions($tagsByKey, $invalidatedTags);
-        $f = $this->createCacheItem;
+        $f = self::$createCacheItem;
         foreach ($tagsByKey as $key => $tags) {
             $this->pool->saveDeferred($f(static::TAGS_PREFIX . $key, \array_intersect_key($tagVersions, $tags), $items[$key]));
         }
         $ok = $this->pool->commit() && $ok;
         if ($invalidatedTags) {
-            $f = $this->invalidateTags;
-            $ok = $f($this->tags, $invalidatedTags) && $ok;
+            $ok = (self::$invalidateTags)($this->tags, $invalidatedTags) && $ok;
         }
         return $ok;
     }
@@ -168,7 +170,7 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
         }
         try {
             $items = $this->pool->getItems($tagKeys + $keys);
-        } catch (\PrefixedByPoP\Psr\Cache\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             $this->pool->getItems($keys);
             // Should throw an exception
             throw $e;
@@ -179,8 +181,9 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
      * {@inheritdoc}
      *
      * @return bool
+     * @param string $prefix
      */
-    public function clear(string $prefix = '')
+    public function clear($prefix = '')
     {
         if ('' !== $prefix) {
             foreach ($this->deferred as $key => $item) {
@@ -191,7 +194,7 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
         } else {
             $this->deferred = [];
         }
-        if ($this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+        if ($this->pool instanceof AdapterInterface) {
             return $this->pool->clear($prefix);
         }
         return $this->pool->clear();
@@ -224,9 +227,9 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
      *
      * @return bool
      */
-    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function save(CacheItemInterface $item)
     {
-        if (!$item instanceof \PrefixedByPoP\Symfony\Component\Cache\CacheItem) {
+        if (!$item instanceof CacheItem) {
             return \false;
         }
         $this->deferred[$item->getKey()] = $item;
@@ -237,9 +240,9 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
      *
      * @return bool
      */
-    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item)
     {
-        if (!$item instanceof \PrefixedByPoP\Symfony\Component\Cache\CacheItem) {
+        if (!$item instanceof CacheItem) {
             return \false;
         }
         $this->deferred[$item->getKey()] = $item;
@@ -269,7 +272,7 @@ class TagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\
     private function generateItems(iterable $items, array $tagKeys)
     {
         $bufferedItems = $itemTags = [];
-        $f = $this->setCacheItemTags;
+        $f = self::$setCacheItemTags;
         foreach ($items as $key => $item) {
             if (!$tagKeys) {
                 (yield $key => $f($item, static::TAGS_PREFIX . $key, $itemTags));

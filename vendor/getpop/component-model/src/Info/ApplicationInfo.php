@@ -15,7 +15,7 @@ class ApplicationInfo implements \PoP\ComponentModel\Info\ApplicationInfoInterfa
      */
     public function __construct()
     {
-        $this->version = \PoP\Root\Environment::getApplicationVersion() ?? '';
+        $this->version = Environment::getApplicationVersion() ?? '';
     }
     public function getVersion() : string
     {

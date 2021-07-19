@@ -7,16 +7,22 @@ use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\TypeResolverPickers\TypeResolverPickerInterface;
 interface UnionTypeResolverInterface
 {
-    // public function addTypeToID($resultItemID): string;
+    // public function addTypeToID(string | int $resultItemID): string;
+    /**
+     * @param string|int $resultItemID
+     */
     public function getTypeResolverClassForResultItem($resultItemID);
     /**
      * @param object $resultItem
      */
-    public function getTargetTypeResolverPicker($resultItem) : ?\PoP\ComponentModel\TypeResolverPickers\TypeResolverPickerInterface;
+    public function getTargetTypeResolverPicker($resultItem) : ?TypeResolverPickerInterface;
     /**
      * @param object $resultItem
      */
-    public function getTargetTypeResolver($resultItem) : ?\PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+    public function getTargetTypeResolver($resultItem) : ?TypeResolverInterface;
+    /**
+     * @param array<string|int> $ids
+     */
     public function getResultItemIDTargetTypeResolvers(array $ids) : array;
     public function getTargetTypeResolverClasses() : array;
     public function getSchemaTypeInterfaceClass() : ?string;

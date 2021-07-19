@@ -8,12 +8,9 @@ class CacheControlEngine implements \PoP\CacheControl\Managers\CacheControlEngin
     /**
      * @var int|null
      */
-    protected $minimumMaxAge = null;
+    protected $minimumMaxAge;
     /**
      * Add a max age from a requested field
-     *
-     * @param integer $maxAge
-     * @return void
      */
     public function addMaxAge(int $maxAge) : void
     {
@@ -34,9 +31,6 @@ class CacheControlEngine implements \PoP\CacheControl\Managers\CacheControlEngin
     }
     /**
      * Calculate the request's max age as the minimum max age from all the requested fields
-     *
-     * @param integer $maxAge
-     * @return void
      */
     public function getCacheControlHeader() : ?string
     {

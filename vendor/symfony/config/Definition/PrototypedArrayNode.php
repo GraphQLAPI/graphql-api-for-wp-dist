@@ -19,7 +19,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\UnsetKeyExceptio
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Definition\ArrayNode
+class PrototypedArrayNode extends ArrayNode
 {
     protected $prototype;
     protected $keyAttribute;
@@ -125,7 +125,7 @@ class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Defini
     /**
      * Sets the node prototype.
      */
-    public function setPrototype(\PrefixedByPoP\Symfony\Component\Config\Definition\PrototypeNodeInterface $node)
+    public function setPrototype(PrototypeNodeInterface $node)
     {
         $this->prototype = $node;
     }
@@ -143,48 +143,36 @@ class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Defini
      *
      * @throws Exception
      */
-    public function addChild(\PrefixedByPoP\Symfony\Component\Config\Definition\NodeInterface $node)
+    public function addChild(NodeInterface $node)
     {
-        throw new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\Exception('A prototyped array node can not have concrete children.');
+        throw new Exception('A prototyped array node can not have concrete children.');
     }
     /**
-     * Finalizes the value of this node.
-     *
-     * @param mixed $value
-     *
-     * @return mixed The finalized value
-     *
-     * @throws UnsetKeyException
-     * @throws InvalidConfigurationException if the node doesn't have enough children
+     * {@inheritdoc}
      */
     protected function finalizeValue($value)
     {
         if (\false === $value) {
-            throw new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\UnsetKeyException(\sprintf('Unsetting key for path "%s", value: %s.', $this->getPath(), \json_encode($value)));
+            throw new UnsetKeyException(\sprintf('Unsetting key for path "%s", value: %s.', $this->getPath(), \json_encode($value)));
         }
         foreach ($value as $k => $v) {
             $prototype = $this->getPrototypeForChild($k);
             try {
                 $value[$k] = $prototype->finalize($v);
-            } catch (\PrefixedByPoP\Symfony\Component\Config\Definition\Exception\UnsetKeyException $e) {
+            } catch (UnsetKeyException $e) {
                 unset($value[$k]);
             }
         }
         if (\count($value) < $this->minNumberOfElements) {
-            $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException(\sprintf('The path "%s" should have at least %d element(s) defined.', $this->getPath(), $this->minNumberOfElements));
+            $ex = new InvalidConfigurationException(\sprintf('The path "%s" should have at least %d element(s) defined.', $this->getPath(), $this->minNumberOfElements));
             $ex->setPath($this->getPath());
             throw $ex;
         }
         return $value;
     }
     /**
-     * Normalizes the value.
+     * {@inheritdoc}
      *
-     * @param mixed $value The value to normalize
-     *
-     * @return mixed The normalized value
-     *
-     * @throws InvalidConfigurationException
      * @throws DuplicateKeyException
      */
     protected function normalizeValue($value)
@@ -193,12 +181,12 @@ class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Defini
             return $value;
         }
         $value = $this->remapXml($value);
-        $isAssoc = \array_keys($value) !== \range(0, \count($value) - 1);
+        $isList = array_is_list($value);
         $normalized = [];
         foreach ($value as $k => $v) {
             if (null !== $this->keyAttribute && \is_array($v)) {
-                if (!isset($v[$this->keyAttribute]) && \is_int($k) && !$isAssoc) {
-                    $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException(\sprintf('The attribute "%s" must be set for path "%s".', $this->keyAttribute, $this->getPath()));
+                if (!isset($v[$this->keyAttribute]) && \is_int($k) && $isList) {
+                    $ex = new InvalidConfigurationException(\sprintf('The attribute "%s" must be set for path "%s".', $this->keyAttribute, $this->getPath()));
                     $ex->setPath($this->getPath());
                     throw $ex;
                 } elseif (isset($v[$this->keyAttribute])) {
@@ -213,7 +201,7 @@ class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Defini
                     // if only "value" is left
                     if (\array_keys($v) === ['value']) {
                         $v = $v['value'];
-                        if ($this->prototype instanceof \PrefixedByPoP\Symfony\Component\Config\Definition\ArrayNode && ($children = $this->prototype->getChildren()) && \array_key_exists('value', $children)) {
+                        if ($this->prototype instanceof ArrayNode && ($children = $this->prototype->getChildren()) && \array_key_exists('value', $children)) {
                             $valuePrototype = \current($this->valuePrototypes) ?: clone $children['value'];
                             $valuePrototype->parent = $this;
                             $originalClosures = $this->prototype->normalizationClosures;
@@ -226,13 +214,13 @@ class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Defini
                     }
                 }
                 if (\array_key_exists($k, $normalized)) {
-                    $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\DuplicateKeyException(\sprintf('Duplicate key "%s" for path "%s".', $k, $this->getPath()));
+                    $ex = new DuplicateKeyException(\sprintf('Duplicate key "%s" for path "%s".', $k, $this->getPath()));
                     $ex->setPath($this->getPath());
                     throw $ex;
                 }
             }
             $prototype = $this->getPrototypeForChild($k);
-            if (null !== $this->keyAttribute || $isAssoc) {
+            if (null !== $this->keyAttribute || !$isList) {
                 $normalized[$k] = $prototype->normalize($v);
             } else {
                 $normalized[] = $prototype->normalize($v);
@@ -241,15 +229,7 @@ class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Defini
         return $normalized;
     }
     /**
-     * Merges values together.
-     *
-     * @param mixed $leftSide  The left side to merge
-     * @param mixed $rightSide The right side to merge
-     *
-     * @return mixed The merged values
-     *
-     * @throws InvalidConfigurationException
-     * @throws \RuntimeException
+     * {@inheritdoc}
      */
     protected function mergeValues($leftSide, $rightSide)
     {
@@ -261,16 +241,17 @@ class PrototypedArrayNode extends \PrefixedByPoP\Symfony\Component\Config\Defini
         if (\false === $leftSide || !$this->performDeepMerging) {
             return $rightSide;
         }
+        $isList = array_is_list($rightSide);
         foreach ($rightSide as $k => $v) {
-            // prototype, and key is irrelevant, append the element
-            if (null === $this->keyAttribute) {
+            // prototype, and key is irrelevant there are no named keys, append the element
+            if (null === $this->keyAttribute && $isList) {
                 $leftSide[] = $v;
                 continue;
             }
             // no conflict
             if (!\array_key_exists($k, $leftSide)) {
                 if (!$this->allowNewKeys) {
-                    $ex = new \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException(\sprintf('You are not allowed to define new elements for path "%s". Please define all elements for this path in one config file.', $this->getPath()));
+                    $ex = new InvalidConfigurationException(\sprintf('You are not allowed to define new elements for path "%s". Please define all elements for this path in one config file.', $this->getPath()));
                     $ex->setPath($this->getPath());
                     throw $ex;
                 }

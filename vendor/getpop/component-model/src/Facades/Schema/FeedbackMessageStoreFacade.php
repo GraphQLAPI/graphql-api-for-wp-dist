@@ -7,12 +7,12 @@ use PoP\ComponentModel\Schema\FeedbackMessageStoreInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class FeedbackMessageStoreFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Schema\FeedbackMessageStoreInterface
+    public static function getInstance() : FeedbackMessageStoreInterface
     {
         /**
          * @var FeedbackMessageStoreInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Schema\FeedbackMessageStoreInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(FeedbackMessageStoreInterface::class);
         return $service;
     }
 }

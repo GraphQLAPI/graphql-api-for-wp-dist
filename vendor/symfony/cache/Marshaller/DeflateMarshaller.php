@@ -16,13 +16,13 @@ use PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class DeflateMarshaller implements \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface
+class DeflateMarshaller implements MarshallerInterface
 {
     private $marshaller;
-    public function __construct(\PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface $marshaller)
+    public function __construct(MarshallerInterface $marshaller)
     {
         if (!\function_exists('gzdeflate')) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException('The "zlib" PHP extension is not loaded.');
+            throw new CacheException('The "zlib" PHP extension is not loaded.');
         }
         $this->marshaller = $marshaller;
     }

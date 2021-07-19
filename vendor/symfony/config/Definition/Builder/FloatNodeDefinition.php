@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\FloatNode;
  *
  * @author Jeanmonod David <david.jeanmonod@gmail.com>
  */
-class FloatNodeDefinition extends \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\NumericNodeDefinition
+class FloatNodeDefinition extends NumericNodeDefinition
 {
     /**
      * Instantiates a Node.
@@ -25,6 +25,6 @@ class FloatNodeDefinition extends \PrefixedByPoP\Symfony\Component\Config\Defini
      */
     protected function instantiateNode()
     {
-        return new \PrefixedByPoP\Symfony\Component\Config\Definition\FloatNode($this->name, $this->parent, $this->min, $this->max, $this->pathSeparator);
+        return new FloatNode($this->name, $this->parent, $this->min, $this->max, $this->pathSeparator);
     }
 }

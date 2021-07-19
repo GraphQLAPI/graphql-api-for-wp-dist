@@ -10,7 +10,7 @@ class QueryUtils
     /**
      * @param string[]|string|null $skipFromChars
      * @param string[]|string|null $skipUntilChars
-     * @return int|false
+     * @return int|bool
      */
     public static function findFirstSymbolPosition(string $haystack, string $needle, $skipFromChars = '', $skipUntilChars = '')
     {
@@ -21,8 +21,8 @@ class QueryUtils
         // Split on that searching element: If it appears within the string,
         // it will produce an array with exactly 2 elements (since using option "ONLY_FIRST_OCCURRENCE")
         // The length of the first element equals the position of that symbol
-        $fieldQueryInterpreter = \PoP\QueryParsing\Facades\QueryParserFacade::getInstance();
-        $options = [\PoP\QueryParsing\QueryParserOptions::ONLY_FIRST_OCCURRENCE => \true];
+        $fieldQueryInterpreter = QueryParserFacade::getInstance();
+        $options = [QueryParserOptions::ONLY_FIRST_OCCURRENCE => \true];
         $symbolElems = $fieldQueryInterpreter->splitElements($haystack, $needle, $skipFromChars, $skipUntilChars, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING, $options);
         if (\count($symbolElems) == 2) {
             return \strlen($symbolElems[0]);
@@ -36,7 +36,7 @@ class QueryUtils
     /**
      * @param string[]|string|null $skipFromChars
      * @param string[]|string|null $skipUntilChars
-     * @return int|false
+     * @return int|bool
      */
     public static function findLastSymbolPosition(string $haystack, string $needle, $skipFromChars = '', $skipUntilChars = '')
     {
@@ -47,8 +47,8 @@ class QueryUtils
         // Split on that searching element: If it appears within the string, it will produce
         // an array with exactly 2 elements (since using option "ONLY_FIRST_OCCURRENCE")
         // The length of the first element equals the position of that symbol
-        $fieldQueryInterpreter = \PoP\QueryParsing\Facades\QueryParserFacade::getInstance();
-        $options = [\PoP\QueryParsing\QueryParserOptions::START_FROM_END => \true, \PoP\QueryParsing\QueryParserOptions::ONLY_FIRST_OCCURRENCE => \true];
+        $fieldQueryInterpreter = QueryParserFacade::getInstance();
+        $options = [QueryParserOptions::START_FROM_END => \true, QueryParserOptions::ONLY_FIRST_OCCURRENCE => \true];
         $symbolElems = $fieldQueryInterpreter->splitElements($haystack, $needle, $skipFromChars, $skipUntilChars, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING, $options);
         if (\count($symbolElems) == 2) {
             return \strlen($symbolElems[0]);

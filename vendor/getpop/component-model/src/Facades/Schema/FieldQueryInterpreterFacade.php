@@ -7,12 +7,12 @@ use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class FieldQueryInterpreterFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Schema\FieldQueryInterpreterInterface
+    public static function getInstance() : FieldQueryInterpreterInterface
     {
         /**
          * @var FieldQueryInterpreterInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Schema\FieldQueryInterpreterInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(FieldQueryInterpreterInterface::class);
         return $service;
     }
 }

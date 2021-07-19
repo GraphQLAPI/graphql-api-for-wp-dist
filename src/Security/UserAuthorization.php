@@ -5,48 +5,49 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Security;
 
 use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
+use GraphQLAPI\GraphQLAPI\Registries\UserAuthorizationSchemeRegistryInterface;
+use InvalidArgumentException;
 
 /**
  * UserAuthorization
  */
-class UserAuthorization
+class UserAuthorization implements UserAuthorizationInterface
 {
-    public const ACCESS_SCHEME_ADMIN_ONLY = 'admin';
-    public const ACCESS_SCHEME_POST = 'post';
-
     /**
-     * The different ways to grant access to the schema editor
-     *
-     * @return string[]
+     * @var \GraphQLAPI\GraphQLAPI\Registries\UserAuthorizationSchemeRegistryInterface
      */
-    public static function getAccessSchemes(): array
+    protected $userAuthorizationSchemeRegistry;
+    public function __construct(UserAuthorizationSchemeRegistryInterface $userAuthorizationSchemeRegistry)
     {
-        return [
-            self::ACCESS_SCHEME_ADMIN_ONLY,
-            self::ACCESS_SCHEME_POST,
-        ];
+        $this->userAuthorizationSchemeRegistry = $userAuthorizationSchemeRegistry;
     }
-
     /**
      * The capability needed to access the schema editor (i.e. access clients GraphiQL/Voyager
      * against the admin endpoint /wp-admin/?page=graphql_api, and execute queries against it).
      * If access to admin only, then it is "manage_options". Otherwise, it is "edit_posts"
-     *
-     * @return string
      */
-    public static function getSchemaEditorAccessCapability(): string
+    public function getSchemaEditorAccessCapability(): string
     {
-        $accessScheme = ComponentConfiguration::getEditingAccessScheme();
-        $accessSchemeCapabilities = [
-            self::ACCESS_SCHEME_ADMIN_ONLY => 'manage_options',
-            self::ACCESS_SCHEME_POST => 'edit_posts',
-        ];
-        // If the option chosen does not exist, or none provided, use the "admin" by default
-        return $accessSchemeCapabilities[$accessScheme] ?? 'manage_options';
+        $accessSchemeCapability = null;
+        if ($accessScheme = ComponentConfiguration::getEditingAccessScheme()) {
+            // If the capability does not exist, catch the exception
+            try {
+                $accessSchemeCapability = $this->userAuthorizationSchemeRegistry->getUserAuthorizationScheme($accessScheme)->getSchemaEditorAccessCapability();
+            } catch (InvalidArgumentException $exception) {
+            }
+        }
+
+        // Return the default access
+        if ($accessSchemeCapability === null) {
+            // This function also throws an exception. Let it bubble up - that's an application error
+            $defaultUserAuthorizationScheme = $this->userAuthorizationSchemeRegistry->getDefaultUserAuthorizationScheme();
+            return $defaultUserAuthorizationScheme->getSchemaEditorAccessCapability();
+        }
+        return $accessSchemeCapability;
     }
 
-    public static function canAccessSchemaEditor(): bool
+    public function canAccessSchemaEditor(): bool
     {
-        return \current_user_can(self::getSchemaEditorAccessCapability());
+        return \current_user_can($this->getSchemaEditorAccessCapability());
     }
 }

@@ -7,7 +7,7 @@ use PoPSchema\Comments\TypeResolvers\CommentTypeResolver;
 use PoPSchema\Comments\ModuleProcessors\CommentFilterInnerModuleProcessor;
 use PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor;
 use PoP\ComponentModel\QueryInputOutputHandlers\ListQueryInputOutputHandler;
-class CommentRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor
+class CommentRelationalFieldDataloadModuleProcessor extends AbstractRelationalFieldDataloadModuleProcessor
 {
     public const MODULE_DATALOAD_RELATIONALFIELDS_COMMENTS = 'dataload-relationalfields-comments';
     public function getModulesToProcess() : array
@@ -18,7 +18,7 @@ class CommentRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProce
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_COMMENTS:
-                return \PoPSchema\Comments\TypeResolvers\CommentTypeResolver::class;
+                return CommentTypeResolver::class;
         }
         return parent::getTypeResolverClass($module);
     }
@@ -26,7 +26,7 @@ class CommentRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProce
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_COMMENTS:
-                return \PoP\ComponentModel\QueryInputOutputHandlers\ListQueryInputOutputHandler::class;
+                return ListQueryInputOutputHandler::class;
         }
         return parent::getQueryInputOutputHandlerClass($module);
     }
@@ -34,7 +34,7 @@ class CommentRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProce
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_COMMENTS:
-                return [\PoPSchema\Comments\ModuleProcessors\CommentFilterInnerModuleProcessor::class, \PoPSchema\Comments\ModuleProcessors\CommentFilterInnerModuleProcessor::MODULE_FILTERINNER_COMMENTS];
+                return [CommentFilterInnerModuleProcessor::class, CommentFilterInnerModuleProcessor::MODULE_FILTERINNER_COMMENTS];
         }
         return parent::getFilterSubmodule($module);
     }

@@ -28,34 +28,34 @@ class Semver
     public static function satisfies($version, $constraints)
     {
         if (null === self::$versionParser) {
-            self::$versionParser = new \PrefixedByPoP\Composer\Semver\VersionParser();
+            self::$versionParser = new VersionParser();
         }
         $versionParser = self::$versionParser;
-        $provider = new \PrefixedByPoP\Composer\Semver\Constraint\Constraint('==', $versionParser->normalize($version));
+        $provider = new Constraint('==', $versionParser->normalize($version));
         $parsedConstraints = $versionParser->parseConstraints($constraints);
         return $parsedConstraints->matches($provider);
     }
     /**
      * Return all versions that satisfy given constraints.
      *
-     * @param array  $versions
-     * @param string $constraints
+     * @param string[] $versions
+     * @param string   $constraints
      *
-     * @return array
+     * @return string[]
      */
     public static function satisfiedBy(array $versions, $constraints)
     {
         $versions = \array_filter($versions, function ($version) use($constraints) {
-            return \PrefixedByPoP\Composer\Semver\Semver::satisfies($version, $constraints);
+            return Semver::satisfies($version, $constraints);
         });
         return \array_values($versions);
     }
     /**
      * Sort given array of versions.
      *
-     * @param array $versions
+     * @param string[] $versions
      *
-     * @return array
+     * @return string[]
      */
     public static function sort(array $versions)
     {
@@ -64,24 +64,24 @@ class Semver
     /**
      * Sort given array of versions in reverse.
      *
-     * @param array $versions
+     * @param string[] $versions
      *
-     * @return array
+     * @return string[]
      */
     public static function rsort(array $versions)
     {
         return self::usort($versions, self::SORT_DESC);
     }
     /**
-     * @param array $versions
-     * @param int   $direction
+     * @param string[] $versions
+     * @param int      $direction
      *
-     * @return array
+     * @return string[]
      */
     private static function usort(array $versions, $direction)
     {
         if (null === self::$versionParser) {
-            self::$versionParser = new \PrefixedByPoP\Composer\Semver\VersionParser();
+            self::$versionParser = new VersionParser();
         }
         $versionParser = self::$versionParser;
         $normalized = array();
@@ -96,7 +96,7 @@ class Semver
             if ($left[0] === $right[0]) {
                 return 0;
             }
-            if (\PrefixedByPoP\Composer\Semver\Comparator::lessThan($left[0], $right[0])) {
+            if (Comparator::lessThan($left[0], $right[0])) {
                 return -$direction;
             }
             return $direction;

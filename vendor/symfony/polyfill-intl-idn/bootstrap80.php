@@ -74,9 +74,6 @@ if (!\defined('IDNA_NONTRANSITIONAL_TO_ASCII')) {
 if (!\defined('IDNA_NONTRANSITIONAL_TO_UNICODE')) {
     \define('IDNA_NONTRANSITIONAL_TO_UNICODE', 32);
 }
-if (!\defined('INTL_IDNA_VARIANT_2003')) {
-    \define('INTL_IDNA_VARIANT_2003', 0);
-}
 if (!\defined('INTL_IDNA_VARIANT_UTS46')) {
     \define('INTL_IDNA_VARIANT_UTS46', 1);
 }
@@ -122,12 +119,12 @@ if (!\defined('IDNA_ERROR_CONTEXTJ')) {
 if (!\function_exists('idn_to_ascii')) {
     function idn_to_ascii(?string $domain, ?int $flags = 0, ?int $variant = \INTL_IDNA_VARIANT_UTS46, &$idna_info = null) : string|false
     {
-        return \PrefixedByPoP\Symfony\Polyfill\Intl\Idn\Idn::idn_to_ascii((string) $domain, (int) $flags, (int) $variant, $idna_info);
+        return p\Idn::idn_to_ascii((string) $domain, (int) $flags, (int) $variant, $idna_info);
     }
 }
 if (!\function_exists('idn_to_utf8')) {
     function idn_to_utf8(?string $domain, ?int $flags = 0, ?int $variant = \INTL_IDNA_VARIANT_UTS46, &$idna_info = null) : string|false
     {
-        return \PrefixedByPoP\Symfony\Polyfill\Intl\Idn\Idn::idn_to_utf8((string) $domain, (int) $flags, (int) $variant, $idna_info);
+        return p\Idn::idn_to_utf8((string) $domain, (int) $flags, (int) $variant, $idna_info);
     }
 }

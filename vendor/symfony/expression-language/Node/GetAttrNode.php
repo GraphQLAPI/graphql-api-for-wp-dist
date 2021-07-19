@@ -16,16 +16,16 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class GetAttrNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class GetAttrNode extends Node
 {
     public const PROPERTY_CALL = 1;
     public const METHOD_CALL = 2;
     public const ARRAY_CALL = 3;
-    public function __construct(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $node, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node $attribute, \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\ArrayNode $arguments, int $type)
+    public function __construct(Node $node, Node $attribute, ArrayNode $arguments, int $type)
     {
         parent::__construct(['node' => $node, 'attribute' => $attribute, 'arguments' => $arguments], ['type' => $type]);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         switch ($this->attributes['type']) {
             case self::PROPERTY_CALL:

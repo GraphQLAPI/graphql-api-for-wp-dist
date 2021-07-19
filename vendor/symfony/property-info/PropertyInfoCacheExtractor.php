@@ -18,12 +18,12 @@ use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
  *
  * @final
  */
-class PropertyInfoCacheExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInitializableExtractorInterface
+class PropertyInfoCacheExtractor implements PropertyInfoExtractorInterface, PropertyInitializableExtractorInterface
 {
     private $propertyInfoExtractor;
     private $cacheItemPool;
     private $arrayCache = [];
-    public function __construct(\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface $propertyInfoExtractor, \PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $cacheItemPool)
+    public function __construct(PropertyInfoExtractorInterface $propertyInfoExtractor, CacheItemPoolInterface $cacheItemPool)
     {
         $this->propertyInfoExtractor = $propertyInfoExtractor;
         $this->cacheItemPool = $cacheItemPool;

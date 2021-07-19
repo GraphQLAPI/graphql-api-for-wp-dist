@@ -6,7 +6,7 @@ namespace PoP\ComponentModel\Registries;
 use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface;
 interface FieldInterfaceRegistryInterface
 {
-    public function addFieldInterfaceResolver(\PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface $fieldInterfaceResolver) : void;
+    public function addFieldInterfaceResolver(FieldInterfaceResolverInterface $fieldInterfaceResolver) : void;
     /**
      * @return FieldInterfaceResolverInterface[]
      */

@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class ServiceCircularReferenceException extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException
+class ServiceCircularReferenceException extends RuntimeException
 {
     private $serviceId;
     private $path;

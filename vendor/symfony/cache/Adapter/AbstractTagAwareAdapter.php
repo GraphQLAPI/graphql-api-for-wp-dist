@@ -28,19 +28,20 @@ use PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface;
  *
  * @internal
  */
-abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\TagAwareAdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\TagAwareCacheInterface, \PrefixedByPoP\Psr\Log\LoggerAwareInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagAwareCacheInterface, LoggerAwareInterface, ResettableInterface
 {
     use AbstractAdapterTrait;
     use ContractsTrait;
-    private const TAGS_PREFIX = "\0tags\0";
+    private const TAGS_PREFIX = "\x00tags\x00";
     protected function __construct(string $namespace = '', int $defaultLifetime = 0)
     {
-        $this->namespace = '' === $namespace ? '' : \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($namespace) . ':';
+        $this->namespace = '' === $namespace ? '' : CacheItem::validateKey($namespace) . ':';
+        $this->defaultLifetime = $defaultLifetime;
         if (null !== $this->maxIdLength && \strlen($namespace) > $this->maxIdLength - 24) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Namespace must be %d chars max, %d given ("%s").', $this->maxIdLength - 24, \strlen($namespace), $namespace));
+            throw new InvalidArgumentException(\sprintf('Namespace must be %d chars max, %d given ("%s").', $this->maxIdLength - 24, \strlen($namespace), $namespace));
         }
-        $this->createCacheItem = \Closure::bind(static function ($key, $value, $isHit) {
-            $item = new \PrefixedByPoP\Symfony\Component\Cache\CacheItem();
+        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key, $value, $isHit) {
+            $item = new CacheItem();
             $item->key = $key;
             $item->isTaggable = \true;
             // If structure does not match what we expect return item as is (no value and not a hit)
@@ -50,18 +51,16 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
             $item->isHit = $isHit;
             // Extract value, tags and meta data from the cache value
             $item->value = $value['value'];
-            $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS] = $value['tags'] ?? [];
+            $item->metadata[CacheItem::METADATA_TAGS] = $value['tags'] ?? [];
             if (isset($value['meta'])) {
                 // For compactness these values are packed, & expiry is offset to reduce size
                 $v = \unpack('Ve/Nc', $value['meta']);
-                $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY] = $v['e'] + \PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY_OFFSET;
-                $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_CTIME] = $v['c'];
+                $item->metadata[CacheItem::METADATA_EXPIRY] = $v['e'] + CacheItem::METADATA_EXPIRY_OFFSET;
+                $item->metadata[CacheItem::METADATA_CTIME] = $v['c'];
             }
             return $item;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
-        $getId = \Closure::fromCallable([$this, 'getId']);
-        $tagPrefix = self::TAGS_PREFIX;
-        $this->mergeByLifetime = \Closure::bind(static function ($deferred, &$expiredIds) use($getId, $tagPrefix, $defaultLifetime) {
+        }, null, CacheItem::class));
+        self::$mergeByLifetime ?? (self::$mergeByLifetime = \Closure::bind(static function ($deferred, &$expiredIds, $getId, $tagPrefix, $defaultLifetime) {
             $byLifetime = [];
             $now = \microtime(\true);
             $expiredIds = [];
@@ -76,9 +75,9 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
                     continue;
                 }
                 // Store Value and Tags on the cache value
-                if (isset(($metadata = $item->newMetadata)[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS])) {
-                    $value = ['value' => $item->value, 'tags' => $metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS]];
-                    unset($metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS]);
+                if (isset(($metadata = $item->newMetadata)[CacheItem::METADATA_TAGS])) {
+                    $value = ['value' => $item->value, 'tags' => $metadata[CacheItem::METADATA_TAGS]];
+                    unset($metadata[CacheItem::METADATA_TAGS]);
                 } else {
                     $value = ['value' => $item->value, 'tags' => []];
                 }
@@ -88,7 +87,7 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
                 }
                 // Extract tag changes, these should be removed from values in doSave()
                 $value['tag-operations'] = ['add' => [], 'remove' => []];
-                $oldTags = $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS] ?? [];
+                $oldTags = $item->metadata[CacheItem::METADATA_TAGS] ?? [];
                 foreach (\array_diff($value['tags'], $oldTags) as $addedTag) {
                     $value['tag-operations']['add'][] = $getId($tagPrefix . $addedTag);
                 }
@@ -96,9 +95,10 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
                     $value['tag-operations']['remove'][] = $getId($tagPrefix . $removedTag);
                 }
                 $byLifetime[$ttl][$getId($key)] = $value;
+                $item->metadata = $item->newMetadata;
             }
             return $byLifetime;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+        }, null, CacheItem::class));
     }
     /**
      * Persists several cache items immediately.
@@ -149,8 +149,7 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
     public function commit() : bool
     {
         $ok = \true;
-        $byLifetime = $this->mergeByLifetime;
-        $byLifetime = $byLifetime($this->deferred, $expiredIds);
+        $byLifetime = (self::$mergeByLifetime)($this->deferred, $expiredIds, \Closure::fromCallable([$this, 'getId']), self::TAGS_PREFIX, $this->defaultLifetime);
         $retry = $this->deferred = [];
         if ($expiredIds) {
             // Tags are not cleaned up in this case, however that is done on invalidateTags().
@@ -171,7 +170,7 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
                     $v = $values[$id];
                     $type = \get_debug_type($v);
                     $message = \sprintf('Failed to save key "{key}" of type %s%s', $type, $e instanceof \Exception ? ': ' . $e->getMessage() : '.');
-                    \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, $message, ['key' => \substr($id, \strlen($this->namespace)), 'exception' => $e instanceof \Exception ? $e : null, 'cache-adapter' => \get_debug_type($this)]);
+                    CacheItem::log($this->logger, $message, ['key' => \substr($id, \strlen($this->namespace)), 'exception' => $e instanceof \Exception ? $e : null, 'cache-adapter' => \get_debug_type($this)]);
                 }
             } else {
                 foreach ($values as $id => $v) {
@@ -194,7 +193,7 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
                 $ok = \false;
                 $type = \get_debug_type($v);
                 $message = \sprintf('Failed to save key "{key}" of type %s%s', $type, $e instanceof \Exception ? ': ' . $e->getMessage() : '.');
-                \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, $message, ['key' => \substr($id, \strlen($this->namespace)), 'exception' => $e instanceof \Exception ? $e : null, 'cache-adapter' => \get_debug_type($this)]);
+                CacheItem::log($this->logger, $message, ['key' => \substr($id, \strlen($this->namespace)), 'exception' => $e instanceof \Exception ? $e : null, 'cache-adapter' => \get_debug_type($this)]);
             }
         }
         return $ok;
@@ -239,7 +238,7 @@ abstract class AbstractTagAwareAdapter implements \PrefixedByPoP\Symfony\Compone
             } catch (\Exception $e) {
             }
             $message = 'Failed to delete key "{key}"' . ($e instanceof \Exception ? ': ' . $e->getMessage() : '.');
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
             $ok = \false;
         }
         return $ok;

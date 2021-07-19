@@ -17,7 +17,7 @@ namespace PrefixedByPoP\Symfony\Component\PropertyInfo;
  *
  * @final
  */
-class PropertyInfoExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInfoExtractorInterface, \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyInitializableExtractorInterface
+class PropertyInfoExtractor implements PropertyInfoExtractorInterface, PropertyInitializableExtractorInterface
 {
     private $listExtractors;
     private $typeExtractors;

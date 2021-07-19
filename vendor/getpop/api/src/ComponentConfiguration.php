@@ -9,22 +9,37 @@ use PoP\ComponentModel\ComponentConfiguration as ComponentModelComponentConfigur
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
-    private static $useSchemaDefinitionCache;
-    private static $executeQueryBatchInStrictOrder;
-    private static $enableEmbeddableFields;
-    private static $enableMutations;
-    private static $overrideRequestURI;
+    /**
+     * @var bool
+     */
+    private static $useSchemaDefinitionCache = \false;
+    /**
+     * @var bool
+     */
+    private static $executeQueryBatchInStrictOrder = \true;
+    /**
+     * @var bool
+     */
+    private static $enableEmbeddableFields = \false;
+    /**
+     * @var bool
+     */
+    private static $enableMutations = \true;
+    /**
+     * @var bool
+     */
+    private static $overrideRequestURI = \false;
     public static function useSchemaDefinitionCache() : bool
     {
         // First check that the Component Model cache is enabled
-        if (!\PoP\ComponentModel\ComponentConfiguration::useComponentModelCache()) {
+        if (!ComponentModelComponentConfiguration::useComponentModelCache()) {
             return \false;
         }
         // Define properties
         $envVariable = \PoP\API\Environment::USE_SCHEMA_DEFINITION_CACHE;
         $selfProperty =& self::$useSchemaDefinitionCache;
         $defaultValue = \false;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -35,7 +50,7 @@ class ComponentConfiguration
         $envVariable = \PoP\API\Environment::EXECUTE_QUERY_BATCH_IN_STRICT_ORDER;
         $selfProperty =& self::$executeQueryBatchInStrictOrder;
         $defaultValue = \true;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -46,7 +61,7 @@ class ComponentConfiguration
         $envVariable = \PoP\API\Environment::ENABLE_EMBEDDABLE_FIELDS;
         $selfProperty =& self::$enableEmbeddableFields;
         $defaultValue = \false;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -57,7 +72,7 @@ class ComponentConfiguration
         $envVariable = \PoP\API\Environment::ENABLE_MUTATIONS;
         $selfProperty =& self::$enableMutations;
         $defaultValue = \true;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -73,7 +88,7 @@ class ComponentConfiguration
         $envVariable = \PoP\API\Environment::OVERRIDE_REQUEST_URI;
         $selfProperty =& self::$overrideRequestURI;
         $defaultValue = \false;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

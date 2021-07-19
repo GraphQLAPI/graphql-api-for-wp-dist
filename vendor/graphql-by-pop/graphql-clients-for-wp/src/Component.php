@@ -41,16 +41,15 @@ class Component extends AbstractComponent
         array $skipSchemaComponentClasses = []
     ): void {
         if (self::isEnabled()) {
-            parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
             ComponentConfiguration::setConfiguration($configuration);
-            self::initYAMLServices(dirname(__DIR__));
+            self::initServices(dirname(__DIR__));
             if (ComponentConfiguration::useGraphiQLExplorer()) {
-                self::initYAMLServices(dirname(__DIR__), '/ConditionalOnEnvironment/UseGraphiQLExplorer/Overrides');
+                self::initServices(dirname(__DIR__), '/ConditionalOnContext/UseGraphiQLExplorer/Overrides');
             }
         }
     }
 
-    protected static function resolveEnabled()
+    protected static function resolveEnabled(): bool
     {
         return GraphQLServerComponent::isEnabled();
     }

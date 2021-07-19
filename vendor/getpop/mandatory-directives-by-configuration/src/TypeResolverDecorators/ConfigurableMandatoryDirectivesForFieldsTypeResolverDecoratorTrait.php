@@ -3,12 +3,14 @@
 declare (strict_types=1);
 namespace PoP\MandatoryDirectivesByConfiguration\TypeResolverDecorators;
 
+use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
+use PoP\ComponentModel\FieldInterfaceResolvers\FieldInterfaceResolverInterface;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForFieldsTrait;
 trait ConfigurableMandatoryDirectivesForFieldsTypeResolverDecoratorTrait
 {
     use ConfigurableMandatoryDirectivesForFieldsTrait;
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
         return \array_map(function ($entry) {
             // The tuple has format [typeOrFieldInterfaceResolverClass, fieldName]
@@ -16,18 +18,24 @@ trait ConfigurableMandatoryDirectivesForFieldsTypeResolverDecoratorTrait
             // or [typeOrFieldInterfaceResolverClass, fieldName, $capability]
             // So, in position [0], will always be the $typeOrFieldInterfaceResolverClass
             return $entry[0];
-        }, static::getConfigurationEntries());
+        }, $this->getConfigurationEntries());
     }
+    /**
+     * @param mixed $entryValue
+     */
     protected abstract function getMandatoryDirectives($entryValue = null) : array;
-    public function getMandatoryDirectivesForFields(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getMandatoryDirectivesForFields(TypeResolverInterface $typeResolver) : array
     {
+        $instanceManager = InstanceManagerFacade::getInstance();
         $mandatoryDirectivesForFields = [];
         $fieldInterfaceResolverClasses = $typeResolver->getAllImplementedInterfaceClasses();
         // Obtain all capabilities allowed for the current combination of typeResolver/fieldName
         foreach ($this->getFieldNames() as $fieldName) {
             // Calculate all the interfaces that define this fieldName
-            $fieldInterfaceResolverClassesForField = \array_values(\array_filter($fieldInterfaceResolverClasses, function ($fieldInterfaceResolverClass) use($fieldName) : bool {
-                return \in_array($fieldName, $fieldInterfaceResolverClass::getFieldNamesToImplement());
+            $fieldInterfaceResolverClassesForField = \array_values(\array_filter($fieldInterfaceResolverClasses, function ($fieldInterfaceResolverClass) use($fieldName, $instanceManager) : bool {
+                /** @var FieldInterfaceResolverInterface */
+                $fieldInterfaceResolver = $instanceManager->getInstance($fieldInterfaceResolverClass);
+                return \in_array($fieldName, $fieldInterfaceResolver->getFieldNamesToImplement());
             }));
             foreach ($this->getEntries($typeResolver, $fieldInterfaceResolverClassesForField, $fieldName) as $entry) {
                 $entryValue = $entry[2] ?? null;

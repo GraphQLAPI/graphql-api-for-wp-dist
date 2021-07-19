@@ -14,12 +14,12 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ReferenceConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractConfigurator
+class ReferenceConfigurator extends AbstractConfigurator
 {
     /** @internal */
     protected $id;
     /** @internal */
-    protected $invalidBehavior = \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
+    protected $invalidBehavior = ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
     public function __construct(string $id)
     {
         $this->id = $id;
@@ -29,7 +29,7 @@ class ReferenceConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyI
      */
     public final function ignoreOnInvalid()
     {
-        $this->invalidBehavior = \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::IGNORE_ON_INVALID_REFERENCE;
+        $this->invalidBehavior = ContainerInterface::IGNORE_ON_INVALID_REFERENCE;
         return $this;
     }
     /**
@@ -37,7 +37,7 @@ class ReferenceConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyI
      */
     public final function nullOnInvalid()
     {
-        $this->invalidBehavior = \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::NULL_ON_INVALID_REFERENCE;
+        $this->invalidBehavior = ContainerInterface::NULL_ON_INVALID_REFERENCE;
         return $this;
     }
     /**
@@ -45,7 +45,7 @@ class ReferenceConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyI
      */
     public final function ignoreOnUninitialized()
     {
-        $this->invalidBehavior = \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE;
+        $this->invalidBehavior = ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE;
         return $this;
     }
     /**

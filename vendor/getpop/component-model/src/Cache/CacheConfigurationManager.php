@@ -10,7 +10,7 @@ use PoP\Root\Environment;
  *
  * @author Leonardo Losoviz <leo@getpop.org>
  */
-class CacheConfigurationManager implements \PoP\ComponentModel\Cache\CacheConfigurationManagerInterface
+class CacheConfigurationManager implements CacheConfigurationManagerInterface
 {
     /**
      * Make the cache folder obsolete when increasing the application version,
@@ -21,9 +21,19 @@ class CacheConfigurationManager implements \PoP\ComponentModel\Cache\CacheConfig
     public function getNamespace() : string
     {
         // (Needed for development) Don't share cache among plugin versions
-        if ($version = \PoP\Root\Environment::getApplicationVersion()) {
+        if ($version = Environment::getApplicationVersion()) {
             return '_v' . $version;
         }
         return '';
+    }
+    /**
+     * Inject to the FilesystemAdapter:
+     * The directory where to store the cache. If null, it uses the default /tmp system folder
+     *
+     * @see https://symfony.com/doc/current/components/cache/adapters/filesystem_adapter.html
+     */
+    public function getDirectory() : ?string
+    {
+        return null;
     }
 }

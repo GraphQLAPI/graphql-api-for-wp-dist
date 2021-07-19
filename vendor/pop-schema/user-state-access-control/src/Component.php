@@ -6,10 +6,11 @@ namespace PoPSchema\UserStateAccessControl;
 use PoP\AccessControl\Component as AccessControlComponent;
 use PoP\Root\Component\AbstractComponent;
 use PoP\Root\Component\CanDisableComponentTrait;
+use PoP\CacheControl\Component as CacheControlComponent;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     use CanDisableComponentTrait;
     /**
@@ -23,8 +24,6 @@ class Component extends \PoP\Root\Component\AbstractComponent
     }
     /**
      * All conditional component classes that this component depends upon, to initialize them
-     *
-     * @return array
      */
     public static function getDependedConditionalComponentClasses() : array
     {
@@ -39,17 +38,16 @@ class Component extends \PoP\Root\Component\AbstractComponent
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
         if (self::isEnabled()) {
-            parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-            self::initYAMLServices(\dirname(__DIR__));
-            self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
+            self::initServices(\dirname(__DIR__));
+            self::initSchemaServices(\dirname(__DIR__), $skipSchema);
             // Init conditional on API package being installed
-            if (\class_exists('\\PoP\\CacheControl\\Component') && !\in_array(\PoP\CacheControl\Component::class, $skipSchemaComponentClasses)) {
-                self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema, '/Conditional/CacheControl');
+            if (\class_exists(CacheControlComponent::class)) {
+                self::initSchemaServices(\dirname(__DIR__), $skipSchema || \in_array(\PoP\CacheControl\Component::class, $skipSchemaComponentClasses), '/ConditionalOnComponent/CacheControl');
             }
         }
     }
-    protected static function resolveEnabled()
+    protected static function resolveEnabled() : bool
     {
-        return \PoP\AccessControl\Component::isEnabled();
+        return AccessControlComponent::isEnabled();
     }
 }

@@ -8,18 +8,18 @@ class ModuleUtils
 {
     public static function getModuleFullName(array $module) : string
     {
-        return \PoP\ComponentModel\ItemProcessors\ProcessorItemUtils::getItemFullName($module);
+        return ProcessorItemUtils::getItemFullName($module);
     }
     public static function getModuleFromFullName(string $moduleFullName) : ?array
     {
-        return \PoP\ComponentModel\ItemProcessors\ProcessorItemUtils::getItemFromFullName($moduleFullName);
+        return ProcessorItemUtils::getItemFromFullName($moduleFullName);
     }
     public static function getModuleOutputName(array $module) : string
     {
-        return \PoP\ComponentModel\ItemProcessors\ProcessorItemUtils::getItemOutputName($module, \PoP\ComponentModel\Modules\DefinitionGroups::MODULES);
+        return ProcessorItemUtils::getItemOutputName($module, \PoP\ComponentModel\Modules\DefinitionGroups::MODULES);
     }
     public static function getModuleFromOutputName(string $moduleOutputName) : ?array
     {
-        return \PoP\ComponentModel\ItemProcessors\ProcessorItemUtils::getItemFromOutputName($moduleOutputName, \PoP\ComponentModel\Modules\DefinitionGroups::MODULES);
+        return ProcessorItemUtils::getItemFromOutputName($moduleOutputName, \PoP\ComponentModel\Modules\DefinitionGroups::MODULES);
     }
 }

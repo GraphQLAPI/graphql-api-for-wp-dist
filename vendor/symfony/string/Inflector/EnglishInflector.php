@@ -10,7 +10,7 @@
  */
 namespace PrefixedByPoP\Symfony\Component\String\Inflector;
 
-final class EnglishInflector implements \PrefixedByPoP\Symfony\Component\String\Inflector\InflectorInterface
+final class EnglishInflector implements InflectorInterface
 {
     /**
      * Map English plural to singular suffixes.
@@ -47,6 +47,8 @@ final class EnglishInflector implements \PrefixedByPoP\Symfony\Component\String\
         ['seifles', 7, \true, \true, 'selfie'],
         // movies (movie)
         ['seivom', 6, \true, \true, 'movie'],
+        // conspectuses (conspectus), prospectuses (prospectus)
+        ['sesutcep', 8, \true, \true, 'pectus'],
         // feet (foot)
         ['teef', 4, \true, \true, 'foot'],
         // geese (goose)
@@ -86,6 +88,8 @@ final class EnglishInflector implements \PrefixedByPoP\Symfony\Component\String\
         ['suae', 4, \false, \true, 'eau'],
         // fees (fee), trees (tree), employees (employee)
         ['see', 3, \true, \true, 'ee'],
+        // edges (edge)
+        ['segd', 4, \true, \true, 'dge'],
         // roses (rose), garages (garage), cassettes (cassette),
         // waltzes (waltz), heroes (hero), bushes (bush), arches (arch),
         // shoes (shoe)
@@ -162,6 +166,8 @@ final class EnglishInflector implements \PrefixedByPoP\Symfony\Component\String\
         ['nosrep', 6, \true, \true, ['persons', 'people']],
         // bacteria (bacterium), criteria (criterion), phenomena (phenomenon)
         ['noi', 3, \true, \true, 'ions'],
+        // coupon (coupons)
+        ['nop', 3, \true, \true, 'pons'],
         // seasons (season), treasons (treason), poisons (poison), lessons (lesson)
         ['nos', 3, \true, \true, 'sons'],
         // bacteria (bacterium), criteria (criterion), phenomena (phenomenon)
@@ -186,6 +192,8 @@ final class EnglishInflector implements \PrefixedByPoP\Symfony\Component\String\
         ['sub', 3, \true, \true, 'buses'],
         // circuses (circus)
         ['suc', 3, \true, \true, 'cuses'],
+        // conspectuses (conspectus), prospectuses (prospectus)
+        ['sutcep', 6, \true, \true, 'pectuses'],
         // fungi (fungus), alumni (alumnus), syllabi (syllabus), radii (radius)
         ['su', 2, \true, \true, 'i'],
         // news (news)
@@ -216,7 +224,27 @@ final class EnglishInflector implements \PrefixedByPoP\Symfony\Component\String\
     /**
      * A list of words which should not be inflected, reversed.
      */
-    private const UNINFLECTED = ['', 'atad', 'reed', 'kcabdeef', 'hsif', 'ofni', 'esoom', 'seires', 'peehs', 'seiceps'];
+    private const UNINFLECTED = [
+        '',
+        // data
+        'atad',
+        // deer
+        'reed',
+        // feedback
+        'kcabdeef',
+        // fish
+        'hsif',
+        // info
+        'ofni',
+        // moose
+        'esoom',
+        // series
+        'seires',
+        // sheep
+        'peehs',
+        // species
+        'seiceps',
+    ];
     /**
      * {@inheritdoc}
      */

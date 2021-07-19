@@ -3,20 +3,18 @@
 declare (strict_types=1);
 namespace PoPSchema\PostTags\FieldResolvers;
 
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoPSchema\Posts\FieldResolvers\AbstractPostFieldResolver;
 use PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver;
-class PostTagListFieldResolver extends \PoPSchema\Posts\FieldResolvers\AbstractPostFieldResolver
+class PostTagListFieldResolver extends AbstractPostFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return array(\PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver::class);
+        return array(PostTagTypeResolver::class);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['posts' => $translationAPI->__('Posts which contain this tag', 'pop-taxonomies'), 'postCount' => $translationAPI->__('Number of posts which contain this tag', 'pop-taxonomies')];
+        $descriptions = ['posts' => $this->translationAPI->__('Posts which contain this tag', 'pop-taxonomies'), 'postCount' => $this->translationAPI->__('Number of posts which contain this tag', 'pop-taxonomies'), 'unrestrictedPosts' => $this->translationAPI->__('[Unrestricted] Posts which contain this tag', 'pop-taxonomies'), 'unrestrictedPostCount' => $this->translationAPI->__('[Unrestricted] Number of posts which contain this tag', 'pop-taxonomies')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
     /**
@@ -24,13 +22,15 @@ class PostTagListFieldResolver extends \PoPSchema\Posts\FieldResolvers\AbstractP
      * @return array<string, mixed>
      * @param object $resultItem
      */
-    protected function getQuery(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : array
+    protected function getQuery(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : array
     {
         $query = parent::getQuery($typeResolver, $resultItem, $fieldName, $fieldArgs);
         $tag = $resultItem;
         switch ($fieldName) {
             case 'posts':
             case 'postCount':
+            case 'unrestrictedPosts':
+            case 'unrestrictedPostCount':
                 $query['tag-ids'] = [$typeResolver->getID($tag)];
                 break;
         }

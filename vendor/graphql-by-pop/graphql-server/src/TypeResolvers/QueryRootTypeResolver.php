@@ -3,7 +3,6 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\TypeResolvers;
 
-use PoP\Translation\Facades\TranslationAPIFacade;
 use GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot;
 use PoP\Engine\TypeResolvers\ReservedNameTypeResolverTrait;
 use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
@@ -11,17 +10,16 @@ use GraphQLByPoP\GraphQLServer\TypeDataLoaders\QueryRootTypeDataLoader;
 class QueryRootTypeResolver extends \GraphQLByPoP\GraphQLServer\TypeResolvers\AbstractUseRootAsSourceForSchemaTypeResolver
 {
     use ReservedNameTypeResolverTrait;
-    public const NAME = 'QueryRoot';
     public function getTypeName() : string
     {
-        return self::NAME;
+        return 'QueryRoot';
     }
     public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('Query type, starting from which the query is executed', 'graphql-server');
+        return $this->translationAPI->__('Query type, starting from which the query is executed', 'graphql-server');
     }
     /**
+     * @return string|int|null
      * @param object $resultItem
      */
     public function getID($resultItem)
@@ -32,10 +30,10 @@ class QueryRootTypeResolver extends \GraphQLByPoP\GraphQLServer\TypeResolvers\Ab
     }
     public function getTypeDataLoaderClass() : string
     {
-        return \GraphQLByPoP\GraphQLServer\TypeDataLoaders\QueryRootTypeDataLoader::class;
+        return QueryRootTypeDataLoader::class;
     }
-    protected function isFieldNameConditionSatisfiedForSchema(\PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, string $fieldName) : bool
+    protected function isFieldNameConditionSatisfiedForSchema(FieldResolverInterface $fieldResolver, string $fieldName) : bool
     {
-        return !\in_array($fieldName, ['mutationRoot']) && $fieldResolver->resolveFieldMutationResolverClass($this, $fieldName) === null;
+        return !\in_array($fieldName, ['queryRoot', 'mutationRoot']) && $fieldResolver->resolveFieldMutationResolverClass($this, $fieldName) === null;
     }
 }

@@ -9,7 +9,13 @@ use PoP\Hooks\Facades\SystemHooksAPIFacade;
  */
 trait ComponentConfigurationTrait
 {
+    /**
+     * @var mixed[]
+     */
     protected static $configuration = [];
+    /**
+     * @var mixed[]
+     */
     protected static $initialized = [];
     public static function setConfiguration(array $configuration) : void
     {
@@ -23,37 +29,40 @@ trait ComponentConfigurationTrait
     {
         return self::$configuration[$option];
     }
-    protected static function maybeInitializeConfigurationValue(string $envVariable, &$selfProperty, $defaultValue = null, ?callable $callback = null, bool $useHook = \true) : void
+    /**
+     * @param mixed $selfProperty
+     * @param mixed $defaultValue
+     */
+    protected static function maybeInitializeConfigurationValue(string $envVariable, &$selfProperty, $defaultValue = null, ?callable $callback = null) : void
     {
         if (!isset(self::$initialized[$envVariable])) {
             self::$initialized[$envVariable] = \true;
-            $selfProperty = $defaultValue;
+            // Only set default value if passing the param,
+            // to avoid overriding a value already set in the param definition
+            if ($defaultValue !== null) {
+                $selfProperty = $defaultValue;
+            }
             // Initialize from configuration, environment or hook
             if (self::hasConfigurationValue($envVariable)) {
                 // Priority: option has been set in the $configuration
                 $selfProperty = self::getConfigurationValue($envVariable);
             } else {
                 // Get the value from the environment function
-                if (\getenv($envVariable) !== \false) {
-                    $selfProperty = \getenv($envVariable);
+                $envValue = \getenv($envVariable);
+                if ($envValue !== \false) {
                     // Modify the type of the variable, from string to bool/int/array
-                    if ($callback) {
-                        $selfProperty = $callback($selfProperty);
-                    }
+                    $selfProperty = $callback ? $callback($envValue) : $envValue;
                 }
-                // Allow to override the value with a hook
-                if ($useHook) {
-                    /**
-                     * Important: it must use the Hooks service from the System Container,
-                     * and not the (Application) Container, because ComponentConfiguration::foo()
-                     * may be accessed when initializing (Application) container services
-                     * in `Component.initialize()`, so it must already be available by then
-                     */
-                    $hooksAPI = \PoP\Hooks\Facades\SystemHooksAPIFacade::getInstance();
-                    $class = \get_called_class();
-                    $hookName = \PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers::getHookName($class, $envVariable);
-                    $selfProperty = $hooksAPI->applyFilters($hookName, $selfProperty, $class, $envVariable);
-                }
+                /**
+                 * Important: it must use the Hooks service from the System Container,
+                 * and not the (Application) Container, because ComponentConfiguration::foo()
+                 * may be accessed when initializing (Application) container services
+                 * in `Component.initialize()`, so it must already be available by then
+                 */
+                $hooksAPI = SystemHooksAPIFacade::getInstance();
+                $class = \get_called_class();
+                $hookName = \PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers::getHookName($class, $envVariable);
+                $selfProperty = $hooksAPI->applyFilters($hookName, $selfProperty, $class, $envVariable);
             }
         }
     }

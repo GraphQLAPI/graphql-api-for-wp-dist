@@ -13,14 +13,12 @@ trait HasTypeSchemaDefinitionReferenceTrait
      * @var \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
      */
     protected $type;
-    public function getType() : \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+    public function getType() : AbstractType
     {
         return $this->type;
     }
     /**
      * Obtain the reference to the type from the registryMap
-     *
-     * @return void
      */
     protected function initType() : void
     {
@@ -30,7 +28,7 @@ trait HasTypeSchemaDefinitionReferenceTrait
         // each of which initializes their Fields (we are here), which may reference
         // a different Type that doesn't exist yet, and can't be created here
         // or it creates an endless loop
-        $typeName = $this->schemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_TYPE];
+        $typeName = $this->schemaDefinition[SchemaDefinition::ARGNAME_TYPE];
         $this->type = $this->getTypeFromTypeName($typeName);
     }
     public function getTypeID() : string

@@ -21,7 +21,7 @@ use PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfoExtractorInter
 class PropertyAccessorBuilder
 {
     /** @var int */
-    private $magicMethods = \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_GET | \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_SET;
+    private $magicMethods = PropertyAccessor::MAGIC_GET | PropertyAccessor::MAGIC_SET;
     private $throwExceptionOnInvalidIndex = \false;
     private $throwExceptionOnInvalidPropertyPath = \true;
     /**
@@ -42,7 +42,7 @@ class PropertyAccessorBuilder
      */
     public function enableMagicMethods()
     {
-        $this->magicMethods = \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_GET | \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_SET | \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_CALL;
+        $this->magicMethods = PropertyAccessor::MAGIC_GET | PropertyAccessor::MAGIC_SET | PropertyAccessor::MAGIC_CALL;
         return $this;
     }
     /**
@@ -51,7 +51,7 @@ class PropertyAccessorBuilder
      */
     public function disableMagicMethods()
     {
-        $this->magicMethods = \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::DISALLOW_MAGIC_METHODS;
+        $this->magicMethods = PropertyAccessor::DISALLOW_MAGIC_METHODS;
         return $this;
     }
     /**
@@ -61,7 +61,7 @@ class PropertyAccessorBuilder
      */
     public function enableMagicCall()
     {
-        $this->magicMethods |= \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_CALL;
+        $this->magicMethods |= PropertyAccessor::MAGIC_CALL;
         return $this;
     }
     /**
@@ -70,7 +70,7 @@ class PropertyAccessorBuilder
      */
     public function enableMagicGet()
     {
-        $this->magicMethods |= \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_GET;
+        $this->magicMethods |= PropertyAccessor::MAGIC_GET;
         return $this;
     }
     /**
@@ -79,7 +79,7 @@ class PropertyAccessorBuilder
      */
     public function enableMagicSet()
     {
-        $this->magicMethods |= \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_SET;
+        $this->magicMethods |= PropertyAccessor::MAGIC_SET;
         return $this;
     }
     /**
@@ -89,7 +89,7 @@ class PropertyAccessorBuilder
      */
     public function disableMagicCall()
     {
-        $this->magicMethods &= ~\PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_CALL;
+        $this->magicMethods &= ~PropertyAccessor::MAGIC_CALL;
         return $this;
     }
     /**
@@ -98,7 +98,7 @@ class PropertyAccessorBuilder
      */
     public function disableMagicGet()
     {
-        $this->magicMethods &= ~\PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_GET;
+        $this->magicMethods &= ~PropertyAccessor::MAGIC_GET;
         return $this;
     }
     /**
@@ -107,7 +107,7 @@ class PropertyAccessorBuilder
      */
     public function disableMagicSet()
     {
-        $this->magicMethods &= ~\PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_SET;
+        $this->magicMethods &= ~PropertyAccessor::MAGIC_SET;
         return $this;
     }
     /**
@@ -115,21 +115,21 @@ class PropertyAccessorBuilder
      */
     public function isMagicCallEnabled()
     {
-        return (bool) ($this->magicMethods & \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_CALL);
+        return (bool) ($this->magicMethods & PropertyAccessor::MAGIC_CALL);
     }
     /**
      * @return bool whether the use of "__get" by the PropertyAccessor is enabled
      */
     public function isMagicGetEnabled() : bool
     {
-        return $this->magicMethods & \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_GET;
+        return $this->magicMethods & PropertyAccessor::MAGIC_GET;
     }
     /**
      * @return bool whether the use of "__set" by the PropertyAccessor is enabled
      */
     public function isMagicSetEnabled() : bool
     {
-        return $this->magicMethods & \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor::MAGIC_SET;
+        return $this->magicMethods & PropertyAccessor::MAGIC_SET;
     }
     /**
      * Enables exceptions when reading a non-existing index.
@@ -200,7 +200,7 @@ class PropertyAccessorBuilder
      *
      * @return PropertyAccessorBuilder The builder object
      */
-    public function setCacheItemPool(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $cacheItemPool = null)
+    public function setCacheItemPool(CacheItemPoolInterface $cacheItemPool = null)
     {
         $this->cacheItemPool = $cacheItemPool;
         return $this;
@@ -217,24 +217,24 @@ class PropertyAccessorBuilder
     /**
      * @return $this
      */
-    public function setReadInfoExtractor(?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfoExtractorInterface $readInfoExtractor)
+    public function setReadInfoExtractor(?PropertyReadInfoExtractorInterface $readInfoExtractor)
     {
         $this->readInfoExtractor = $readInfoExtractor;
         return $this;
     }
-    public function getReadInfoExtractor() : ?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfoExtractorInterface
+    public function getReadInfoExtractor() : ?PropertyReadInfoExtractorInterface
     {
         return $this->readInfoExtractor;
     }
     /**
      * @return $this
      */
-    public function setWriteInfoExtractor(?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfoExtractorInterface $writeInfoExtractor)
+    public function setWriteInfoExtractor(?PropertyWriteInfoExtractorInterface $writeInfoExtractor)
     {
         $this->writeInfoExtractor = $writeInfoExtractor;
         return $this;
     }
-    public function getWriteInfoExtractor() : ?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyWriteInfoExtractorInterface
+    public function getWriteInfoExtractor() : ?PropertyWriteInfoExtractorInterface
     {
         return $this->writeInfoExtractor;
     }
@@ -245,6 +245,13 @@ class PropertyAccessorBuilder
      */
     public function getPropertyAccessor()
     {
-        return new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyAccessor($this->magicMethods, $this->throwExceptionOnInvalidIndex, $this->cacheItemPool, $this->throwExceptionOnInvalidPropertyPath, $this->readInfoExtractor, $this->writeInfoExtractor);
+        $throw = PropertyAccessor::DO_NOT_THROW;
+        if ($this->throwExceptionOnInvalidIndex) {
+            $throw |= PropertyAccessor::THROW_ON_INVALID_INDEX;
+        }
+        if ($this->throwExceptionOnInvalidPropertyPath) {
+            $throw |= PropertyAccessor::THROW_ON_INVALID_PROPERTY_PATH;
+        }
+        return new PropertyAccessor($this->magicMethods, $throw, $this->cacheItemPool, $this->readInfoExtractor, $this->writeInfoExtractor);
     }
 }

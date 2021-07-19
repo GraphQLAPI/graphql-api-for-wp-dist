@@ -5,10 +5,10 @@ namespace PoPSchema\CustomPosts\TypeDataLoaders;
 
 use PoP\ComponentModel\TypeDataLoaders\AbstractUnionTypeDataLoader;
 use PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver;
-class CustomPostUnionTypeDataLoader extends \PoP\ComponentModel\TypeDataLoaders\AbstractUnionTypeDataLoader
+class CustomPostUnionTypeDataLoader extends AbstractUnionTypeDataLoader
 {
     protected function getUnionTypeResolverClass() : string
     {
-        return \PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class;
+        return CustomPostUnionTypeResolver::class;
     }
 }

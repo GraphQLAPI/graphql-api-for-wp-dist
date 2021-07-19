@@ -37,7 +37,7 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = isset($options['handle_factory']) ? $options['handle_factory'] : new \PrefixedByPoP\GuzzleHttp\Handler\CurlFactory(50);
+        $this->factory = isset($options['handle_factory']) ? $options['handle_factory'] : new CurlFactory(50);
         if (isset($options['select_timeout'])) {
             $this->selectTimeout = $options['select_timeout'];
         } elseif ($selectTimeout = \getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
@@ -68,11 +68,11 @@ class CurlMultiHandler
             unset($this->_mh);
         }
     }
-    public function __invoke(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options)
     {
         $easy = $this->factory->create($request, $options);
         $id = (int) $easy->handle;
-        $promise = new \PrefixedByPoP\GuzzleHttp\Promise\Promise([$this, 'execute'], function () use($id) {
+        $promise = new Promise([$this, 'execute'], function () use($id) {
             return $this->cancel($id);
         });
         $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
@@ -85,7 +85,7 @@ class CurlMultiHandler
     {
         // Add any delayed handles if needed.
         if ($this->delays) {
-            $currentTime = \PrefixedByPoP\GuzzleHttp\Utils::currentTime();
+            $currentTime = Utils::currentTime();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
                     unset($this->delays[$id]);
@@ -94,7 +94,7 @@ class CurlMultiHandler
             }
         }
         // Step through the task queue which may add additional requests.
-        \PrefixedByPoP\GuzzleHttp\Promise\queue()->run();
+        P\queue()->run();
         if ($this->active && \curl_multi_select($this->_mh, $this->selectTimeout) === -1) {
             // Perform a usleep if a select returns -1.
             // See: https://bugs.php.net/bug.php?id=61141
@@ -109,7 +109,7 @@ class CurlMultiHandler
      */
     public function execute()
     {
-        $queue = \PrefixedByPoP\GuzzleHttp\Promise\queue();
+        $queue = P\queue();
         while ($this->handles || !$queue->isEmpty()) {
             // If there are no transfers, then sleep for the next delay
             if (!$this->active && $this->delays) {
@@ -126,7 +126,7 @@ class CurlMultiHandler
         if (empty($easy->options['delay'])) {
             \curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
-            $this->delays[$id] = \PrefixedByPoP\GuzzleHttp\Utils::currentTime() + $easy->options['delay'] / 1000;
+            $this->delays[$id] = Utils::currentTime() + $easy->options['delay'] / 1000;
         }
     }
     /**
@@ -160,12 +160,12 @@ class CurlMultiHandler
             $entry = $this->handles[$id];
             unset($this->handles[$id], $this->delays[$id]);
             $entry['easy']->errno = $done['result'];
-            $entry['deferred']->resolve(\PrefixedByPoP\GuzzleHttp\Handler\CurlFactory::finish($this, $entry['easy'], $this->factory));
+            $entry['deferred']->resolve(CurlFactory::finish($this, $entry['easy'], $this->factory));
         }
     }
     private function timeToNext()
     {
-        $currentTime = \PrefixedByPoP\GuzzleHttp\Utils::currentTime();
+        $currentTime = Utils::currentTime();
         $nextTime = \PHP_INT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {

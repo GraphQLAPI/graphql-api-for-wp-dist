@@ -3,23 +3,26 @@
 declare (strict_types=1);
 namespace PoPSchema\UserRolesAccessControl\TypeResolverDecorators;
 
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
+use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver;
 trait ValidateDoesLoggedInUserHaveRolePublicSchemaTypeResolverDecoratorTrait
 {
     /**
      * By default, only the admin can see the roles from the users
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @return array
+     * @param mixed $entryValue
      */
     protected function getMandatoryDirectives($entryValue = null) : array
     {
         $roles = $entryValue;
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        $directiveResoverClass = $this->getValidateRoleDirectiveResolverClass();
-        $directiveName = $directiveResoverClass::getDirectiveName();
+        $fieldQueryInterpreter = FieldQueryInterpreterFacade::getInstance();
+        $directiveResolverClass = $this->getValidateRoleDirectiveResolverClass();
+        $instanceManager = InstanceManagerFacade::getInstance();
+        /** @var DirectiveResolverInterface */
+        $directiveResolver = $instanceManager->getInstance($directiveResolverClass);
+        $directiveName = $directiveResolver->getDirectiveName();
         $validateDoesLoggedInUserHaveAnyRoleDirective = $fieldQueryInterpreter->getDirective($directiveName, ['roles' => $roles]);
         return [$validateDoesLoggedInUserHaveAnyRoleDirective];
     }

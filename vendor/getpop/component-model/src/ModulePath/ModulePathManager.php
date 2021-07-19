@@ -8,7 +8,7 @@ class ModulePathManager implements \PoP\ComponentModel\ModulePath\ModulePathMana
     /**
      * @var array[]|null
      */
-    protected $propagation_current_path = null;
+    protected $propagation_current_path;
     public function getPropagationCurrentPath() : ?array
     {
         return $this->propagation_current_path;

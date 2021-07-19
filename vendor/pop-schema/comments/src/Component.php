@@ -4,10 +4,12 @@ declare (strict_types=1);
 namespace PoPSchema\Comments;
 
 use PoP\Root\Component\AbstractComponent;
+use PoP\RESTAPI\Component as RESTAPIComponent;
+use PoPSchema\Users\Component as UsersComponent;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     /**
      * Classes from PoP components that must be initialized before this component
@@ -20,18 +22,10 @@ class Component extends \PoP\Root\Component\AbstractComponent
     }
     /**
      * All conditional component classes that this component depends upon, to initialize them
-     *
-     * @return array
      */
     public static function getDependedConditionalComponentClasses() : array
     {
-        return [\PoP\RESTAPI\Component::class];
-    }
-    public static function getDependedMigrationPlugins() : array
-    {
-        $packageName = \basename(\dirname(__DIR__));
-        $folder = \dirname(__DIR__, 2);
-        return [$folder . '/migrate-' . $packageName . '/initialize.php'];
+        return [\PoP\RESTAPI\Component::class, \PoPSchema\Users\Component::class];
     }
     /**
      * Initialize services
@@ -41,14 +35,13 @@ class Component extends \PoP\Root\Component\AbstractComponent
      */
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-        self::initYAMLServices(\dirname(__DIR__));
-        self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
-        if (\class_exists('\\PoP\\RESTAPI\\Component') && !\in_array(\PoP\RESTAPI\Component::class, $skipSchemaComponentClasses)) {
-            self::initYAMLServices(\dirname(__DIR__), '/Conditional/RESTAPI');
+        self::initServices(\dirname(__DIR__));
+        self::initSchemaServices(\dirname(__DIR__), $skipSchema);
+        if (\class_exists(RESTAPIComponent::class) && RESTAPIComponent::isEnabled()) {
+            self::initServices(\dirname(__DIR__), '/ConditionalOnComponent/RESTAPI');
         }
-        if (\class_exists('\\PoPSchema\\Users\\Component') && !\in_array(\PoPSchema\Users\Component::class, $skipSchemaComponentClasses)) {
-            self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema, '/Conditional/Users');
+        if (\class_exists(UsersComponent::class)) {
+            self::initSchemaServices(\dirname(__DIR__), $skipSchema || \in_array(UsersComponent::class, $skipSchemaComponentClasses), '/ConditionalOnComponent/Users');
         }
     }
 }

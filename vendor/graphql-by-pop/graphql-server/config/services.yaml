@@ -2,6 +2,7 @@ services:
     _defaults:
         public: true
         autowire: true
+        autoconfigure: true
 
     GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInterface:
         class: \GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistry
@@ -15,8 +16,14 @@ services:
     GraphQLByPoP\GraphQLServer\Hooks\:
         resource: '../src/Hooks/*'
 
+    GraphQLByPoP\GraphQLServer\ModuleProcessors\:
+        resource: '../src/ModuleProcessors/*'
+
     GraphQLByPoP\GraphQLServer\RouteModuleProcessors\:
         resource: '../src/RouteModuleProcessors/*'
+
+    GraphQLByPoP\GraphQLServer\Enums\:
+        resource: '../src/Enums/*'
 
     GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot:
         class: \GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot

@@ -43,10 +43,16 @@ class Bound
     {
         return $this->isInclusive;
     }
+    /**
+     * @return bool
+     */
     public function isZero()
     {
         return $this->getVersion() === '0.0.0.0-dev' && $this->isInclusive();
     }
+    /**
+     * @return bool
+     */
     public function isPositiveInfinity()
     {
         return $this->getVersion() === \PHP_INT_MAX . '.0.0.0' && !$this->isInclusive();
@@ -59,7 +65,7 @@ class Bound
      *
      * @return bool
      */
-    public function compareTo(\PrefixedByPoP\Composer\Semver\Constraint\Bound $other, $operator)
+    public function compareTo(Bound $other, $operator)
     {
         if (!\in_array($operator, array('<', '>'), \true)) {
             throw new \InvalidArgumentException('Does not support any other operator other than > or <.');
@@ -85,13 +91,13 @@ class Bound
      */
     public static function zero()
     {
-        return new \PrefixedByPoP\Composer\Semver\Constraint\Bound('0.0.0.0-dev', \true);
+        return new Bound('0.0.0.0-dev', \true);
     }
     /**
      * @return self
      */
     public static function positiveInfinity()
     {
-        return new \PrefixedByPoP\Composer\Semver\Constraint\Bound(\PHP_INT_MAX . '.0.0.0', \false);
+        return new Bound(\PHP_INT_MAX . '.0.0.0', \false);
     }
 }

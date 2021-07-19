@@ -7,37 +7,39 @@ interface UserRoleTypeDataResolverInterface
 {
     /**
      * Admin role name
-     *
-     * @return string
      */
     public function getAdminRoleName() : string;
     /**
-     * Role names
-     *
-     * @return array
+     * @return string[]
      */
     public function getRoleNames() : array;
     /**
      * All available capabilities
      *
-     * @return array
+     * @return string[]
      */
     public function getCapabilities() : array;
     /**
-     * User roles
-     *
-     * @param [type] $userObjectOrID
-     * @return array
+     * @return string[]
+     * @param string|int|object $userObjectOrID
      */
     public function getUserRoles($userObjectOrID) : array;
     /**
-     * User capabilities
-     *
-     * @param [type] $userObjectOrID
-     * @return array
+     * @return string[]
+     * @param string|int|object $userObjectOrID
      */
     public function getUserCapabilities($userObjectOrID) : array;
-    public function getTheUserRole($userObjectOrID);
-    public function userCan($userObjectOrID, $capability);
-    public function hasRole($userObjectOrID, $role);
+    /**
+     * @return string|null `null` if the user is not found, its first role otherwise
+     * @param string|int|object $userObjectOrID
+     */
+    public function getTheUserRole($userObjectOrID) : ?string;
+    /**
+     * @param string|int|object $userObjectOrID
+     */
+    public function userCan($userObjectOrID, string $capability) : bool;
+    /**
+     * @param string|int|object $userObjectOrID
+     */
+    public function hasRole($userObjectOrID, string $role) : bool;
 }

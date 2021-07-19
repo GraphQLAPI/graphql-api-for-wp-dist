@@ -8,7 +8,7 @@ namespace PrefixedByPoP\GuzzleHttp\Promise;
  * Thenning off of this promise will invoke the onFulfilled callback
  * immediately and ignore other callbacks.
  */
-class FulfilledPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface
+class FulfilledPromise implements PromiseInterface
 {
     private $value;
     public function __construct($value)
@@ -18,17 +18,21 @@ class FulfilledPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromiseInter
         }
         $this->value = $value;
     }
-    public function then(callable $onFulfilled = null, callable $onRejected = null)
+    /**
+     * @param callable $onFulfilled
+     * @param callable $onRejected
+     */
+    public function then($onFulfilled = null, $onRejected = null)
     {
         // Return itself if there is no onFulfilled function.
         if (!$onFulfilled) {
             return $this;
         }
-        $queue = \PrefixedByPoP\GuzzleHttp\Promise\Utils::queue();
-        $p = new \PrefixedByPoP\GuzzleHttp\Promise\Promise([$queue, 'run']);
+        $queue = Utils::queue();
+        $p = new Promise([$queue, 'run']);
         $value = $this->value;
         $queue->add(static function () use($p, $value, $onFulfilled) {
-            if (\PrefixedByPoP\GuzzleHttp\Promise\Is::pending($p)) {
+            if (Is::pending($p)) {
                 try {
                     $p->resolve($onFulfilled($value));
                 } catch (\Throwable $e) {

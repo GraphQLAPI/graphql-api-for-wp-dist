@@ -7,12 +7,12 @@ use GraphQLByPoP\GraphQLQuery\Schema\GraphQLQueryConvertorInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class GraphQLQueryConvertorFacade
 {
-    public static function getInstance() : \GraphQLByPoP\GraphQLQuery\Schema\GraphQLQueryConvertorInterface
+    public static function getInstance() : GraphQLQueryConvertorInterface
     {
         /**
          * @var GraphQLQueryConvertorInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\GraphQLByPoP\GraphQLQuery\Schema\GraphQLQueryConvertorInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(GraphQLQueryConvertorInterface::class);
         return $service;
     }
 }

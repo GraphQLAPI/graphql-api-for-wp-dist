@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class ConstantNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class ConstantNode extends Node
 {
     private $isIdentifier;
     public function __construct($value, bool $isIdentifier = \false)
@@ -24,7 +24,7 @@ class ConstantNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\N
         $this->isIdentifier = $isIdentifier;
         parent::__construct([], ['value' => $value]);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $compiler->repr($this->attributes['value']);
     }

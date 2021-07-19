@@ -6,20 +6,26 @@ namespace PoPSchema\Posts\TypeResolverPickers;
 use PoP\ComponentModel\TypeResolverPickers\AbstractTypeResolverPicker;
 use PoPSchema\Posts\Facades\PostTypeAPIFacade;
 use PoPSchema\Posts\TypeResolvers\PostTypeResolver;
-abstract class AbstractPostTypeResolverPicker extends \PoP\ComponentModel\TypeResolverPickers\AbstractTypeResolverPicker
+abstract class AbstractPostTypeResolverPicker extends AbstractTypeResolverPicker
 {
     public function getTypeResolverClass() : string
     {
-        return \PoPSchema\Posts\TypeResolvers\PostTypeResolver::class;
+        return PostTypeResolver::class;
     }
+    /**
+     * @param object $object
+     */
     public function isInstanceOfType($object) : bool
     {
-        $postTypeAPI = \PoPSchema\Posts\Facades\PostTypeAPIFacade::getInstance();
+        $postTypeAPI = PostTypeAPIFacade::getInstance();
         return $postTypeAPI->isInstanceOfPostType($object);
     }
+    /**
+     * @param string|int $resultItemID
+     */
     public function isIDOfType($resultItemID) : bool
     {
-        $postTypeAPI = \PoPSchema\Posts\Facades\PostTypeAPIFacade::getInstance();
+        $postTypeAPI = PostTypeAPIFacade::getInstance();
         return $postTypeAPI->postExists($resultItemID);
     }
 }

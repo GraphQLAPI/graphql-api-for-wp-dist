@@ -5,10 +5,10 @@ namespace PoPSchema\CustomPosts\FieldResolvers;
 
 use PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver;
 use PoPSchema\CustomPosts\FieldResolvers\AbstractCustomPostFieldResolver;
-class CustomPostFieldResolver extends \PoPSchema\CustomPosts\FieldResolvers\AbstractCustomPostFieldResolver
+class CustomPostFieldResolver extends AbstractCustomPostFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return [\PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver::class];
+        return [AbstractCustomPostTypeResolver::class];
     }
 }

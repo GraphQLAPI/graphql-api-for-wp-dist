@@ -7,12 +7,12 @@ use PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class ModuleFilterManagerFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface
+    public static function getInstance() : ModuleFilterManagerInterface
     {
         /**
          * @var ModuleFilterManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(ModuleFilterManagerInterface::class);
         return $service;
     }
 }

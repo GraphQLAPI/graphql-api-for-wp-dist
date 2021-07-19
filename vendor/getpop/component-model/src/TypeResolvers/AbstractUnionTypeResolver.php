@@ -7,10 +7,8 @@ use PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups;
 use Exception;
 use PoP\ComponentModel\ErrorHandling\Error;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\UnionTypeHelpers;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade;
 use PoP\ComponentModel\TypeResolverPickers\TypeResolverPickerInterface;
 use PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade;
@@ -19,19 +17,10 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     /**
      * @var TypeResolverPickerInterface[]
      */
-    protected $typeResolverPickers = null;
-    /**
-     * This is a Union Type
-     *
-     * @return bool
-     */
-    public function isUnionType() : bool
-    {
-        return \true;
-    }
+    protected $typeResolverPickers;
     public final function getTypeOutputName() : string
     {
-        return \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::getUnionTypeCollectionName(parent::getTypeOutputName());
+        return UnionTypeHelpers::getUnionTypeCollectionName(parent::getTypeOutputName());
     }
     public function getSchemaTypeInterfaceClass() : ?string
     {
@@ -40,15 +29,18 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     /**
      * Remove the type from the ID to resolve the objects through `getObjects` (check parent class)
      *
-     * @param array $ids_data_fields
-     * @return void
+     * @return mixed[]
      */
-    protected function getIDsToQuery(array $ids_data_fields)
+    protected function getIDsToQuery(array $ids_data_fields) : array
     {
         $ids = parent::getIDsToQuery($ids_data_fields);
         // Each ID contains the type (added in function `getID`). Remove it
-        return \array_map([\PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::class, 'extractDBObjectID'], $ids);
+        return \array_map([UnionTypeHelpers::class, 'extractDBObjectID'], $ids);
     }
+    /**
+     * @param string|int|array<string|int> $dbObjectIDOrIDs
+     * @return string|int|mixed[]
+     */
     public function getQualifiedDBObjectIDOrIDs($dbObjectIDOrIDs)
     {
         $dbObjectIDs = \is_array($dbObjectIDOrIDs) ? $dbObjectIDOrIDs : [$dbObjectIDOrIDs];
@@ -58,7 +50,7 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
             // Make sure there is a resolver for this resultItem. If there is none, return the same ID
             $targetTypeResolver = $resultItemIDTargetTypeResolvers[$resultItemID];
             if (!\is_null($targetTypeResolver)) {
-                $typeDBObjectIDOrIDs[] = \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::getDBObjectComposedTypeAndID($targetTypeResolver, $resultItemID);
+                $typeDBObjectIDOrIDs[] = UnionTypeHelpers::getDBObjectComposedTypeAndID($targetTypeResolver, $resultItemID);
             } else {
                 $typeDBObjectIDOrIDs[] = $resultItemID;
             }
@@ -76,7 +68,7 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     {
         return $this->recursiveGetResultItemIDTargetTypeResolvers($this, $ids);
     }
-    private function recursiveGetResultItemIDTargetTypeResolvers(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array $ids) : array
+    private function recursiveGetResultItemIDTargetTypeResolvers(TypeResolverInterface $typeResolver, array $ids) : array
     {
         if (!$ids) {
             return [];
@@ -84,7 +76,8 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
         $resultItemIDTargetTypeResolvers = [];
         $isUnionTypeResolver = $typeResolver instanceof \PoP\ComponentModel\TypeResolvers\UnionTypeResolverInterface;
         if ($isUnionTypeResolver) {
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+            /** @var UnionTypeResolverInterface */
+            $typeResolver = $typeResolver;
             $targetTypeResolverClassDataItems = [];
             foreach ($ids as $resultItemID) {
                 if ($targetTypeResolverClass = $typeResolver->getTypeResolverClassForResultItem($resultItemID)) {
@@ -94,7 +87,7 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
                 }
             }
             foreach ($targetTypeResolverClassDataItems as $targetTypeResolverClass => $resultItemIDs) {
-                $targetTypeResolver = $instanceManager->getInstance($targetTypeResolverClass);
+                $targetTypeResolver = $this->instanceManager->getInstance($targetTypeResolverClass);
                 $targetResultItemIDTargetTypeResolvers = $this->recursiveGetResultItemIDTargetTypeResolvers($targetTypeResolver, $resultItemIDs);
                 foreach ($targetResultItemIDTargetTypeResolvers as $targetResultItemID => $targetTypeResolver) {
                     $resultItemIDTargetTypeResolvers[(string) $targetResultItemID] = $targetTypeResolver;
@@ -109,15 +102,11 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     }
     // /**
     //  * Add the type to the ID
-    //  *
-    //  * @param [type] $resultItem
-    //  * @return void
     //  */
-    // public function addTypeToID($resultItemID): string
+    // public function addTypeToID(string | int $resultItemID): string
     // {
-    //     $instanceManager = InstanceManagerFacade::getInstance();
     //     if ($resultItemTypeResolverClass = $this->getTypeResolverClassForResultItem($resultItemID)) {
-    //         $resultItemTypeResolver = $instanceManager->getInstance($resultItemTypeResolverClass);
+    //         $resultItemTypeResolver = $this->instanceManager->getInstance($resultItemTypeResolverClass);
     //         return UnionTypeHelpers::getDBObjectComposedTypeAndID(
     //             $resultItemTypeResolver,
     //             $resultItemID
@@ -126,11 +115,54 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     //     return (string)$resultItemID;
     // }
     /**
-     * In order to enable elements from different types (such as posts and users) to have same ID,
-     * add the type to the ID
+     * Watch out! This function overrides the implementation from the for the AbstractTypeResolver
      *
-     * @param [type] $resultItem
-     * @return void
+     * Collect all directives for all fields, and then build a single directive pipeline for all fields,
+     * including all directives, even if they don't apply to all fields
+     * Eg: id|title<skip>|excerpt<translate> will produce a pipeline [Skip, Translate] where they apply
+     * to different fields. After producing the pipeline, add the mandatory items
+     */
+    public final function enqueueFillingResultItemsFromIDs(array $ids_data_fields) : void
+    {
+        /**
+         * This section is different from parent's implementation
+         */
+        // Watch out! The UnionType must obtain the mandatoryDirectivesForFields
+        // from each of its target types!
+        // This is mandatory, because the UnionType doesn't have fields by itself.
+        // Otherwise, TypeResolverDecorators can't have their defined ACL rules
+        // work when querying a union type (eg: "customPosts")
+        $targetTypeResolverClassMandatoryDirectivesForFields = [];
+        $targetTypeResolverClasses = $this->getTargetTypeResolverClasses();
+        foreach ($targetTypeResolverClasses as $targetTypeResolverClass) {
+            $targetTypeResolver = $this->instanceManager->getInstance($targetTypeResolverClass);
+            $targetTypeResolverClassMandatoryDirectivesForFields[$targetTypeResolverClass] = $targetTypeResolver->getAllMandatoryDirectivesForFields();
+        }
+        // If the type data resolver is union, the dbKey where the value is stored
+        // is contained in the ID itself, with format dbKey/ID.
+        // Remove this information, and get purely the ID
+        $resultItemIDs = \array_map(function ($composedID) {
+            list($dbKey, $id) = UnionTypeHelpers::extractDBObjectTypeAndID($composedID);
+            return $id;
+        }, \array_keys($ids_data_fields));
+        $resultItemIDTargetTypeResolvers = $this->getResultItemIDTargetTypeResolvers($resultItemIDs);
+        $mandatorySystemDirectives = $this->getMandatoryDirectives();
+        foreach ($ids_data_fields as $id => $data_fields) {
+            $fields = $this->getFieldsToEnqueueFillingResultItemsFromIDs($data_fields);
+            /**
+             * This section is different from parent's implementation
+             */
+            list($dbKey, $resultItemID) = UnionTypeHelpers::extractDBObjectTypeAndID($id);
+            $resultItemIDTargetTypeResolver = $resultItemIDTargetTypeResolvers[$resultItemID];
+            $mandatoryDirectivesForFields = $targetTypeResolverClassMandatoryDirectivesForFields[\get_class($resultItemIDTargetTypeResolver)];
+            $this->doEnqueueFillingResultItemsFromIDs($fields, $mandatoryDirectivesForFields, $mandatorySystemDirectives, $id, $data_fields);
+        }
+    }
+    /**
+     * In order to enable elements from different types (such as posts and users) to have same ID,
+     * add the type to the ID.
+     *
+     * @return string|int|null the ID of the passed object, or `null` if there is no resolver to handle it
      * @param object $resultItem
      */
     public function getID($resultItem)
@@ -141,7 +173,7 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
         }
         // Add the type to the ID, so that elements of different types can live side by side
         // The type will be removed again in `getIDsToQuery`
-        return \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::getDBObjectComposedTypeAndID($targetTypeResolver, $targetTypeResolver->getID($resultItem));
+        return UnionTypeHelpers::getDBObjectComposedTypeAndID($targetTypeResolver, $targetTypeResolver->getID($resultItem));
     }
     public function getTargetTypeResolverClasses() : array
     {
@@ -163,51 +195,52 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     }
     protected function calculateTypeResolverPickers()
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $attachableExtensionManager = \PoP\ComponentModel\Facades\AttachableExtensions\AttachableExtensionManagerFacade::getInstance();
+        $attachableExtensionManager = AttachableExtensionManagerFacade::getInstance();
         // Iterate classes from the current class towards the parent classes until finding typeResolver that satisfies processing this field
         $class = \get_called_class();
         $typeResolverPickers = [];
         do {
             // All the pickers and their priorities for this class level
             // Important: do array_reverse to enable more specific hooks, which are initialized later on in the project, to be the chosen ones (if their priority is the same)
-            $extensionPickerClassPriorities = \array_reverse($attachableExtensionManager->getExtensionClasses($class, \PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups::TYPERESOLVERPICKERS));
-            $classPickerPriorities = \array_values($extensionPickerClassPriorities);
-            $classPickerClasses = \array_keys($extensionPickerClassPriorities);
-            $classPickers = \array_map(function ($extensionClass) use($instanceManager) {
-                return $instanceManager->getInstance($extensionClass);
-            }, $classPickerClasses);
+            /** @var TypeResolverPickerInterface[] */
+            $attachedTypeResolverPickers = \array_reverse($attachableExtensionManager->getAttachedExtensions($class, AttachableExtensionGroups::TYPERESOLVERPICKERS));
+            // Order them by priority: higher priority are evaluated first
+            $extensionPriorities = \array_map(function (TypeResolverPickerInterface $typeResolverPicker) {
+                return $typeResolverPicker->getPriorityToAttachToClasses();
+            }, $attachedTypeResolverPickers);
             // Sort the found pickers by their priority, and then add to the stack of all pickers, for all classes
             // Higher priority means they execute first!
-            \array_multisort($classPickerPriorities, \SORT_DESC, \SORT_NUMERIC, $classPickers);
-            $typeResolverPickers = \array_merge($typeResolverPickers, $classPickers);
+            \array_multisort($extensionPriorities, \SORT_DESC, \SORT_NUMERIC, $attachedTypeResolverPickers);
+            $typeResolverPickers = \array_merge($typeResolverPickers, $attachedTypeResolverPickers);
             // Continue iterating for the class parents
         } while ($class = \get_parent_class($class));
         // Validate that all typeResolvers implement the required interface
         if ($typeInterfaceClass = $this->getSchemaTypeInterfaceClass()) {
             $typeResolverClasses = $this->getTypeResolverClassesFromPickers($typeResolverPickers);
-            $notImplementingInterfaceTypeResolverClasses = \array_filter($typeResolverClasses, function ($typeResolverClass) use($typeInterfaceClass, $instanceManager) {
+            $notImplementingInterfaceTypeResolverClasses = \array_filter($typeResolverClasses, function ($typeResolverClass) use($typeInterfaceClass) {
                 /**
                  * @var TypeResolverInterface
                  */
-                $typeResolver = $instanceManager->getInstance($typeResolverClass);
+                $typeResolver = $this->instanceManager->getInstance($typeResolverClass);
                 return !\in_array($typeInterfaceClass, $typeResolver->getAllImplementedInterfaceClasses());
             });
             if ($notImplementingInterfaceTypeResolverClasses) {
-                $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-                $typeInterfaceResolver = $instanceManager->getInstance($typeInterfaceClass);
-                throw new \Exception(\sprintf($translationAPI->__('UnionTypeResolver \'%s\' (\'%s\') must return results implementing interface \'%s\' (\'%s\'), however its following member TypeResolvers do not: \'%s\'', 'component-model'), $this->getMaybeNamespacedTypeName(), \get_called_class(), $typeInterfaceResolver->getMaybeNamespacedInterfaceName(), $typeInterfaceClass, \implode($translationAPI->__('\', \''), \array_map(function ($typeResolverClass) use($instanceManager, $translationAPI) {
+                $typeInterfaceResolver = $this->instanceManager->getInstance($typeInterfaceClass);
+                throw new Exception(\sprintf($this->translationAPI->__('UnionTypeResolver \'%s\' (\'%s\') must return results implementing interface \'%s\' (\'%s\'), however its following member TypeResolvers do not: \'%s\'', 'component-model'), $this->getMaybeNamespacedTypeName(), \get_called_class(), $typeInterfaceResolver->getMaybeNamespacedInterfaceName(), $typeInterfaceClass, \implode($this->translationAPI->__('\', \''), \array_map(function ($typeResolverClass) {
                     /**
                      * @var TypeResolverInterface
                      */
-                    $typeResolver = $instanceManager->getInstance($typeResolverClass);
-                    return \sprintf($translationAPI->__('%s (%s)'), $typeResolver->getMaybeNamespacedTypeName(), $typeResolverClass);
+                    $typeResolver = $this->instanceManager->getInstance($typeResolverClass);
+                    return \sprintf($this->translationAPI->__('%s (%s)'), $typeResolver->getMaybeNamespacedTypeName(), $typeResolverClass);
                 }, $notImplementingInterfaceTypeResolverClasses))));
             }
         }
         // Return all the pickers
         return $typeResolverPickers;
     }
+    /**
+     * @param string|int $resultItemID
+     */
     public function getTypeResolverClassForResultItem($resultItemID)
     {
         // Among all registered fieldresolvers, check if any is able to process the object, through function `process`
@@ -228,7 +261,7 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     /**
      * @param object $resultItem
      */
-    public function getTargetTypeResolverPicker($resultItem) : ?\PoP\ComponentModel\TypeResolverPickers\TypeResolverPickerInterface
+    public function getTargetTypeResolverPicker($resultItem) : ?TypeResolverPickerInterface
     {
         // Among all registered fieldresolvers, check if any is able to process the object, through function `process`
         // Important: iterate from back to front, because more general components (eg: Users) are defined first,
@@ -247,31 +280,31 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     /**
      * @param object $resultItem
      */
-    public function getTargetTypeResolver($resultItem) : ?\PoP\ComponentModel\TypeResolvers\TypeResolverInterface
+    public function getTargetTypeResolver($resultItem) : ?TypeResolverInterface
     {
         if ($typeResolverPicker = $this->getTargetTypeResolverPicker($resultItem)) {
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
             $typeResolverClass = $typeResolverPicker->getTypeResolverClass();
             /**
              * @var TypeResolverInterface
              */
-            $typeResolver = $instanceManager->getInstance($typeResolverClass);
+            $typeResolver = $this->instanceManager->getInstance($typeResolverClass);
             return $typeResolver;
         }
         return null;
     }
+    /**
+     * @param string|int $resultItemID
+     */
     protected function getUnresolvedResultItemIDError($resultItemID)
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return new \PoP\ComponentModel\ErrorHandling\Error('unresolved-resultitem-id', \sprintf($translationAPI->__('Either the DataLoader can\'t load data, or no TypeResolver resolves, object with ID \'%s\'', 'pop-component-model'), $resultItemID));
+        return new Error('unresolved-resultitem-id', \sprintf($this->translationAPI->__('Either the DataLoader can\'t load data, or no TypeResolver resolves, object with ID \'%s\'', 'pop-component-model'), (string) $resultItemID));
     }
     /**
      * @param object $resultItem
      */
-    protected function getUnresolvedResultItemError($resultItem)
+    protected function getUnresolvedResultItemError($resultItem) : Error
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return new \PoP\ComponentModel\ErrorHandling\Error('unresolved-resultitem', \sprintf($translationAPI->__('No TypeResolver resolves object \'%s\'', 'pop-component-model'), \json_encode($resultItem)));
+        return new Error('unresolved-resultitem', \sprintf($this->translationAPI->__('No TypeResolver resolves object \'%s\'', 'pop-component-model'), \json_encode($resultItem)));
     }
     /**
      * @param array<string, mixed>|null $variables
@@ -285,7 +318,7 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
         // Check that a typeResolver from this Union can process this resultItem, or return an arror
         $targetTypeResolver = $this->getTargetTypeResolver($resultItem);
         if (\is_null($targetTypeResolver)) {
-            return self::getUnresolvedResultItemError($resultItem);
+            return $this->getUnresolvedResultItemError($resultItem);
         }
         // Delegate to that typeResolver to obtain the value
         // Because the schema validation cannot be performed through the UnionTypeResolver, since it depends on each dbObject, indicate that it must be done in resolveValue
@@ -294,46 +327,42 @@ abstract class AbstractUnionTypeResolver extends \PoP\ComponentModel\TypeResolve
     }
     protected function addSchemaDefinition(array $stackMessages, array &$generalMessages, array $options = [])
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-        $schemaDefinitionService = \PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
+        $schemaDefinitionService = SchemaDefinitionServiceFacade::getInstance();
         $typeSchemaKey = $schemaDefinitionService->getTypeSchemaKey($this);
         // Properties
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME] = $this->getMaybeNamespacedTypeName();
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAMESPACED_NAME] = $this->getNamespacedTypeName();
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_ELEMENT_NAME] = $this->getTypeName();
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_NAME] = $this->getMaybeNamespacedTypeName();
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_NAMESPACED_NAME] = $this->getNamespacedTypeName();
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_ELEMENT_NAME] = $this->getTypeName();
         if ($description = $this->getSchemaTypeDescription()) {
-            $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
+            $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_DESCRIPTION] = $description;
         }
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_IS_UNION] = \true;
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_IS_UNION] = \true;
         // If it returns an interface as type, add it to the schemaDefinition
         if ($typeInterfaceClass = $this->getSchemaTypeInterfaceClass()) {
-            $typeInterfaceResolver = $instanceManager->getInstance($typeInterfaceClass);
-            $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_RESULTS_IMPLEMENT_INTERFACE] = $typeInterfaceResolver->getMaybeNamespacedInterfaceName();
+            $typeInterfaceResolver = $this->instanceManager->getInstance($typeInterfaceClass);
+            $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_RESULTS_IMPLEMENT_INTERFACE] = $typeInterfaceResolver->getMaybeNamespacedInterfaceName();
         }
         // Iterate through the typeResolvers from all the pickers and get their schema definitions
         foreach ($this->getTypeResolverPickers() as $picker) {
-            $pickerTypeResolver = $instanceManager->getInstance($picker->getTypeResolverClass());
+            $pickerTypeResolver = $this->instanceManager->getInstance($picker->getTypeResolverClass());
             $pickerTypeSchemaDefinition = $pickerTypeResolver->getSchemaDefinition($stackMessages, $generalMessages, $options);
             $pickerTypeName = $pickerTypeResolver->getMaybeNamespacedTypeName();
-            $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_POSSIBLE_TYPES][$pickerTypeName] = $pickerTypeSchemaDefinition[$pickerTypeName];
+            $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_POSSIBLE_TYPES][$pickerTypeName] = $pickerTypeSchemaDefinition[$pickerTypeName];
         }
     }
     protected function processFlatShapeSchemaDefinition(array $options = [])
     {
         parent::processFlatShapeSchemaDefinition($options);
-        $schemaDefinitionService = \PoP\ComponentModel\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
+        $schemaDefinitionService = SchemaDefinitionServiceFacade::getInstance();
         $typeSchemaKey = $schemaDefinitionService->getTypeSchemaKey($this);
         // Replace the UnionTypeResolver's types with their typeNames
-        $this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_POSSIBLE_TYPES] = \array_keys($this->schemaDefinition[$typeSchemaKey][\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_POSSIBLE_TYPES]);
+        $this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_POSSIBLE_TYPES] = \array_keys($this->schemaDefinition[$typeSchemaKey][SchemaDefinition::ARGNAME_POSSIBLE_TYPES]);
     }
     /**
      * Because the UnionTypeResolver doesn't know yet which TypeResolver will be used (that depends on each resultItem), it can't resolve error validation
-     *
-     * @param string $field
-     * @param array $variables
-     * @return array
+     * @param mixed[] $variables
      */
-    public function resolveSchemaValidationErrorDescriptions(string $field, array &$variables = null) : array
+    public function resolveSchemaValidationErrorDescriptions(string $field, &$variables = null) : array
     {
         return [];
     }

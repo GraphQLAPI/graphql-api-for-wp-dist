@@ -28,7 +28,7 @@ trait MemcachedTrait
      * {@see \Symfony\Contracts\Cache\ItemInterface::RESERVED_CHARACTERS} that are legal in Memcached.
      * Note: don’t use {@see \Symfony\Component\Cache\Adapter\AbstractAdapter::NS_SEPARATOR}.
      */
-    private static $RESERVED_MEMCACHED = " \n\r\t\v\f\0";
+    private static $RESERVED_MEMCACHED = " \n\r\t\v\f\x00";
     private static $RESERVED_PSR6 = '@()\\{}/';
     private $marshaller;
     private $client;
@@ -37,15 +37,15 @@ trait MemcachedTrait
     {
         return \extension_loaded('memcached') && \version_compare(\phpversion('memcached'), '2.2.0', '>=');
     }
-    private function init(\Memcached $client, string $namespace, int $defaultLifetime, ?\PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface $marshaller)
+    private function init(\Memcached $client, string $namespace, int $defaultLifetime, ?MarshallerInterface $marshaller)
     {
         if (!static::isSupported()) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException('Memcached >= 2.2.0 is required.');
+            throw new CacheException('Memcached >= 2.2.0 is required.');
         }
         if ('Memcached' === \get_class($client)) {
             $opt = $client->getOption(\Memcached::OPT_SERIALIZER);
             if (\Memcached::SERIALIZER_PHP !== $opt && \Memcached::SERIALIZER_IGBINARY !== $opt) {
-                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException('MemcachedAdapter: "serializer" option must be "php" or "igbinary".');
+                throw new CacheException('MemcachedAdapter: "serializer" option must be "php" or "igbinary".');
             }
             $this->maxIdLength -= \strlen($client->getOption(\Memcached::OPT_PREFIX_KEY));
             $this->client = $client;
@@ -54,7 +54,7 @@ trait MemcachedTrait
         }
         parent::__construct($namespace, $defaultLifetime);
         $this->enableVersioning();
-        $this->marshaller = $marshaller ?? new \PrefixedByPoP\Symfony\Component\Cache\Marshaller\DefaultMarshaller();
+        $this->marshaller = $marshaller ?? new DefaultMarshaller();
     }
     /**
      * Creates a Memcached instance.
@@ -76,10 +76,10 @@ trait MemcachedTrait
         if (\is_string($servers)) {
             $servers = [$servers];
         } elseif (!\is_array($servers)) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('MemcachedAdapter::createClient() expects array or string as first argument, "%s" given.', \gettype($servers)));
+            throw new InvalidArgumentException(\sprintf('MemcachedAdapter::createClient() expects array or string as first argument, "%s" given.', \gettype($servers)));
         }
         if (!static::isSupported()) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException('Memcached >= 2.2.0 is required.');
+            throw new CacheException('Memcached >= 2.2.0 is required.');
         }
         \set_error_handler(function ($type, $msg, $file, $line) {
             throw new \ErrorException($msg, 0, $type, $file, $line);
@@ -95,7 +95,7 @@ trait MemcachedTrait
                     continue;
                 }
                 if (0 !== \strpos($dsn, 'memcached:')) {
-                    throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s" does not start with "memcached:".', $dsn));
+                    throw new InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s" does not start with "memcached:".', $dsn));
                 }
                 $params = \preg_replace_callback('#^memcached:(//)?(?:([^@]*+)@)?#', function ($m) use(&$username, &$password) {
                     if (!empty($m[2])) {
@@ -104,14 +104,14 @@ trait MemcachedTrait
                     return 'file:' . ($m[1] ?? '');
                 }, $dsn);
                 if (\false === ($params = \parse_url($params))) {
-                    throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s".', $dsn));
+                    throw new InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s".', $dsn));
                 }
                 $query = $hosts = [];
                 if (isset($params['query'])) {
                     \parse_str($params['query'], $query);
                     if (isset($query['host'])) {
                         if (!\is_array($hosts = $query['host'])) {
-                            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s".', $dsn));
+                            throw new InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s".', $dsn));
                         }
                         foreach ($hosts as $host => $weight) {
                             if (\false === ($port = \strrpos($host, ':'))) {
@@ -130,7 +130,7 @@ trait MemcachedTrait
                     }
                 }
                 if (!isset($params['host']) && !isset($params['path'])) {
-                    throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s".', $dsn));
+                    throw new InvalidArgumentException(\sprintf('Invalid Memcached DSN: "%s".', $dsn));
                 }
                 if (isset($params['path']) && \preg_match('#/(\\d+)$#', $params['path'], $m)) {
                     $params['weight'] = $m[1];
@@ -269,7 +269,7 @@ trait MemcachedTrait
         if (\Memcached::RES_SUCCESS === $code || \Memcached::RES_NOTFOUND === $code) {
             return $result;
         }
-        throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException('MemcachedAdapter client error: ' . \strtolower($this->client->getResultMessage()));
+        throw new CacheException('MemcachedAdapter client error: ' . \strtolower($this->client->getResultMessage()));
     }
     private function getClient() : \Memcached
     {
@@ -278,10 +278,10 @@ trait MemcachedTrait
         }
         $opt = $this->lazyClient->getOption(\Memcached::OPT_SERIALIZER);
         if (\Memcached::SERIALIZER_PHP !== $opt && \Memcached::SERIALIZER_IGBINARY !== $opt) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException('MemcachedAdapter: "serializer" option must be "php" or "igbinary".');
+            throw new CacheException('MemcachedAdapter: "serializer" option must be "php" or "igbinary".');
         }
         if ('' !== ($prefix = (string) $this->lazyClient->getOption(\Memcached::OPT_PREFIX_KEY))) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException(\sprintf('MemcachedAdapter: "prefix_key" option must be empty when using proxified connections, "%s" given.', $prefix));
+            throw new CacheException(\sprintf('MemcachedAdapter: "prefix_key" option must be empty when using proxified connections, "%s" given.', $prefix));
         }
         return $this->client = $this->lazyClient;
     }

@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\Config\Exception\FileLocatorFileNotFoundExce
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class FileLocator implements \PrefixedByPoP\Symfony\Component\Config\FileLocatorInterface
+class FileLocator implements FileLocatorInterface
 {
     protected $paths;
     /**
@@ -28,15 +28,16 @@ class FileLocator implements \PrefixedByPoP\Symfony\Component\Config\FileLocator
     }
     /**
      * {@inheritdoc}
+     * @param string $currentPath
      */
-    public function locate(string $name, string $currentPath = null, bool $first = \true)
+    public function locate(string $name, $currentPath = null, bool $first = \true)
     {
         if ('' === $name) {
             throw new \InvalidArgumentException('An empty file name is not valid to be located.');
         }
         if ($this->isAbsolutePath($name)) {
             if (!\file_exists($name)) {
-                throw new \PrefixedByPoP\Symfony\Component\Config\Exception\FileLocatorFileNotFoundException(\sprintf('The file "%s" does not exist.', $name), 0, null, [$name]);
+                throw new FileLocatorFileNotFoundException(\sprintf('The file "%s" does not exist.', $name), 0, null, [$name]);
             }
             return $name;
         }
@@ -57,7 +58,7 @@ class FileLocator implements \PrefixedByPoP\Symfony\Component\Config\FileLocator
             }
         }
         if (!$filepaths) {
-            throw new \PrefixedByPoP\Symfony\Component\Config\Exception\FileLocatorFileNotFoundException(\sprintf('The file "%s" does not exist (in: "%s").', $name, \implode('", "', $paths)), 0, null, $notfound);
+            throw new FileLocatorFileNotFoundException(\sprintf('The file "%s" does not exist (in: "%s").', $name, \implode('", "', $paths)), 0, null, $notfound);
         }
         return $filepaths;
     }

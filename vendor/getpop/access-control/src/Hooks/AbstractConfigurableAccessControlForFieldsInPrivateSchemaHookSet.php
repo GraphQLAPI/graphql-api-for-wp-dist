@@ -3,12 +3,14 @@
 declare (strict_types=1);
 namespace PoP\AccessControl\Hooks;
 
-use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForFieldsTrait;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
 use PoP\AccessControl\ConfigurationEntries\AccessControlConfigurableMandatoryDirectivesForFieldsTrait;
+use PoP\AccessControl\Hooks\AccessControlConfigurableMandatoryDirectivesForFieldsHookSetTrait;
+use PoP\ComponentModel\FieldResolvers\FieldResolverInterface;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForFieldsTrait;
 abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractAccessControlForFieldsInPrivateSchemaHookSet
 {
+    use AccessControlConfigurableMandatoryDirectivesForFieldsHookSetTrait;
     use ConfigurableMandatoryDirectivesForFieldsTrait, AccessControlConfigurableMandatoryDirectivesForFieldsTrait {
         AccessControlConfigurableMandatoryDirectivesForFieldsTrait::getMatchingEntries insteadof ConfigurableMandatoryDirectivesForFieldsTrait;
         // The conflict resolutions below should not be needed, because the functions are not repeated, but it is defined just once in the same source trait
@@ -20,18 +22,14 @@ abstract class AbstractConfigurableAccessControlForFieldsInPrivateSchemaHookSet 
     }
     protected function enabled() : bool
     {
-        return parent::enabled() && !empty(static::getConfigurationEntries());
+        return parent::enabled() && !empty($this->getConfigurationEntries());
     }
     /**
      * Remove fieldName "roles" if the user is not logged in
      *
-     * @param boolean $include
-     * @param TypeResolverInterface $typeResolver
-     * @param FieldResolverInterface $fieldResolver
-     * @param string $fieldName
-     * @return boolean
+     * @param string[] $fieldInterfaceResolverClasses
      */
-    protected function removeFieldName(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, \PoP\ComponentModel\FieldResolvers\FieldResolverInterface $fieldResolver, array $fieldInterfaceResolverClasses, string $fieldName) : bool
+    protected function removeFieldName(TypeResolverInterface $typeResolver, FieldResolverInterface $fieldResolver, array $fieldInterfaceResolverClasses, string $fieldName) : bool
     {
         // Obtain all entries for the current combination of [typeResolver or $fieldInterfaceClass]/fieldName
         foreach ($this->getEntries($typeResolver, $fieldInterfaceResolverClasses, $fieldName) as $entry) {

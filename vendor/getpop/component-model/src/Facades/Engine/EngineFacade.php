@@ -7,12 +7,12 @@ use PoP\ComponentModel\Engine\EngineInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class EngineFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Engine\EngineInterface
+    public static function getInstance() : EngineInterface
     {
         /**
          * @var EngineInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Engine\EngineInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(EngineInterface::class);
         return $service;
     }
 }

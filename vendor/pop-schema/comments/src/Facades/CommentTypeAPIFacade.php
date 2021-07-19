@@ -7,12 +7,12 @@ use PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class CommentTypeAPIFacade
 {
-    public static function getInstance() : \PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface
+    public static function getInstance() : CommentTypeAPIInterface
     {
         /**
          * @var CommentTypeAPIInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(CommentTypeAPIInterface::class);
         return $service;
     }
 }

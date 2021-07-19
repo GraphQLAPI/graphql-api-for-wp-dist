@@ -7,12 +7,12 @@ use PoP\API\PersistedQueries\PersistedFragmentManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class PersistedFragmentManagerFacade
 {
-    public static function getInstance() : \PoP\API\PersistedQueries\PersistedFragmentManagerInterface
+    public static function getInstance() : PersistedFragmentManagerInterface
     {
         /**
          * @var PersistedFragmentManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\API\PersistedQueries\PersistedFragmentManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(PersistedFragmentManagerInterface::class);
         return $service;
     }
 }

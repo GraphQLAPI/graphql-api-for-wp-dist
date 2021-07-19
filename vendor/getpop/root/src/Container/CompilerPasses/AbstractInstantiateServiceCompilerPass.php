@@ -3,22 +3,25 @@
 declare (strict_types=1);
 namespace PoP\Root\Container\CompilerPasses;
 
+use PoP\Root\Container\ContainerBuilderWrapperInterface;
 use PoP\Root\Container\ServiceInstantiatorInterface;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
-abstract class AbstractInstantiateServiceCompilerPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+abstract class AbstractInstantiateServiceCompilerPass extends \PoP\Root\Container\CompilerPasses\AbstractCompilerPass
 {
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $containerBuilder) : void
+    use AutoconfigurableServicesCompilerPassTrait;
+    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void
     {
-        $serviceInstantiatorDefinition = $containerBuilder->getDefinition(\PoP\Root\Container\ServiceInstantiatorInterface::class);
+        $serviceInstantiatorDefinition = $containerBuilderWrapper->getDefinition(ServiceInstantiatorInterface::class);
         $serviceClass = $this->getServiceClass();
-        $definitions = $containerBuilder->getDefinitions();
+        $definitions = $containerBuilderWrapper->getDefinitions();
         foreach ($definitions as $definitionID => $definition) {
             $definitionClass = $definition->getClass();
             if ($definitionClass === null || !\is_a($definitionClass, $serviceClass, \true)) {
                 continue;
             }
-            $serviceInstantiatorDefinition->addMethodCall('addServiceDefinition', [$definitionID]);
+            $onlyProcessAutoconfiguredServices = $this->onlyProcessAutoconfiguredServices();
+            if (!$onlyProcessAutoconfiguredServices || $definition->isAutoconfigured()) {
+                $serviceInstantiatorDefinition->addMethodCall('addService', [$this->createReference($definitionID)]);
+            }
         }
     }
     protected abstract function getServiceClass() : string;

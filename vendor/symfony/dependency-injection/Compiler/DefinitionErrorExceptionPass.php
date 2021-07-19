@@ -19,22 +19,21 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  *
  * @author Ryan Weaver <ryan@knpuniversity.com>
  */
-class DefinitionErrorExceptionPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class DefinitionErrorExceptionPass extends AbstractRecursivePass
 {
     /**
      * {@inheritdoc}
-     * @param bool $isRoot
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if (!$value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition || !$value->hasErrors()) {
+        if (!$value instanceof Definition || !$value->hasErrors()) {
             return parent::processValue($value, $isRoot);
         }
         if ($isRoot && !$value->isPublic()) {
             $graph = $this->container->getCompiler()->getServiceReferenceGraph();
             $runtimeException = \false;
             foreach ($graph->getNode($this->currentId)->getInEdges() as $edge) {
-                if (!$edge->getValue() instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference || \PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface::RUNTIME_EXCEPTION_ON_INVALID_REFERENCE !== $edge->getValue()->getInvalidBehavior()) {
+                if (!$edge->getValue() instanceof Reference || ContainerInterface::RUNTIME_EXCEPTION_ON_INVALID_REFERENCE !== $edge->getValue()->getInvalidBehavior()) {
                     $runtimeException = \false;
                     break;
                 }
@@ -47,6 +46,6 @@ class DefinitionErrorExceptionPass extends \PrefixedByPoP\Symfony\Component\Depe
         // only show the first error so the user can focus on it
         $errors = $value->getErrors();
         $message = \reset($errors);
-        throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException($message);
+        throw new RuntimeException($message);
     }
 }

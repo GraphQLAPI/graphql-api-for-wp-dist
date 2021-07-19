@@ -8,14 +8,14 @@ use GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeTrait;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeInterface;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeTrait;
 use GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeInterface;
-class ObjectType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType implements \GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeInterface, \GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeInterface
+class ObjectType extends AbstractType implements HasFieldsTypeInterface, HasInterfacesTypeInterface
 {
     use HasFieldsTypeTrait;
     use HasInterfacesTypeTrait;
     public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath, array $customDefinition = [])
     {
         parent::__construct($fullSchemaDefinition, $schemaDefinitionPath, $customDefinition);
-        $this->initFields($fullSchemaDefinition, $schemaDefinitionPath, \true, \true);
+        $this->initFields($fullSchemaDefinition, $schemaDefinitionPath, \true);
         $this->initInterfaces($fullSchemaDefinition, $schemaDefinitionPath);
     }
     public function initializeTypeDependencies() : void

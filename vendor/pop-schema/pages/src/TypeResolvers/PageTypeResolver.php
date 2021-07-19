@@ -3,32 +3,46 @@
 declare (strict_types=1);
 namespace PoPSchema\Pages\TypeResolvers;
 
-use PoPSchema\Pages\TypeDataLoaders\PageTypeDataLoader;
-use PoP\Translation\Facades\TranslationAPIFacade;
+use PoP\ComponentModel\ErrorHandling\ErrorProviderInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\ComponentModel\Schema\FeedbackMessageStoreInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface;
+use PoP\Hooks\HooksAPIInterface;
+use PoP\Translation\TranslationAPIInterface;
 use PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver;
-class PageTypeResolver extends \PoPSchema\CustomPosts\TypeResolvers\AbstractCustomPostTypeResolver
+use PoPSchema\Pages\TypeAPIs\PageTypeAPIInterface;
+use PoPSchema\Pages\TypeDataLoaders\PageTypeDataLoader;
+class PageTypeResolver extends AbstractCustomPostTypeResolver
 {
-    public const NAME = 'Page';
+    /**
+     * @var \PoPSchema\Pages\TypeAPIs\PageTypeAPIInterface
+     */
+    protected $pageTypeAPI;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FeedbackMessageStoreInterface $feedbackMessageStore, FieldQueryInterpreterInterface $fieldQueryInterpreter, ErrorProviderInterface $errorProvider, SchemaDefinitionServiceInterface $schemaDefinitionService, PageTypeAPIInterface $pageTypeAPI)
+    {
+        $this->pageTypeAPI = $pageTypeAPI;
+        parent::__construct($translationAPI, $hooksAPI, $instanceManager, $feedbackMessageStore, $fieldQueryInterpreter, $errorProvider, $schemaDefinitionService);
+    }
     public function getTypeName() : string
     {
-        return self::NAME;
+        return 'Page';
     }
     public function getSchemaTypeDescription() : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('Representation of a page', 'pages');
+        return $this->translationAPI->__('Representation of a page', 'pages');
     }
     /**
+     * @return string|int|null
      * @param object $resultItem
      */
     public function getID($resultItem)
     {
-        $cmspagesresolver = \PoPSchema\Pages\ObjectPropertyResolverFactory::getInstance();
         $page = $resultItem;
-        return $cmspagesresolver->getPageId($page);
+        return $this->pageTypeAPI->getPageId($page);
     }
     public function getTypeDataLoaderClass() : string
     {
-        return \PoPSchema\Pages\TypeDataLoaders\PageTypeDataLoader::class;
+        return PageTypeDataLoader::class;
     }
 }

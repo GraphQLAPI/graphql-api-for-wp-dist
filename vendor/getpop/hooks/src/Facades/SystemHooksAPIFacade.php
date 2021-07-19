@@ -7,12 +7,12 @@ use PoP\Hooks\HooksAPIInterface;
 use PoP\Root\Container\SystemContainerBuilderFactory;
 class SystemHooksAPIFacade
 {
-    public static function getInstance() : \PoP\Hooks\HooksAPIInterface
+    public static function getInstance() : HooksAPIInterface
     {
         /**
          * @var HooksAPIInterface
          */
-        $service = \PoP\Root\Container\SystemContainerBuilderFactory::getInstance()->get(\PoP\Hooks\HooksAPIInterface::class);
+        $service = SystemContainerBuilderFactory::getInstance()->get(HooksAPIInterface::class);
         return $service;
     }
 }

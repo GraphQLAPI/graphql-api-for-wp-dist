@@ -14,7 +14,7 @@ interface CurlFactoryInterface
      * @return EasyHandle
      * @throws \RuntimeException when an option cannot be applied
      */
-    public function create(\PrefixedByPoP\Psr\Http\Message\RequestInterface $request, array $options);
+    public function create(RequestInterface $request, array $options);
     /**
      * Release an easy handle, allowing it to be reused or closed.
      *
@@ -22,5 +22,5 @@ interface CurlFactoryInterface
      *
      * @param EasyHandle $easy
      */
-    public function release(\PrefixedByPoP\GuzzleHttp\Handler\EasyHandle $easy);
+    public function release(EasyHandle $easy);
 }

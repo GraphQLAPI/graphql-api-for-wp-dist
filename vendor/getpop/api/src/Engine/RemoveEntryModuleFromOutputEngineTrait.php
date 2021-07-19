@@ -14,8 +14,8 @@ trait RemoveEntryModuleFromOutputEngineTrait
     {
         $data = parent::getEncodedDataObject($data);
         // For the API: maybe remove the entry module from the output
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
-        if (\PoP\API\Component::isEnabled() && $vars['scheme'] == \PoP\API\Response\Schemes::API && \in_array(\PoP\API\Constants\Actions::REMOVE_ENTRYMODULE_FROM_OUTPUT, $vars['actions']) && $vars['dataoutputmode'] == \PoP\ComponentModel\Constants\DataOutputModes::COMBINED) {
+        $vars = ApplicationState::getVars();
+        if (APIComponent::isEnabled() && $vars['scheme'] == APISchemes::API && \in_array(Actions::REMOVE_ENTRYMODULE_FROM_OUTPUT, $vars['actions']) && $vars['dataoutputmode'] == DataOutputModes::COMBINED) {
             if ($data['datasetmodulesettings'] ?? null) {
                 $data['datasetmodulesettings'] = $this->removeEntryModuleFromOutput($data['datasetmodulesettings']);
             }

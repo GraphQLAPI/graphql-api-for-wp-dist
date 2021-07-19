@@ -2,7 +2,7 @@
 
 namespace PrefixedByPoP\FastRoute\DataGenerator;
 
-class GroupCountBased extends \PrefixedByPoP\FastRoute\DataGenerator\RegexBasedAbstract
+class GroupCountBased extends RegexBasedAbstract
 {
     protected function getApproxChunkSize()
     {

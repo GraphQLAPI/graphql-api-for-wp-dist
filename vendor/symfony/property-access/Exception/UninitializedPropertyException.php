@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
  *
  * @author Jules Pietri <jules@heahprod.com>
  */
-class UninitializedPropertyException extends \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\AccessException
+class UninitializedPropertyException extends AccessException
 {
 }

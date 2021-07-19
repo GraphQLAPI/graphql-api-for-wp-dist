@@ -9,12 +9,12 @@ use PrefixedByPoP\Psr\Http\Message\UriInterface;
 /**
  * PSR-7 request implementation.
  */
-class Request implements \PrefixedByPoP\Psr\Http\Message\RequestInterface
+class Request implements RequestInterface
 {
     use MessageTrait;
     /** @var string */
     private $method;
-    /** @var null|string */
+    /** @var string|null */
     private $requestTarget;
     /** @var UriInterface */
     private $uri;
@@ -22,14 +22,14 @@ class Request implements \PrefixedByPoP\Psr\Http\Message\RequestInterface
      * @param string                               $method  HTTP method
      * @param string|UriInterface                  $uri     URI
      * @param array                                $headers Request headers
-     * @param string|null|resource|StreamInterface $body    Request body
+     * @param string|resource|StreamInterface|null $body    Request body
      * @param string                               $version Protocol version
      */
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1')
     {
         $this->assertMethod($method);
-        if (!$uri instanceof \PrefixedByPoP\Psr\Http\Message\UriInterface) {
-            $uri = new \PrefixedByPoP\GuzzleHttp\Psr7\Uri($uri);
+        if (!$uri instanceof UriInterface) {
+            $uri = new Uri($uri);
         }
         $this->method = \strtoupper($method);
         $this->uri = $uri;
@@ -39,7 +39,7 @@ class Request implements \PrefixedByPoP\Psr\Http\Message\RequestInterface
             $this->updateHostFromUri();
         }
         if ($body !== '' && $body !== null) {
-            $this->stream = \PrefixedByPoP\GuzzleHttp\Psr7\Utils::streamFor($body);
+            $this->stream = Utils::streamFor($body);
         }
     }
     public function getRequestTarget()
@@ -59,7 +59,7 @@ class Request implements \PrefixedByPoP\Psr\Http\Message\RequestInterface
     public function withRequestTarget($requestTarget)
     {
         if (\preg_match('#\\s#', $requestTarget)) {
-            throw new \InvalidArgumentException('Invalid request target provided; cannot contain whitespace');
+            throw new InvalidArgumentException('Invalid request target provided; cannot contain whitespace');
         }
         $new = clone $this;
         $new->requestTarget = $requestTarget;
@@ -80,7 +80,7 @@ class Request implements \PrefixedByPoP\Psr\Http\Message\RequestInterface
     {
         return $this->uri;
     }
-    public function withUri(\PrefixedByPoP\Psr\Http\Message\UriInterface $uri, $preserveHost = \false)
+    public function withUri(UriInterface $uri, $preserveHost = \false)
     {
         if ($uri === $this->uri) {
             return $this;

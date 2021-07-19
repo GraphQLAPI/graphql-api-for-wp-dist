@@ -13,8 +13,8 @@ namespace PrefixedByPoP\Symfony\Contracts\Service;
 use PrefixedByPoP\Psr\Container\ContainerExceptionInterface;
 use PrefixedByPoP\Psr\Container\NotFoundExceptionInterface;
 // Help opcache.preload discover always-needed symbols
-\class_exists(\PrefixedByPoP\Psr\Container\ContainerExceptionInterface::class);
-\class_exists(\PrefixedByPoP\Psr\Container\NotFoundExceptionInterface::class);
+\class_exists(ContainerExceptionInterface::class);
+\class_exists(NotFoundExceptionInterface::class);
 /**
  * A trait to help implement ServiceProviderInterface.
  *
@@ -44,6 +44,8 @@ trait ServiceLocatorTrait
     }
     /**
      * {@inheritdoc}
+     *
+     * @return mixed
      */
     public function get($id)
     {
@@ -81,7 +83,7 @@ trait ServiceLocatorTrait
         }
         return $this->providedTypes;
     }
-    private function createNotFoundException(string $id) : \PrefixedByPoP\Psr\Container\NotFoundExceptionInterface
+    private function createNotFoundException(string $id) : NotFoundExceptionInterface
     {
         if (!($alternatives = \array_keys($this->factories))) {
             $message = 'is empty...';
@@ -98,13 +100,13 @@ trait ServiceLocatorTrait
         } else {
             $message = \sprintf('Service "%s" not found: the current service locator %s', $id, $message);
         }
-        return new class($message) extends \InvalidArgumentException implements \PrefixedByPoP\Psr\Container\NotFoundExceptionInterface
+        return new class($message) extends \InvalidArgumentException implements NotFoundExceptionInterface
         {
         };
     }
-    private function createCircularReferenceException(string $id, array $path) : \PrefixedByPoP\Psr\Container\ContainerExceptionInterface
+    private function createCircularReferenceException(string $id, array $path) : ContainerExceptionInterface
     {
-        return new class(\sprintf('Circular reference detected for service "%s", path: "%s".', $id, \implode(' -> ', $path))) extends \RuntimeException implements \PrefixedByPoP\Psr\Container\ContainerExceptionInterface
+        return new class(\sprintf('Circular reference detected for service "%s", path: "%s".', $id, \implode(' -> ', $path))) extends \RuntimeException implements ContainerExceptionInterface
         {
         };
     }

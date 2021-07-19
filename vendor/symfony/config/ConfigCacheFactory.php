@@ -19,7 +19,7 @@ namespace PrefixedByPoP\Symfony\Component\Config;
  *
  * @author Matthias Pigulla <mp@webfactory.de>
  */
-class ConfigCacheFactory implements \PrefixedByPoP\Symfony\Component\Config\ConfigCacheFactoryInterface
+class ConfigCacheFactory implements ConfigCacheFactoryInterface
 {
     private $debug;
     /**
@@ -34,7 +34,7 @@ class ConfigCacheFactory implements \PrefixedByPoP\Symfony\Component\Config\Conf
      */
     public function cache(string $file, callable $callback)
     {
-        $cache = new \PrefixedByPoP\Symfony\Component\Config\ConfigCache($file, $this->debug);
+        $cache = new ConfigCache($file, $this->debug);
         if (!$cache->isFresh()) {
             $callback($cache);
         }

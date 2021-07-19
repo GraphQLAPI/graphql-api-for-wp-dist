@@ -13,6 +13,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\BoundArgument;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Attribute\Target;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -23,7 +24,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference;
 /**
  * @author Guilhem Niot <guilhem.niot@gmail.com>
  */
-class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class ResolveBindingsPass extends AbstractRecursivePass
 {
     private $usedBindings = [];
     private $unusedBindings = [];
@@ -31,7 +32,7 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         $this->usedBindings = $container->getRemovedBindingIds();
         try {
@@ -51,9 +52,9 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
                 if ($argumentName) {
                     $message .= \sprintf('named "%s" ', $argumentName);
                 }
-                if (\PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\BoundArgument::DEFAULTS_BINDING === $bindingType) {
+                if (BoundArgument::DEFAULTS_BINDING === $bindingType) {
                     $message .= 'under "_defaults"';
-                } elseif (\PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\BoundArgument::INSTANCEOF_BINDING === $bindingType) {
+                } elseif (BoundArgument::INSTANCEOF_BINDING === $bindingType) {
                     $message .= 'under "_instanceof"';
                 } else {
                     $message .= \sprintf('for service "%s"', $serviceId);
@@ -68,7 +69,7 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
                 foreach ($this->errorMessages as $m) {
                     $message .= "\n - " . $m;
                 }
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException($message);
+                throw new InvalidArgumentException($message);
             }
         } finally {
             $this->usedBindings = [];
@@ -78,11 +79,10 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
     }
     /**
      * {@inheritdoc}
-     * @param bool $isRoot
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference && $value->getType() === (string) $value) {
+        if ($value instanceof TypedReference && $value->getType() === (string) $value) {
             // Already checked
             $bindings = $this->container->getDefinition($this->currentId)->getBindings();
             $name = $value->getName();
@@ -94,7 +94,7 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
             }
             return parent::processValue($value, $isRoot);
         }
-        if (!$value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition || !($bindings = $value->getBindings())) {
+        if (!$value instanceof Definition || !($bindings = $value->getBindings())) {
             return parent::processValue($value, $isRoot);
         }
         $bindingNames = [];
@@ -112,8 +112,8 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
             if (!isset($m[1])) {
                 continue;
             }
-            if (null !== $bindingValue && !$bindingValue instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference && !$bindingValue instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition && !$bindingValue instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument && !$bindingValue instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument) {
-                throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\sprintf('Invalid value for binding key "%s" for service "%s": expected null, "%s", "%s", "%s" or ServiceLocatorArgument, "%s" given.', $key, $this->currentId, \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference::class, \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition::class, \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument::class, \get_debug_type($bindingValue)));
+            if (null !== $bindingValue && !$bindingValue instanceof Reference && !$bindingValue instanceof Definition && !$bindingValue instanceof TaggedIteratorArgument && !$bindingValue instanceof ServiceLocatorArgument) {
+                throw new InvalidArgumentException(\sprintf('Invalid value for binding key "%s" for service "%s": expected "%s", "%s", "%s", "%s" or null, "%s" given.', $key, $this->currentId, Reference::class, Definition::class, TaggedIteratorArgument::class, ServiceLocatorArgument::class, \get_debug_type($bindingValue)));
             }
         }
         if ($value->isAbstract()) {
@@ -124,7 +124,7 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
             if ($constructor = $this->getConstructor($value, \false)) {
                 $calls[] = [$constructor, $value->getArguments()];
             }
-        } catch (\PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $this->errorMessages[] = $e->getMessage();
             $this->container->getDefinition($this->currentId)->addError($e->getMessage());
             return parent::processValue($value, $isRoot);
@@ -136,7 +136,7 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
             } else {
                 try {
                     $reflectionMethod = $this->getReflectionMethod($value, $method);
-                } catch (\PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException $e) {
+                } catch (RuntimeException $e) {
                     if ($value->getFactory()) {
                         continue;
                     }
@@ -147,20 +147,21 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
                 if (\array_key_exists($key, $arguments) && '' !== $arguments[$key]) {
                     continue;
                 }
-                $typeHint = \PrefixedByPoP\Symfony\Component\DependencyInjection\LazyProxy\ProxyHelper::getTypeHint($reflectionMethod, $parameter);
-                if (\array_key_exists($k = \ltrim($typeHint, '\\') . ' $' . $parameter->name, $bindings)) {
+                $typeHint = ProxyHelper::getTypeHint($reflectionMethod, $parameter);
+                $name = Target::parseName($parameter);
+                if ($typeHint && \array_key_exists($k = \ltrim($typeHint, '\\') . ' $' . $name, $bindings)) {
                     $arguments[$key] = $this->getBindingValue($bindings[$k]);
                     continue;
                 }
-                if (\array_key_exists('$' . $parameter->name, $bindings)) {
-                    $arguments[$key] = $this->getBindingValue($bindings['$' . $parameter->name]);
+                if (\array_key_exists('$' . $name, $bindings)) {
+                    $arguments[$key] = $this->getBindingValue($bindings['$' . $name]);
                     continue;
                 }
                 if ($typeHint && '\\' === $typeHint[0] && isset($bindings[$typeHint = \substr($typeHint, 1)])) {
                     $arguments[$key] = $this->getBindingValue($bindings[$typeHint]);
                     continue;
                 }
-                if (isset($bindingNames[$parameter->name])) {
+                if (isset($bindingNames[$name]) || isset($bindingNames[$parameter->name])) {
                     $bindingKey = \array_search($binding, $bindings, \true);
                     $argumentType = \substr($bindingKey, 0, \strpos($bindingKey, ' '));
                     $this->errorMessages[] = \sprintf('Did you forget to add the type "%s" to argument "$%s" of method "%s::%s()"?', $argumentType, $parameter->name, $reflectionMethod->class, $reflectionMethod->name);
@@ -185,7 +186,7 @@ class ResolveBindingsPass extends \PrefixedByPoP\Symfony\Component\DependencyInj
     /**
      * @return mixed
      */
-    private function getBindingValue(\PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\BoundArgument $binding)
+    private function getBindingValue(BoundArgument $binding)
     {
         [$bindingValue, $bindingId] = $binding->getValues();
         $this->usedBindings[$bindingId] = \true;

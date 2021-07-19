@@ -20,7 +20,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceNotFoun
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-interface ContainerInterface extends \PrefixedByPoP\Psr\Container\ContainerInterface
+interface ContainerInterface extends PsrContainerInterface
 {
     public const RUNTIME_EXCEPTION_ON_INVALID_REFERENCE = 0;
     public const EXCEPTION_ON_INVALID_REFERENCE = 1;
@@ -45,7 +45,7 @@ interface ContainerInterface extends \PrefixedByPoP\Psr\Container\ContainerInter
      *
      * @see Reference
      */
-    public function get($id, int $invalidBehavior = self::EXCEPTION_ON_INVALID_REFERENCE);
+    public function get($id, $invalidBehavior = self::EXCEPTION_ON_INVALID_REFERENCE);
     /**
      * Returns true if the given service is defined.
      *

@@ -18,8 +18,9 @@ abstract class AbstractRouteModuleProcessorManager implements \PoP\ModuleRouting
     }
     /**
      * @return AbstractRouteModuleProcessor[]
+     * @param string $group
      */
-    public function getProcessors(string $group = null) : array
+    public function getProcessors($group = null) : array
     {
         $group = $group ?? $this->getDefaultGroup();
         return $this->processors[$group] ?? array();
@@ -30,8 +31,9 @@ abstract class AbstractRouteModuleProcessorManager implements \PoP\ModuleRouting
     }
     /**
      * @return string[]|null
+     * @param string $group
      */
-    public function getRouteModuleByMostAllmatchingVarsProperties(string $group = null) : ?array
+    public function getRouteModuleByMostAllmatchingVarsProperties($group = null) : ?array
     {
         $group = $group ?? $this->getDefaultGroup();
         $vars = $this->getVars();
@@ -96,7 +98,7 @@ abstract class AbstractRouteModuleProcessorManager implements \PoP\ModuleRouting
             if ($vars_properties = $processor->getModulesVarsProperties()) {
                 foreach ($vars_properties as $vars_properties_set) {
                     // Check if the all the $vars_properties are satisfied <= if all those key/values are also present in $vars
-                    $conditions = (array) $vars_properties_set['conditions'] ?? [];
+                    $conditions = $vars_properties_set['conditions'] ?? [];
                     if (\PoP\ModuleRouting\Utils::arrayIsSubset($conditions, $vars)) {
                         // Check how many matches there are, and if it's the most, this is the most matching module
                         if (($matching_properties_count = \count($conditions, \COUNT_RECURSIVE)) >= $most_matching_properties_count) {

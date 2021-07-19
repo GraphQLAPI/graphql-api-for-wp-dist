@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Brain\Cortex\Controller;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class RedirectController implements \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface
+final class RedirectController implements ControllerInterface
 {
     /**
      * @codeCoverageIgnore

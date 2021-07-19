@@ -22,24 +22,24 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\ParameterBa
  *
  * @author Roland Franssen <franssen.roland@gmail.com>
  */
-class ValidateEnvPlaceholdersPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+class ValidateEnvPlaceholdersPass implements CompilerPassInterface
 {
     private const TYPE_FIXTURES = ['array' => [], 'bool' => \false, 'float' => 0.0, 'int' => 0, 'string' => ''];
     private $extensionConfig = [];
     /**
      * {@inheritdoc}
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         $this->extensionConfig = [];
-        if (!\class_exists(\PrefixedByPoP\Symfony\Component\Config\Definition\BaseNode::class) || !($extensions = $container->getExtensions())) {
+        if (!\class_exists(BaseNode::class) || !($extensions = $container->getExtensions())) {
             return;
         }
         $resolvingBag = $container->getParameterBag();
-        if (!$resolvingBag instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\EnvPlaceholderParameterBag) {
+        if (!$resolvingBag instanceof EnvPlaceholderParameterBag) {
             return;
         }
-        $defaultBag = new \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\ParameterBag($resolvingBag->all());
+        $defaultBag = new ParameterBag($resolvingBag->all());
         $envTypes = $resolvingBag->getProvidedTypes();
         try {
             foreach ($resolvingBag->getEnvPlaceholders() + $resolvingBag->getUnusedEnvPlaceholders() as $env => $placeholders) {
@@ -55,17 +55,17 @@ class ValidateEnvPlaceholdersPass implements \PrefixedByPoP\Symfony\Component\De
                     }
                 }
                 foreach ($placeholders as $placeholder) {
-                    \PrefixedByPoP\Symfony\Component\Config\Definition\BaseNode::setPlaceholder($placeholder, $values);
+                    BaseNode::setPlaceholder($placeholder, $values);
                 }
             }
-            $processor = new \PrefixedByPoP\Symfony\Component\Config\Definition\Processor();
+            $processor = new Processor();
             foreach ($extensions as $name => $extension) {
-                if (!($extension instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface || $extension instanceof \PrefixedByPoP\Symfony\Component\Config\Definition\ConfigurationInterface) || !($config = \array_filter($container->getExtensionConfig($name)))) {
+                if (!($extension instanceof ConfigurationExtensionInterface || $extension instanceof ConfigurationInterface) || !($config = \array_filter($container->getExtensionConfig($name)))) {
                     // this extension has no semantic configuration or was not called
                     continue;
                 }
                 $config = $resolvingBag->resolveValue($config);
-                if ($extension instanceof \PrefixedByPoP\Symfony\Component\Config\Definition\ConfigurationInterface) {
+                if ($extension instanceof ConfigurationInterface) {
                     $configuration = $extension;
                 } elseif (null === ($configuration = $extension->getConfiguration($config, $container))) {
                     continue;
@@ -73,7 +73,7 @@ class ValidateEnvPlaceholdersPass implements \PrefixedByPoP\Symfony\Component\De
                 $this->extensionConfig[$name] = $processor->processConfiguration($configuration, $config);
             }
         } finally {
-            \PrefixedByPoP\Symfony\Component\Config\Definition\BaseNode::resetPlaceholders();
+            BaseNode::resetPlaceholders();
         }
         $resolvingBag->clearUnusedEnvPlaceholders();
     }

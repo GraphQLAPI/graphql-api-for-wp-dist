@@ -7,12 +7,12 @@ use GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class MarkdownConvertorFacade
 {
-    public static function getInstance() : \GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface
+    public static function getInstance() : MarkdownConvertorInterface
     {
         /**
          * @var MarkdownConvertorInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(MarkdownConvertorInterface::class);
         return $service;
     }
 }

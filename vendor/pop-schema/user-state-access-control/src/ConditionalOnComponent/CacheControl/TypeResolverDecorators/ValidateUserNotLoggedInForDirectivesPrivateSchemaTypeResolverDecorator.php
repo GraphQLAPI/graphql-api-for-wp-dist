@@ -1,0 +1,10 @@
+<?php
+
+declare (strict_types=1);
+namespace PoPSchema\UserStateAccessControl\ConditionalOnComponent\CacheControl\TypeResolverDecorators;
+
+use PoPSchema\UserStateAccessControl\TypeResolverDecorators\ValidateUserNotLoggedInForDirectivesTypeResolverDecoratorTrait;
+class ValidateUserNotLoggedInForDirectivesPrivateSchemaTypeResolverDecorator extends \PoPSchema\UserStateAccessControl\ConditionalOnComponent\CacheControl\TypeResolverDecorators\AbstractNoCacheConfigurableAccessControlForDirectivesInPrivateSchemaTypeResolverDecorator
+{
+    use ValidateUserNotLoggedInForDirectivesTypeResolverDecoratorTrait;
+}

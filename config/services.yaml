@@ -2,30 +2,46 @@ services:
     _defaults:
         public: true
         autowire: true
-
-    GraphQLAPI\GraphQLAPI\Taxonomies\:
-        resource: '../src/Taxonomies/*'
-
-    GraphQLAPI\GraphQLAPI\PostTypes\:
-        resource: '../src/PostTypes/*'
-
-    GraphQLAPI\GraphQLAPI\EditorScripts\:
-        resource: '../src/EditorScripts/*'
-
-    GraphQLAPI\GraphQLAPI\Blocks\:
-        resource: '../src/Blocks/*'
-
-    GraphQLAPI\GraphQLAPI\BlockCategories\:
-        resource: '../src/BlockCategories/*'
-
-    GraphQLAPI\GraphQLAPI\Hooks\:
-        resource: '../src/Hooks/*'
-
-    GraphQLAPI\GraphQLAPI\Clients\:
-        resource: '../src/Clients/*'
+        autoconfigure: true
 
     GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface:
         class: '\GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParser'
 
     GraphQLAPI\GraphQLAPI\Registries\AccessControlRuleBlockRegistryInterface:
         class: '\GraphQLAPI\GraphQLAPI\Registries\AccessControlRuleBlockRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\SchemaConfigBlockRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\SchemaConfigBlockRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointBlockRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointBlockRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\EndpointBlockRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\EndpointBlockRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\ModuleTypeRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\ModuleTypeRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\EndpointSchemaConfigurationExecuterRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\EndpointSchemaConfigurationExecuterRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointSchemaConfigurationExecuterRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointSchemaConfigurationExecuterRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\CustomEndpointExecuterRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\CustomEndpointExecuterRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointExecuterRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointExecuterRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\CustomEndpointAnnotatorRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\CustomEndpointAnnotatorRegistry'
+
+    GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointAnnotatorRegistryInterface:
+        class: '\GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointAnnotatorRegistry'
+
+    GraphQLAPI\GraphQLAPI\Services\:
+        resource: '../src/Services/*'

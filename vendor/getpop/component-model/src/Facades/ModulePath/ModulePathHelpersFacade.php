@@ -7,12 +7,12 @@ use PoP\ComponentModel\ModulePath\ModulePathHelpersInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class ModulePathHelpersFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\ModulePath\ModulePathHelpersInterface
+    public static function getInstance() : ModulePathHelpersInterface
     {
         /**
          * @var ModulePathHelpersInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\ModulePath\ModulePathHelpersInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(ModulePathHelpersInterface::class);
         return $service;
     }
 }

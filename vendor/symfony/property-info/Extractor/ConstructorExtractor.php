@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface;
  *
  * @author Dmitrii Poddubnyi <dpoddubny@gmail.com>
  */
-final class ConstructorExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyTypeExtractorInterface
+final class ConstructorExtractor implements PropertyTypeExtractorInterface
 {
     /** @var iterable|ConstructorArgumentTypeExtractorInterface[] */
     private $extractors;

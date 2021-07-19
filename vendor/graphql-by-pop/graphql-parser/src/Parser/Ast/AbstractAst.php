@@ -9,11 +9,11 @@ namespace GraphQLByPoP\GraphQLParser\Parser\Ast;
 
 use GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\LocatableInterface;
 use GraphQLByPoP\GraphQLParser\Parser\Location;
-abstract class AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Interfaces\LocatableInterface
+abstract class AbstractAst implements LocatableInterface
 {
     /** @var  Location */
     private $location;
-    public function __construct(\GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function __construct(Location $location)
     {
         $this->location = $location;
     }
@@ -21,7 +21,7 @@ abstract class AbstractAst implements \GraphQLByPoP\GraphQLParser\Parser\Ast\Int
     {
         return $this->location;
     }
-    public function setLocation(\GraphQLByPoP\GraphQLParser\Parser\Location $location)
+    public function setLocation(Location $location)
     {
         $this->location = $location;
     }

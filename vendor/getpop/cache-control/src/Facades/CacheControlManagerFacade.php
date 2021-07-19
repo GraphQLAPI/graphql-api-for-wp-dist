@@ -7,12 +7,12 @@ use PoP\CacheControl\Managers\CacheControlManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class CacheControlManagerFacade
 {
-    public static function getInstance() : \PoP\CacheControl\Managers\CacheControlManagerInterface
+    public static function getInstance() : CacheControlManagerInterface
     {
         /**
          * @var CacheControlManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\CacheControl\Managers\CacheControlManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(CacheControlManagerInterface::class);
         return $service;
     }
 }

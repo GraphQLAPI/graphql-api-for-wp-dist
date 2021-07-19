@@ -9,5 +9,5 @@ interface InstanceManagerInterface
      * @return object
      */
     public function getInstance(string $class);
-    public function getImplementationClass(string $class) : string;
+    public function getInstanceClass(string $class) : string;
 }

@@ -16,6 +16,6 @@ class MarkdownConvertor implements \GraphQLAPI\MarkdownConvertor\MarkdownConvert
      */
     public function convertMarkdownToHTML(string $markdownContent) : string
     {
-        return \PrefixedByPoP\Michelf\MarkdownExtra::defaultTransform($markdownContent);
+        return MarkdownExtra::defaultTransform($markdownContent);
     }
 }

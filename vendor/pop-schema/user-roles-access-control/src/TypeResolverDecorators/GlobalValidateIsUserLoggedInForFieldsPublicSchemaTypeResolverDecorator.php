@@ -7,19 +7,17 @@ use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
 use PoPSchema\UserStateAccessControl\TypeResolverDecorators\AbstractValidateIsUserLoggedInForFieldsPublicSchemaTypeResolverDecorator;
 use PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver;
 use PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyCapabilityDirectiveResolver;
-class GlobalValidateIsUserLoggedInForFieldsPublicSchemaTypeResolverDecorator extends \PoPSchema\UserStateAccessControl\TypeResolverDecorators\AbstractValidateIsUserLoggedInForFieldsPublicSchemaTypeResolverDecorator
+class GlobalValidateIsUserLoggedInForFieldsPublicSchemaTypeResolverDecorator extends AbstractValidateIsUserLoggedInForFieldsPublicSchemaTypeResolverDecorator
 {
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return array(\PoP\ComponentModel\TypeResolvers\AbstractTypeResolver::class);
+        return array(AbstractTypeResolver::class);
     }
     /**
      * Provide the classes for all the directiveResolverClasses that need the "validateIsUserLoggedIn" directive
-     *
-     * @return array
      */
     protected function getDirectiveResolverClasses() : array
     {
-        return [\PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver::class, \PoPSchema\UserRolesAccessControl\DirectiveResolvers\ValidateDoesLoggedInUserHaveAnyCapabilityDirectiveResolver::class];
+        return [ValidateDoesLoggedInUserHaveAnyRoleDirectiveResolver::class, ValidateDoesLoggedInUserHaveAnyCapabilityDirectiveResolver::class];
     }
 }

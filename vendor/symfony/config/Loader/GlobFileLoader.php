@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Loader;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class GlobFileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader\FileLoader
+class GlobFileLoader extends FileLoader
 {
     /**
      * {@inheritdoc}
@@ -27,8 +27,9 @@ class GlobFileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader\File
     }
     /**
      * {@inheritdoc}
+     * @param string $type
      */
-    public function supports($resource, string $type = null)
+    public function supports($resource, $type = null)
     {
         return 'glob' === $type;
     }

@@ -2,6 +2,10 @@ services:
     _defaults:
         public: true
         autowire: true
+        autoconfigure: true
 
     PoP\ComponentModel\Container\CompilerPasses\:
         resource: '../src/Container/CompilerPasses/*'
+
+    PoP\ComponentModel\Instances\InstanceManagerInterface:
+        class: \PoP\ComponentModel\Instances\SystemInstanceManager

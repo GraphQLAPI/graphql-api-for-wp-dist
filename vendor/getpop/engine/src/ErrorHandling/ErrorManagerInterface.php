@@ -9,9 +9,9 @@ interface ErrorManagerInterface
     /**
      * @param object $cmsError
      */
-    public function convertFromCMSToPoPError($cmsError) : \PoP\ComponentModel\ErrorHandling\Error;
+    public function convertFromCMSToPoPError($cmsError) : Error;
     /**
-     * @param object $object
+     * @param mixed $thing
      */
-    public function isCMSError($object) : bool;
+    public function isCMSError($thing) : bool;
 }

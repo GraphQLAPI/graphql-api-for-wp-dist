@@ -14,17 +14,17 @@ trait UserStateFieldResolverTrait
      * @return array<array>|null A checkpoint set, or null
      * @param object $resultItem
      */
-    protected function getValidationCheckpoints(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : ?array
+    protected function getValidationCheckpoints(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : ?array
     {
-        return \PoPSchema\UserState\CheckpointSets\UserStateCheckpointSets::LOGGEDIN_DATAFROMSERVER;
+        return UserStateCheckpointSets::LOGGEDIN_DATAFROMSERVER;
     }
     /**
      * @param array<string, mixed> $fieldArgs
      * @param object $resultItem
      */
-    protected function getValidationCheckpointsErrorMessage(\PoP\ComponentModel\ErrorHandling\Error $error, string $errorMessage, \PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : string
+    protected function getValidationCheckpointsErrorMessage(Error $error, string $errorMessage, TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
+        $translationAPI = TranslationAPIFacade::getInstance();
         return \sprintf($translationAPI->__('You must be logged in to access field \'%s\' for type \'%s\'', ''), $fieldName, $typeResolver->getMaybeNamespacedTypeName());
     }
 }

@@ -16,8 +16,6 @@ class GraphQLEndpointHandler extends AbstractEndpointHandler
 {
     /**
      * Initialize the endpoints
-     *
-     * @return void
      */
     public function initialize(): void
     {
@@ -38,21 +36,17 @@ class GraphQLEndpointHandler extends AbstractEndpointHandler
 
     /**
      * Check if GrahQL has been enabled
-     *
-     * @return boolean
      */
     protected function isGraphQLAPIEnabled(): bool
     {
         return
-            class_exists('\PoP\GraphQLAPI\Component')
+            class_exists(Component::class)
             && Component::isEnabled()
             && !ComponentConfiguration::isGraphQLAPIEndpointDisabled();
     }
 
     /**
      * Indicate this is a GraphQL request
-     *
-     * @return void
      */
     protected function executeEndpoint(): void
     {

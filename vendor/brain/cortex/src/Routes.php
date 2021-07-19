@@ -27,7 +27,7 @@ class Routes
      */
     private static function checkTiming($method)
     {
-        if (!\PrefixedByPoP\Brain\Cortex::late() && !did_action('parse_request')) {
+        if (!Cortex::late() && !did_action('parse_request')) {
             return;
         }
         $exception = new \BadMethodCallException(\sprintf('%s must be called before "do_parse_request".', $method));
@@ -45,8 +45,8 @@ class Routes
     public static function add($path, $query, array $options = [])
     {
         self::checkTiming(__METHOD__);
-        $routeObj = new \PrefixedByPoP\Brain\Cortex\Route\QueryRoute($path, $query, $options);
-        add_action('cortex.routes', function (\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $collection) use($routeObj) {
+        $routeObj = new QueryRoute($path, $query, $options);
+        add_action('cortex.routes', function (RouteCollectionInterface $collection) use($routeObj) {
             $collection->addRoute($routeObj);
         });
         return $routeObj;
@@ -61,8 +61,8 @@ class Routes
     public static function redirect($path, $to, $status = 301, $external = \false)
     {
         self::checkTiming(__METHOD__);
-        $routeObj = new \PrefixedByPoP\Brain\Cortex\Route\RedirectRoute($path, $to, ['redirect_status' => $status, 'redirect_external' => $external]);
-        add_action('cortex.routes', function (\PrefixedByPoP\Brain\Cortex\Route\RouteCollectionInterface $collection) use($routeObj) {
+        $routeObj = new RedirectRoute($path, $to, ['redirect_status' => $status, 'redirect_external' => $external]);
+        add_action('cortex.routes', function (RouteCollectionInterface $collection) use($routeObj) {
             $collection->addRoute($routeObj);
         });
         return $routeObj;
@@ -76,8 +76,8 @@ class Routes
     {
         self::checkTiming(__METHOD__);
         $group['id'] = $id;
-        $groupObj = new \PrefixedByPoP\Brain\Cortex\Group\Group($group);
-        add_action('cortex.groups', function (\PrefixedByPoP\Brain\Cortex\Group\GroupCollectionInterface $collection) use($groupObj) {
+        $groupObj = new Group($group);
+        add_action('cortex.groups', function (GroupCollectionInterface $collection) use($groupObj) {
             $collection->addGroup($groupObj);
         });
         return $groupObj;

@@ -9,7 +9,7 @@ use PoP\Root\Component\CanDisableComponentTrait;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     use CanDisableComponentTrait;
     /**
@@ -30,14 +30,13 @@ class Component extends \PoP\Root\Component\AbstractComponent
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
         if (self::isEnabled()) {
-            parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
             \PoP\AccessControl\ComponentConfiguration::setConfiguration($configuration);
-            self::initYAMLServices(\dirname(__DIR__));
-            self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
+            self::initServices(\dirname(__DIR__));
+            self::initSchemaServices(\dirname(__DIR__), $skipSchema);
         }
     }
-    protected static function resolveEnabled()
+    protected static function resolveEnabled() : bool
     {
-        return !\PoP\AccessControl\Environment::disableAccessControl();
+        return !Environment::disableAccessControl();
     }
 }

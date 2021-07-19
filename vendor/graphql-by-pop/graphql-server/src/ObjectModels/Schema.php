@@ -20,10 +20,6 @@ use GraphQLByPoP\GraphQLServer\Facades\Registries\SchemaDefinitionReferenceRegis
 class Schema
 {
     /**
-     * @var string
-     */
-    protected $id;
-    /**
      * @var ScalarType[]
      */
     protected $types;
@@ -34,79 +30,83 @@ class Schema
     /**
      * @var \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType|null
      */
-    protected $queryType = null;
+    protected $queryType;
     /**
      * @var \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType|null
      */
-    protected $mutationType = null;
+    protected $mutationType;
     /**
      * @var \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType|null
      */
-    protected $subscriptionType = null;
+    protected $subscriptionType;
+    /**
+     * @var string
+     */
+    protected $id;
     public function __construct(array $fullSchemaDefinition, string $id)
     {
         $this->id = $id;
         // Initialize the global elements before anything, since they will
         // be references from the ObjectType: Fields/Connections/Directives
         // 1. Initialize all the Scalar types
-        $scalarTypeNames = [\GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_ID, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_STRING, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_INT, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_FLOAT, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_BOOL, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_OBJECT, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_MIXED, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_DATE, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_TIME, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_URL, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_EMAIL, \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition::TYPE_IP];
+        $scalarTypeNames = [GraphQLServerSchemaDefinition::TYPE_ID, GraphQLServerSchemaDefinition::TYPE_STRING, GraphQLServerSchemaDefinition::TYPE_INT, GraphQLServerSchemaDefinition::TYPE_FLOAT, GraphQLServerSchemaDefinition::TYPE_BOOL, GraphQLServerSchemaDefinition::TYPE_OBJECT, GraphQLServerSchemaDefinition::TYPE_ANY_SCALAR, GraphQLServerSchemaDefinition::TYPE_MIXED, GraphQLServerSchemaDefinition::TYPE_ARRAY_KEY, GraphQLServerSchemaDefinition::TYPE_DATE, GraphQLServerSchemaDefinition::TYPE_TIME, GraphQLServerSchemaDefinition::TYPE_URL, GraphQLServerSchemaDefinition::TYPE_EMAIL, GraphQLServerSchemaDefinition::TYPE_IP];
         $this->types = [];
         foreach ($scalarTypeNames as $typeName) {
-            $typeSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_TYPES, $typeName];
-            $this->types[] = new \GraphQLByPoP\GraphQLServer\ObjectModels\ScalarType($fullSchemaDefinition, $typeSchemaDefinitionPath, $typeName);
+            $typeSchemaDefinitionPath = [SchemaDefinition::ARGNAME_TYPES, $typeName];
+            $this->types[] = new ScalarType($fullSchemaDefinition, $typeSchemaDefinitionPath, $typeName);
         }
         // Enable or not to add the global fields to the schema, since they may pollute the documentation
-        if (\GraphQLByPoP\GraphQLServer\Environment::addGlobalFieldsToSchema()) {
+        if (Environment::addGlobalFieldsToSchema()) {
             // Add the fields in the registry
             // 1. Global fields
-            \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers::initFieldsFromPath($fullSchemaDefinition, [\PoP\API\Schema\SchemaDefinition::ARGNAME_GLOBAL_FIELDS]);
+            SchemaDefinitionHelpers::initFieldsFromPath($fullSchemaDefinition, [SchemaDefinition::ARGNAME_GLOBAL_FIELDS]);
             // 2. Global connections
-            \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers::initFieldsFromPath($fullSchemaDefinition, [\PoP\API\Schema\SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS]);
+            SchemaDefinitionHelpers::initFieldsFromPath($fullSchemaDefinition, [SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS]);
         }
         // Initialize the interfaces
-        $interfaceSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_INTERFACES];
-        $interfaceSchemaDefinitionPointer = \GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers::advancePointerToPath($fullSchemaDefinition, $interfaceSchemaDefinitionPath);
+        $interfaceSchemaDefinitionPath = [SchemaDefinition::ARGNAME_INTERFACES];
+        $interfaceSchemaDefinitionPointer = SchemaDefinitionHelpers::advancePointerToPath($fullSchemaDefinition, $interfaceSchemaDefinitionPath);
         foreach (\array_keys($interfaceSchemaDefinitionPointer) as $interfaceName) {
             new \GraphQLByPoP\GraphQLServer\ObjectModels\InterfaceType($fullSchemaDefinition, \array_merge($interfaceSchemaDefinitionPath, [$interfaceName]));
         }
         // Initialize the directives
         $this->directives = [];
-        foreach ($fullSchemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES] as $directiveName => $directiveDefinition) {
-            $directiveSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES, $directiveName];
+        foreach ($fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES] as $directiveName => $directiveDefinition) {
+            $directiveSchemaDefinitionPath = [SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES, $directiveName];
             $this->directives[] = $this->getDirectiveInstance($fullSchemaDefinition, $directiveSchemaDefinitionPath);
         }
-        $graphQLSchemaDefinitionService = \GraphQLByPoP\GraphQLServer\Facades\Schema\GraphQLSchemaDefinitionServiceFacade::getInstance();
+        $graphQLSchemaDefinitionService = GraphQLSchemaDefinitionServiceFacade::getInstance();
         // Initialize the different types
         // 1. queryType
         $queryTypeSchemaKey = $graphQLSchemaDefinitionService->getQueryRootTypeSchemaKey();
-        $queryTypeSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_TYPES, $queryTypeSchemaKey];
+        $queryTypeSchemaDefinitionPath = [SchemaDefinition::ARGNAME_TYPES, $queryTypeSchemaKey];
         $this->queryType = $this->getTypeInstance($fullSchemaDefinition, $queryTypeSchemaDefinitionPath);
         // 2. mutationType
         if ($mutationTypeSchemaKey = $graphQLSchemaDefinitionService->getMutationRootTypeSchemaKey()) {
-            $mutationTypeSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_TYPES, $mutationTypeSchemaKey];
+            $mutationTypeSchemaDefinitionPath = [SchemaDefinition::ARGNAME_TYPES, $mutationTypeSchemaKey];
             $this->mutationType = $this->getTypeInstance($fullSchemaDefinition, $mutationTypeSchemaDefinitionPath);
         }
         // 3. subscriptionType
         if ($subscriptionTypeSchemaKey = $graphQLSchemaDefinitionService->getSubscriptionRootTypeSchemaKey()) {
-            $subscriptionTypeSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_TYPES, $subscriptionTypeSchemaKey];
+            $subscriptionTypeSchemaDefinitionPath = [SchemaDefinition::ARGNAME_TYPES, $subscriptionTypeSchemaKey];
             $this->subscriptionType = $this->getTypeInstance($fullSchemaDefinition, $subscriptionTypeSchemaDefinitionPath);
         }
         // 2. Initialize the Object and Union types from under "types" and the Interface type from under "interfaces"
         $resolvableTypes = [];
-        $resolvableTypeSchemaKeys = \array_diff(\array_keys($fullSchemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_TYPES]), $scalarTypeNames);
+        $resolvableTypeSchemaKeys = \array_diff(\array_keys($fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES]), $scalarTypeNames);
         foreach ($resolvableTypeSchemaKeys as $typeName) {
-            $typeSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_TYPES, $typeName];
+            $typeSchemaDefinitionPath = [SchemaDefinition::ARGNAME_TYPES, $typeName];
             $resolvableTypes[] = $this->getTypeInstance($fullSchemaDefinition, $typeSchemaDefinitionPath);
         }
-        $interfaceNames = \array_keys($fullSchemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_INTERFACES]);
+        $interfaceNames = \array_keys($fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES]);
         // Now we can sort the interfaces, after creating new `InterfaceType`
         // Everything else was already sorted in `SchemaDefinitionReferenceRegistry`
         // Sort the elements in the schema alphabetically
-        if (\GraphQLByPoP\GraphQLServer\ComponentConfiguration::sortSchemaAlphabetically()) {
+        if (ComponentConfiguration::sortSchemaAlphabetically()) {
             \sort($interfaceNames);
         }
         foreach ($interfaceNames as $interfaceName) {
-            $interfaceSchemaDefinitionPath = [\PoP\API\Schema\SchemaDefinition::ARGNAME_INTERFACES, $interfaceName];
+            $interfaceSchemaDefinitionPath = [SchemaDefinition::ARGNAME_INTERFACES, $interfaceName];
             $resolvableTypes[] = new \GraphQLByPoP\GraphQLServer\ObjectModels\InterfaceType($fullSchemaDefinition, $interfaceSchemaDefinitionPath);
         }
         // 3. Since all types have been initialized by now, we tell them to further initialize their type dependencies, since now they all exist
@@ -118,19 +118,19 @@ class Schema
          * If nested mutations are disabled, we will use types QueryRoot and MutationRoot,
          * and the data for type "Root" can be safely not sent
          */
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if (!$vars['nested-mutations-enabled']) {
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
-            $schemaDefinitionService = \PoP\Engine\Facades\Schema\SchemaDefinitionServiceFacade::getInstance();
+            $instanceManager = InstanceManagerFacade::getInstance();
+            $schemaDefinitionService = SchemaDefinitionServiceFacade::getInstance();
             $rootTypeResolverClass = $schemaDefinitionService->getRootTypeResolverClass();
             /** @var TypeResolverInterface */
             $rootTypeResolver = $instanceManager->getInstance($rootTypeResolverClass);
-            $resolvableTypes = \array_filter($resolvableTypes, function (\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType $objectType) use($rootTypeResolver) {
+            $resolvableTypes = \array_filter($resolvableTypes, function (AbstractType $objectType) use($rootTypeResolver) {
                 return $objectType->getName() != $rootTypeResolver->getTypeName();
             });
         }
         // 4. Add the Object, Union and Interface types under $resolvableTypes, and the dynamic Enum and InputObject types from the registry
-        $schemaDefinitionReferenceRegistry = \GraphQLByPoP\GraphQLServer\Facades\Registries\SchemaDefinitionReferenceRegistryFacade::getInstance();
+        $schemaDefinitionReferenceRegistry = SchemaDefinitionReferenceRegistryFacade::getInstance();
         $this->types = \array_merge($this->types, $resolvableTypes, $schemaDefinitionReferenceRegistry->getDynamicTypes());
     }
     protected function getTypeInstance(array &$fullSchemaDefinition, array $typeSchemaDefinitionPath)
@@ -141,17 +141,17 @@ class Schema
         }
         $typeSchemaDefinition = $typeSchemaDefinitionPointer;
         // The type here can either be an ObjectType or a UnionType
-        return $typeSchemaDefinition[\PoP\API\Schema\SchemaDefinition::ARGNAME_IS_UNION] ?? null ? new \GraphQLByPoP\GraphQLServer\ObjectModels\UnionType($fullSchemaDefinition, $typeSchemaDefinitionPath) : new \GraphQLByPoP\GraphQLServer\ObjectModels\ObjectType($fullSchemaDefinition, $typeSchemaDefinitionPath);
+        return $typeSchemaDefinition[SchemaDefinition::ARGNAME_IS_UNION] ?? null ? new \GraphQLByPoP\GraphQLServer\ObjectModels\UnionType($fullSchemaDefinition, $typeSchemaDefinitionPath) : new \GraphQLByPoP\GraphQLServer\ObjectModels\ObjectType($fullSchemaDefinition, $typeSchemaDefinitionPath);
     }
-    protected function getDirectiveInstance(array &$fullSchemaDefinition, array $directiveSchemaDefinitionPath) : \GraphQLByPoP\GraphQLServer\ObjectModels\Directive
+    protected function getDirectiveInstance(array &$fullSchemaDefinition, array $directiveSchemaDefinitionPath) : Directive
     {
-        return new \GraphQLByPoP\GraphQLServer\ObjectModels\Directive($fullSchemaDefinition, $directiveSchemaDefinitionPath);
+        return new Directive($fullSchemaDefinition, $directiveSchemaDefinitionPath);
     }
-    public function getID()
+    public function getID() : string
     {
         return $this->id;
     }
-    public function getQueryType() : \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+    public function getQueryType() : AbstractType
     {
         return $this->queryType;
     }
@@ -159,7 +159,7 @@ class Schema
     {
         return $this->getQueryType()->getID();
     }
-    public function getMutationType() : ?\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+    public function getMutationType() : ?AbstractType
     {
         return $this->mutationType;
     }
@@ -170,7 +170,7 @@ class Schema
         }
         return null;
     }
-    public function getSubscriptionType() : ?\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+    public function getSubscriptionType() : ?AbstractType
     {
         return $this->subscriptionType;
     }
@@ -187,7 +187,7 @@ class Schema
     }
     public function getTypeIDs() : array
     {
-        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType $type) {
+        return \array_map(function (AbstractType $type) {
             return $type->getID();
         }, $this->getTypes());
     }
@@ -197,14 +197,14 @@ class Schema
     }
     public function getDirectiveIDs() : array
     {
-        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\Directive $directive) {
+        return \array_map(function (Directive $directive) {
             return $directive->getID();
         }, $this->getDirectives());
     }
-    public function getType(string $typeName) : ?\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+    public function getType(string $typeName) : ?AbstractType
     {
         // If the provided typeName contains the namespace separator, then compare by qualifiedType
-        $useQualifiedName = \strpos($typeName, \PoP\API\Schema\SchemaDefinition::TOKEN_NAMESPACE_SEPARATOR) !== \false;
+        $useQualifiedName = \strpos($typeName, SchemaDefinition::TOKEN_NAMESPACE_SEPARATOR) !== \false;
         // From all the types, get the one that has this name
         foreach ($this->types as $type) {
             // The provided `$typeName` can include namespaces or not

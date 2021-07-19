@@ -21,14 +21,15 @@ use PrefixedByPoP\Symfony\Component\Config\Resource\GlobResource;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-abstract class FileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader\Loader
+abstract class FileLoader extends Loader
 {
     protected static $loading = [];
     protected $locator;
     private $currentDir;
-    public function __construct(\PrefixedByPoP\Symfony\Component\Config\FileLocatorInterface $locator)
+    public function __construct(FileLocatorInterface $locator, string $env = null)
     {
         $this->locator = $locator;
+        parent::__construct($env);
     }
     /**
      * Sets the current directory.
@@ -50,9 +51,9 @@ abstract class FileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader
      * Imports a resource.
      *
      * @param mixed                $resource       A Resource
-     * @param string          $type           The resource type or null if unknown
+     * @param string $type The resource type or null if unknown
      * @param bool                 $ignoreErrors   Whether to ignore import errors or not
-     * @param string          $sourceResource The original resource importing the new resource
+     * @param string $sourceResource The original resource importing the new resource
      * @param string|string[]|null $exclude        Glob patterns to exclude from the import
      *
      * @return mixed
@@ -67,8 +68,8 @@ abstract class FileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader
             $excluded = [];
             foreach ((array) $exclude as $pattern) {
                 foreach ($this->glob($pattern, \true, $_, \false, \true) as $path => $info) {
-                    // normalize Windows slashes
-                    $excluded[\str_replace('\\', '/', $path)] = \true;
+                    // normalize Windows slashes and remove trailing slashes
+                    $excluded[\rtrim(\str_replace('\\', '/', $path), '/')] = \true;
                 }
             }
             $ret = [];
@@ -102,17 +103,17 @@ abstract class FileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader
         }
         try {
             $prefix = $this->locator->locate($prefix, $this->currentDir, \true);
-        } catch (\PrefixedByPoP\Symfony\Component\Config\Exception\FileLocatorFileNotFoundException $e) {
+        } catch (FileLocatorFileNotFoundException $e) {
             if (!$ignoreErrors) {
                 throw $e;
             }
             $resource = [];
             foreach ($e->getPaths() as $path) {
-                $resource[] = new \PrefixedByPoP\Symfony\Component\Config\Resource\FileExistenceResource($path);
+                $resource[] = new FileExistenceResource($path);
             }
             return;
         }
-        $resource = new \PrefixedByPoP\Symfony\Component\Config\Resource\GlobResource($prefix, $pattern, $recursive, $forExclusion, $excluded);
+        $resource = new GlobResource($prefix, $pattern, $recursive, $forExclusion, $excluded);
         yield from $resource;
     }
     private function doImport($resource, string $type = null, bool $ignoreErrors = \false, string $sourceResource = null)
@@ -126,7 +127,7 @@ abstract class FileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader
             for ($i = 0; $i < ($resourcesCount = \count($resources)); ++$i) {
                 if (isset(self::$loading[$resources[$i]])) {
                     if ($i == $resourcesCount - 1) {
-                        throw new \PrefixedByPoP\Symfony\Component\Config\Exception\FileLoaderImportCircularReferenceException(\array_keys(self::$loading));
+                        throw new FileLoaderImportCircularReferenceException(\array_keys(self::$loading));
                     }
                 } else {
                     $resource = $resources[$i];
@@ -140,15 +141,15 @@ abstract class FileLoader extends \PrefixedByPoP\Symfony\Component\Config\Loader
                 unset(self::$loading[$resource]);
             }
             return $ret;
-        } catch (\PrefixedByPoP\Symfony\Component\Config\Exception\FileLoaderImportCircularReferenceException $e) {
+        } catch (FileLoaderImportCircularReferenceException $e) {
             throw $e;
         } catch (\Exception $e) {
             if (!$ignoreErrors) {
                 // prevent embedded imports from nesting multiple exceptions
-                if ($e instanceof \PrefixedByPoP\Symfony\Component\Config\Exception\LoaderLoadException) {
+                if ($e instanceof LoaderLoadException) {
                     throw $e;
                 }
-                throw new \PrefixedByPoP\Symfony\Component\Config\Exception\LoaderLoadException($resource, $sourceResource, null, $e, $type);
+                throw new LoaderLoadException($resource, $sourceResource, 0, $e, $type);
             }
         }
         return null;

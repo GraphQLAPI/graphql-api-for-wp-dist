@@ -11,8 +11,7 @@ abstract class AbstractSchemaDefinitionReferenceObject
      */
     protected $id;
     /**
-     * @var <string, mixed>
-     * @var mixed[]
+     * @var array<string, mixed>
      */
     protected $fullSchemaDefinition;
     /**
@@ -20,15 +19,12 @@ abstract class AbstractSchemaDefinitionReferenceObject
      */
     protected $schemaDefinitionPath;
     /**
-     * @var <string, mixed>
-     * @var mixed[]
+     * @var array<string, mixed>
      */
     protected $schemaDefinition;
     /**
      * Build a new Schema Definition Reference Object
      *
-     * @param array $fullSchemaDefinition
-     * @param array $schemaDefinitionPath
      * @param array $customDefinition Pass custom values that will override the ones defined in $schemaDefinition
      */
     public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath, array $customDefinition = [])
@@ -43,13 +39,11 @@ abstract class AbstractSchemaDefinitionReferenceObject
         }
         $this->schemaDefinition = \array_merge($schemaDefinitionPointer, $customDefinition);
         // Register the object, and get back its ID
-        $schemaDefinitionReferenceRegistry = \GraphQLByPoP\GraphQLServer\Facades\Registries\SchemaDefinitionReferenceRegistryFacade::getInstance();
+        $schemaDefinitionReferenceRegistry = SchemaDefinitionReferenceRegistryFacade::getInstance();
         $this->id = $schemaDefinitionReferenceRegistry->registerSchemaDefinitionReference($this);
     }
     /**
      * By default, types are static
-     *
-     * @return boolean
      */
     public function isDynamicType() : bool
     {

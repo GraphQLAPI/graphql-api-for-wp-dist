@@ -22,27 +22,32 @@ use PrefixedByPoP\Symfony\Component\Cache\Traits\ProxyTrait;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class Psr16Cache implements CacheInterface, PruneableInterface, ResettableInterface
 {
     use ProxyTrait;
     private const METADATA_EXPIRY_OFFSET = 1527506807;
     private $createCacheItem;
     private $cacheItemPrototype;
-    public function __construct(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $pool)
+    public function __construct(CacheItemPoolInterface $pool)
     {
         $this->pool = $pool;
-        if (!$pool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+        if (!$pool instanceof AdapterInterface) {
             return;
         }
         $cacheItemPrototype =& $this->cacheItemPrototype;
         $createCacheItem = \Closure::bind(static function ($key, $value, $allowInt = \false) use(&$cacheItemPrototype) {
             $item = clone $cacheItemPrototype;
             $item->poolHash = $item->innerItem = null;
-            $item->key = $allowInt && \is_int($key) ? (string) $key : \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($key);
+            if ($allowInt && \is_int($key)) {
+                $item->key = (string) $key;
+            } else {
+                \assert('' !== CacheItem::validateKey($key));
+                $item->key = $key;
+            }
             $item->value = $value;
             $item->isHit = \false;
             return $item;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+        }, null, CacheItem::class);
         $this->createCacheItem = function ($key, $value, $allowInt = \false) use($createCacheItem) {
             if (null === $this->cacheItemPrototype) {
                 $this->get($allowInt && \is_int($key) ? (string) $key : $key);
@@ -60,10 +65,10 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
     {
         try {
             $item = $this->pool->getItem($key);
-        } catch (\PrefixedByPoP\Psr\SimpleCache\CacheException $e) {
+        } catch (SimpleCacheException $e) {
             throw $e;
-        } catch (\PrefixedByPoP\Psr\Cache\CacheException $e) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        } catch (Psr6CacheException $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
         if (null === $this->cacheItemPrototype) {
             $this->cacheItemPrototype = clone $item;
@@ -84,10 +89,10 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
             } else {
                 $item = $this->pool->getItem($key)->set($value);
             }
-        } catch (\PrefixedByPoP\Psr\SimpleCache\CacheException $e) {
+        } catch (SimpleCacheException $e) {
             throw $e;
-        } catch (\PrefixedByPoP\Psr\Cache\CacheException $e) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        } catch (Psr6CacheException $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
         if (null !== $ttl) {
             $item->expiresAfter($ttl);
@@ -103,10 +108,10 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
     {
         try {
             return $this->pool->deleteItem($key);
-        } catch (\PrefixedByPoP\Psr\SimpleCache\CacheException $e) {
+        } catch (SimpleCacheException $e) {
             throw $e;
-        } catch (\PrefixedByPoP\Psr\Cache\CacheException $e) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        } catch (Psr6CacheException $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
     }
     /**
@@ -128,17 +133,17 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
         if ($keys instanceof \Traversable) {
             $keys = \iterator_to_array($keys, \false);
         } elseif (!\is_array($keys)) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache keys must be array or Traversable, "%s" given.', \get_debug_type($keys)));
+            throw new InvalidArgumentException(\sprintf('Cache keys must be array or Traversable, "%s" given.', \get_debug_type($keys)));
         }
         try {
             $items = $this->pool->getItems($keys);
-        } catch (\PrefixedByPoP\Psr\SimpleCache\CacheException $e) {
+        } catch (SimpleCacheException $e) {
             throw $e;
-        } catch (\PrefixedByPoP\Psr\Cache\CacheException $e) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        } catch (Psr6CacheException $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
         $values = [];
-        if (!$this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+        if (!$this->pool instanceof AdapterInterface) {
             foreach ($items as $key => $item) {
                 $values[$key] = $item->isHit() ? $item->get() : $default;
             }
@@ -153,9 +158,9 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
             if (!($metadata = $item->getMetadata())) {
                 continue;
             }
-            unset($metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS]);
+            unset($metadata[CacheItem::METADATA_TAGS]);
             if ($metadata) {
-                $values[$key] = ["" . \pack('VN', (int) (0.1 + $metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY] - self::METADATA_EXPIRY_OFFSET), $metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_CTIME]) . "_" => $values[$key]];
+                $values[$key] = ["\x9d" . \pack('VN', (int) (0.1 + $metadata[CacheItem::METADATA_EXPIRY] - self::METADATA_EXPIRY_OFFSET), $metadata[CacheItem::METADATA_CTIME]) . "_" => $values[$key]];
             }
         }
         return $values;
@@ -169,7 +174,7 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
     {
         $valuesIsArray = \is_array($values);
         if (!$valuesIsArray && !$values instanceof \Traversable) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache values must be array or Traversable, "%s" given.', \get_debug_type($values)));
+            throw new InvalidArgumentException(\sprintf('Cache values must be array or Traversable, "%s" given.', \get_debug_type($values)));
         }
         $items = [];
         try {
@@ -192,10 +197,10 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
                     $items[$key] = $this->pool->getItem($key)->set($value);
                 }
             }
-        } catch (\PrefixedByPoP\Psr\SimpleCache\CacheException $e) {
+        } catch (SimpleCacheException $e) {
             throw $e;
-        } catch (\PrefixedByPoP\Psr\Cache\CacheException $e) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        } catch (Psr6CacheException $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
         $ok = \true;
         foreach ($items as $key => $item) {
@@ -219,14 +224,14 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
         if ($keys instanceof \Traversable) {
             $keys = \iterator_to_array($keys, \false);
         } elseif (!\is_array($keys)) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Cache keys must be array or Traversable, "%s" given.', \get_debug_type($keys)));
+            throw new InvalidArgumentException(\sprintf('Cache keys must be array or Traversable, "%s" given.', \get_debug_type($keys)));
         }
         try {
             return $this->pool->deleteItems($keys);
-        } catch (\PrefixedByPoP\Psr\SimpleCache\CacheException $e) {
+        } catch (SimpleCacheException $e) {
             throw $e;
-        } catch (\PrefixedByPoP\Psr\Cache\CacheException $e) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        } catch (Psr6CacheException $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
     }
     /**
@@ -238,10 +243,10 @@ class Psr16Cache implements \PrefixedByPoP\Psr\SimpleCache\CacheInterface, \Pref
     {
         try {
             return $this->pool->hasItem($key);
-        } catch (\PrefixedByPoP\Psr\SimpleCache\CacheException $e) {
+        } catch (SimpleCacheException $e) {
             throw $e;
-        } catch (\PrefixedByPoP\Psr\Cache\CacheException $e) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
+        } catch (Psr6CacheException $e) {
+            throw new InvalidArgumentException($e->getMessage(), $e->getCode(), $e);
         }
     }
 }

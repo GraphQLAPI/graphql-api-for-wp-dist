@@ -23,24 +23,26 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface, \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInterface, ResettableInterface
 {
     protected $pool;
     private $calls = [];
-    public function __construct(\PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface $pool)
+    public function __construct(AdapterInterface $pool)
     {
         $this->pool = $pool;
     }
     /**
      * {@inheritdoc}
+     * @param float $beta
+     * @param mixed[] $metadata
      */
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
+    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
     {
-        if (!$this->pool instanceof \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface) {
-            throw new \BadMethodCallException(\sprintf('Cannot call "%s::get()": this class doesn\'t implement "%s".', \get_debug_type($this->pool), \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface::class));
+        if (!$this->pool instanceof CacheInterface) {
+            throw new \BadMethodCallException(\sprintf('Cannot call "%s::get()": this class doesn\'t implement "%s".', \get_debug_type($this->pool), CacheInterface::class));
         }
         $isHit = \true;
-        $callback = function (\PrefixedByPoP\Symfony\Component\Cache\CacheItem $item, bool &$save) use($callback, &$isHit) {
+        $callback = function (CacheItem $item, bool &$save) use($callback, &$isHit) {
             $isHit = $item->isHit();
             return $callback($item, $save);
         };
@@ -109,7 +111,7 @@ class TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter
      *
      * @return bool
      */
-    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function save(CacheItemInterface $item)
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -123,7 +125,7 @@ class TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter
      *
      * @return bool
      */
-    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item)
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -160,12 +162,13 @@ class TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter
      * {@inheritdoc}
      *
      * @return bool
+     * @param string $prefix
      */
-    public function clear(string $prefix = '')
+    public function clear($prefix = '')
     {
         $event = $this->start(__FUNCTION__);
         try {
-            if ($this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+            if ($this->pool instanceof AdapterInterface) {
                 return $event->result = $this->pool->clear($prefix);
             }
             return $event->result = $this->pool->clear();
@@ -207,7 +210,7 @@ class TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter
      */
     public function prune()
     {
-        if (!$this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface) {
+        if (!$this->pool instanceof PruneableInterface) {
             return \false;
         }
         $event = $this->start(__FUNCTION__);
@@ -222,7 +225,7 @@ class TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter
      */
     public function reset()
     {
-        if ($this->pool instanceof \PrefixedByPoP\Symfony\Contracts\Service\ResetInterface) {
+        if ($this->pool instanceof ResetInterface) {
             $this->pool->reset();
         }
         $this->clearCalls();
@@ -249,7 +252,7 @@ class TraceableAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter
     }
     protected function start($name)
     {
-        $this->calls[] = $event = new \PrefixedByPoP\Symfony\Component\Cache\Adapter\TraceableAdapterEvent();
+        $this->calls[] = $event = new TraceableAdapterEvent();
         $event->name = $name;
         $event->start = \microtime(\true);
         return $event;

@@ -5,12 +5,12 @@ namespace PoP\APIEndpoints;
 
 use PoP\APIEndpoints\EndpointUtils;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
-abstract class AbstractEndpointHandler extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
+abstract class AbstractEndpointHandler extends AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var string|null
      */
-    protected $endpoint = null;
+    protected $endpoint;
     /**
      * Provide the endpoint
      */
@@ -25,14 +25,12 @@ abstract class AbstractEndpointHandler extends \PoP\Root\Services\AbstractAutoma
          */
         if ($this->endpoint = $this->getEndpoint()) {
             // Make sure the endpoint has trailing "/" on both ends
-            $this->endpoint = \PoP\APIEndpoints\EndpointUtils::slashURI($this->endpoint);
+            $this->endpoint = EndpointUtils::slashURI($this->endpoint);
         }
     }
     /**
      * If `true`, the endpoint must exactly match the URL
      * If `false`, the endpoint is triggered when it is contained at the end of the URL
-     *
-     * @return boolean
      */
     protected function doesEndpointMatchWholeURL() : bool
     {
@@ -40,20 +38,16 @@ abstract class AbstractEndpointHandler extends \PoP\Root\Services\AbstractAutoma
     }
     /**
      * Get the requested URI to compare it against the endpoint
-     *
-     * @return void
      */
     protected function getRequestedURI() : string
     {
         // Check if the URL ends with either /api/graphql/ or /api/rest/ or /api/
-        $uri = \PoP\APIEndpoints\EndpointUtils::removeMarkersFromURI($_SERVER['REQUEST_URI']);
+        $uri = EndpointUtils::removeMarkersFromURI($_SERVER['REQUEST_URI']);
         // Same as the endpoint, make sure the URI has "/" in both ends
-        return \PoP\APIEndpoints\EndpointUtils::slashURI($uri);
+        return EndpointUtils::slashURI($uri);
     }
     /**
      * Indicate if the endpoint has been requested
-     *
-     * @return void
      */
     protected function isEndpointRequested() : bool
     {
@@ -68,6 +62,6 @@ abstract class AbstractEndpointHandler extends \PoP\Root\Services\AbstractAutoma
         if ($this->doesEndpointMatchWholeURL()) {
             return $uri == $this->endpoint;
         }
-        return \PoP\APIEndpoints\EndpointUtils::doesURIEndWith($uri, $this->endpoint);
+        return EndpointUtils::doesURIEndWith($uri, $this->endpoint);
     }
 }

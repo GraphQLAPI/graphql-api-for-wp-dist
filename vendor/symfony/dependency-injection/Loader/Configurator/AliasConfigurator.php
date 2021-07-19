@@ -14,12 +14,12 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Alias;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class AliasConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractServiceConfigurator
+class AliasConfigurator extends AbstractServiceConfigurator
 {
     public const FACTORY = 'alias';
     use Traits\DeprecateTrait;
     use Traits\PublicTrait;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator $parent, \PrefixedByPoP\Symfony\Component\DependencyInjection\Alias $alias)
+    public function __construct(ServicesConfigurator $parent, Alias $alias)
     {
         $this->parent = $parent;
         $this->definition = $alias;

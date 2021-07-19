@@ -23,10 +23,10 @@ class ModulePathHelpers implements \PoP\ComponentModel\ModulePath\ModulePathHelp
     }
     public function stringifyModulePath(array $modulepath)
     {
-        return \implode(\PoP\ComponentModel\Tokens\ModulePath::MODULE_SEPARATOR, \array_map([\PoP\ComponentModel\Modules\ModuleUtils::class, 'getModuleOutputName'], $modulepath));
+        return \implode(ModulePath::MODULE_SEPARATOR, \array_map([ModuleUtils::class, 'getModuleOutputName'], $modulepath));
     }
     public function recastModulePath(string $modulepath_as_string)
     {
-        return \array_map([\PoP\ComponentModel\Modules\ModuleUtils::class, 'getModuleFromOutputName'], \explode(\PoP\ComponentModel\Tokens\ModulePath::MODULE_SEPARATOR, $modulepath_as_string));
+        return \array_map([ModuleUtils::class, 'getModuleFromOutputName'], \explode(ModulePath::MODULE_SEPARATOR, $modulepath_as_string));
     }
 }

@@ -5,13 +5,19 @@ namespace PoP\ComponentModel\ModuleProcessors;
 
 use PoP\ComponentModel\Constants\DataSources;
 use PoP\ComponentModel\Constants\Params;
-use PoP\Hooks\Facades\HooksAPIFacade;
-use PoP\ComponentModel\ModuleProcessors\DataloadingConstants;
+use PoP\ComponentModel\Facades\FilterInputProcessors\FilterInputProcessorManagerFacade;
 use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade;
+use PoP\ComponentModel\ModuleProcessors\DataloadingConstants;
 use PoP\ComponentModel\QueryInputOutputHandlers\ActionExecutionQueryInputOutputHandler;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Hooks\Facades\HooksAPIFacade;
 trait QueryDataModuleProcessorTrait
 {
+    /**
+     * @var array<string, array<string[]>>
+     */
+    protected $activeDataloadQueryArgsFilteringModules = [];
     protected function getImmutableDataloadQueryArgs(array $module, array &$props) : array
     {
         return array();
@@ -22,7 +28,7 @@ trait QueryDataModuleProcessorTrait
     }
     public function getQueryInputOutputHandlerClass(array $module) : ?string
     {
-        return \PoP\ComponentModel\QueryInputOutputHandlers\ActionExecutionQueryInputOutputHandler::class;
+        return ActionExecutionQueryInputOutputHandler::class;
     }
     // public function getFilter(array $module)
     // {
@@ -32,7 +38,7 @@ trait QueryDataModuleProcessorTrait
     {
         $ret = parent::getImmutableHeaddatasetmoduleDataProperties($module, $props);
         // Attributes to pass to the query
-        $ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS] = $this->getImmutableDataloadQueryArgs($module, $props);
+        $ret[DataloadingConstants::QUERYARGS] = $this->getImmutableDataloadQueryArgs($module, $props);
         return $ret;
     }
     public function getQueryArgsFilteringModules(array $module, array &$props) : array
@@ -44,8 +50,8 @@ trait QueryDataModuleProcessorTrait
     {
         $ret = parent::getMutableonmodelHeaddatasetmoduleDataProperties($module, $props);
         // Attributes overriding the query args, taken from the request
-        if (!isset($ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::IGNOREREQUESTPARAMS]) || !$ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::IGNOREREQUESTPARAMS]) {
-            $ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGSFILTERINGMODULES] = $this->getQueryArgsFilteringModules($module, $props);
+        if (!isset($ret[DataloadingConstants::IGNOREREQUESTPARAMS]) || !$ret[DataloadingConstants::IGNOREREQUESTPARAMS]) {
+            $ret[DataloadingConstants::QUERYARGSFILTERINGMODULES] = $this->getQueryArgsFilteringModules($module, $props);
         }
         // // Set the filter if it has one
         // if ($filter = $this->getFilter($module)) {
@@ -53,16 +59,16 @@ trait QueryDataModuleProcessorTrait
         // }
         return $ret;
     }
-    public function filterHeadmoduleDataloadQueryArgs(array $module, array &$query, array $source = null)
+    public function filterHeadmoduleDataloadQueryArgs(array $module, array &$query, array $source = null) : void
     {
         if ($active_filterqueryargs_modules = $this->getActiveDataloadQueryArgsFilteringModules($module, $source)) {
-            $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
-            global $pop_filterinputprocessor_manager;
+            $moduleProcessorManager = ModuleProcessorManagerFacade::getInstance();
+            $filterInputProcessorManager = FilterInputProcessorManagerFacade::getInstance();
             foreach ($active_filterqueryargs_modules as $submodule) {
-                $submodule_processor = $moduleprocessor_manager->getProcessor($submodule);
+                $submodule_processor = $moduleProcessorManager->getProcessor($submodule);
                 $value = $submodule_processor->getValue($submodule, $source);
                 if ($filterInput = $submodule_processor->getFilterInput($submodule)) {
-                    $pop_filterinputprocessor_manager->getProcessor($filterInput)->filterDataloadQueryArgs($filterInput, $query, $value);
+                    $filterInputProcessorManager->getProcessor($filterInput)->filterDataloadQueryArgs($filterInput, $query, $value);
                 }
             }
         }
@@ -76,12 +82,12 @@ trait QueryDataModuleProcessorTrait
             return $this->activeDataloadQueryArgsFilteringModules[$cacheKey][$module[1]];
         }
         $modules = [];
-        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
+        $moduleProcessorManager = ModuleProcessorManagerFacade::getInstance();
         // Check if the module has any filtercomponent
         if ($filterqueryargs_modules = $this->getDataloadQueryArgsFilteringModules($module)) {
             // Check if if we're currently filtering by any filtercomponent
-            $modules = \array_filter($filterqueryargs_modules, function ($module) use($moduleprocessor_manager, $source) {
-                return !\is_null($moduleprocessor_manager->getProcessor($module)->getValue($module, $source));
+            $modules = \array_filter($filterqueryargs_modules, function ($module) use($moduleProcessorManager, $source) {
+                return !\is_null($moduleProcessorManager->getProcessor($module)->getValue($module, $source));
             });
         }
         $this->activeDataloadQueryArgsFilteringModules[$cacheKey][$module[1]] = $modules;
@@ -89,37 +95,40 @@ trait QueryDataModuleProcessorTrait
     }
     public function getDataloadQueryArgsFilteringModules(array $module) : array
     {
-        $moduleprocessor_manager = \PoP\ComponentModel\Facades\ModuleProcessors\ModuleProcessorManagerFacade::getInstance();
-        return \array_values(\array_filter($this->getDatasetmoduletreeSectionFlattenedModules($module), function ($module) use($moduleprocessor_manager) {
-            return $moduleprocessor_manager->getProcessor($module) instanceof \PoP\ComponentModel\ModuleProcessors\DataloadQueryArgsFilterInputModuleProcessorInterface;
+        $moduleProcessorManager = ModuleProcessorManagerFacade::getInstance();
+        return \array_values(\array_filter($this->getDatasetmoduletreeSectionFlattenedModules($module), function ($module) use($moduleProcessorManager) {
+            return $moduleProcessorManager->getProcessor($module) instanceof \PoP\ComponentModel\ModuleProcessors\DataloadQueryArgsFilterInputModuleProcessorInterface;
         }));
     }
     public function getMutableonrequestHeaddatasetmoduleDataProperties(array $module, array &$props) : array
     {
         $ret = parent::getMutableonrequestHeaddatasetmoduleDataProperties($module, $props);
-        $ret[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS] = $this->getMutableonrequestDataloadQueryArgs($module, $props);
+        $ret[DataloadingConstants::QUERYARGS] = $this->getMutableonrequestDataloadQueryArgs($module, $props);
         return $ret;
     }
+    /**
+     * @return string|int|mixed[]
+     */
     public function getDBObjectIDOrIDs(array $module, array &$props, &$data_properties)
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+        $instanceManager = InstanceManagerFacade::getInstance();
         // Prepare the Query to get data from the DB
-        $datasource = $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::DATASOURCE] ?? null;
-        if ($datasource == \PoP\ComponentModel\Constants\DataSources::MUTABLEONREQUEST && !$data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::IGNOREREQUESTPARAMS]) {
+        $datasource = $data_properties[DataloadingConstants::DATASOURCE] ?? null;
+        if ($datasource == DataSources::MUTABLEONREQUEST && !($data_properties[DataloadingConstants::IGNOREREQUESTPARAMS] ?? null)) {
             // Merge with $_REQUEST, so that params passed through the URL can be used for the query (eg: ?limit=5)
             // But whitelist the params that can be taken, to avoid hackers peering inside the system and getting custom data (eg: params "include", "post-status" => "draft", etc)
-            $whitelisted_params = (array) \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters(\PoP\ComponentModel\ModuleProcessors\Constants::HOOK_QUERYDATA_WHITELISTEDPARAMS, array(\PoP\ComponentModel\Constants\Params::PAGE_NUMBER, \PoP\ComponentModel\Constants\Params::LIMIT));
+            $whitelisted_params = (array) HooksAPIFacade::getInstance()->applyFilters(\PoP\ComponentModel\ModuleProcessors\Constants::HOOK_QUERYDATA_WHITELISTEDPARAMS, array(Params::PAGE_NUMBER, Params::LIMIT));
             $params_from_request = \array_filter($_REQUEST, function ($param) use($whitelisted_params) {
                 return \in_array($param, $whitelisted_params);
             }, \ARRAY_FILTER_USE_KEY);
-            $params_from_request = \PoP\Hooks\Facades\HooksAPIFacade::getInstance()->applyFilters('QueryDataModuleProcessorTrait:request:filter_params', $params_from_request);
+            $params_from_request = HooksAPIFacade::getInstance()->applyFilters('QueryDataModuleProcessorTrait:request:filter_params', $params_from_request);
             // Finally merge it into the data properties
-            $data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS] = \array_merge($data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS], $params_from_request);
+            $data_properties[DataloadingConstants::QUERYARGS] = \array_merge($data_properties[DataloadingConstants::QUERYARGS], $params_from_request);
         }
         if ($queryHandlerClass = $this->getQueryInputOutputHandlerClass($module)) {
             // Allow the queryhandler to override/normalize the query args
             $queryhandler = $instanceManager->getInstance((string) $queryHandlerClass);
-            $queryhandler->prepareQueryArgs($data_properties[\PoP\ComponentModel\ModuleProcessors\DataloadingConstants::QUERYARGS]);
+            $queryhandler->prepareQueryArgs($data_properties[DataloadingConstants::QUERYARGS]);
         }
         $typeResolverClass = $this->getTypeResolverClass($module);
         /**
@@ -134,7 +143,7 @@ trait QueryDataModuleProcessorTrait
     {
         $ret = parent::getDatasetmeta($module, $props, $data_properties, $dataaccess_checkpoint_validation, $actionexecution_checkpoint_validation, $executed, $dbObjectIDOrIDs);
         if ($queryHandlerClass = $this->getQueryInputOutputHandlerClass($module)) {
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+            $instanceManager = InstanceManagerFacade::getInstance();
             $queryhandler = $instanceManager->getInstance((string) $queryHandlerClass);
             if ($query_state = $queryhandler->getQueryState($data_properties, $dataaccess_checkpoint_validation, $actionexecution_checkpoint_validation, $executed, $dbObjectIDOrIDs)) {
                 $ret['querystate'] = $query_state;

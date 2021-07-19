@@ -16,7 +16,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Definition\Exception;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class InvalidConfigurationException extends \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\Exception
+class InvalidConfigurationException extends Exception
 {
     private $path;
     private $containsHints = \false;

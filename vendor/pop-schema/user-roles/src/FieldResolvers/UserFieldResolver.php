@@ -3,40 +3,45 @@
 declare (strict_types=1);
 namespace PoPSchema\UserRoles\FieldResolvers;
 
-use PoPSchema\Users\TypeResolvers\UserTypeResolver;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Schema\TypeCastingHelpers;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoPSchema\UserRoles\Facades\UserRoleTypeDataResolverFacade;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
-class UserFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoPSchema\UserRoles\Facades\UserRoleTypeDataResolverFacade;
+use PoPSchema\Users\TypeResolvers\UserTypeResolver;
+class UserFieldResolver extends AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return array(\PoPSchema\Users\TypeResolvers\UserTypeResolver::class);
+        return array(UserTypeResolver::class);
     }
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
         return ['roles', 'capabilities'];
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getAdminFieldNames() : array
     {
-        $types = ['roles' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING), 'capabilities' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING)];
+        return ['roles', 'capabilities'];
+    }
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
+    {
+        $types = ['roles' => SchemaDefinition::TYPE_STRING, 'capabilities' => SchemaDefinition::TYPE_STRING];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(TypeResolverInterface $typeResolver, string $fieldName) : ?int
     {
-        $nonNullableFieldNames = ['roles', 'capabilities'];
-        if (\in_array($fieldName, $nonNullableFieldNames)) {
-            return \true;
+        switch ($fieldName) {
+            case 'roles':
+                return SchemaTypeModifiers::NON_NULLABLE | SchemaTypeModifiers::IS_ARRAY | SchemaTypeModifiers::IS_NON_NULLABLE_ITEMS_IN_ARRAY;
+            case 'capabilities':
+                return SchemaTypeModifiers::NON_NULLABLE | SchemaTypeModifiers::IS_ARRAY;
+            default:
+                return parent::getSchemaFieldTypeModifiers($typeResolver, $fieldName);
         }
-        return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['roles' => $translationAPI->__('User roles', 'user-roles'), 'capabilities' => $translationAPI->__('User capabilities', 'user-roles')];
+        $descriptions = ['roles' => $this->translationAPI->__('User roles', 'user-roles'), 'capabilities' => $this->translationAPI->__('User capabilities', 'user-roles')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
     /**
@@ -47,9 +52,9 @@ class UserFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDat
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $userRoleTypeDataResolver = \PoPSchema\UserRoles\Facades\UserRoleTypeDataResolverFacade::getInstance();
+        $userRoleTypeDataResolver = UserRoleTypeDataResolverFacade::getInstance();
         $user = $resultItem;
         switch ($fieldName) {
             case 'roles':

@@ -7,12 +7,12 @@ use PoP\Engine\Schema\SchemaDefinitionServiceInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class SchemaDefinitionServiceFacade
 {
-    public static function getInstance() : \PoP\Engine\Schema\SchemaDefinitionServiceInterface
+    public static function getInstance() : SchemaDefinitionServiceInterface
     {
         /**
          * @var SchemaDefinitionServiceInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\Engine\Schema\SchemaDefinitionServiceInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(SchemaDefinitionServiceInterface::class);
         return $service;
     }
 }

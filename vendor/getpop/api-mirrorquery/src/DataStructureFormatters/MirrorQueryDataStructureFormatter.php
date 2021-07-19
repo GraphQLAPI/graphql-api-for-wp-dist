@@ -4,11 +4,9 @@ declare (strict_types=1);
 namespace PoP\APIMirrorQuery\DataStructureFormatters;
 
 use PoP\ComponentModel\TypeResolvers\UnionTypeHelpers;
-use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter;
 use PoP\ComponentModel\State\ApplicationState;
-class MirrorQueryDataStructureFormatter extends \PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter
+class MirrorQueryDataStructureFormatter extends AbstractJSONDataStructureFormatter
 {
     public function getName() : string
     {
@@ -17,7 +15,7 @@ class MirrorQueryDataStructureFormatter extends \PoP\ComponentModel\DataStructur
     protected function getFields()
     {
         // Allow REST to override with default fields
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         return $vars['requested-query'] ?? $vars['query'] ?? [];
     }
     public function getFormattedData($data)
@@ -115,7 +113,12 @@ class MirrorQueryDataStructureFormatter extends \PoP\ComponentModel\DataStructur
         // Eg: /?query=content.comments.id. In this case, "content" is handled by UnionTypeResolver, and "comments" would not be found since its entry can't be added under "datasetmodulesettings.dbkeys", since the module (of class AbstractRelationalFieldQueryDataModuleProcessor) with a UnionTypeResolver can't resolve the 'succeeding-typeResolver' to set to its submodules
         // if (UnionTypeHelpers::isUnionType($dbKey))
         if ($concatenateField) {
-            list($dbKey, $dbObjectID) = \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::extractDBObjectTypeAndID($dbObjectID);
+            list($dbKey, $dbObjectID) = UnionTypeHelpers::extractDBObjectTypeAndID(
+                // If the object could not be loaded, $dbObjectID will be all ID, with no $dbKey
+                // Since that could be an int, the strict typing would throw an error,
+                // so make sure to type it as a string
+                (string) $dbObjectID
+            );
         } else {
             // Add all properties requested from the object
             $dbKey = $dbKeyPaths[$dbObjectKeyPath];
@@ -127,14 +130,14 @@ class MirrorQueryDataStructureFormatter extends \PoP\ComponentModel\DataStructur
         $dbObject = $databases[$dbKey][$dbObjectID] ?? [];
         foreach ($propertyFields as $propertyField) {
             // Only if the property has been set (in case of dbError it is not set)
-            $propertyFieldOutputKey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($propertyField);
+            $propertyFieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($propertyField);
             if (\array_key_exists($propertyFieldOutputKey, $dbObject)) {
                 $dbObjectRet[$propertyFieldOutputKey] = $dbObject[$propertyFieldOutputKey];
             }
         }
         // Add the nested levels
         foreach ($nestedFields as $nestedField => $nestedPropertyFields) {
-            $nestedFieldOutputKey = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance()->getFieldOutputKey($nestedField);
+            $nestedFieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($nestedField);
             // If the key doesn't exist, then do nothing. This supports the "skip output if null" behaviour: if it is to be skipped, there will be no value (which is different than a null)
             if (\array_key_exists($nestedFieldOutputKey, $dbObject)) {
                 // If it's null, directly assign the null to the result
@@ -144,7 +147,7 @@ class MirrorQueryDataStructureFormatter extends \PoP\ComponentModel\DataStructur
                     // Watch out! If the property has already been loaded from a previous iteration, in some cases it can create trouble!
                     // But make sure that there truly are subproperties! It could also be a schemaError.
                     // Eg: ?query=posts.title.id, then no need to transform "title" from string to {"id" => ...}
-                    if (\PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance()->getSchemaErrorsForField($dbKey, $nestedField)) {
+                    if ($this->feedbackMessageStore->getSchemaErrorsForField($dbKey, $nestedField)) {
                         $dbObjectRet[$nestedFieldOutputKey] = $dbObject[$nestedFieldOutputKey];
                     } else {
                         // The first field, "id", needs not be concatenated. All the others do need

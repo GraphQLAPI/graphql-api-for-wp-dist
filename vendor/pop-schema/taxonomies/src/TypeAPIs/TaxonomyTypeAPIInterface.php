@@ -10,9 +10,7 @@ interface TaxonomyTypeAPIInterface
 {
     /**
      * Retrieves the taxonomy name of the object ("post_tag", "category", etc)
-     *
-     * @param [type] $object
-     * @return string
+     * @param string|int|object $termObjectOrID
      */
     public function getTermTaxonomyName($termObjectOrID) : string;
 }

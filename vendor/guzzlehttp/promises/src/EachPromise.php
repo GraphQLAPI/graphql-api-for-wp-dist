@@ -6,9 +6,10 @@ namespace PrefixedByPoP\GuzzleHttp\Promise;
  * Represents a promise that iterates over many promises and invokes
  * side-effect functions in the process.
  */
-class EachPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromisorInterface
+class EachPromise implements PromisorInterface
 {
     private $pending = [];
+    private $nextPendingIndex = 0;
     /** @var \Iterator|null */
     private $iterable;
     /** @var callable|int|null */
@@ -44,7 +45,7 @@ class EachPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromisorInterface
      */
     public function __construct($iterable, array $config = [])
     {
-        $this->iterable = \PrefixedByPoP\GuzzleHttp\Promise\Create::iterFor($iterable);
+        $this->iterable = Create::iterFor($iterable);
         if (isset($config['concurrency'])) {
             $this->concurrency = $config['concurrency'];
         }
@@ -90,14 +91,14 @@ class EachPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromisorInterface
     private function createPromise()
     {
         $this->mutex = \false;
-        $this->aggregate = new \PrefixedByPoP\GuzzleHttp\Promise\Promise(function () {
+        $this->aggregate = new Promise(function () {
             \reset($this->pending);
             // Consume a potentially fluctuating list of promises while
             // ensuring that indexes are maintained (precluding array_shift).
             while ($promise = \current($this->pending)) {
                 \next($this->pending);
                 $promise->wait();
-                if (\PrefixedByPoP\GuzzleHttp\Promise\Is::settled($this->aggregate)) {
+                if (Is::settled($this->aggregate)) {
                     return;
                 }
             }
@@ -106,6 +107,7 @@ class EachPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromisorInterface
         $clearFn = function () {
             $this->iterable = $this->concurrency = $this->pending = null;
             $this->onFulfilled = $this->onRejected = null;
+            $this->nextPendingIndex = 0;
         };
         $this->aggregate->then($clearFn, $clearFn);
     }
@@ -138,13 +140,11 @@ class EachPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromisorInterface
         if (!$this->iterable || !$this->iterable->valid()) {
             return \false;
         }
-        $promise = \PrefixedByPoP\GuzzleHttp\Promise\Create::promiseFor($this->iterable->current());
+        $promise = Create::promiseFor($this->iterable->current());
         $key = $this->iterable->key();
-        // Iterable keys may not be unique, so we add the promises at the end
-        // of the pending array and retrieve the array index being used
-        $this->pending[] = null;
-        \end($this->pending);
-        $idx = \key($this->pending);
+        // Iterable keys may not be unique, so we use a counter to
+        // guarantee uniqueness
+        $idx = $this->nextPendingIndex++;
         $this->pending[$idx] = $promise->then(function ($value) use($idx, $key) {
             if ($this->onFulfilled) {
                 \call_user_func($this->onFulfilled, $value, $key, $this->aggregate);
@@ -183,7 +183,7 @@ class EachPromise implements \PrefixedByPoP\GuzzleHttp\Promise\PromisorInterface
     private function step($idx)
     {
         // If the promise was already resolved, then ignore this step.
-        if (\PrefixedByPoP\GuzzleHttp\Promise\Is::settled($this->aggregate)) {
+        if (Is::settled($this->aggregate)) {
             return;
         }
         unset($this->pending[$idx]);

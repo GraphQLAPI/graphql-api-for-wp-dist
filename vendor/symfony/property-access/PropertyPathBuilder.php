@@ -42,7 +42,7 @@ class PropertyPathBuilder
     public function append($path, int $offset = 0, int $length = 0)
     {
         if (\is_string($path)) {
-            $path = new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPath($path);
+            $path = new PropertyPath($path);
         }
         if (0 === $length) {
             $end = $path->getLength();
@@ -85,7 +85,7 @@ class PropertyPathBuilder
     public function remove(int $offset, int $length = 1)
     {
         if (!isset($this->elements[$offset])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsException(\sprintf('The offset "%s" is not within the property path.', $offset));
+            throw new OutOfBoundsException(\sprintf('The offset "%s" is not within the property path.', $offset));
         }
         $this->resize($offset, $length, 0);
     }
@@ -105,12 +105,12 @@ class PropertyPathBuilder
     public function replace(int $offset, int $length, $path, int $pathOffset = 0, int $pathLength = 0)
     {
         if (\is_string($path)) {
-            $path = new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPath($path);
+            $path = new PropertyPath($path);
         }
         if ($offset < 0 && \abs($offset) <= $this->getLength()) {
             $offset = $this->getLength() + $offset;
         } elseif (!isset($this->elements[$offset])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsException('The offset ' . $offset . ' is not within the property path');
+            throw new OutOfBoundsException('The offset ' . $offset . ' is not within the property path');
         }
         if (0 === $pathLength) {
             $pathLength = $path->getLength() - $pathOffset;
@@ -133,7 +133,7 @@ class PropertyPathBuilder
     public function replaceByIndex(int $offset, string $name = null)
     {
         if (!isset($this->elements[$offset])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsException(\sprintf('The offset "%s" is not within the property path.', $offset));
+            throw new OutOfBoundsException(\sprintf('The offset "%s" is not within the property path.', $offset));
         }
         if (null !== $name) {
             $this->elements[$offset] = $name;
@@ -151,7 +151,7 @@ class PropertyPathBuilder
     public function replaceByProperty(int $offset, string $name = null)
     {
         if (!isset($this->elements[$offset])) {
-            throw new \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\OutOfBoundsException(\sprintf('The offset "%s" is not within the property path.', $offset));
+            throw new OutOfBoundsException(\sprintf('The offset "%s" is not within the property path.', $offset));
         }
         if (null !== $name) {
             $this->elements[$offset] = $name;
@@ -175,7 +175,7 @@ class PropertyPathBuilder
     public function getPropertyPath()
     {
         $pathAsString = $this->__toString();
-        return '' !== $pathAsString ? new \PrefixedByPoP\Symfony\Component\PropertyAccess\PropertyPath($pathAsString) : null;
+        return '' !== $pathAsString ? new PropertyPath($pathAsString) : null;
     }
     /**
      * Returns the current property path as string.

@@ -19,13 +19,13 @@ use PrefixedByPoP\Symfony\Component\Config\ResourceCheckerInterface;
  *
  * @author Matthias Pigulla <mp@webfactory.de>
  */
-class SelfCheckingResourceChecker implements \PrefixedByPoP\Symfony\Component\Config\ResourceCheckerInterface
+class SelfCheckingResourceChecker implements ResourceCheckerInterface
 {
-    public function supports(\PrefixedByPoP\Symfony\Component\Config\Resource\ResourceInterface $metadata)
+    public function supports(ResourceInterface $metadata)
     {
-        return $metadata instanceof \PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceInterface;
+        return $metadata instanceof SelfCheckingResourceInterface;
     }
-    public function isFresh(\PrefixedByPoP\Symfony\Component\Config\Resource\ResourceInterface $resource, int $timestamp)
+    public function isFresh(ResourceInterface $resource, int $timestamp)
     {
         /* @var SelfCheckingResourceInterface $resource */
         return $resource->isFresh($timestamp);

@@ -10,6 +10,7 @@
  */
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use PrefixedByPoP\Symfony\Component\Config\Loader\ParamConfigurator;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\AbstractArgument;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
@@ -23,7 +24,7 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ContainerConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractConfigurator
+class ContainerConfigurator extends AbstractConfigurator
 {
     public const FACTORY = 'container';
     private $container;
@@ -32,21 +33,23 @@ class ContainerConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyI
     private $path;
     private $file;
     private $anonymousCount = 0;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container, \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\PhpFileLoader $loader, array &$instanceof, string $path, string $file)
+    private $env;
+    public function __construct(ContainerBuilder $container, PhpFileLoader $loader, array &$instanceof, string $path, string $file, string $env = null)
     {
         $this->container = $container;
         $this->loader = $loader;
         $this->instanceof =& $instanceof;
         $this->path = $path;
         $this->file = $file;
+        $this->env = $env;
     }
     public final function extension(string $namespace, array $config)
     {
         if (!$this->container->hasExtension($namespace)) {
-            $extensions = \array_filter(\array_map(function (\PrefixedByPoP\Symfony\Component\DependencyInjection\Extension\ExtensionInterface $ext) {
+            $extensions = \array_filter(\array_map(function (ExtensionInterface $ext) {
                 return $ext->getAlias();
             }, $this->container->getExtensions()));
-            throw new \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException(\sprintf('There is no extension able to load the configuration for "%s" (in "%s"). Looked for namespace "%s", found "%s".', $namespace, $this->file, $namespace, $extensions ? \implode('", "', $extensions) : 'none'));
+            throw new InvalidArgumentException(\sprintf('There is no extension able to load the configuration for "%s" (in "%s"). Looked for namespace "%s", found "%s".', $namespace, $this->file, $namespace, $extensions ? \implode('", "', $extensions) : 'none'));
         }
         $this->container->loadFromExtension($namespace, static::processValue($config));
     }
@@ -55,13 +58,20 @@ class ContainerConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyI
         $this->loader->setCurrentDir(\dirname($this->path));
         $this->loader->import($resource, $type, $ignoreErrors, $this->file);
     }
-    public final function parameters() : \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ParametersConfigurator
+    public final function parameters() : ParametersConfigurator
     {
-        return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ParametersConfigurator($this->container);
+        return new ParametersConfigurator($this->container);
     }
-    public final function services() : \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator
+    public final function services() : ServicesConfigurator
     {
-        return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator($this->container, $this->loader, $this->instanceof, $this->path, $this->anonymousCount);
+        return new ServicesConfigurator($this->container, $this->loader, $this->instanceof, $this->path, $this->anonymousCount);
+    }
+    /**
+     * Get the current environment to be able to write conditional configuration.
+     */
+    public final function env() : ?string
+    {
+        return $this->env;
     }
     /**
      * @return static
@@ -70,93 +80,101 @@ class ContainerConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyI
     {
         $clone = clone $this;
         $clone->path = $clone->file = $path;
+        $clone->loader->setCurrentDir(\dirname($path));
         return $clone;
     }
 }
 /**
  * Creates a parameter.
  */
-function param(string $name) : string
+function param(string $name) : ParamConfigurator
 {
-    return '%' . $name . '%';
+    return new ParamConfigurator($name);
 }
 /**
  * Creates a service reference.
  *
  * @deprecated since Symfony 5.1, use service() instead.
  */
-function ref(string $id) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator
+function ref(string $id) : ReferenceConfigurator
 {
     trigger_deprecation('symfony/dependency-injection', '5.1', '"%s()" is deprecated, use "service()" instead.', __FUNCTION__);
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator($id);
+    return new ReferenceConfigurator($id);
 }
 /**
  * Creates a reference to a service.
  */
-function service(string $serviceId) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator
+function service(string $serviceId) : ReferenceConfigurator
 {
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator($serviceId);
+    return new ReferenceConfigurator($serviceId);
 }
 /**
  * Creates an inline service.
  *
  * @deprecated since Symfony 5.1, use inline_service() instead.
  */
-function inline(string $class = null) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\InlineServiceConfigurator
+function inline(string $class = null) : InlineServiceConfigurator
 {
     trigger_deprecation('symfony/dependency-injection', '5.1', '"%s()" is deprecated, use "inline_service()" instead.', __FUNCTION__);
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\InlineServiceConfigurator(new \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition($class));
+    return new InlineServiceConfigurator(new Definition($class));
 }
 /**
  * Creates an inline service.
  */
-function inline_service(string $class = null) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\InlineServiceConfigurator
+function inline_service(string $class = null) : InlineServiceConfigurator
 {
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\InlineServiceConfigurator(new \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition($class));
+    return new InlineServiceConfigurator(new Definition($class));
 }
 /**
  * Creates a service locator.
  *
  * @param ReferenceConfigurator[] $values
  */
-function service_locator(array $values) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument
+function service_locator(array $values) : ServiceLocatorArgument
 {
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument(\PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractConfigurator::processValue($values, \true));
+    return new ServiceLocatorArgument(AbstractConfigurator::processValue($values, \true));
 }
 /**
  * Creates a lazy iterator.
  *
  * @param ReferenceConfigurator[] $values
  */
-function iterator(array $values) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument
+function iterator(array $values) : IteratorArgument
 {
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgument(\PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractConfigurator::processValue($values, \true));
+    return new IteratorArgument(AbstractConfigurator::processValue($values, \true));
 }
 /**
  * Creates a lazy iterator by tag name.
  */
-function tagged_iterator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null, string $defaultPriorityMethod = null) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument
+function tagged_iterator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null, string $defaultPriorityMethod = null) : TaggedIteratorArgument
 {
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \false, $defaultPriorityMethod);
+    return new TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \false, $defaultPriorityMethod);
 }
 /**
  * Creates a service locator by tag name.
  */
-function tagged_locator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument
+function tagged_locator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null) : ServiceLocatorArgument
 {
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument(new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \true));
+    return new ServiceLocatorArgument(new TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \true));
 }
 /**
  * Creates an expression.
  */
-function expr(string $expression) : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression
+function expr(string $expression) : Expression
 {
-    return new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression($expression);
+    return new Expression($expression);
 }
 /**
  * Creates an abstract argument.
  */
-function abstract_arg(string $description) : \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\AbstractArgument
+function abstract_arg(string $description) : AbstractArgument
 {
-    return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\AbstractArgument($description);
+    return new AbstractArgument($description);
+}
+/**
+ * Creates an environment variable reference.
+ */
+function env(string $name) : EnvConfigurator
+{
+    return new EnvConfigurator($name);
 }

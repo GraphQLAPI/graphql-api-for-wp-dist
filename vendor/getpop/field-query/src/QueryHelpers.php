@@ -21,14 +21,14 @@ class QueryHelpers
         return [\PoP\FieldQuery\QueryUtils::findFirstSymbolPosition($field, \PoP\FieldQuery\QuerySyntax::SYMBOL_BOOKMARK_OPENING, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING]), \PoP\FieldQuery\QueryUtils::findLastSymbolPosition($field, \PoP\FieldQuery\QuerySyntax::SYMBOL_BOOKMARK_CLOSING, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING])];
     }
     /**
-     * @return int|false
+     * @return int|bool
      */
     public static function findFieldAliasSymbolPosition(string $field)
     {
         return \PoP\FieldQuery\QueryUtils::findFirstSymbolPosition($field, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDALIAS_PREFIX, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING]);
     }
     /**
-     * @return int|false
+     * @return int|bool
      */
     public static function findSkipOutputIfNullSymbolPosition(string $field)
     {
@@ -57,7 +57,7 @@ class QueryHelpers
             $fieldArgsAsString = \trim($fieldArgsAsString);
             // Use `strlen` to allow for "0" as value. Eg: <skip(0)> meaning false
             if (!empty($fieldArgsAsString) || \strlen($fieldArgsAsString)) {
-                $queryParser = \PoP\QueryParsing\Facades\QueryParserFacade::getInstance();
+                $queryParser = QueryParserFacade::getInstance();
                 return $queryParser->splitElements($fieldArgsAsString, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGSEPARATOR, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUEARRAY_CLOSING], \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING);
             }
         }
@@ -76,7 +76,7 @@ class QueryHelpers
      */
     public static function splitFieldDirectives(string $fieldDirectives) : array
     {
-        $queryParser = \PoP\QueryParsing\Facades\QueryParserFacade::getInstance();
+        $queryParser = QueryParserFacade::getInstance();
         return $queryParser->splitElements($fieldDirectives, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_SEPARATOR, [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_BOOKMARK_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_OPENING], [\PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_BOOKMARK_CLOSING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDDIRECTIVE_CLOSING], \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_OPENING, \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDARGS_ARGVALUESTRING_CLOSING);
     }
 }

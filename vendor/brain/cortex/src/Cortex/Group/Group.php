@@ -16,7 +16,7 @@ use PrefixedByPoP\Brain\Cortex\Route\Route;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class Group implements \PrefixedByPoP\Brain\Cortex\Group\GroupInterface
+final class Group implements GroupInterface
 {
     /**
      * @var \Brain\Cortex\Route\Route
@@ -34,7 +34,7 @@ final class Group implements \PrefixedByPoP\Brain\Cortex\Group\GroupInterface
             unset($data['group']);
         }
         $data['id'] = !empty($data['id']) && \is_string($data['id']) ? $data['id'] : 'group_' . \spl_object_hash($this);
-        $this->route = new \PrefixedByPoP\Brain\Cortex\Route\Route($data);
+        $this->route = new Route($data);
     }
     /**
      * @inheritdoc

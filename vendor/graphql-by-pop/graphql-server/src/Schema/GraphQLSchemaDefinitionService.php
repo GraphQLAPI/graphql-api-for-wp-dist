@@ -11,11 +11,11 @@ use PoP\API\ComponentConfiguration as APIComponentConfiguration;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\QueryRootTypeResolver;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\MutationRootTypeResolver;
 use GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface;
-class GraphQLSchemaDefinitionService extends \PoP\Engine\Schema\SchemaDefinitionService implements \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface
+class GraphQLSchemaDefinitionService extends SchemaDefinitionService implements GraphQLSchemaDefinitionServiceInterface
 {
     public function getQueryRootTypeSchemaKey() : string
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+        $instanceManager = InstanceManagerFacade::getInstance();
         $queryTypeResolverClass = $this->getQueryRootTypeResolverClass();
         $queryTypeResolver = $instanceManager->getInstance($queryTypeResolverClass);
         return $this->getTypeSchemaKey($queryTypeResolver);
@@ -26,16 +26,16 @@ class GraphQLSchemaDefinitionService extends \PoP\Engine\Schema\SchemaDefinition
      */
     public function getQueryRootTypeResolverClass() : string
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($vars['nested-mutations-enabled']) {
             return $this->getRootTypeResolverClass();
         }
-        return \GraphQLByPoP\GraphQLServer\TypeResolvers\QueryRootTypeResolver::class;
+        return QueryRootTypeResolver::class;
     }
     public function getMutationRootTypeSchemaKey() : ?string
     {
         if ($mutationTypeResolverClass = $this->getMutationRootTypeResolverClass()) {
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+            $instanceManager = InstanceManagerFacade::getInstance();
             $mutationTypeResolver = $instanceManager->getInstance($mutationTypeResolverClass);
             return $this->getTypeSchemaKey($mutationTypeResolver);
         }
@@ -47,19 +47,19 @@ class GraphQLSchemaDefinitionService extends \PoP\Engine\Schema\SchemaDefinition
      */
     public function getMutationRootTypeResolverClass() : ?string
     {
-        if (!\PoP\API\ComponentConfiguration::enableMutations()) {
+        if (!APIComponentConfiguration::enableMutations()) {
             return null;
         }
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($vars['nested-mutations-enabled']) {
             return $this->getRootTypeResolverClass();
         }
-        return \GraphQLByPoP\GraphQLServer\TypeResolvers\MutationRootTypeResolver::class;
+        return MutationRootTypeResolver::class;
     }
     public function getSubscriptionRootTypeSchemaKey() : ?string
     {
         if ($subscriptionTypeResolverClass = $this->getSubscriptionRootTypeResolverClass()) {
-            $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
+            $instanceManager = InstanceManagerFacade::getInstance();
             $subscriptionTypeResolver = $instanceManager->getInstance($subscriptionTypeResolverClass);
             return $this->getTypeSchemaKey($subscriptionTypeResolver);
         }

@@ -8,7 +8,13 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
+    /**
+     * @var int|null
+     */
     private static $getTagListDefaultLimit;
+    /**
+     * @var int|null
+     */
     private static $getTagListMaxLimit;
     public static function getTagListDefaultLimit() : ?int
     {
@@ -16,7 +22,7 @@ class ComponentConfiguration
         $envVariable = \PoPSchema\Tags\Environment::TAG_LIST_DEFAULT_LIMIT;
         $selfProperty =& self::$getTagListDefaultLimit;
         $defaultValue = 10;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -28,7 +34,7 @@ class ComponentConfiguration
         $selfProperty =& self::$getTagListMaxLimit;
         $defaultValue = -1;
         // Unlimited
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

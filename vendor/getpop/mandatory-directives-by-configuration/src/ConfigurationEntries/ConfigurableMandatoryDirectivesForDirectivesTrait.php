@@ -8,14 +8,10 @@ trait ConfigurableMandatoryDirectivesForDirectivesTrait
 {
     /**
      * Configuration entries
-     *
-     * @return array
      */
     protected abstract function getConfigurationEntries() : array;
     /**
      * Configuration entries
-     *
-     * @return array
      */
     protected final function getEntries() : array
     {
@@ -25,8 +21,6 @@ trait ConfigurableMandatoryDirectivesForDirectivesTrait
     }
     /**
      * The value in the 2nd element from the entry
-     *
-     * @return string
      */
     protected function getRequiredEntryValue() : ?string
     {
@@ -34,11 +28,6 @@ trait ConfigurableMandatoryDirectivesForDirectivesTrait
     }
     /**
      * Remove directiveName "translate" if the user is not logged in
-     *
-     * @param boolean $include
-     * @param TypeResolverInterface $typeResolver
-     * @param string $directiveName
-     * @return boolean
      */
     protected function getDirectiveResolverClasses() : array
     {
@@ -49,10 +38,6 @@ trait ConfigurableMandatoryDirectivesForDirectivesTrait
     }
     /**
      * Filter all the entries from the list which apply to the passed typeResolver and fieldName
-     *
-     * @param array $entryList
-     * @param string|null $value
-     * @return array
      */
     protected final function getMatchingEntries(array $entryList, ?string $value) : array
     {

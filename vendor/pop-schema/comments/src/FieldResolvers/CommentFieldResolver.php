@@ -3,30 +3,49 @@
 declare (strict_types=1);
 namespace PoPSchema\Comments\FieldResolvers;
 
+use PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver;
+use PoP\ComponentModel\HelperServices\SemverHelperServiceInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\LooseContracts\Facades\NameResolverFacade;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Engine\CMS\CMSServiceInterface;
+use PoP\Engine\Facades\Formatters\DateFormatterFacade;
+use PoP\Hooks\HooksAPIInterface;
+use PoP\LooseContracts\NameResolverInterface;
+use PoP\Translation\TranslationAPIInterface;
+use PoPSchema\Comments\Constants\Status;
+use PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface;
 use PoPSchema\Comments\TypeResolvers\CommentTypeResolver;
 use PoPSchema\CustomPosts\TypeHelpers\CustomPostUnionTypeHelpers;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver;
-use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
-class CommentFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
+class CommentFieldResolver extends AbstractQueryableFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    /**
+     * @var \PoPSchema\Comments\TypeAPIs\CommentTypeAPIInterface
+     */
+    protected $commentTypeAPI;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FieldQueryInterpreterInterface $fieldQueryInterpreter, NameResolverInterface $nameResolver, CMSServiceInterface $cmsService, SemverHelperServiceInterface $semverHelperService, CommentTypeAPIInterface $commentTypeAPI)
     {
-        return array(\PoPSchema\Comments\TypeResolvers\CommentTypeResolver::class);
+        $this->commentTypeAPI = $commentTypeAPI;
+        parent::__construct($translationAPI, $hooksAPI, $instanceManager, $fieldQueryInterpreter, $nameResolver, $cmsService, $semverHelperService);
     }
-    public static function getFieldNamesToResolve() : array
+    public function getClassesToAttachTo() : array
     {
-        return ['content', 'authorName', 'authorURL', 'authorEmail', 'customPost', 'customPostID', 'approved', 'type', 'parent', 'date'];
+        return array(CommentTypeResolver::class);
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getFieldNamesToResolve() : array
     {
-        $types = ['content' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'authorName' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'authorURL' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_URL, 'authorEmail' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_EMAIL, 'customPost' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'customPostID' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'approved' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_BOOL, 'type' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'parent' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'date' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_DATE];
+        return ['content', 'authorName', 'authorURL', 'authorEmail', 'customPost', 'customPostID', 'approved', 'type', 'parent', 'date', 'responses'];
+    }
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
+    {
+        $types = ['content' => SchemaDefinition::TYPE_STRING, 'authorName' => SchemaDefinition::TYPE_STRING, 'authorURL' => SchemaDefinition::TYPE_URL, 'authorEmail' => SchemaDefinition::TYPE_EMAIL, 'customPost' => SchemaDefinition::TYPE_ID, 'customPostID' => SchemaDefinition::TYPE_ID, 'approved' => SchemaDefinition::TYPE_BOOL, 'type' => SchemaDefinition::TYPE_STRING, 'parent' => SchemaDefinition::TYPE_ID, 'date' => SchemaDefinition::TYPE_DATE, 'responses' => SchemaDefinition::TYPE_ID];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(TypeResolverInterface $typeResolver, string $fieldName) : ?int
     {
         switch ($fieldName) {
             case 'content':
@@ -35,14 +54,16 @@ class CommentFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDB
             case 'approved':
             case 'type':
             case 'date':
-                return \true;
+                return SchemaTypeModifiers::NON_NULLABLE;
+            case 'responses':
+                return SchemaTypeModifiers::NON_NULLABLE | SchemaTypeModifiers::IS_ARRAY;
+            default:
+                return parent::getSchemaFieldTypeModifiers($typeResolver, $fieldName);
         }
-        return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['content' => $translationAPI->__('Comment\'s content', 'pop-comments'), 'authorName' => $translationAPI->__('Comment author\'s name', 'pop-comments'), 'authorURL' => $translationAPI->__('Comment author\'s URL', 'pop-comments'), 'authorEmail' => $translationAPI->__('Comment author\'s email', 'pop-comments'), 'customPost' => $translationAPI->__('Custom post to which the comment was added', 'pop-comments'), 'customPostID' => $translationAPI->__('ID of the custom post to which the comment was added', 'pop-comments'), 'approved' => $translationAPI->__('Is the comment approved?', 'pop-comments'), 'type' => $translationAPI->__('Type of comment', 'pop-comments'), 'parent' => $translationAPI->__('Parent comment (if this comment is a response to another one)', 'pop-comments'), 'date' => $translationAPI->__('Date when the comment was added', 'pop-comments')];
+        $descriptions = ['content' => $this->translationAPI->__('Comment\'s content', 'pop-comments'), 'authorName' => $this->translationAPI->__('Comment author\'s name', 'pop-comments'), 'authorURL' => $this->translationAPI->__('Comment author\'s URL', 'pop-comments'), 'authorEmail' => $this->translationAPI->__('Comment author\'s email', 'pop-comments'), 'customPost' => $this->translationAPI->__('Custom post to which the comment was added', 'pop-comments'), 'customPostID' => $this->translationAPI->__('ID of the custom post to which the comment was added', 'pop-comments'), 'approved' => $this->translationAPI->__('Is the comment approved?', 'pop-comments'), 'type' => $this->translationAPI->__('Type of comment', 'pop-comments'), 'parent' => $this->translationAPI->__('Parent comment (if this comment is a response to another one)', 'pop-comments'), 'date' => $this->translationAPI->__('Date when the comment was added', 'pop-comments'), 'responses' => $this->translationAPI->__('Responses to the comment', 'pop-comments')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
     /**
@@ -53,53 +74,61 @@ class CommentFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDB
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $cmscommentsresolver = \PoPSchema\Comments\ObjectPropertyResolverFactory::getInstance();
-        $cmsengineapi = \PoP\Engine\FunctionAPIFactory::getInstance();
-        $cmsusersapi = \PoPSchema\Users\FunctionAPIFactory::getInstance();
+        $dateFormatter = DateFormatterFacade::getInstance();
         $comment = $resultItem;
         switch ($fieldName) {
             case 'content':
-                return $cmscommentsresolver->getCommentContent($comment);
+                return $this->commentTypeAPI->getCommentContent($comment);
             case 'authorName':
-                return $cmsusersapi->getUserDisplayName($cmscommentsresolver->getCommentUserId($comment));
+                return $this->commentTypeAPI->getCommentAuthorName($comment);
             case 'authorURL':
-                return $cmsusersapi->getUserURL($cmscommentsresolver->getCommentUserId($comment));
+                return $this->commentTypeAPI->getCommentAuthorURL($comment);
             case 'authorEmail':
-                return $cmsusersapi->getUserEmail($cmscommentsresolver->getCommentUserId($comment));
+                return $this->commentTypeAPI->getCommentAuthorEmail($comment);
             case 'customPost':
             case 'customPostID':
-                return $cmscommentsresolver->getCommentPostId($comment);
+                return $this->commentTypeAPI->getCommentPostId($comment);
             case 'approved':
-                return $cmscommentsresolver->isCommentApproved($comment);
+                return $this->commentTypeAPI->isCommentApproved($comment);
             case 'type':
-                return $cmscommentsresolver->getCommentType($comment);
+                return $this->commentTypeAPI->getCommentType($comment);
             case 'parent':
-                return $cmscommentsresolver->getCommentParent($comment);
+                return $this->commentTypeAPI->getCommentParent($comment);
             case 'date':
-                return $cmsengineapi->getDate($fieldArgs['format'], $cmscommentsresolver->getCommentDateGmt($comment));
+                return $dateFormatter->format($fieldArgs['format'], $this->commentTypeAPI->getCommentDateGmt($comment));
+            case 'responses':
+                $query = array(
+                    'status' => Status::APPROVED,
+                    // The Order must always be date > ASC so the jQuery works in inserting sub-comments in already-created parent comments
+                    'order' => 'ASC',
+                    'orderby' => $this->nameResolver->getName('popcms:dbcolumn:orderby:comments:date'),
+                    'parentID' => $typeResolver->getID($comment),
+                );
+                $options = ['return-type' => ReturnTypes::IDS];
+                $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
+                return $this->commentTypeAPI->getComments($query, $options);
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
+    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         $schemaFieldArgs = parent::getSchemaFieldArgs($typeResolver, $fieldName);
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $cmsengineapi = \PoP\Engine\FunctionAPIFactory::getInstance();
         switch ($fieldName) {
             case 'date':
-                return \array_merge($schemaFieldArgs, [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'format', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($translationAPI->__('Date format, as defined in %s', 'pop-comments'), 'https://www.php.net/manual/en/function.date.php'), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DEFAULT_VALUE => $cmsengineapi->getOption(\PoP\LooseContracts\Facades\NameResolverFacade::getInstance()->getName('popcms:option:dateFormat'))]]);
+                return \array_merge($schemaFieldArgs, [[SchemaDefinition::ARGNAME_NAME => 'format', SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_STRING, SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($this->translationAPI->__('Date format, as defined in %s', 'pop-comments'), 'https://www.php.net/manual/en/function.date.php'), SchemaDefinition::ARGNAME_DEFAULT_VALUE => $this->cmsService->getOption($this->nameResolver->getName('popcms:option:dateFormat'))]]);
         }
         return $schemaFieldArgs;
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'customPost':
-                return \PoPSchema\CustomPosts\TypeHelpers\CustomPostUnionTypeHelpers::getCustomPostUnionOrTargetTypeResolverClass(\PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver::class);
+                return CustomPostUnionTypeHelpers::getCustomPostUnionOrTargetTypeResolverClass(CustomPostUnionTypeResolver::class);
             case 'parent':
-                return \PoPSchema\Comments\TypeResolvers\CommentTypeResolver::class;
+            case 'responses':
+                return CommentTypeResolver::class;
         }
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }

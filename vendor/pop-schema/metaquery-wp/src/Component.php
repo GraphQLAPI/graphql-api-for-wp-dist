@@ -19,17 +19,7 @@ class Component extends AbstractComponent
     public static function getDependedComponentClasses(): array
     {
         return [
-            \PoPSchema\MetaQuery\Component::class,
             \PoP\EngineWP\Component::class,
-        ];
-    }
-
-    public static function getDependedMigrationPlugins(): array
-    {
-        $packageName = basename(dirname(__DIR__));
-        $folder = dirname(__DIR__, 2);
-        return [
-            $folder . '/migrate-' . $packageName . '/initialize.php',
         ];
     }
 }

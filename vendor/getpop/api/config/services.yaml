@@ -2,6 +2,7 @@ services:
     _defaults:
         public: true
         autowire: true
+        autoconfigure: true
 
     PoP\API\Schema\FieldQueryConvertorInterface:
         class: \PoP\API\Schema\FieldQueryConvertor
@@ -15,8 +16,12 @@ services:
     PoP\API\PersistedQueries\PersistedQueryManagerInterface:
         class: \PoP\API\PersistedQueries\PersistedQueryManager
 
-    # Override the service from ComponentModel
+    # Override the services from FieldQuery and ComponentModel
+    PoP\FieldQuery\FieldQueryInterpreterInterface:
+        class: \PoP\API\Schema\FieldQueryInterpreter
     PoP\ComponentModel\Schema\FieldQueryInterpreterInterface:
+        class: \PoP\API\Schema\FieldQueryInterpreter
+    PoP\API\Schema\FieldQueryInterpreterInterface:
         class: \PoP\API\Schema\FieldQueryInterpreter
 
     PoP\API\Hooks\:
@@ -24,3 +29,9 @@ services:
 
     PoP\API\RouteModuleProcessors\:
         resource: '../src/RouteModuleProcessors/*'
+
+    PoP\API\ModuleProcessors\:
+        resource: '../src/ModuleProcessors/*'
+
+    PoP\API\Enums\:
+        resource: '../src/Enums/*'

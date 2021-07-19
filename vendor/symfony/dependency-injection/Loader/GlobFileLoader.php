@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class GlobFileLoader extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\FileLoader
+class GlobFileLoader extends FileLoader
 {
     /**
      * {@inheritdoc}
@@ -30,8 +30,9 @@ class GlobFileLoader extends \PrefixedByPoP\Symfony\Component\DependencyInjectio
     }
     /**
      * {@inheritdoc}
+     * @param string $type
      */
-    public function supports($resource, string $type = null)
+    public function supports($resource, $type = null)
     {
         return 'glob' === $type;
     }

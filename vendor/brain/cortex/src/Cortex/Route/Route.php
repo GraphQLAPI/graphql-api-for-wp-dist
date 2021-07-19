@@ -15,7 +15,7 @@ namespace PrefixedByPoP\Brain\Cortex\Route;
  * @license http://opensource.org/licenses/MIT MIT
  * @package Cortex
  */
-final class Route implements \PrefixedByPoP\Brain\Cortex\Route\RouteInterface
+final class Route implements RouteInterface
 {
     /**
      * @var array

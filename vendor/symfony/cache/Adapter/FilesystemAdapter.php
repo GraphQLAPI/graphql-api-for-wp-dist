@@ -14,12 +14,12 @@ use PrefixedByPoP\Symfony\Component\Cache\Marshaller\DefaultMarshaller;
 use PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface;
 use PrefixedByPoP\Symfony\Component\Cache\PruneableInterface;
 use PrefixedByPoP\Symfony\Component\Cache\Traits\FilesystemTrait;
-class FilesystemAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\AbstractAdapter implements \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface
+class FilesystemAdapter extends AbstractAdapter implements PruneableInterface
 {
     use FilesystemTrait;
-    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $directory = null, \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface $marshaller = null)
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $directory = null, MarshallerInterface $marshaller = null)
     {
-        $this->marshaller = $marshaller ?? new \PrefixedByPoP\Symfony\Component\Cache\Marshaller\DefaultMarshaller();
+        $this->marshaller = $marshaller ?? new DefaultMarshaller();
         parent::__construct('', $defaultLifetime);
         $this->init($namespace, $directory);
     }

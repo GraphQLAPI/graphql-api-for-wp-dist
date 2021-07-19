@@ -7,12 +7,12 @@ use PoP\ComponentModel\DataStructure\DataStructureManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class DataStructureManagerFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\DataStructure\DataStructureManagerInterface
+    public static function getInstance() : DataStructureManagerInterface
     {
         /**
          * @var DataStructureManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\DataStructure\DataStructureManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(DataStructureManagerInterface::class);
         return $service;
     }
 }

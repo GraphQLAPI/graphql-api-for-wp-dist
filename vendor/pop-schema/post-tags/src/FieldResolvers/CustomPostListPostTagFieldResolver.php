@@ -6,12 +6,19 @@ namespace PoPSchema\PostTags\FieldResolvers;
 use PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver;
 use PoPSchema\Tags\FieldResolvers\AbstractCustomPostListTagFieldResolver;
 use PoPSchema\PostTags\ComponentContracts\PostTagAPISatisfiedContractTrait;
-class CustomPostListPostTagFieldResolver extends \PoPSchema\Tags\FieldResolvers\AbstractCustomPostListTagFieldResolver
+class CustomPostListPostTagFieldResolver extends AbstractCustomPostListTagFieldResolver
 {
     use PostTagAPISatisfiedContractTrait;
-    public static function getClassesToAttachTo() : array
+    public function isServiceEnabled() : bool
     {
-        return array(\PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver::class);
+        /**
+         * @todo Enable if the post tag (i.e. taxonomy "post_tag") can have other custom post types use it (eg: page, event, etc)
+         */
+        return \false;
+    }
+    public function getClassesToAttachTo() : array
+    {
+        return array(PostTagTypeResolver::class);
     }
     protected function getQueryProperty() : string
     {

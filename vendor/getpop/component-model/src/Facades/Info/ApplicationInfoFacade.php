@@ -7,12 +7,12 @@ use PoP\ComponentModel\Info\ApplicationInfoInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class ApplicationInfoFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Info\ApplicationInfoInterface
+    public static function getInstance() : ApplicationInfoInterface
     {
         /**
          * @var ApplicationInfoInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Info\ApplicationInfoInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(ApplicationInfoInterface::class);
         return $service;
     }
 }

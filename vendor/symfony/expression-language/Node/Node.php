@@ -51,7 +51,7 @@ class Node
         }
         return \implode("\n", $repr);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         foreach ($this->nodes as $node) {
             $node->compile($compiler);
@@ -79,7 +79,7 @@ class Node
     }
     protected function dumpString(string $value)
     {
-        return \sprintf('"%s"', \addcslashes($value, "\0\t\"\\"));
+        return \sprintf('"%s"', \addcslashes($value, "\x00\t\"\\"));
     }
     protected function isHash(array $value)
     {

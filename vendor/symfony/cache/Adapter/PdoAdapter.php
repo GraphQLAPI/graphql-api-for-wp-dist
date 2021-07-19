@@ -21,7 +21,7 @@ use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\Cache\Marshaller\DefaultMarshaller;
 use PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface;
 use PrefixedByPoP\Symfony\Component\Cache\PruneableInterface;
-class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\AbstractAdapter implements \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface
+class PdoAdapter extends AbstractAdapter implements PruneableInterface
 {
     protected $maxIdLength = 255;
     private $marshaller;
@@ -62,22 +62,22 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
      * @throws InvalidArgumentException When PDO error mode is not PDO::ERRMODE_EXCEPTION
      * @throws InvalidArgumentException When namespace contains invalid characters
      */
-    public function __construct($connOrDsn, string $namespace = '', int $defaultLifetime = 0, array $options = [], \PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface $marshaller = null)
+    public function __construct($connOrDsn, string $namespace = '', int $defaultLifetime = 0, array $options = [], MarshallerInterface $marshaller = null)
     {
         if (isset($namespace[0]) && \preg_match('#[^-+.A-Za-z0-9]#', $namespace, $match)) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Namespace contains "%s" but only characters in [-+.A-Za-z0-9] are allowed.', $match[0]));
+            throw new InvalidArgumentException(\sprintf('Namespace contains "%s" but only characters in [-+.A-Za-z0-9] are allowed.', $match[0]));
         }
         if ($connOrDsn instanceof \PDO) {
             if (\PDO::ERRMODE_EXCEPTION !== $connOrDsn->getAttribute(\PDO::ATTR_ERRMODE)) {
-                throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('"%s" requires PDO error mode attribute be set to throw Exceptions (i.e. $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION)).', __CLASS__));
+                throw new InvalidArgumentException(\sprintf('"%s" requires PDO error mode attribute be set to throw Exceptions (i.e. $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION)).', __CLASS__));
             }
             $this->conn = $connOrDsn;
-        } elseif ($connOrDsn instanceof \PrefixedByPoP\Doctrine\DBAL\Connection) {
+        } elseif ($connOrDsn instanceof Connection) {
             $this->conn = $connOrDsn;
         } elseif (\is_string($connOrDsn)) {
             $this->dsn = $connOrDsn;
         } else {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('"%s" requires PDO or Doctrine\\DBAL\\Connection instance or DSN string as first argument, "%s" given.', __CLASS__, \get_debug_type($connOrDsn)));
+            throw new InvalidArgumentException(\sprintf('"%s" requires PDO or Doctrine\\DBAL\\Connection instance or DSN string as first argument, "%s" given.', __CLASS__, \get_debug_type($connOrDsn)));
         }
         $this->table = $options['db_table'] ?? $this->table;
         $this->idCol = $options['db_id_col'] ?? $this->idCol;
@@ -88,7 +88,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
         $this->password = $options['db_password'] ?? $this->password;
         $this->connectionOptions = $options['db_connection_options'] ?? $this->connectionOptions;
         $this->namespace = $namespace;
-        $this->marshaller = $marshaller ?? new \PrefixedByPoP\Symfony\Component\Cache\Marshaller\DefaultMarshaller();
+        $this->marshaller = $marshaller ?? new DefaultMarshaller();
         parent::__construct($namespace, $defaultLifetime);
     }
     /**
@@ -106,8 +106,8 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
     {
         // connect if we are not yet
         $conn = $this->getConnection();
-        if ($conn instanceof \PrefixedByPoP\Doctrine\DBAL\Connection) {
-            $schema = new \PrefixedByPoP\Doctrine\DBAL\Schema\Schema();
+        if ($conn instanceof Connection) {
+            $schema = new Schema();
             $this->addTableToSchema($schema);
             foreach ($schema->toSql($conn->getDatabasePlatform()) as $sql) {
                 if (\method_exists($conn, 'executeStatement')) {
@@ -125,7 +125,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
                 // - trailing space removal
                 // - case-insensitivity
                 // - language processing like é == e
-                $sql = "CREATE TABLE {$this->table} ({$this->idCol} VARBINARY(255) NOT NULL PRIMARY KEY, {$this->dataCol} MEDIUMBLOB NOT NULL, {$this->lifetimeCol} INTEGER UNSIGNED, {$this->timeCol} INTEGER UNSIGNED NOT NULL) COLLATE utf8_bin, ENGINE = InnoDB";
+                $sql = "CREATE TABLE {$this->table} ({$this->idCol} VARBINARY(255) NOT NULL PRIMARY KEY, {$this->dataCol} MEDIUMBLOB NOT NULL, {$this->lifetimeCol} INTEGER UNSIGNED, {$this->timeCol} INTEGER UNSIGNED NOT NULL) COLLATE utf8mb4_bin, ENGINE = InnoDB";
                 break;
             case 'sqlite':
                 $sql = "CREATE TABLE {$this->table} ({$this->idCol} TEXT NOT NULL PRIMARY KEY, {$this->dataCol} BLOB NOT NULL, {$this->lifetimeCol} INTEGER, {$this->timeCol} INTEGER NOT NULL)";
@@ -151,7 +151,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
     /**
      * Adds the Table to the Schema if the adapter uses this Connection.
      */
-    public function configureSchema(\PrefixedByPoP\Doctrine\DBAL\Schema\Schema $schema, \PrefixedByPoP\Doctrine\DBAL\Connection $forConnection) : void
+    public function configureSchema(Schema $schema, Connection $forConnection) : void
     {
         // only update the schema for this connection
         if ($forConnection !== $this->getConnection()) {
@@ -173,7 +173,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
         }
         try {
             $delete = $this->getConnection()->prepare($deleteSql);
-        } catch (\PrefixedByPoP\Doctrine\DBAL\Exception\TableNotFoundException $e) {
+        } catch (TableNotFoundException $e) {
             return \true;
         } catch (\PDOException $e) {
             return \true;
@@ -184,7 +184,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
         }
         try {
             return $delete->execute();
-        } catch (\PrefixedByPoP\Doctrine\DBAL\Exception\TableNotFoundException $e) {
+        } catch (TableNotFoundException $e) {
             return \true;
         } catch (\PDOException $e) {
             return \true;
@@ -262,7 +262,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
             } else {
                 $conn->exec($sql);
             }
-        } catch (\PrefixedByPoP\Doctrine\DBAL\Exception\TableNotFoundException $e) {
+        } catch (TableNotFoundException $e) {
         } catch (\PDOException $e) {
         }
         return \true;
@@ -277,7 +277,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
         try {
             $stmt = $this->getConnection()->prepare($sql);
             $stmt->execute(\array_values($ids));
-        } catch (\PrefixedByPoP\Doctrine\DBAL\Exception\TableNotFoundException $e) {
+        } catch (TableNotFoundException $e) {
         } catch (\PDOException $e) {
         }
         return \true;
@@ -321,7 +321,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
         $lifetime = $lifetime ?: null;
         try {
             $stmt = $conn->prepare($sql);
-        } catch (\PrefixedByPoP\Doctrine\DBAL\Exception\TableNotFoundException $e) {
+        } catch (TableNotFoundException $e) {
             if (!$conn->isTransactionActive() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], \true)) {
                 $this->createTable();
             }
@@ -357,7 +357,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
         foreach ($values as $id => $data) {
             try {
                 $result = $stmt->execute();
-            } catch (\PrefixedByPoP\Doctrine\DBAL\Exception\TableNotFoundException $e) {
+            } catch (TableNotFoundException $e) {
                 if (!$conn->isTransactionActive() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], \true)) {
                     $this->createTable();
                 }
@@ -371,7 +371,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
             if (null === $driver && !(\is_object($result) ? $result->rowCount() : $stmt->rowCount())) {
                 try {
                     $insertStmt->execute();
-                } catch (\PrefixedByPoP\Doctrine\DBAL\DBALException|\PrefixedByPoP\Doctrine\DBAL\Exception $e) {
+                } catch (DBALException|Exception $e) {
                 } catch (\PDOException $e) {
                     // A concurrent write won, let it be
                 }
@@ -386,10 +386,10 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
     {
         if (null === $this->conn) {
             if (\strpos($this->dsn, '://')) {
-                if (!\class_exists(\PrefixedByPoP\Doctrine\DBAL\DriverManager::class)) {
-                    throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Failed to parse the DSN "%s". Try running "composer require doctrine/dbal".', $this->dsn));
+                if (!\class_exists(DriverManager::class)) {
+                    throw new InvalidArgumentException(\sprintf('Failed to parse the DSN "%s". Try running "composer require doctrine/dbal".', $this->dsn));
                 }
-                $this->conn = \PrefixedByPoP\Doctrine\DBAL\DriverManager::getConnection(['url' => $this->dsn]);
+                $this->conn = DriverManager::getConnection(['url' => $this->dsn]);
             } else {
                 $this->conn = new \PDO($this->dsn, $this->username, $this->password, $this->connectionOptions);
                 $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -438,7 +438,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
             $conn = $this->conn instanceof \PDO ? $this->conn : $this->conn->getWrappedConnection();
             if ($conn instanceof \PDO) {
                 $this->serverVersion = $conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
-            } elseif ($conn instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\ServerInfoAwareConnection) {
+            } elseif ($conn instanceof ServerInfoAwareConnection) {
                 $this->serverVersion = $conn->getServerVersion();
             } else {
                 $this->serverVersion = '0';
@@ -446,7 +446,7 @@ class PdoAdapter extends \PrefixedByPoP\Symfony\Component\Cache\Adapter\Abstract
         }
         return $this->serverVersion;
     }
-    private function addTableToSchema(\PrefixedByPoP\Doctrine\DBAL\Schema\Schema $schema) : void
+    private function addTableToSchema(Schema $schema) : void
     {
         $types = ['mysql' => 'binary', 'sqlite' => 'text', 'pgsql' => 'string', 'oci' => 'string', 'sqlsrv' => 'string'];
         if (!isset($types[$this->driver])) {

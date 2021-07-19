@@ -12,11 +12,11 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
     /**
      * @var string|null
      */
-    protected $selected_filter_name = null;
+    protected $selected_filter_name;
     /**
      * @var \PoP\ComponentModel\ModuleFilters\ModuleFilterInterface|null
      */
-    protected $selected_filter = null;
+    protected $selected_filter;
     /**
      * @var array<string, ModuleFilterInterface>
      */
@@ -29,11 +29,11 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
     /**
      * @var string|null
      */
-    protected $not_excluded_ancestor_module = null;
+    protected $not_excluded_ancestor_module;
     /**
      * @var array<array>|null
      */
-    protected $not_excluded_module_sets = null;
+    protected $not_excluded_module_sets;
     /**
      * @var string[]|null
      */
@@ -43,7 +43,6 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
      * @var bool
      */
     protected $neverExclude = \false;
-    // Services
     /**
      * @var \PoP\ComponentModel\ModulePath\ModulePathManagerInterface
      */
@@ -52,16 +51,16 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
      * @var \PoP\ComponentModel\ModulePath\ModulePathHelpersInterface
      */
     protected $modulePathHelpers;
-    public function __construct(\PoP\ComponentModel\ModulePath\ModulePathManagerInterface $modulePathManager, \PoP\ComponentModel\ModulePath\ModulePathHelpersInterface $modulePathHelpers)
+    public function __construct(ModulePathManagerInterface $modulePathManager, ModulePathHelpersInterface $modulePathHelpers)
     {
         $this->modulePathManager = $modulePathManager;
         $this->modulePathHelpers = $modulePathHelpers;
     }
-    public function addModuleFilter(\PoP\ComponentModel\ModuleFilters\ModuleFilterInterface $moduleFilter) : void
+    public function addModuleFilter(ModuleFilterInterface $moduleFilter) : void
     {
         $this->modulefilters[$moduleFilter->getName()] = $moduleFilter;
     }
-    protected function init()
+    protected function init() : void
     {
         // Lazy initialize so that we can inject all the moduleFilters before checking the selected one
         $this->selected_filter_name = $this->selected_filter_name ?? $this->getSelectedModuleFilterName();
@@ -75,7 +74,7 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
     /**
      * The selected filter can be set from outside by the engine
      */
-    public function setSelectedModuleFilterName(string $selectedModuleFilterName)
+    public function setSelectedModuleFilterName(string $selectedModuleFilterName) : void
     {
         $this->selected_filter_name = $selectedModuleFilterName;
     }
@@ -91,16 +90,16 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
         }
         return null;
     }
-    public function getNotExcludedModuleSets()
+    public function getNotExcludedModuleSets() : ?array
     {
         // It shall be used for requestmeta.rendermodules, to know from which modules the client must start rendering
         return $this->not_excluded_module_sets;
     }
-    public function neverExclude($neverExclude)
+    public function neverExclude($neverExclude) : void
     {
         $this->neverExclude = $neverExclude;
     }
-    public function excludeModule(array $module, array &$props)
+    public function excludeModule(array $module, array &$props) : bool
     {
         if (!$this->initialized) {
             $this->init();
@@ -116,7 +115,7 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
         }
         return \false;
     }
-    public function removeExcludedSubmodules(array $module, $submodules)
+    public function removeExcludedSubmodules(array $module, array $submodules) : array
     {
         if (!$this->initialized) {
             $this->init();
@@ -132,7 +131,7 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
     /**
      * The `prepare` function advances the modulepath one level down, when interating into the submodules, and then calling `restore` the value goes one level up again
      */
-    public function prepareForPropagation(array $module, array &$props)
+    public function prepareForPropagation(array $module, array &$props) : void
     {
         if (!$this->initialized) {
             $this->init();
@@ -154,7 +153,7 @@ class ModuleFilterManager implements \PoP\ComponentModel\ModuleFiltering\ModuleF
         // Add the module to the path
         $this->modulePathManager->prepareForPropagation($module, $props);
     }
-    public function restoreFromPropagation(array $module, array &$props)
+    public function restoreFromPropagation(array $module, array &$props) : void
     {
         if (!$this->initialized) {
             $this->init();

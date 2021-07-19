@@ -3,9 +3,10 @@
 declare (strict_types=1);
 namespace PoP\GraphQLAPI\DataStructureFormatters;
 
+use GraphQLByPoP\GraphQLServer\ComponentConfiguration;
 use PoP\APIMirrorQuery\DataStructureFormatters\MirrorQueryDataStructureFormatter;
 use PoP\ComponentModel\Feedback\Tokens;
-class GraphQLDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFormatters\MirrorQueryDataStructureFormatter
+class GraphQLDataStructureFormatter extends MirrorQueryDataStructureFormatter
 {
     public function getName() : string
     {
@@ -16,74 +17,88 @@ class GraphQLDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFor
         $ret = [];
         // Add errors
         $errors = $warnings = $deprecations = $notices = $traces = [];
-        if ($data['dbErrors'] ?? null) {
-            $errors = $this->reformatDBEntries($data['dbErrors']);
+        if (isset($data['queryErrors'])) {
+            $errors = \array_merge($errors, $this->reformatQueryEntries($data['queryErrors']));
         }
-        if ($data['schemaErrors'] ?? null) {
+        if (isset($data['schemaErrors'])) {
             $errors = \array_merge($errors, $this->reformatSchemaEntries($data['schemaErrors']));
         }
-        if ($data['queryErrors'] ?? null) {
-            $errors = \array_merge($errors, $this->reformatQueryEntries($data['queryErrors']));
+        if (isset($data['dbErrors'])) {
+            $errors = \array_merge($errors, $this->reformatDBEntries($data['dbErrors']));
         }
         if ($errors) {
             $ret['errors'] = $errors;
         }
+        // Add warnings always, not inside of Proactive Feedback,
+        // because the difference between errors and warnings sometimes is not clear
+        // Eg: `{ posts(searchfor: ["posts"]) { id } }` will fail casting fieldArg `searchfor`,
+        // raising a warning, but field `posts` is still executed, retrieving all results.
+        // If the user is not told that there was an error/warning, it's very confusing
+        if ($data['dbWarnings'] ?? null) {
+            $warnings = $this->reformatDBEntries($data['dbWarnings']);
+        }
+        if ($data['schemaWarnings'] ?? null) {
+            $warnings = \array_merge($warnings, $this->reformatSchemaEntries($data['schemaWarnings']));
+        }
+        if ($data['queryWarnings'] ?? null) {
+            $warnings = \array_merge($warnings, $this->reformatQueryEntries($data['queryWarnings']));
+        }
+        if ($warnings) {
+            $ret['extensions']['warnings'] = $warnings;
+        }
         /**
-         * "Warnings", "deprecations", and "logEntries" top-level entries:
+         * "deprecations", and "logEntries" top-level entries:
          * since they are not part of the spec, place them under the top-level entry "extensions":
          *
          * > This entry is reserved for implementors to extend the protocol however they see fit,
          * > and hence there are no additional restrictions on its contents.
          *
          * @see http://spec.graphql.org/June2018/#sec-Response-Format
+         *
+         * "warnings" are added always (see above)
          */
         if ($this->addTopLevelExtensionsEntryToResponse()) {
-            // Add warnings
-            if ($data['dbWarnings'] ?? null) {
-                $warnings = $this->reformatDBEntries($data['dbWarnings']);
-            }
-            if ($data['schemaWarnings'] ?? null) {
-                $warnings = \array_merge($warnings, $this->reformatSchemaEntries($data['schemaWarnings']));
-            }
-            if ($data['queryWarnings'] ?? null) {
-                $warnings = \array_merge($warnings, $this->reformatQueryEntries($data['queryWarnings']));
-            }
-            if ($warnings) {
-                $ret['extensions']['warnings'] = $warnings;
-            }
             // Add notices
-            if ($data['dbNotices'] ?? null) {
-                $notices = $this->reformatDBEntries($data['dbNotices']);
-            }
-            if ($data['schemaNotices'] ?? null) {
-                $notices = \array_merge($notices, $this->reformatSchemaEntries($data['schemaNotices']));
-            }
-            if ($notices) {
-                $ret['extensions']['notices'] = $notices;
+            if (ComponentConfiguration::enableProactiveFeedbackNotices()) {
+                if ($data['dbNotices'] ?? null) {
+                    $notices = $this->reformatDBEntries($data['dbNotices']);
+                }
+                if ($data['schemaNotices'] ?? null) {
+                    $notices = \array_merge($notices, $this->reformatSchemaEntries($data['schemaNotices']));
+                }
+                if ($notices) {
+                    $ret['extensions']['notices'] = $notices;
+                }
             }
             // Add traces
-            if ($data['dbTraces'] ?? null) {
-                $traces = $this->reformatDBEntries($data['dbTraces']);
-            }
-            if ($data['schemaTraces'] ?? null) {
-                $traces = \array_merge($traces, $this->reformatSchemaEntries($data['schemaTraces']));
-            }
-            if ($traces) {
-                $ret['extensions']['traces'] = $traces;
+            if (ComponentConfiguration::enableProactiveFeedbackTraces()) {
+                if ($data['dbTraces'] ?? null) {
+                    $traces = $this->reformatDBEntries($data['dbTraces']);
+                }
+                if ($data['schemaTraces'] ?? null) {
+                    $traces = \array_merge($traces, $this->reformatSchemaEntries($data['schemaTraces']));
+                }
+                if ($traces) {
+                    $ret['extensions']['traces'] = $traces;
+                }
             }
             // Add deprecations
-            if ($data['dbDeprecations'] ?? null) {
-                $deprecations = $this->reformatDBEntries($data['dbDeprecations']);
+            if (ComponentConfiguration::enableProactiveFeedbackDeprecations()) {
+                if ($data['dbDeprecations'] ?? null) {
+                    $deprecations = $this->reformatDBEntries($data['dbDeprecations']);
+                }
+                if ($data['schemaDeprecations'] ?? null) {
+                    $deprecations = \array_merge($deprecations, $this->reformatSchemaEntries($data['schemaDeprecations']));
+                }
+                if ($deprecations) {
+                    $ret['extensions']['deprecations'] = $deprecations;
+                }
             }
-            if ($data['schemaDeprecations'] ?? null) {
-                $deprecations = \array_merge($deprecations, $this->reformatSchemaEntries($data['schemaDeprecations']));
-            }
-            if ($deprecations) {
-                $ret['extensions']['deprecations'] = $deprecations;
-            }
-            // Logs
-            if ($data['logEntries'] ?? null) {
-                $ret['extensions']['logs'] = $data['logEntries'];
+            // Add logs
+            if (ComponentConfiguration::enableProactiveFeedbackLogs()) {
+                if ($data['logEntries'] ?? null) {
+                    $ret['extensions']['logs'] = $data['logEntries'];
+                }
             }
         }
         if ($resultData = parent::getFormattedData($data)) {
@@ -124,22 +139,25 @@ class GraphQLDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFor
     protected function getDBEntry(string $dbKey, $id, array $item) : array
     {
         $entry = [];
-        if ($message = $item[\PoP\ComponentModel\Feedback\Tokens::MESSAGE] ?? null) {
+        if ($message = $item[Tokens::MESSAGE] ?? null) {
             $entry['message'] = $message;
         }
-        if ($name = $item[\PoP\ComponentModel\Feedback\Tokens::NAME] ?? null) {
+        if ($name = $item[Tokens::NAME] ?? null) {
             $entry['name'] = $name;
         }
-        if ($this->addTopLevelExtensionsEntryToResponse()) {
-            if ($extensions = \array_merge($this->getDBEntryExtensions($dbKey, $id, $item), $item[\PoP\ComponentModel\Feedback\Tokens::EXTENSIONS] ?? [])) {
-                $entry['extensions'] = $extensions;
-            }
+        // if ($this->addTopLevelExtensionsEntryToResponse()) {
+        if ($extensions = \array_merge($this->getDBEntryExtensions($dbKey, $id, $item), $item[Tokens::EXTENSIONS] ?? [])) {
+            $entry['extensions'] = $extensions;
         }
+        // }
         return $entry;
     }
+    /**
+     * @param int|string $id
+     */
     protected function getDBEntryExtensions(string $dbKey, $id, array $item) : array
     {
-        return ['type' => 'dataObject', 'entityDBKey' => $dbKey, 'id' => $id, 'path' => $item[\PoP\ComponentModel\Feedback\Tokens::PATH] ?? []];
+        return ['type' => 'dataObject', 'entityDBKey' => $dbKey, 'id' => $id, 'path' => $item[Tokens::PATH] ?? []];
     }
     protected function reformatSchemaEntries($entries)
     {
@@ -154,22 +172,22 @@ class GraphQLDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFor
     protected function getSchemaEntry(string $dbKey, array $item) : array
     {
         $entry = [];
-        if ($message = $item[\PoP\ComponentModel\Feedback\Tokens::MESSAGE] ?? null) {
+        if ($message = $item[Tokens::MESSAGE] ?? null) {
             $entry['message'] = $message;
         }
-        if ($name = $item[\PoP\ComponentModel\Feedback\Tokens::NAME] ?? null) {
+        if ($name = $item[Tokens::NAME] ?? null) {
             $entry['name'] = $name;
         }
-        if ($this->addTopLevelExtensionsEntryToResponse()) {
-            if ($extensions = \array_merge($this->getSchemaEntryExtensions($dbKey, $item), $item[\PoP\ComponentModel\Feedback\Tokens::EXTENSIONS] ?? [])) {
-                $entry['extensions'] = $extensions;
-            }
+        // if ($this->addTopLevelExtensionsEntryToResponse()) {
+        if ($extensions = \array_merge($this->getSchemaEntryExtensions($dbKey, $item), $item[Tokens::EXTENSIONS] ?? [])) {
+            $entry['extensions'] = $extensions;
         }
+        // }
         return $entry;
     }
     protected function getSchemaEntryExtensions(string $dbKey, array $item) : array
     {
-        return ['type' => 'schema', 'entityDBKey' => $dbKey, 'path' => $item[\PoP\ComponentModel\Feedback\Tokens::PATH] ?? []];
+        return ['type' => 'schema', 'entityDBKey' => $dbKey, 'path' => $item[Tokens::PATH] ?? []];
     }
     protected function reformatQueryEntries($entries)
     {
@@ -182,11 +200,11 @@ class GraphQLDataStructureFormatter extends \PoP\APIMirrorQuery\DataStructureFor
     protected function getQueryEntry(string $message, array $extensions) : array
     {
         $entry = ['message' => $message];
-        if ($this->addTopLevelExtensionsEntryToResponse()) {
-            if ($extensions = \array_merge($this->getQueryEntryExtensions(), $extensions)) {
-                $entry['extensions'] = $extensions;
-            }
+        // if ($this->addTopLevelExtensionsEntryToResponse()) {
+        if ($extensions = \array_merge($this->getQueryEntryExtensions(), $extensions)) {
+            $entry['extensions'] = $extensions;
         }
+        // }
         return $entry;
     }
     protected function getQueryEntryExtensions() : array

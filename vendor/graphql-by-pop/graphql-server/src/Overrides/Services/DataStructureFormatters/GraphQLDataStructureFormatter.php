@@ -7,7 +7,6 @@ use GraphQLByPoP\GraphQLServer\ComponentConfiguration;
 use PoP\ComponentModel\Feedback\Tokens;
 use PoP\ComponentModel\State\ApplicationState;
 use PoP\ComponentModel\TypeResolvers\UnionTypeHelpers;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
 use PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter as UpstreamGraphQLDataStructureFormatter;
 /**
  * Change the properties printed for the standard GraphQL response:
@@ -19,20 +18,17 @@ use PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter as Upst
  *
  * @author Leonardo Losoviz <leo@getpop.org>
  */
-class GraphQLDataStructureFormatter extends \PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter
+class GraphQLDataStructureFormatter extends UpstreamGraphQLDataStructureFormatter
 {
     /**
      * If it is a Union Type, we must remove the "*" from the name
-     *
-     * @param string $dbKey
-     * @return string
      */
     protected function getTypeName(string $dbKey) : string
     {
         // The type name is the same as the $dbKey
         $typeName = $dbKey;
-        if (\PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::isUnionType($typeName)) {
-            return \PoP\ComponentModel\TypeResolvers\UnionTypeHelpers::removePrefixFromUnionTypeName($typeName);
+        if (UnionTypeHelpers::isUnionType($typeName)) {
+            return UnionTypeHelpers::removePrefixFromUnionTypeName($typeName);
         }
         return $typeName;
     }
@@ -41,34 +37,28 @@ class GraphQLDataStructureFormatter extends \PoP\GraphQLAPI\DataStructureFormatt
      */
     protected function addTopLevelExtensionsEntryToResponse() : bool
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($vars['standard-graphql']) {
-            return \GraphQLByPoP\GraphQLServer\ComponentConfiguration::enableProactiveFeedback();
+            return ComponentConfiguration::enableProactiveFeedback();
         }
         return parent::addTopLevelExtensionsEntryToResponse();
     }
     /**
      * Change properties for GraphQL
-     *
-     * @param string $dbKey
-     * @param [type] $id
-     * @param array $item
-     * @return array
      */
     protected function addFieldOrDirectiveEntryToExtensions(array &$extensions, array $item) : void
     {
         // Single field
-        $fields = $item[\PoP\ComponentModel\Feedback\Tokens::PATH] ?? [];
+        $fields = $item[Tokens::PATH] ?? [];
         if (\count($fields) == 1) {
             $extensions['field'] = $fields[0];
             return;
         }
         // Two fields: it may be a directive
         if (\count($fields) == 2) {
-            $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
             $maybeField = $fields[0];
             $maybeDirective = $fields[1];
-            $maybeFieldDirectives = \array_map([$fieldQueryInterpreter, 'convertDirectiveToFieldDirective'], $fieldQueryInterpreter->getDirectives($maybeField));
+            $maybeFieldDirectives = \array_map([$this->fieldQueryInterpreter, 'convertDirectiveToFieldDirective'], $this->fieldQueryInterpreter->getDirectives($maybeField));
             // Find out if the directive is contained in the field
             if (\in_array($maybeDirective, $maybeFieldDirectives)) {
                 $extensions['directive'] = $maybeDirective;
@@ -80,15 +70,11 @@ class GraphQLDataStructureFormatter extends \PoP\GraphQLAPI\DataStructureFormatt
     }
     /**
      * Change properties for GraphQL
-     *
-     * @param string $dbKey
-     * @param [type] $id
-     * @param array $item
-     * @return array
+     * @param int|string $id
      */
     protected function getDBEntryExtensions(string $dbKey, $id, array $item) : array
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($vars['standard-graphql']) {
             $extensions = ['type' => $this->getTypeName($dbKey), 'id' => $id];
             $this->addFieldOrDirectiveEntryToExtensions($extensions, $item);
@@ -98,14 +84,10 @@ class GraphQLDataStructureFormatter extends \PoP\GraphQLAPI\DataStructureFormatt
     }
     /**
      * Change properties for GraphQL
-     *
-     * @param string $dbKey
-     * @param array $item
-     * @return array
      */
     protected function getSchemaEntryExtensions(string $dbKey, array $item) : array
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($vars['standard-graphql']) {
             $extensions = ['type' => $this->getTypeName($dbKey)];
             $this->addFieldOrDirectiveEntryToExtensions($extensions, $item);
@@ -115,10 +97,6 @@ class GraphQLDataStructureFormatter extends \PoP\GraphQLAPI\DataStructureFormatt
     }
     /**
      * Override the parent function, to place the locations from outside extensions
-     *
-     * @param string $message
-     * @param array $extensions
-     * @return void
      */
     protected function getQueryEntry(string $message, array $extensions) : array
     {
@@ -128,21 +106,19 @@ class GraphQLDataStructureFormatter extends \PoP\GraphQLAPI\DataStructureFormatt
             unset($extensions['location']);
             $entry['location'] = $location;
         }
-        if ($this->addTopLevelExtensionsEntryToResponse()) {
-            if ($extensions = \array_merge($this->getQueryEntryExtensions(), $extensions)) {
-                $entry['extensions'] = $extensions;
-            }
+        // if ($this->addTopLevelExtensionsEntryToResponse()) {
+        if ($extensions = \array_merge($this->getQueryEntryExtensions(), $extensions)) {
+            $entry['extensions'] = $extensions;
         }
+        // }
         return $entry;
     }
     /**
      * Change properties for GraphQL
-     *
-     * @return array
      */
     protected function getQueryEntryExtensions() : array
     {
-        $vars = \PoP\ComponentModel\State\ApplicationState::getVars();
+        $vars = ApplicationState::getVars();
         if ($vars['standard-graphql']) {
             // Do not print "type" => "query"
             return [];

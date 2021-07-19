@@ -3,74 +3,89 @@
 declare (strict_types=1);
 namespace PoPSchema\Pages\FieldResolvers;
 
+use PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver;
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Engine\TypeResolvers\RootTypeResolver;
+use PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor;
 use PoPSchema\CustomPosts\Types\Status;
 use PoPSchema\Pages\ComponentConfiguration;
 use PoPSchema\Pages\Facades\PageTypeAPIFacade;
 use PoPSchema\Pages\TypeResolvers\PageTypeResolver;
-use PoP\Engine\TypeResolvers\RootTypeResolver;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Schema\TypeCastingHelpers;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver;
-use PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor;
 use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
-class RootPageFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractQueryableFieldResolver
+class RootPageFieldResolver extends AbstractQueryableFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return array(\PoP\Engine\TypeResolvers\RootTypeResolver::class);
+        return array(RootTypeResolver::class);
     }
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
-        return ['page', 'pages', 'pageCount'];
+        return ['page', 'pages', 'pageCount', 'unrestrictedPage', 'unrestrictedPages', 'unrestrictedPageCount'];
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getAdminFieldNames() : array
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['page' => $translationAPI->__('Page with a specific ID', 'pages'), 'pages' => $translationAPI->__('Pages', 'pages'), 'pageCount' => $translationAPI->__('Number of pages', 'pages')];
+        return ['unrestrictedPage', 'unrestrictedPages', 'unrestrictedPageCount'];
+    }
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    {
+        $descriptions = ['page' => $this->translationAPI->__('Page with a specific ID', 'pages'), 'pages' => $this->translationAPI->__('Pages', 'pages'), 'pageCount' => $this->translationAPI->__('Number of pages', 'pages'), 'unrestrictedPage' => $this->translationAPI->__('[Unrestricted] Page with a specific ID', 'pages'), 'unrestrictedPages' => $this->translationAPI->__('[Unrestricted] Pages', 'pages'), 'unrestrictedPageCount' => $this->translationAPI->__('[Unrestricted] Number of pages', 'pages')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
     {
-        $types = ['page' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, 'pages' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID), 'pageCount' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_INT];
+        $types = ['page' => SchemaDefinition::TYPE_ID, 'pages' => SchemaDefinition::TYPE_ID, 'pageCount' => SchemaDefinition::TYPE_INT, 'unrestrictedPage' => SchemaDefinition::TYPE_ID, 'unrestrictedPages' => SchemaDefinition::TYPE_ID, 'unrestrictedPageCount' => SchemaDefinition::TYPE_INT];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(TypeResolverInterface $typeResolver, string $fieldName) : ?int
     {
-        $nonNullableFieldNames = ['pages', 'pageCount'];
-        if (\in_array($fieldName, $nonNullableFieldNames)) {
-            return \true;
+        switch ($fieldName) {
+            case 'pageCount':
+            case 'unrestrictedPageCount':
+                return SchemaTypeModifiers::NON_NULLABLE;
+            case 'pages':
+            case 'unrestrictedPages':
+                return SchemaTypeModifiers::NON_NULLABLE | SchemaTypeModifiers::IS_ARRAY;
+            default:
+                return parent::getSchemaFieldTypeModifiers($typeResolver, $fieldName);
         }
-        return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-    public function getSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : array
+    public function getSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName) : array
     {
         $schemaFieldArgs = parent::getSchemaFieldArgs($typeResolver, $fieldName);
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         switch ($fieldName) {
             case 'page':
-                return \array_merge($schemaFieldArgs, [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'id', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('The page ID', 'pages'), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true]]);
+            case 'unrestrictedPage':
+                return \array_merge($schemaFieldArgs, [[SchemaDefinition::ARGNAME_NAME => 'id', SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_ID, SchemaDefinition::ARGNAME_DESCRIPTION => $this->translationAPI->__('The page ID', 'pages'), SchemaDefinition::ARGNAME_MANDATORY => \true]]);
             case 'pages':
             case 'pageCount':
+            case 'unrestrictedPages':
+            case 'unrestrictedPageCount':
                 return \array_merge($schemaFieldArgs, $this->getFieldArgumentsSchemaDefinitions($typeResolver, $fieldName));
         }
         return $schemaFieldArgs;
     }
-    public function enableOrderedSchemaFieldArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function enableOrderedSchemaFieldArgs(TypeResolverInterface $typeResolver, string $fieldName) : bool
     {
         switch ($fieldName) {
             case 'pages':
             case 'pageCount':
+            case 'unrestrictedPages':
+            case 'unrestrictedPageCount':
                 return \false;
         }
         return parent::enableOrderedSchemaFieldArgs($typeResolver, $fieldName);
     }
-    protected function getFieldDefaultFilterDataloadingModule(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []) : ?array
+    protected function getFieldDefaultFilterDataloadingModule(TypeResolverInterface $typeResolver, string $fieldName, array $fieldArgs = []) : ?array
     {
         switch ($fieldName) {
             case 'pageCount':
-                return [\PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor::class, \PoPSchema\CustomPosts\ModuleProcessors\CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_CUSTOMPOSTCOUNT];
+                return [CustomPostRelationalFieldDataloadModuleProcessor::class, CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_CUSTOMPOSTCOUNT];
+            case 'unrestrictedPages':
+                return [CustomPostRelationalFieldDataloadModuleProcessor::class, CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_ADMINCUSTOMPOSTLIST];
+            case 'unrestrictedPageCount':
+                return [CustomPostRelationalFieldDataloadModuleProcessor::class, CustomPostRelationalFieldDataloadModuleProcessor::MODULE_DATALOAD_RELATIONALFIELDS_ADMINCUSTOMPOSTCOUNT];
         }
         return parent::getFieldDefaultFilterDataloadingModule($typeResolver, $fieldName, $fieldArgs);
     }
@@ -82,36 +97,41 @@ class RootPageFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractQ
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $pageTypeAPI = \PoPSchema\Pages\Facades\PageTypeAPIFacade::getInstance();
+        $pageTypeAPI = PageTypeAPIFacade::getInstance();
         switch ($fieldName) {
             case 'page':
-                $query = ['include' => [$fieldArgs['id']], 'status' => [\PoPSchema\CustomPosts\Types\Status::PUBLISHED]];
-                $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
+            case 'unrestrictedPage':
+                $query = ['include' => [$fieldArgs['id']], 'status' => \array_merge([Status::PUBLISHED], $fieldName === 'unrestrictedPage' ? [Status::PENDING, Status::DRAFT, Status::TRASH] : [])];
+                $options = ['return-type' => ReturnTypes::IDS];
                 if ($pages = $pageTypeAPI->getPages($query, $options)) {
                     return $pages[0];
                 }
                 return null;
             case 'pages':
-                $query = ['limit' => \PoPSchema\Pages\ComponentConfiguration::getPageListDefaultLimit(), 'status' => [\PoPSchema\CustomPosts\Types\Status::PUBLISHED]];
-                $options = ['return-type' => \PoPSchema\SchemaCommons\DataLoading\ReturnTypes::IDS];
+            case 'unrestrictedPages':
+                $query = ['limit' => ComponentConfiguration::getPageListDefaultLimit(), 'status' => [Status::PUBLISHED]];
+                $options = ['return-type' => ReturnTypes::IDS];
                 $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
                 return $pageTypeAPI->getPages($query, $options);
             case 'pageCount':
-                $query = ['status' => [\PoPSchema\CustomPosts\Types\Status::PUBLISHED]];
+            case 'unrestrictedPageCount':
+                $query = ['status' => [Status::PUBLISHED]];
                 $options = [];
                 $this->addFilterDataloadQueryArgs($options, $typeResolver, $fieldName, $fieldArgs);
                 return $pageTypeAPI->getPageCount($query, $options);
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'page':
             case 'pages':
-                return \PoPSchema\Pages\TypeResolvers\PageTypeResolver::class;
+            case 'unrestrictedPage':
+            case 'unrestrictedPages':
+                return PageTypeResolver::class;
         }
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }

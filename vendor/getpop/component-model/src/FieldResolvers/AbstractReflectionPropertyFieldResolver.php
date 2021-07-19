@@ -5,48 +5,42 @@ namespace PoP\ComponentModel\FieldResolvers;
 
 use ReflectionClass;
 use ReflectionProperty;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
-abstract class AbstractReflectionPropertyFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+abstract class AbstractReflectionPropertyFieldResolver extends AbstractDBDataFieldResolver
 {
-    protected static $reflectionInstance;
-    protected static $reflectionFieldNames;
-    protected static $reflectionDocComments;
-    protected static abstract function getTypeClass() : string;
-    protected static function getReflectionInstance() : \ReflectionClass
+    protected $reflectionInstance;
+    protected $reflectionFieldNames;
+    protected $reflectionDocComments;
+    protected abstract function getTypeClass() : string;
+    protected function getReflectionInstance() : ReflectionClass
     {
-        if (\is_null(self::$reflectionInstance)) {
-            $class = \get_called_class();
-            self::$reflectionInstance = new \ReflectionClass($class::getTypeClass());
+        if (\is_null($this->reflectionInstance)) {
+            $this->reflectionInstance = new ReflectionClass($this->getTypeClass());
         }
-        return self::$reflectionInstance;
+        return $this->reflectionInstance;
     }
-    protected static function getReflectionPropertyFilters() : int
+    protected function getReflectionPropertyFilters() : int
     {
         // By default: Return all public properties
-        return \ReflectionProperty::IS_PUBLIC;
+        return ReflectionProperty::IS_PUBLIC;
     }
-    protected static function getReflectionFieldNames() : array
+    protected function getReflectionFieldNames() : array
     {
-        if (\is_null(self::$reflectionFieldNames)) {
-            $reflectionInstance = self::getReflectionInstance();
-            $class = \get_called_class();
-            $reflectionProperties = $reflectionInstance->getProperties($class::getReflectionPropertyFilters());
-            self::$reflectionFieldNames = \array_map(function ($property) {
+        if (\is_null($this->reflectionFieldNames)) {
+            $reflectionInstance = $this->getReflectionInstance();
+            $reflectionProperties = $reflectionInstance->getProperties($this->getReflectionPropertyFilters());
+            $this->reflectionFieldNames = \array_map(function ($property) {
                 return $property->getName();
             }, $reflectionProperties);
         }
-        return self::$reflectionFieldNames;
+        return $this->reflectionFieldNames;
     }
     /**
      * Extract the description from the docComment
      * Adapted from https://github.com/nadirlc/comment-manager/blob/master/DescriptionParser.php
-     *
-     * @param string $docComment
-     * @return string
      */
-    public static function extractDescriptionText(string $docComment) : string
+    public function extractDescriptionText(string $docComment) : string
     {
         // Remove "/**" and "*/". Taken from https://www.php.net/manual/en/reflectionclass.getdoccomment.php
         $docComment = \trim(\substr($docComment, 3, -2));
@@ -67,61 +61,59 @@ abstract class AbstractReflectionPropertyFieldResolver extends \PoP\ComponentMod
             // The line is added to the description
             $docCommentDescLines[] = $docCommentLines[$count];
         }
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return \implode($translationAPI->__('. '), $docCommentDescLines);
+        return \implode($this->translationAPI->__('. '), $docCommentDescLines);
     }
-    public static function getTypePropertyDocComments() : array
+    public function getTypePropertyDocComments() : array
     {
-        if (\is_null(self::$reflectionDocComments)) {
-            $reflectionInstance = self::getReflectionInstance();
-            self::$reflectionDocComments = [];
+        if (\is_null($this->reflectionDocComments)) {
+            $reflectionInstance = $this->getReflectionInstance();
+            $this->reflectionDocComments = [];
             foreach ($reflectionInstance->getProperties() as $property) {
                 // If the property has a docblock comment, it will also include the symbols "/**" and "*/" and everything in between
                 // Clean it a bit
                 if ($docComment = $property->getDocComment()) {
-                    $docComment = self::extractDescriptionText($docComment);
+                    $docComment = $this->extractDescriptionText($docComment);
                 } else {
                     $docComment = '';
                 }
-                self::$reflectionDocComments[$property->getName()] = $docComment;
+                $this->reflectionDocComments[$property->getName()] = $docComment;
             }
         }
-        return self::$reflectionDocComments;
+        return $this->reflectionDocComments;
     }
-    public static function getPropertiesToExclude() : array
+    public function getPropertiesToExclude() : array
     {
         return [];
     }
-    public static function getPropertiesToInclude() : array
+    public function getPropertiesToInclude() : array
     {
         return [];
     }
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
         // If explicitly stating what properties to include, then already use those
-        $class = \get_called_class();
-        if ($propertiesToInclude = $class::getPropertiesToInclude()) {
+        if ($propertiesToInclude = $this->getPropertiesToInclude()) {
             return $propertiesToInclude;
         }
         // Otherwise, get all properties from the class, possibly excluding the forbidden ones (eg: user's "password" property)
-        return \array_diff(self::getReflectionFieldNames(), $class::getPropertiesToExclude());
+        return \array_diff($this->getReflectionFieldNames(), $this->getPropertiesToExclude());
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
     {
         // TODO: If we are running PHP 7.4, the properties may be typed,
         // so we can already get the type through reflection. Implement this!
         return parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(TypeResolverInterface $typeResolver, string $fieldName) : ?int
     {
         // TODO: If we are running PHP 7.4, the properties may be typed,
         // so we can already get the type through reflection. Implement this!
-        return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
+        return parent::getSchemaFieldTypeModifiers($typeResolver, $fieldName);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         // Attempt to obtain the description from the docblock
-        $reflectionDocComments = self::getTypePropertyDocComments();
+        $reflectionDocComments = $this->getTypePropertyDocComments();
         return $reflectionDocComments[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
     /**
@@ -132,7 +124,7 @@ abstract class AbstractReflectionPropertyFieldResolver extends \PoP\ComponentMod
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
         // Simply return the value of the property in the object
         return $resultItem->{$fieldName};

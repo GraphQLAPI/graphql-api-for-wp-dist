@@ -15,6 +15,6 @@ namespace PrefixedByPoP\Symfony\Component\PropertyAccess\Exception;
  *
  * @author Bernhard Schussek <bschussek@gmail.com>
  */
-class InvalidPropertyPathException extends \PrefixedByPoP\Symfony\Component\PropertyAccess\Exception\RuntimeException
+class InvalidPropertyPathException extends RuntimeException
 {
 }

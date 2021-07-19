@@ -20,5 +20,5 @@ interface PropertyReadInfoExtractorInterface
     /**
      * Get read information object for a given property of a class.
      */
-    public function getReadInfo(string $class, string $property, array $context = []) : ?\PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyReadInfo;
+    public function getReadInfo(string $class, string $property, array $context = []) : ?PropertyReadInfo;
 }

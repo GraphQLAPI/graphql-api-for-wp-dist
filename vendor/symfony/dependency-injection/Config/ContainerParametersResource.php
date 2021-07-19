@@ -18,7 +18,7 @@ use PrefixedByPoP\Symfony\Component\Config\Resource\ResourceInterface;
  *
  * @final
  */
-class ContainerParametersResource implements \PrefixedByPoP\Symfony\Component\Config\Resource\ResourceInterface
+class ContainerParametersResource implements ResourceInterface
 {
     private $parameters;
     /**

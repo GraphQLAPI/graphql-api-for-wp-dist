@@ -9,35 +9,35 @@ final class Is
      *
      * @return bool
      */
-    public static function pending(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
+    public static function pending(PromiseInterface $promise)
     {
-        return $promise->getState() === \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface::PENDING;
+        return $promise->getState() === PromiseInterface::PENDING;
     }
     /**
      * Returns true if a promise is fulfilled or rejected.
      *
      * @return bool
      */
-    public static function settled(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
+    public static function settled(PromiseInterface $promise)
     {
-        return $promise->getState() !== \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface::PENDING;
+        return $promise->getState() !== PromiseInterface::PENDING;
     }
     /**
      * Returns true if a promise is fulfilled.
      *
      * @return bool
      */
-    public static function fulfilled(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
+    public static function fulfilled(PromiseInterface $promise)
     {
-        return $promise->getState() === \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface::FULFILLED;
+        return $promise->getState() === PromiseInterface::FULFILLED;
     }
     /**
      * Returns true if a promise is rejected.
      *
      * @return bool
      */
-    public static function rejected(\PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface $promise)
+    public static function rejected(PromiseInterface $promise)
     {
-        return $promise->getState() === \PrefixedByPoP\GuzzleHttp\Promise\PromiseInterface::REJECTED;
+        return $promise->getState() === PromiseInterface::REJECTED;
     }
 }

@@ -12,20 +12,33 @@ use PoP\Root\Services\AutomaticallyInstantiatedServiceInterface;
 class ServiceInstantiator implements \PoP\Root\Container\ServiceInstantiatorInterface
 {
     /**
-     * @var string[]
+     * @var AutomaticallyInstantiatedServiceInterface[]
      */
-    protected $serviceDefinitions = [];
-    public function addServiceDefinition(string $serviceDefinition) : void
+    protected $services = [];
+    public function addService(AutomaticallyInstantiatedServiceInterface $service) : void
     {
-        $this->serviceDefinitions[] = $serviceDefinition;
+        $this->services[] = $service;
     }
-    public function initializeServices() : void
+    /**
+     * The SystemContainer requires no events => pass null
+     * The ApplicationContainer has 3 events (beforeBoot, boot, afterBoot)
+     */
+    public function initializeServices(?string $event = null) : void
     {
-        $containerBuilder = \PoP\Root\Container\ContainerBuilderFactory::getInstance();
-        foreach ($this->serviceDefinitions as $serviceDefinition) {
-            /** @var AutomaticallyInstantiatedServiceInterface */
-            $service = $containerBuilder->get($serviceDefinition);
-            $service->initialize();
+        $servicesForEvent = $this->services;
+        /**
+         * For ApplicationContainer:
+         * Filter all the services that must be instantiated during the passed event
+         */
+        if ($event !== null) {
+            $servicesForEvent = \array_filter($this->services, function ($service) use($event) {
+                return $service->getInstantiationEvent() == $event;
+            });
+        }
+        foreach ($servicesForEvent as $service) {
+            if ($service->isServiceEnabled()) {
+                $service->initialize();
+            }
         }
     }
 }

@@ -18,13 +18,13 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class RemoveUnusedDefinitionsPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class RemoveUnusedDefinitionsPass extends AbstractRecursivePass
 {
     private $connectedIds = [];
     /**
      * Processes the ContainerBuilder to remove unused definitions.
      */
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container)
+    public function process(ContainerBuilder $container)
     {
         try {
             $this->enableExpressionProcessing();
@@ -66,14 +66,13 @@ class RemoveUnusedDefinitionsPass extends \PrefixedByPoP\Symfony\Component\Depen
     }
     /**
      * {@inheritdoc}
-     * @param bool $isRoot
      */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if (!$value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference) {
+        if (!$value instanceof Reference) {
             return parent::processValue($value, $isRoot);
         }
-        if (\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder::IGNORE_ON_UNINITIALIZED_REFERENCE !== $value->getInvalidBehavior()) {
+        if (ContainerBuilder::IGNORE_ON_UNINITIALIZED_REFERENCE !== $value->getInvalidBehavior()) {
             $this->connectedIds[] = (string) $value;
         }
         return $value;

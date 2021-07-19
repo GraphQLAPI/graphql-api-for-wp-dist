@@ -7,12 +7,12 @@ use PoP\ComponentModel\Registries\DirectiveRegistryInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class DirectiveRegistryFacade
 {
-    public static function getInstance() : \PoP\ComponentModel\Registries\DirectiveRegistryInterface
+    public static function getInstance() : DirectiveRegistryInterface
     {
         /**
          * @var DirectiveRegistryInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\ComponentModel\Registries\DirectiveRegistryInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(DirectiveRegistryInterface::class);
         return $service;
     }
 }

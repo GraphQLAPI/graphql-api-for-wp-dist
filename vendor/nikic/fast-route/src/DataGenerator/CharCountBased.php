@@ -2,7 +2,7 @@
 
 namespace PrefixedByPoP\FastRoute\DataGenerator;
 
-class CharCountBased extends \PrefixedByPoP\FastRoute\DataGenerator\RegexBasedAbstract
+class CharCountBased extends RegexBasedAbstract
 {
     protected function getApproxChunkSize()
     {

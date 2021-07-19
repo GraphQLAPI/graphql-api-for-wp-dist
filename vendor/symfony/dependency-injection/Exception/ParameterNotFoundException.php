@@ -16,7 +16,7 @@ use PrefixedByPoP\Psr\Container\NotFoundExceptionInterface;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class ParameterNotFoundException extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException implements \PrefixedByPoP\Psr\Container\NotFoundExceptionInterface
+class ParameterNotFoundException extends InvalidArgumentException implements NotFoundExceptionInterface
 {
     private $key;
     private $sourceId;

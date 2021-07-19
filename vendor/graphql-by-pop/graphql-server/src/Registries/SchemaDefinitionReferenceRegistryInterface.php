@@ -8,11 +8,9 @@ interface SchemaDefinitionReferenceRegistryInterface
 {
     /**
      * It returns the full schema, expanded with all data required to satisfy GraphQL's introspection fields (starting from "__schema")
-     *
-     * @return array
      */
     public function &getFullSchemaDefinition() : array;
-    public function registerSchemaDefinitionReference(\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject $referenceObject) : string;
-    public function getSchemaDefinitionReference(string $referenceObjectID) : ?\GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject;
+    public function registerSchemaDefinitionReference(AbstractSchemaDefinitionReferenceObject $referenceObject) : string;
+    public function getSchemaDefinitionReference(string $referenceObjectID) : ?AbstractSchemaDefinitionReferenceObject;
     public function getDynamicTypes(bool $filterRepeated = \true) : array;
 }

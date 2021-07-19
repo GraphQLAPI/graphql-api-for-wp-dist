@@ -4,69 +4,69 @@ declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\FieldResolvers;
 
 use GraphQLByPoP\GraphQLServer\Enums\DirectiveLocationEnum;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Schema\TypeCastingHelpers;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\DirectiveTypeResolver;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\InputValueTypeResolver;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
 use PoP\ComponentModel\FieldResolvers\EnumTypeFieldSchemaDefinitionResolverTrait;
-class DirectiveFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\Schema\SchemaTypeModifiers;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+class DirectiveFieldResolver extends AbstractDBDataFieldResolver
 {
     use EnumTypeFieldSchemaDefinitionResolverTrait;
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return array(\GraphQLByPoP\GraphQLServer\TypeResolvers\DirectiveTypeResolver::class);
+        return array(DirectiveTypeResolver::class);
     }
-    public static function getFieldNamesToResolve() : array
+    public function getFieldNamesToResolve() : array
     {
         return ['name', 'description', 'args', 'locations', 'isRepeatable'];
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
     {
-        $types = ['name' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'description' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'args' => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ID), 'locations' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_ENUM, 'locations' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_BOOL];
+        $types = ['name' => SchemaDefinition::TYPE_STRING, 'description' => SchemaDefinition::TYPE_STRING, 'args' => SchemaDefinition::TYPE_ID, 'locations' => SchemaDefinition::TYPE_ENUM, 'isRepeatable' => SchemaDefinition::TYPE_BOOL];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function isSchemaFieldResponseNonNullable(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : bool
+    public function getSchemaFieldTypeModifiers(TypeResolverInterface $typeResolver, string $fieldName) : ?int
     {
-        $nonNullableFieldNames = ['name', 'args', 'locations', 'isRepeatable'];
-        if (\in_array($fieldName, $nonNullableFieldNames)) {
-            return \true;
+        switch ($fieldName) {
+            case 'name':
+            case 'isRepeatable':
+                return SchemaTypeModifiers::NON_NULLABLE;
+            case 'locations':
+            case 'args':
+                return SchemaTypeModifiers::NON_NULLABLE | SchemaTypeModifiers::IS_ARRAY;
+            default:
+                return parent::getSchemaFieldTypeModifiers($typeResolver, $fieldName);
         }
-        return parent::isSchemaFieldResponseNonNullable($typeResolver, $fieldName);
     }
-    protected function getSchemaDefinitionEnumName(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    protected function getSchemaDefinitionEnumName(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         switch ($fieldName) {
             case 'locations':
                 /**
                  * @var DirectiveLocationEnum
                  */
-                $directiveLocationEnum = $instanceManager->getInstance(\GraphQLByPoP\GraphQLServer\Enums\DirectiveLocationEnum::class);
+                $directiveLocationEnum = $this->instanceManager->getInstance(DirectiveLocationEnum::class);
                 return $directiveLocationEnum->getName();
         }
         return null;
     }
-    protected function getSchemaDefinitionEnumValues(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?array
+    protected function getSchemaDefinitionEnumValues(TypeResolverInterface $typeResolver, string $fieldName) : ?array
     {
-        $instanceManager = \PoP\ComponentModel\Facades\Instances\InstanceManagerFacade::getInstance();
         switch ($fieldName) {
             case 'locations':
                 /**
                  * @var DirectiveLocationEnum
                  */
-                $directiveLocationEnum = $instanceManager->getInstance(\GraphQLByPoP\GraphQLServer\Enums\DirectiveLocationEnum::class);
+                $directiveLocationEnum = $this->instanceManager->getInstance(DirectiveLocationEnum::class);
                 return $directiveLocationEnum->getValues();
         }
         return null;
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['name' => $translationAPI->__('Directive\'s name', 'graphql-server'), 'description' => $translationAPI->__('Directive\'s description', 'graphql-server'), 'args' => $translationAPI->__('Directive\'s arguments', 'graphql-server'), 'locations' => $translationAPI->__('The locations where the directive may be placed', 'graphql-server'), 'isRepeatable' => $translationAPI->__('Can the directive be executed more than once in the same field?', 'graphql-server')];
+        $descriptions = ['name' => $this->translationAPI->__('Directive\'s name', 'graphql-server'), 'description' => $this->translationAPI->__('Directive\'s description', 'graphql-server'), 'args' => $this->translationAPI->__('Directive\'s arguments', 'graphql-server'), 'locations' => $this->translationAPI->__('The locations where the directive may be placed', 'graphql-server'), 'isRepeatable' => $this->translationAPI->__('Can the directive be executed more than once in the same field?', 'graphql-server')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
     /**
@@ -77,7 +77,7 @@ class DirectiveFieldResolver extends \PoP\ComponentModel\FieldResolvers\Abstract
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
         $directive = $resultItem;
         switch ($fieldName) {
@@ -94,11 +94,11 @@ class DirectiveFieldResolver extends \PoP\ComponentModel\FieldResolvers\Abstract
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }
-    public function resolveFieldTypeResolverClass(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function resolveFieldTypeResolverClass(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
         switch ($fieldName) {
             case 'args':
-                return \GraphQLByPoP\GraphQLServer\TypeResolvers\InputValueTypeResolver::class;
+                return InputValueTypeResolver::class;
         }
         return parent::resolveFieldTypeResolverClass($typeResolver, $fieldName);
     }

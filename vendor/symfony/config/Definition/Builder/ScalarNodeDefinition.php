@@ -16,7 +16,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\ScalarNode;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class ScalarNodeDefinition extends \PrefixedByPoP\Symfony\Component\Config\Definition\Builder\VariableNodeDefinition
+class ScalarNodeDefinition extends VariableNodeDefinition
 {
     /**
      * Instantiate a Node.
@@ -25,6 +25,6 @@ class ScalarNodeDefinition extends \PrefixedByPoP\Symfony\Component\Config\Defin
      */
     protected function instantiateNode()
     {
-        return new \PrefixedByPoP\Symfony\Component\Config\Definition\ScalarNode($this->name, $this->parent, $this->pathSeparator);
+        return new ScalarNode($this->name, $this->parent, $this->pathSeparator);
     }
 }

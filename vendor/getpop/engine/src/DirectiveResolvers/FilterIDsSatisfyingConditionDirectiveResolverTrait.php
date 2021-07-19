@@ -8,7 +8,7 @@ use PoP\ComponentModel\DirectiveResolvers\RemoveIDsDataFieldsDirectiveResolverTr
 trait FilterIDsSatisfyingConditionDirectiveResolverTrait
 {
     use RemoveIDsDataFieldsDirectiveResolverTrait;
-    protected function getIdsSatisfyingCondition(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$resultIDItems, array &$idsDataFields, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations)
+    protected function getIdsSatisfyingCondition(TypeResolverInterface $typeResolver, array &$resultIDItems, array &$idsDataFields, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations)
     {
         // Check the condition field. If it is satisfied, then skip those fields
         $idsSatisfyingCondition = [];

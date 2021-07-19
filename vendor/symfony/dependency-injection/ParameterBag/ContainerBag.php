@@ -14,10 +14,10 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Container;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ContainerBag extends \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\FrozenParameterBag implements \PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface
+class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
 {
     private $container;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\Container $container)
+    public function __construct(Container $container)
     {
         $this->container = $container;
     }

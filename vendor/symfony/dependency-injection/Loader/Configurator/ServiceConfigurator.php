@@ -15,7 +15,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ServiceConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\AbstractServiceConfigurator
+class ServiceConfigurator extends AbstractServiceConfigurator
 {
     public const FACTORY = 'services';
     use Traits\AbstractTrait;
@@ -41,7 +41,8 @@ class ServiceConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInj
     private $instanceof;
     private $allowParent;
     private $path;
-    public function __construct(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $container, array $instanceof, bool $allowParent, \PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator $parent, \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition $definition, $id, array $defaultTags, string $path = null)
+    private $destructed = \false;
+    public function __construct(ContainerBuilder $container, array $instanceof, bool $allowParent, ServicesConfigurator $parent, Definition $definition, $id, array $defaultTags, string $path = null)
     {
         $this->container = $container;
         $this->instanceof = $instanceof;
@@ -51,6 +52,10 @@ class ServiceConfigurator extends \PrefixedByPoP\Symfony\Component\DependencyInj
     }
     public function __destruct()
     {
+        if ($this->destructed) {
+            return;
+        }
+        $this->destructed = \true;
         parent::__destruct();
         $this->container->removeBindings($this->id);
         $this->container->setDefinition($this->id, $this->definition->setInstanceofConditionals($this->instanceof));

@@ -17,7 +17,7 @@ namespace PrefixedByPoP\Symfony\Component\Config\Resource;
  *
  * @final
  */
-class ComposerResource implements \PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceInterface
+class ComposerResource implements SelfCheckingResourceInterface
 {
     private $vendors;
     private static $runtimeVendors;

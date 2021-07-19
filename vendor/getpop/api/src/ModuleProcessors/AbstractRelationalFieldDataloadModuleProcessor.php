@@ -5,7 +5,7 @@ namespace PoP\API\ModuleProcessors;
 
 use PoP\API\Constants\Formats;
 use PoP\ComponentModel\ModuleProcessors\AbstractDataloadModuleProcessor;
-abstract class AbstractRelationalFieldDataloadModuleProcessor extends \PoP\ComponentModel\ModuleProcessors\AbstractDataloadModuleProcessor
+abstract class AbstractRelationalFieldDataloadModuleProcessor extends AbstractDataloadModuleProcessor
 {
     protected function getInnerSubmodules(array $module) : array
     {
@@ -16,6 +16,6 @@ abstract class AbstractRelationalFieldDataloadModuleProcessor extends \PoP\Compo
     }
     public function getFormat(array $module) : ?string
     {
-        return \PoP\API\Constants\Formats::FIELDS;
+        return Formats::FIELDS;
     }
 }

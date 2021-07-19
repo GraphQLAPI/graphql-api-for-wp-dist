@@ -3,18 +3,22 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\AttachableExtensions;
 
+use PoP\ComponentModel\AttachableExtensions\AttachableExtensionInterface;
 class AttachableExtensionManager implements \PoP\ComponentModel\AttachableExtensions\AttachableExtensionManagerInterface
 {
     /**
-     * @var array<string, array>
+     * @var array<string, array<string, AttachableExtensionInterface[]>>
      */
-    protected $extensionClasses = [];
-    public function setExtensionClass(string $attachableClass, string $group, string $extensionClass, int $priority = 10) : void
+    protected $attachableExtensions = [];
+    public function attachExtensionToClass(string $attachableClass, string $group, AttachableExtensionInterface $attachableExtension) : void
     {
-        $this->extensionClasses[$attachableClass][$group][$extensionClass] = $priority;
+        $this->attachableExtensions[$attachableClass][$group][] = $attachableExtension;
     }
-    public function getExtensionClasses(string $attachableClass, string $group) : array
+    /**
+     * @return AttachableExtensionInterface[]
+     */
+    public function getAttachedExtensions(string $attachableClass, string $group) : array
     {
-        return $this->extensionClasses[$attachableClass][$group] ?? [];
+        return $this->attachableExtensions[$attachableClass][$group] ?? [];
     }
 }

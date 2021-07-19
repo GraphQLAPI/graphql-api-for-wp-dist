@@ -4,7 +4,7 @@ declare (strict_types=1);
 namespace PoP\LooseContracts;
 
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
-abstract class AbstractLooseContractSet extends \PoP\Root\Services\AbstractAutomaticallyInstantiatedService
+abstract class AbstractLooseContractSet extends AbstractAutomaticallyInstantiatedService
 {
     /**
      * @var \PoP\LooseContracts\LooseContractManagerInterface

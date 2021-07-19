@@ -15,15 +15,15 @@ namespace PrefixedByPoP\Symfony\Component\Dotenv\Exception;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-final class FormatException extends \LogicException implements \PrefixedByPoP\Symfony\Component\Dotenv\Exception\ExceptionInterface
+final class FormatException extends \LogicException implements ExceptionInterface
 {
     private $context;
-    public function __construct(string $message, \PrefixedByPoP\Symfony\Component\Dotenv\Exception\FormatExceptionContext $context, int $code = 0, \Throwable $previous = null)
+    public function __construct(string $message, FormatExceptionContext $context, int $code = 0, \Throwable $previous = null)
     {
         $this->context = $context;
         parent::__construct(\sprintf("%s in \"%s\" at line %d.\n%s", $message, $context->getPath(), $context->getLineno(), $context->getDetails()), $code, $previous);
     }
-    public function getContext() : \PrefixedByPoP\Symfony\Component\Dotenv\Exception\FormatExceptionContext
+    public function getContext() : FormatExceptionContext
     {
         return $this->context;
     }

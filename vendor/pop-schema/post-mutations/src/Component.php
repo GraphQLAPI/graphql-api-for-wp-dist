@@ -7,7 +7,7 @@ use PoP\Root\Component\AbstractComponent;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     /**
      * Classes from PoP components that must be initialized before this component
@@ -26,7 +26,7 @@ class Component extends \PoP\Root\Component\AbstractComponent
      */
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
-        parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
-        self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
+        self::initServices(\dirname(__DIR__));
+        self::initSchemaServices(\dirname(__DIR__), $skipSchema);
     }
 }

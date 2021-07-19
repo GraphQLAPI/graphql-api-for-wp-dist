@@ -7,7 +7,7 @@ use GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot;
 use GraphQLByPoP\GraphQLServer\ObjectModels\MutationRoot;
 use PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor;
 use GraphQLByPoP\GraphQLServer\Facades\Schema\GraphQLSchemaDefinitionServiceFacade;
-class RootRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor
+class RootRelationalFieldDataloadModuleProcessor extends AbstractRelationalFieldDataloadModuleProcessor
 {
     public const MODULE_DATALOAD_RELATIONALFIELDS_QUERYROOT = 'dataload-relationalfields-queryroot';
     public const MODULE_DATALOAD_RELATIONALFIELDS_MUTATIONROOT = 'dataload-relationalfields-mutationroot';
@@ -15,19 +15,22 @@ class RootRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProcesso
     {
         return array([self::class, self::MODULE_DATALOAD_RELATIONALFIELDS_QUERYROOT], [self::class, self::MODULE_DATALOAD_RELATIONALFIELDS_MUTATIONROOT]);
     }
+    /**
+     * @return string|int|mixed[]
+     */
     public function getDBObjectIDOrIDs(array $module, array &$props, &$data_properties)
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_QUERYROOT:
-                return \GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot::ID;
+                return QueryRoot::ID;
             case self::MODULE_DATALOAD_RELATIONALFIELDS_MUTATIONROOT:
-                return \GraphQLByPoP\GraphQLServer\ObjectModels\MutationRoot::ID;
+                return MutationRoot::ID;
         }
         return parent::getDBObjectIDOrIDs($module, $props, $data_properties);
     }
     public function getTypeResolverClass(array $module) : ?string
     {
-        $graphQLSchemaDefinitionService = \GraphQLByPoP\GraphQLServer\Facades\Schema\GraphQLSchemaDefinitionServiceFacade::getInstance();
+        $graphQLSchemaDefinitionService = GraphQLSchemaDefinitionServiceFacade::getInstance();
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_QUERYROOT:
                 return $graphQLSchemaDefinitionService->getQueryRootTypeResolverClass();

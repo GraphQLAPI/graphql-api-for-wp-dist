@@ -13,7 +13,7 @@ namespace PrefixedByPoP\Symfony\Component\ExpressionLanguage;
 use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
 use PrefixedByPoP\Symfony\Component\Cache\Adapter\ArrayAdapter;
 // Help opcache.preload discover always-needed symbols
-\class_exists(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression::class);
+\class_exists(ParsedExpression::class);
 /**
  * Allows to compile and evaluate expressions written in your own DSL.
  *
@@ -29,9 +29,9 @@ class ExpressionLanguage
     /**
      * @param ExpressionFunctionProviderInterface[] $providers
      */
-    public function __construct(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $cache = null, array $providers = [])
+    public function __construct(CacheItemPoolInterface $cache = null, array $providers = [])
     {
-        $this->cache = $cache ?: new \PrefixedByPoP\Symfony\Component\Cache\Adapter\ArrayAdapter();
+        $this->cache = $cache ?? new ArrayAdapter();
         $this->registerFunctions();
         foreach ($providers as $provider) {
             $this->registerProvider($provider);
@@ -68,7 +68,7 @@ class ExpressionLanguage
      */
     public function parse($expression, array $names)
     {
-        if ($expression instanceof \PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression) {
+        if ($expression instanceof ParsedExpression) {
             return $expression;
         }
         \asort($names);
@@ -79,7 +79,7 @@ class ExpressionLanguage
         $cacheItem = $this->cache->getItem(\rawurlencode($expression . '//' . \implode('|', $cacheKeyItems)));
         if (null === ($parsedExpression = $cacheItem->get())) {
             $nodes = $this->getParser()->parse($this->getLexer()->tokenize((string) $expression), $names);
-            $parsedExpression = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression((string) $expression, $nodes);
+            $parsedExpression = new ParsedExpression((string) $expression, $nodes);
             $cacheItem->set($parsedExpression);
             $this->cache->save($cacheItem);
         }
@@ -95,7 +95,7 @@ class ExpressionLanguage
      */
     public function lint($expression, ?array $names) : void
     {
-        if ($expression instanceof \PrefixedByPoP\Symfony\Component\ExpressionLanguage\ParsedExpression) {
+        if ($expression instanceof ParsedExpression) {
             return;
         }
         $this->getParser()->lint($this->getLexer()->tokenize((string) $expression), $names);
@@ -117,11 +117,11 @@ class ExpressionLanguage
         }
         $this->functions[$name] = ['compiler' => $compiler, 'evaluator' => $evaluator];
     }
-    public function addFunction(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ExpressionFunction $function)
+    public function addFunction(ExpressionFunction $function)
     {
         $this->register($function->getName(), $function->getCompiler(), $function->getEvaluator());
     }
-    public function registerProvider(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface $provider)
+    public function registerProvider(ExpressionFunctionProviderInterface $provider)
     {
         foreach ($provider->getFunctions() as $function) {
             $this->addFunction($function);
@@ -129,26 +129,26 @@ class ExpressionLanguage
     }
     protected function registerFunctions()
     {
-        $this->addFunction(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\ExpressionFunction::fromPhp('constant'));
+        $this->addFunction(ExpressionFunction::fromPhp('constant'));
     }
-    private function getLexer() : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Lexer
+    private function getLexer() : Lexer
     {
         if (null === $this->lexer) {
-            $this->lexer = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Lexer();
+            $this->lexer = new Lexer();
         }
         return $this->lexer;
     }
-    private function getParser() : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Parser
+    private function getParser() : Parser
     {
         if (null === $this->parser) {
-            $this->parser = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Parser($this->functions);
+            $this->parser = new Parser($this->functions);
         }
         return $this->parser;
     }
-    private function getCompiler() : \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler
+    private function getCompiler() : Compiler
     {
         if (null === $this->compiler) {
-            $this->compiler = new \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler($this->functions);
+            $this->compiler = new Compiler($this->functions);
         }
         return $this->compiler->reset();
     }

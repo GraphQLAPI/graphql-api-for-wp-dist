@@ -12,9 +12,6 @@ interface GraphQLQueryConvertorInterface
     public function convertFromGraphQLToFieldQuery(string $graphQLQuery, ?array $variables = [], bool $enableMultipleQueryExecution = \false, ?string $operationName = null) : array;
     /**
      * Indicates if the variable must be dealt with as an expression: if its name starts with "_"
-     *
-     * @param string $variableName
-     * @return boolean
      */
     public function treatVariableAsExpression(string $variableName) : bool;
 }

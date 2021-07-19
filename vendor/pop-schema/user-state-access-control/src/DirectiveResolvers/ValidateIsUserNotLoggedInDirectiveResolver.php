@@ -3,30 +3,26 @@
 declare (strict_types=1);
 namespace PoPSchema\UserStateAccessControl\DirectiveResolvers;
 
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoPSchema\UserState\CheckpointSets\UserStateCheckpointSets;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\DirectiveResolvers\AbstractValidateCheckpointDirectiveResolver;
-class ValidateIsUserNotLoggedInDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractValidateCheckpointDirectiveResolver
+class ValidateIsUserNotLoggedInDirectiveResolver extends AbstractValidateCheckpointDirectiveResolver
 {
-    const DIRECTIVE_NAME = 'validateIsUserNotLoggedIn';
-    public static function getDirectiveName() : string
+    public function getDirectiveName() : string
     {
-        return self::DIRECTIVE_NAME;
+        return 'validateIsUserNotLoggedIn';
     }
-    protected function getValidationCheckpointSet(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    protected function getValidationCheckpointSet(TypeResolverInterface $typeResolver) : array
     {
-        return \PoPSchema\UserState\CheckpointSets\UserStateCheckpointSets::NOTLOGGEDIN;
+        return UserStateCheckpointSets::NOTLOGGEDIN;
     }
-    protected function getValidationFailedMessage(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array $failedDataFields) : string
+    protected function getValidationFailedMessage(TypeResolverInterface $typeResolver, array $failedDataFields) : string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $errorMessage = $this->isValidatingDirective() ? $translationAPI->__('You must not be logged in to access directives in field(s) \'%s\' for type \'%s\'', 'user-state') : $translationAPI->__('You must not be logged in to access field(s) \'%s\' for type \'%s\'', 'user-state');
-        return \sprintf($errorMessage, \implode($translationAPI->__('\', \''), $failedDataFields), $typeResolver->getMaybeNamespacedTypeName());
+        $errorMessage = $this->isValidatingDirective() ? $this->translationAPI->__('You must not be logged in to access directives in field(s) \'%s\' for type \'%s\'', 'user-state') : $this->translationAPI->__('You must not be logged in to access field(s) \'%s\' for type \'%s\'', 'user-state');
+        return \sprintf($errorMessage, \implode($this->translationAPI->__('\', \''), $failedDataFields), $typeResolver->getMaybeNamespacedTypeName());
     }
-    public function getSchemaDirectiveDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : ?string
+    public function getSchemaDirectiveDescription(TypeResolverInterface $typeResolver) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return $translationAPI->__('It validates if the user is not logged-in', 'component-model');
+        return $this->translationAPI->__('It validates if the user is not logged-in', 'component-model');
     }
 }

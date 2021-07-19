@@ -16,13 +16,13 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  *
  * @internal
  */
-class NameNode extends \PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node
+class NameNode extends Node
 {
     public function __construct(string $name)
     {
         parent::__construct([], ['name' => $name]);
     }
-    public function compile(\PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler $compiler)
+    public function compile(Compiler $compiler)
     {
         $compiler->raw('$' . $this->attributes['name']);
     }

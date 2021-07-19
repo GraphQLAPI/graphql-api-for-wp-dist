@@ -3,88 +3,68 @@
 declare (strict_types=1);
 namespace PoP\Engine\DirectiveResolvers;
 
-use PoP\FieldQuery\QueryHelpers;
+use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
+use PoP\ComponentModel\Directives\DirectiveTypes;
+use PoP\ComponentModel\ErrorHandling\Error;
+use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
 use PoP\ComponentModel\Feedback\Tokens;
-use PoP\Engine\Dataloading\Expressions;
 use PoP\ComponentModel\Misc\GeneralUtils;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Directives\DirectiveTypes;
-use PoP\ComponentModel\Schema\TypeCastingHelpers;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
-class ApplyFunctionDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
+use PoP\Engine\Dataloading\Expressions;
+use PoP\FieldQuery\QueryHelpers;
+class ApplyFunctionDirectiveResolver extends AbstractGlobalDirectiveResolver
 {
-    public const DIRECTIVE_NAME = 'applyFunction';
-    public static function getDirectiveName() : string
+    public function getDirectiveName() : string
     {
-        return self::DIRECTIVE_NAME;
+        return 'applyFunction';
     }
     /**
      * This is a "Scripting" type directive
-     *
-     * @return string
      */
     public function getDirectiveType() : string
     {
-        return \PoP\ComponentModel\Directives\DirectiveTypes::SCRIPTING;
+        return DirectiveTypes::SCRIPTING;
     }
-    public function getSchemaDirectiveArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getSchemaDirectiveArgs(TypeResolverInterface $typeResolver) : array
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'function', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('Function to execute on the affected fields', 'component-model'), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_MANDATORY => \true], [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'addArguments', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_MIXED), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($translationAPI->__('Arguments to inject to the function. The value of the affected field can be provided under special expression `%s`', 'component-model'), \PoP\FieldQuery\QueryHelpers::getExpressionQuery(\PoP\Engine\Dataloading\Expressions::NAME_VALUE))], [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'target', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => $translationAPI->__('Property from the current object where to store the results of the function. If the result must not be stored, pass an empty value. Default value: Same property as the affected field', 'component-model')]];
+        return [[SchemaDefinition::ARGNAME_NAME => 'function', SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_STRING, SchemaDefinition::ARGNAME_DESCRIPTION => $this->translationAPI->__('Function to execute on the affected fields', 'component-model'), SchemaDefinition::ARGNAME_MANDATORY => \true], [SchemaDefinition::ARGNAME_NAME => 'addArguments', SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_MIXED, SchemaDefinition::ARGNAME_IS_ARRAY => \true, SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($this->translationAPI->__('Arguments to inject to the function. The value of the affected field can be provided under special expression `%s`', 'component-model'), QueryHelpers::getExpressionQuery(Expressions::NAME_VALUE))], [SchemaDefinition::ARGNAME_NAME => 'target', SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_STRING, SchemaDefinition::ARGNAME_DESCRIPTION => $this->translationAPI->__('Property from the current object where to store the results of the function. If the result must not be stored, pass an empty value. Default value: Same property as the affected field', 'component-model')]];
     }
-    public function getSchemaDirectiveExpressions(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getSchemaDirectiveExpressions(TypeResolverInterface $typeResolver) : array
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return [\PoP\Engine\Dataloading\Expressions::NAME_VALUE => $translationAPI->__('Element being transformed', 'component-model')];
+        return [Expressions::NAME_VALUE => $this->translationAPI->__('Element being transformed', 'component-model')];
     }
-    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    public function resolveDirective(TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
     {
         $this->regenerateAndExecuteFunction($typeResolver, $resultIDItems, $idsDataFields, $dbItems, $previousDBItems, $variables, $messages, $dbErrors, $dbWarnings, $dbDeprecations, $schemaErrors, $schemaWarnings, $schemaDeprecations);
     }
     /**
      * Execute a function on the affected field
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @param array $resultIDItems
-     * @param array $idsDataFields
-     * @param array $dbItems
-     * @param array $dbErrors
-     * @param array $dbWarnings
-     * @param array $schemaErrors
-     * @param array $schemaWarnings
-     * @param array $schemaDeprecations
-     * @return void
      */
-    protected function regenerateAndExecuteFunction(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$resultIDItems, array &$idsDataFields, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations)
+    protected function regenerateAndExecuteFunction(TypeResolverInterface $typeResolver, array &$resultIDItems, array &$idsDataFields, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations) : void
     {
         $function = $this->directiveArgsForSchema['function'];
         $addArguments = $this->directiveArgsForSchema['addArguments'] ?? [];
-        $target = $this->directiveArgsForSchema['target'];
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
+        $target = $this->directiveArgsForSchema['target'] ?? null;
         // Maybe re-generate the function: Inject the provided `$addArguments` to the fieldArgs already declared in the query
         if ($addArguments) {
-            $functionName = $fieldQueryInterpreter->getFieldName($function);
-            $functionArgElems = \array_merge($fieldQueryInterpreter->extractFieldArguments($typeResolver, $function), $addArguments);
-            $function = $fieldQueryInterpreter->getField($functionName, $functionArgElems);
+            $functionName = $this->fieldQueryInterpreter->getFieldName($function);
+            $functionArgElems = \array_merge($this->fieldQueryInterpreter->extractFieldArguments($typeResolver, $function), $addArguments);
+            $function = $this->fieldQueryInterpreter->getField($functionName, $functionArgElems);
         }
         $dbKey = $typeResolver->getTypeOutputName();
         // Get the value from the object
         foreach ($idsDataFields as $id => $dataFields) {
             foreach ($dataFields['direct'] as $field) {
-                $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
+                $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
                 // Validate that the property exists
                 $isValueInDBItems = \array_key_exists($fieldOutputKey, $dbItems[(string) $id] ?? []);
                 if (!$isValueInDBItems && !\array_key_exists($fieldOutputKey, $previousDBItems[$dbKey][(string) $id] ?? [])) {
                     if ($fieldOutputKey != $field) {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Field \'%s\' (under property \'%s\') hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $field, $fieldOutputKey, $id)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Field \'%s\' (under property \'%s\') hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $field, $fieldOutputKey, $id)];
                     } else {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Field \'%s\' hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $fieldOutputKey, $id)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Field \'%s\' hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $fieldOutputKey, $id)];
                     }
                     continue;
                 }
@@ -92,37 +72,45 @@ class ApplyFunctionDirectiveResolver extends \PoP\ComponentModel\DirectiveResolv
                 $this->addExpressionsForResultItem($typeResolver, $id, $field, $resultIDItems, $dbItems, $previousDBItems, $variables, $messages, $dbErrors, $dbWarnings, $dbDeprecations, $schemaErrors, $schemaWarnings, $schemaDeprecations);
                 // Generate the fieldArgs from combining the query with the values in the context, through $variables
                 $expressions = $this->getExpressionsForResultItem($id, $variables, $messages);
-                list($validFunction, $schemaFieldName, $schemaFieldArgs, $schemaDBErrors, $schemaDBWarnings) = $fieldQueryInterpreter->extractFieldArgumentsForSchema($typeResolver, $function, $variables);
+                list($validFunction, $schemaFieldName, $schemaFieldArgs, $schemaDBErrors, $schemaDBWarnings) = $this->fieldQueryInterpreter->extractFieldArgumentsForSchema($typeResolver, $function, $variables);
                 // Place the errors not under schema but under DB, since they may change on a resultItem by resultItem basis
                 if ($schemaDBWarnings) {
-                    foreach ($schemaDBWarnings as $warningMessage) {
-                        $dbWarnings[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Warning validating function \'%s\' on object with ID \'%s\' and field under property \'%s\': %s)', 'component-model'), $function, $id, $fieldOutputKey, $warningMessage)];
+                    $dbWarning = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Nested warnings validating function \'%s\' on object with ID \'%s\' and field under property \'%s\')', 'component-model'), $function, $id, $fieldOutputKey)];
+                    foreach ($schemaDBWarnings as $schemaDBWarning) {
+                        \array_unshift($schemaDBWarning[Tokens::PATH], $this->directive);
+                        $this->prependPathOnNestedErrors($schemaDBWarning);
+                        $dbWarning[Tokens::EXTENSIONS][Tokens::NESTED][] = $schemaDBWarning;
                     }
+                    $dbWarnings[(string) $id][] = $dbWarning;
                 }
                 if ($schemaDBErrors) {
-                    foreach ($schemaDBErrors as $errorMessage) {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Error validating function \'%s\' on object with ID \'%s\' and field under property \'%s\': %s)', 'component-model'), $function, $id, $fieldOutputKey, $errorMessage)];
-                    }
                     if ($fieldOutputKey != $field) {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Applying function on field \'%s\' (under property \'%s\') on object with ID \'%s\' can\'t be executed due to previous errors', 'component-model'), $field, $fieldOutputKey, $id)];
+                        $errorMessage = \sprintf($this->translationAPI->__('Applying function on field \'%s\' (under property \'%s\') on object with ID \'%s\' can\'t be executed due to nested errors', 'component-model'), $field, $fieldOutputKey, $id);
                     } else {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Applying function on field \'%s\' on object with ID \'%s\' can\'t be executed due to previous errors', 'component-model'), $fieldOutputKey, $id)];
+                        $errorMessage = \sprintf($this->translationAPI->__('Applying function on field \'%s\' on object with ID \'%s\' can\'t be executed due to nested errors', 'component-model'), $fieldOutputKey, $id);
                     }
+                    $dbError = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => $errorMessage];
+                    foreach ($schemaDBErrors as $schemaDBError) {
+                        \array_unshift($schemaDBError[Tokens::PATH], $this->directive);
+                        $this->prependPathOnNestedErrors($schemaDBError);
+                        $dbError[Tokens::EXTENSIONS][Tokens::NESTED][] = $schemaDBError;
+                    }
+                    $dbErrors[(string) $id][] = $dbError;
                     continue;
                 }
                 // Execute the function
                 // Because the function was dynamically created, we must indicate to validate the schema when doing ->resolveValue
-                $options = [\PoP\ComponentModel\TypeResolvers\AbstractTypeResolver::OPTION_VALIDATE_SCHEMA_ON_RESULT_ITEM => \true];
+                $options = [AbstractTypeResolver::OPTION_VALIDATE_SCHEMA_ON_RESULT_ITEM => \true];
                 $functionValue = $typeResolver->resolveValue($resultIDItems[(string) $id], $validFunction, $variables, $expressions, $options);
                 // Merge the dbWarnings, if any
-                $feedbackMessageStore = \PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance();
-                if ($resultItemDBWarnings = $feedbackMessageStore->retrieveAndClearResultItemDBWarnings($id)) {
+                if ($resultItemDBWarnings = $this->feedbackMessageStore->retrieveAndClearResultItemDBWarnings($id)) {
                     $dbWarnings[$id] = \array_merge($dbWarnings[$id] ?? [], $resultItemDBWarnings);
                 }
                 // If there was an error (eg: a missing mandatory argument), then the function will be of type Error
-                if (\PoP\ComponentModel\Misc\GeneralUtils::isError($functionValue)) {
+                if (GeneralUtils::isError($functionValue)) {
+                    /** @var Error */
                     $error = $functionValue;
-                    $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Applying function on \'%s\' on object with ID \'%s\' failed due to error: %s', 'component-model'), $fieldOutputKey, $id, $error->getErrorMessage())];
+                    $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Applying function on \'%s\' on object with ID \'%s\' failed due to error: %s', 'component-model'), $fieldOutputKey, $id, $error->getMessageOrCode())];
                     continue;
                 }
                 // Store the results:
@@ -138,29 +126,13 @@ class ApplyFunctionDirectiveResolver extends \PoP\ComponentModel\DirectiveResolv
     }
     /**
      * Place all the reserved variables into the `$variables` context
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @param [type] $id
-     * @param string $field
-     * @param array $resultIDItems
-     * @param array $dbItems
-     * @param array $dbErrors
-     * @param array $dbWarnings
-     * @param array $schemaErrors
-     * @param array $schemaWarnings
-     * @param array $schemaDeprecations
-     * @param array $previousDBItems
-     * @param array $variables
-     * @param array $messages
-     * @return void
      */
-    protected function addExpressionsForResultItem(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $id, string $field, array &$resultIDItems, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations)
+    protected function addExpressionsForResultItem(TypeResolverInterface $typeResolver, $id, string $field, array &$resultIDItems, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations) : void
     {
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-        $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
+        $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
         $isValueInDBItems = \array_key_exists($fieldOutputKey, $dbItems[(string) $id] ?? []);
         $dbKey = $typeResolver->getTypeOutputName();
         $value = $isValueInDBItems ? $dbItems[(string) $id][$fieldOutputKey] : $previousDBItems[$dbKey][(string) $id][$fieldOutputKey];
-        $this->addExpressionForResultItem($id, \PoP\Engine\Dataloading\Expressions::NAME_VALUE, $value, $messages);
+        $this->addExpressionForResultItem($id, Expressions::NAME_VALUE, $value, $messages);
     }
 }

@@ -25,7 +25,7 @@ use PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface;
 final class LockRegistry
 {
     private static $openedFiles = [];
-    private static $lockedFiles = [];
+    private static $lockedFiles;
     /**
      * The number of items in this list controls the max number of concurrent processes.
      */
@@ -48,9 +48,13 @@ final class LockRegistry
         self::$openedFiles = self::$lockedFiles = [];
         return $previousFiles;
     }
-    public static function compute(callable $callback, \PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface $item, bool &$save, \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface $pool, \Closure $setMetadata = null, \PrefixedByPoP\Psr\Log\LoggerInterface $logger = null)
+    public static function compute(callable $callback, ItemInterface $item, bool &$save, CacheInterface $pool, \Closure $setMetadata = null, LoggerInterface $logger = null)
     {
-        $key = self::$files ? \crc32($item->getKey()) % \count(self::$files) : -1;
+        if ('\\' === \DIRECTORY_SEPARATOR && null === self::$lockedFiles) {
+            // disable locking on Windows by default
+            self::$files = self::$lockedFiles = [];
+        }
+        $key = self::$files ? \abs(\crc32($item->getKey())) % \count(self::$files) : -1;
         if ($key < 0 || (self::$lockedFiles[$key] ?? \false) || !($lock = self::open($key))) {
             return $callback($item, $save);
         }
@@ -79,7 +83,7 @@ final class LockRegistry
                 unset(self::$lockedFiles[$key]);
             }
             static $signalingException, $signalingCallback;
-            $signalingException = $signalingException ?? \unserialize("O:9:\"Exception\":1:{s:16:\"\0Exception\0trace\";a:0:{}}");
+            $signalingException = $signalingException ?? \unserialize("O:9:\"Exception\":1:{s:16:\"\x00Exception\x00trace\";a:0:{}}");
             $signalingCallback = $signalingCallback ?? function () use($signalingException) {
                 throw $signalingException;
             };

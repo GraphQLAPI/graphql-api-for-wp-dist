@@ -6,16 +6,14 @@ namespace PoP\MandatoryDirectivesByConfiguration\TypeResolverDecorators;
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
 use PoP\ComponentModel\TypeResolverDecorators\AbstractTypeResolverDecorator;
 use PoP\MandatoryDirectivesByConfiguration\TypeResolverDecorators\ConfigurableMandatoryDirectivesForDirectivesTypeResolverDecoratorTrait;
-abstract class AbstractMandatoryDirectivesForDirectivesTypeResolverDecorator extends \PoP\ComponentModel\TypeResolverDecorators\AbstractTypeResolverDecorator
+abstract class AbstractMandatoryDirectivesForDirectivesTypeResolverDecorator extends AbstractTypeResolverDecorator
 {
     use ConfigurableMandatoryDirectivesForDirectivesTypeResolverDecoratorTrait;
     /**
      * By default, it is valid everywhere
-     *
-     * @return array
      */
-    public static function getClassesToAttachTo() : array
+    public function getClassesToAttachTo() : array
     {
-        return [\PoP\ComponentModel\TypeResolvers\AbstractTypeResolver::class];
+        return [AbstractTypeResolver::class];
     }
 }

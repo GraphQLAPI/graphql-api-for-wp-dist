@@ -5,7 +5,7 @@ namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds;
 use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNestableType;
-class NonNullType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNestableType
+class NonNullType extends AbstractNestableType
 {
     use NonDocumentableTypeTrait;
     public function getName() : string
@@ -14,6 +14,6 @@ class NonNullType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNesta
     }
     public function getKind() : string
     {
-        return \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::NON_NULL;
+        return TypeKinds::NON_NULL;
     }
 }

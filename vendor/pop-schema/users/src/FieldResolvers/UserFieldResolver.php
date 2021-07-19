@@ -3,35 +3,50 @@
 declare (strict_types=1);
 namespace PoPSchema\Users\FieldResolvers;
 
-use PoPSchema\Users\TypeResolvers\UserTypeResolver;
-use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\Translation\Facades\TranslationAPIFacade;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 use PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver;
+use PoP\ComponentModel\HelperServices\SemverHelperServiceInterface;
+use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
+use PoP\ComponentModel\Schema\SchemaDefinition;
+use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\Engine\CMS\CMSServiceInterface;
+use PoP\Hooks\HooksAPIInterface;
+use PoP\LooseContracts\NameResolverInterface;
+use PoP\Translation\TranslationAPIInterface;
 use PoPSchema\QueriedObject\FieldInterfaceResolvers\QueryableFieldInterfaceResolver;
-class UserFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDataFieldResolver
+use PoPSchema\Users\TypeAPIs\UserTypeAPIInterface;
+use PoPSchema\Users\TypeResolvers\UserTypeResolver;
+class UserFieldResolver extends AbstractDBDataFieldResolver
 {
-    public static function getClassesToAttachTo() : array
+    /**
+     * @var \PoPSchema\Users\TypeAPIs\UserTypeAPIInterface
+     */
+    protected $userTypeAPI;
+    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, InstanceManagerInterface $instanceManager, FieldQueryInterpreterInterface $fieldQueryInterpreter, NameResolverInterface $nameResolver, CMSServiceInterface $cmsService, SemverHelperServiceInterface $semverHelperService, UserTypeAPIInterface $userTypeAPI)
     {
-        return array(\PoPSchema\Users\TypeResolvers\UserTypeResolver::class);
+        $this->userTypeAPI = $userTypeAPI;
+        parent::__construct($translationAPI, $hooksAPI, $instanceManager, $fieldQueryInterpreter, $nameResolver, $cmsService, $semverHelperService);
     }
-    public static function getImplementedInterfaceClasses() : array
+    public function getClassesToAttachTo() : array
     {
-        return [\PoPSchema\QueriedObject\FieldInterfaceResolvers\QueryableFieldInterfaceResolver::class];
+        return array(UserTypeResolver::class);
     }
-    public static function getFieldNamesToResolve() : array
+    public function getImplementedFieldInterfaceResolverClasses() : array
     {
-        return ['username', 'userNicename', 'nicename', 'name', 'displayName', 'firstname', 'lastname', 'email', 'url', 'slug', 'description', 'websiteURL'];
+        return [QueryableFieldInterfaceResolver::class];
     }
-    public function getSchemaFieldType(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getFieldNamesToResolve() : array
     {
-        $types = ['username' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'userNicename' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'nicename' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'name' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'displayName' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'firstname' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'lastname' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'email' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_EMAIL, 'url' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_URL, 'slug' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'description' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_STRING, 'websiteURL' => \PoP\ComponentModel\Schema\SchemaDefinition::TYPE_URL];
+        return ['username', 'name', 'displayName', 'firstname', 'lastname', 'email', 'url', 'slug', 'description', 'websiteURL'];
+    }
+    public function getSchemaFieldType(TypeResolverInterface $typeResolver, string $fieldName) : string
+    {
+        $types = ['username' => SchemaDefinition::TYPE_STRING, 'name' => SchemaDefinition::TYPE_STRING, 'displayName' => SchemaDefinition::TYPE_STRING, 'firstname' => SchemaDefinition::TYPE_STRING, 'lastname' => SchemaDefinition::TYPE_STRING, 'email' => SchemaDefinition::TYPE_EMAIL, 'url' => SchemaDefinition::TYPE_URL, 'slug' => SchemaDefinition::TYPE_STRING, 'description' => SchemaDefinition::TYPE_STRING, 'websiteURL' => SchemaDefinition::TYPE_URL];
         return $types[$fieldName] ?? parent::getSchemaFieldType($typeResolver, $fieldName);
     }
-    public function getSchemaFieldDescription(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, string $fieldName) : ?string
+    public function getSchemaFieldDescription(TypeResolverInterface $typeResolver, string $fieldName) : ?string
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        $descriptions = ['username' => $translationAPI->__('User\'s username handle', 'pop-users'), 'userNicename' => $translationAPI->__('User\'s nice name', 'pop-users'), 'nicename' => $translationAPI->__('User\'s nice name', 'pop-users'), 'name' => $translationAPI->__('Name of the user', 'pop-users'), 'displayName' => $translationAPI->__('Name of the user as displayed on the website', 'pop-users'), 'firstname' => $translationAPI->__('User\'s first name', 'pop-users'), 'lastname' => $translationAPI->__('User\'s last name', 'pop-users'), 'email' => $translationAPI->__('User\'s email', 'pop-users'), 'url' => $translationAPI->__('URL of the user\'s profile in the website', 'pop-users'), 'slug' => $translationAPI->__('Slug of the URL of the user\'s profile in the website', 'pop-users'), 'description' => $translationAPI->__('Description of the user', 'pop-users'), 'websiteURL' => $translationAPI->__('User\'s own website\'s URL', 'pop-users')];
+        $descriptions = ['username' => $this->translationAPI->__('User\'s username handle', 'pop-users'), 'name' => $this->translationAPI->__('Name of the user', 'pop-users'), 'displayName' => $this->translationAPI->__('Name of the user as displayed on the website', 'pop-users'), 'firstname' => $this->translationAPI->__('User\'s first name', 'pop-users'), 'lastname' => $this->translationAPI->__('User\'s last name', 'pop-users'), 'email' => $this->translationAPI->__('User\'s email', 'pop-users'), 'url' => $this->translationAPI->__('URL of the user\'s profile in the website', 'pop-users'), 'slug' => $this->translationAPI->__('Slug of the URL of the user\'s profile in the website', 'pop-users'), 'description' => $this->translationAPI->__('Description of the user', 'pop-users'), 'websiteURL' => $this->translationAPI->__('User\'s own website\'s URL', 'pop-users')];
         return $descriptions[$fieldName] ?? parent::getSchemaFieldDescription($typeResolver, $fieldName);
     }
     /**
@@ -42,34 +57,29 @@ class UserFieldResolver extends \PoP\ComponentModel\FieldResolvers\AbstractDBDat
      * @return mixed
      * @param object $resultItem
      */
-    public function resolveValue(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
+    public function resolveValue(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = [], ?array $variables = null, ?array $expressions = null, array $options = [])
     {
-        $cmsusersresolver = \PoPSchema\Users\ObjectPropertyResolverFactory::getInstance();
-        $cmsusersapi = \PoPSchema\Users\FunctionAPIFactory::getInstance();
         $user = $resultItem;
         switch ($fieldName) {
             case 'username':
-                return $cmsusersresolver->getUserLogin($user);
-            case 'userNicename':
-            case 'nicename':
-                return $cmsusersresolver->getUserNicename($user);
+                return $this->userTypeAPI->getUserLogin($user);
             case 'name':
             case 'displayName':
-                return $cmsusersresolver->getUserDisplayName($user);
+                return $this->userTypeAPI->getUserDisplayName($user);
             case 'firstname':
-                return $cmsusersresolver->getUserFirstname($user);
+                return $this->userTypeAPI->getUserFirstname($user);
             case 'lastname':
-                return $cmsusersresolver->getUserLastname($user);
+                return $this->userTypeAPI->getUserLastname($user);
             case 'email':
-                return $cmsusersresolver->getUserEmail($user);
+                return $this->userTypeAPI->getUserEmail($user);
             case 'url':
-                return $cmsusersapi->getUserURL($typeResolver->getID($user));
+                return $this->userTypeAPI->getUserURL($typeResolver->getID($user));
             case 'slug':
-                return $cmsusersresolver->getUserSlug($user);
+                return $this->userTypeAPI->getUserSlug($user);
             case 'description':
-                return $cmsusersresolver->getUserDescription($user);
+                return $this->userTypeAPI->getUserDescription($user);
             case 'websiteURL':
-                return $cmsusersresolver->getUserWebsiteUrl($user);
+                return $this->userTypeAPI->getUserWebsiteUrl($user);
         }
         return parent::resolveValue($typeResolver, $resultItem, $fieldName, $fieldArgs, $variables, $expressions, $options);
     }

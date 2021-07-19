@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI;
 
-use GraphQLAPI\GraphQLAPI\Security\UserAuthorization;
-use PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers;
 use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
+use PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers;
 
 class ComponentConfiguration
 {
@@ -28,20 +27,18 @@ class ComponentConfiguration
     /**
      * @var string|null
      */
-    private static $getCustomEndpointSlugBase = null;
+    private static $getCustomEndpointSlugBase;
     /**
      * @var string|null
      */
-    private static $getPersistedQuerySlugBase = null;
+    private static $getPersistedQuerySlugBase;
     /**
      * @var string|null
      */
-    private static $getEditingAccessScheme = null;
+    private static $getEditingAccessScheme;
 
     // /**
     //  * URL base for the module, pointing to graphql-api.com
-    //  *
-    //  * @return string
     //  */
     // public static function getModuleURLBase(): string
     // {
@@ -49,7 +46,6 @@ class ComponentConfiguration
     //     $envVariable = Environment::MODULE_URL_BASE;
     //     $selfProperty = &self::$getModuleURLBase;
     //     $defaultValue = 'https://graphql-api.com/modules/';
-
     //     // Initialize property from the environment/hook
     //     self::maybeInitializeConfigurationValue(
     //         $envVariable,
@@ -58,11 +54,8 @@ class ComponentConfiguration
     //     );
     //     return $selfProperty;
     // }
-
     /**
      * Group the fields under the type when printing it for the user
-     *
-     * @return boolean
      */
     public static function groupFieldsUnderTypeForPrint(): bool
     {
@@ -73,7 +66,12 @@ class ComponentConfiguration
         $callback = [EnvironmentValueHelpers::class, 'toBool'];
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue,
+            $callback
+        );
         return $selfProperty;
     }
 
@@ -88,7 +86,11 @@ class ComponentConfiguration
         $defaultValue = \__('---', 'graphql-api');
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue
+        );
         return $selfProperty;
     }
 
@@ -100,18 +102,19 @@ class ComponentConfiguration
         // Define properties
         $envVariable = Environment::SETTINGS_VALUE_LABEL;
         $selfProperty = &self::$getSettingsValueLabel;
-        // $defaultValue = \__('As defined in the General Settings', 'graphql-api');
-        $defaultValue = \__('Default', 'graphql-api');
+        $defaultValue = \__('🟡 Default', 'graphql-api');
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue
+        );
         return $selfProperty;
     }
 
     /**
      * The slug to use as base when accessing the custom endpoint
-     *
-     * @return string
      */
     public static function getCustomEndpointSlugBase(): string
     {
@@ -121,14 +124,16 @@ class ComponentConfiguration
         $defaultValue = 'graphql';
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue
+        );
         return $selfProperty;
     }
 
     /**
      * The slug to use as base when accessing the persisted query
-     *
-     * @return string
      */
     public static function getPersistedQuerySlugBase(): string
     {
@@ -138,7 +143,11 @@ class ComponentConfiguration
         $defaultValue = 'graphql-query';
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue
+        );
         return $selfProperty;
     }
 
@@ -146,18 +155,20 @@ class ComponentConfiguration
      * If `"admin"`, only the admin can compose a GraphQL query and endpoint
      * If `"post"`, the workflow from creating posts is employed (i.e. Author role can create
      * but not publish the query, Editor role can publish it, etc)
-     *
-     * @return string
      */
-    public static function getEditingAccessScheme(): string
+    public static function getEditingAccessScheme(): ?string
     {
         // Define properties
         $envVariable = Environment::EDITING_ACCESS_SCHEME;
         $selfProperty = &self::$getEditingAccessScheme;
-        $defaultValue = UserAuthorization::ACCESS_SCHEME_ADMIN_ONLY;
+        $defaultValue = null;
 
         // Initialize property from the environment/hook
-        self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue);
+        self::maybeInitializeConfigurationValue(
+            $envVariable,
+            $selfProperty,
+            $defaultValue
+        );
         return $selfProperty;
     }
 }

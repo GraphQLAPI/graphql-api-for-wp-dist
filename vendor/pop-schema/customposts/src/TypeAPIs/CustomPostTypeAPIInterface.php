@@ -7,20 +7,22 @@ use PoPSchema\CustomPosts\Types\CustomPostTypeInterface;
 /**
  * Methods to interact with the Type, to be implemented by the underlying CMS
  */
-interface CustomPostTypeAPIInterface extends \PoPSchema\CustomPosts\Types\CustomPostTypeInterface
+interface CustomPostTypeAPIInterface extends CustomPostTypeInterface
 {
     /**
      * Get the custom post with provided ID or, if it doesn't exist, null
-     *
-     * @param [type] $id
-     * @return void
+     * @param int|string $id
+     * @return object|null
      */
     public function getCustomPost($id);
+    /**
+     * @param string|int|object $objectOrID
+     */
     public function getCustomPostType($objectOrID) : string;
     /**
      * @param array<string, mixed> $query
      * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @return object[]
      */
     public function getCustomPosts(array $query, array $options = []) : array;
     public function getCustomPostCount(array $query = [], array $options = []) : int;

@@ -25,7 +25,7 @@ interface PromiseInterface
      *
      * @return PromiseInterface
      */
-    public function then(callable $onFulfilled = null, callable $onRejected = null);
+    public function then($onFulfilled = null, $onRejected = null);
     /**
      * Appends a rejection handler callback to the promise, and returns a new
      * promise resolving to the return value of the callback if it is called,

@@ -22,20 +22,21 @@ use PrefixedByPoP\Symfony\Component\HttpKernel\DataCollector\LateDataCollectorIn
  *
  * @final
  */
-class CacheDataCollector extends \PrefixedByPoP\Symfony\Component\HttpKernel\DataCollector\DataCollector implements \PrefixedByPoP\Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface
+class CacheDataCollector extends DataCollector implements LateDataCollectorInterface
 {
     /**
      * @var TraceableAdapter[]
      */
     private $instances = [];
-    public function addInstance(string $name, \PrefixedByPoP\Symfony\Component\Cache\Adapter\TraceableAdapter $instance)
+    public function addInstance(string $name, TraceableAdapter $instance)
     {
         $this->instances[$name] = $instance;
     }
     /**
      * {@inheritdoc}
+     * @param \Throwable $exception
      */
-    public function collect(\PrefixedByPoP\Symfony\Component\HttpFoundation\Request $request, \PrefixedByPoP\Symfony\Component\HttpFoundation\Response $response, \Throwable $exception = null)
+    public function collect(Request $request, Response $response, $exception = null)
     {
         $empty = ['calls' => [], 'config' => [], 'options' => [], 'statistics' => []];
         $this->data = ['instances' => $empty, 'total' => $empty];

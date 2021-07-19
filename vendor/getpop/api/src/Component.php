@@ -7,10 +7,12 @@ use PoP\API\Configuration\Request;
 use PoP\Root\Component\AbstractComponent;
 use PoP\Root\Component\CanDisableComponentTrait;
 use PoP\AccessControl\ComponentConfiguration as AccessControlComponentConfiguration;
+use PoP\AccessControl\Component as AccessControlComponent;
+use PoP\CacheControl\Component as CacheControlComponent;
 /**
  * Initialize component
  */
-class Component extends \PoP\Root\Component\AbstractComponent
+class Component extends AbstractComponent
 {
     use CanDisableComponentTrait;
     /**
@@ -24,18 +26,10 @@ class Component extends \PoP\Root\Component\AbstractComponent
     }
     /**
      * All conditional component classes that this component depends upon, to initialize them
-     *
-     * @return array
      */
     public static function getDependedConditionalComponentClasses() : array
     {
         return [\PoP\AccessControl\Component::class, \PoP\CacheControl\Component::class];
-    }
-    public static function getDependedMigrationPlugins() : array
-    {
-        $packageName = \basename(\dirname(__DIR__));
-        $folder = \dirname(__DIR__, 2);
-        return [$folder . '/migrate-' . $packageName . '/initialize.php'];
     }
     /**
      * Set the default component configuration
@@ -46,7 +40,7 @@ class Component extends \PoP\Root\Component\AbstractComponent
     {
         // If passing ?use_namespace=1, set it on the configuration
         if (\PoP\API\Environment::enableSettingNamespacingByURLParam()) {
-            $useNamespacing = \PoP\API\Configuration\Request::namespaceTypesAndInterfaces();
+            $useNamespacing = Request::namespaceTypesAndInterfaces();
             if ($useNamespacing !== null) {
                 $componentClassConfiguration[\PoP\ComponentModel\Component::class][\PoP\ComponentModel\Environment::NAMESPACE_TYPES_AND_INTERFACES] = $useNamespacing;
             }
@@ -61,20 +55,19 @@ class Component extends \PoP\Root\Component\AbstractComponent
     protected static function initializeContainerServices(array $configuration = [], bool $skipSchema = \false, array $skipSchemaComponentClasses = []) : void
     {
         if (self::isEnabled()) {
-            parent::initializeContainerServices($configuration, $skipSchema, $skipSchemaComponentClasses);
             \PoP\API\ComponentConfiguration::setConfiguration($configuration);
-            self::initYAMLServices(\dirname(__DIR__));
-            self::maybeInitYAMLSchemaServices(\dirname(__DIR__), $skipSchema);
+            self::initServices(\dirname(__DIR__));
+            self::initSchemaServices(\dirname(__DIR__), $skipSchema);
             // Conditional packages
-            if (\class_exists('\\PoP\\AccessControl\\Component')) {
-                self::initYAMLServices(\dirname(__DIR__), '/Conditional/AccessControl');
+            if (\class_exists(AccessControlComponent::class)) {
+                self::initServices(\dirname(__DIR__), '/ConditionalOnComponent/AccessControl');
             }
-            if (\class_exists('\\PoP\\CacheControl\\Component') && !\in_array(\PoP\CacheControl\Component::class, $skipSchemaComponentClasses) && \class_exists('\\PoP\\AccessControl\\Component') && !\in_array(\PoP\AccessControl\Component::class, $skipSchemaComponentClasses) && \PoP\AccessControl\ComponentConfiguration::canSchemaBePrivate()) {
-                self::maybeInitPHPSchemaServices(\dirname(__DIR__), $skipSchema, '/Conditional/CacheControl/Conditional/AccessControl/ConditionalOnEnvironment/PrivateSchema');
+            if (\class_exists(CacheControlComponent::class) && \class_exists(AccessControlComponent::class) && AccessControlComponentConfiguration::canSchemaBePrivate()) {
+                self::initSchemaServices(\dirname(__DIR__), $skipSchema || \in_array(\PoP\CacheControl\Component::class, $skipSchemaComponentClasses) || \in_array(\PoP\AccessControl\Component::class, $skipSchemaComponentClasses), '/ConditionalOnComponent/CacheControl/ConditionalOnComponent/AccessControl/ConditionalOnContext/PrivateSchema');
             }
         }
     }
-    protected static function resolveEnabled()
+    protected static function resolveEnabled() : bool
     {
         return !\PoP\API\Environment::disableAPI();
     }

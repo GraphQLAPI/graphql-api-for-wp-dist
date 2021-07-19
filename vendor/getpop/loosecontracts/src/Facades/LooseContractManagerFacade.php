@@ -7,12 +7,12 @@ use PoP\LooseContracts\LooseContractManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class LooseContractManagerFacade
 {
-    public static function getInstance() : \PoP\LooseContracts\LooseContractManagerInterface
+    public static function getInstance() : LooseContractManagerInterface
     {
         /**
          * @var LooseContractManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\LooseContracts\LooseContractManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(LooseContractManagerInterface::class);
         return $service;
     }
 }

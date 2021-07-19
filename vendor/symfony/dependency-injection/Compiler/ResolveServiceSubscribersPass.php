@@ -19,18 +19,15 @@ use PrefixedByPoP\Symfony\Contracts\Service\ServiceProviderInterface;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ResolveServiceSubscribersPass extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\AbstractRecursivePass
+class ResolveServiceSubscribersPass extends AbstractRecursivePass
 {
     private $serviceLocator;
-    /**
-     * @param bool $isRoot
-     */
-    protected function processValue($value, $isRoot = \false)
+    protected function processValue($value, bool $isRoot = \false)
     {
-        if ($value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference && $this->serviceLocator && \in_array((string) $value, [\PrefixedByPoP\Psr\Container\ContainerInterface::class, \PrefixedByPoP\Symfony\Contracts\Service\ServiceProviderInterface::class], \true)) {
-            return new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($this->serviceLocator);
+        if ($value instanceof Reference && $this->serviceLocator && \in_array((string) $value, [ContainerInterface::class, ServiceProviderInterface::class], \true)) {
+            return new Reference($this->serviceLocator);
         }
-        if (!$value instanceof \PrefixedByPoP\Symfony\Component\DependencyInjection\Definition) {
+        if (!$value instanceof Definition) {
             return parent::processValue($value, $isRoot);
         }
         $serviceLocator = $this->serviceLocator;

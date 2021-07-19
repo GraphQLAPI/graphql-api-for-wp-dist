@@ -21,25 +21,28 @@ use PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ProxyAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface, \PrefixedByPoP\Symfony\Component\Cache\PruneableInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterface, ResettableInterface
 {
     use ContractsTrait;
     use ProxyTrait;
-    private $namespace;
+    private $namespace = '';
     private $namespaceLen;
-    private $createCacheItem;
-    private $setInnerItem;
     private $poolHash;
     private $defaultLifetime;
-    public function __construct(\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface $pool, string $namespace = '', int $defaultLifetime = 0)
+    private static $createCacheItem;
+    private static $setInnerItem;
+    public function __construct(CacheItemPoolInterface $pool, string $namespace = '', int $defaultLifetime = 0)
     {
         $this->pool = $pool;
         $this->poolHash = $poolHash = \spl_object_hash($pool);
-        $this->namespace = '' === $namespace ? '' : \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($namespace);
+        if ('' !== $namespace) {
+            \assert('' !== CacheItem::validateKey($namespace));
+            $this->namespace = $namespace;
+        }
         $this->namespaceLen = \strlen($namespace);
         $this->defaultLifetime = $defaultLifetime;
-        $this->createCacheItem = \Closure::bind(static function ($key, $innerItem) use($poolHash) {
-            $item = new \PrefixedByPoP\Symfony\Component\Cache\CacheItem();
+        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key, $innerItem, $poolHash) {
+            $item = new CacheItem();
             $item->key = $key;
             if (null === $innerItem) {
                 return $item;
@@ -51,49 +54,51 @@ class ProxyAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
             // Detect wrapped values that encode for their expiry and creation duration
             // For compactness, these values are packed in the key of an array using
             // magic numbers in the form 9D-..-..-..-..-00-..-..-..-5F
-            if (\is_array($v) && 1 === \count($v) && 10 === \strlen($k = (string) \key($v)) && "" === $k[0] && "\0" === $k[5] && "_" === $k[9]) {
+            if (\is_array($v) && 1 === \count($v) && 10 === \strlen($k = (string) \key($v)) && "\x9d" === $k[0] && "\x00" === $k[5] && "_" === $k[9]) {
                 $item->value = $v[$k];
                 $v = \unpack('Ve/Nc', \substr($k, 1, -1));
-                $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY] = $v['e'] + \PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_EXPIRY_OFFSET;
-                $item->metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_CTIME] = $v['c'];
-            } elseif ($innerItem instanceof \PrefixedByPoP\Symfony\Component\Cache\CacheItem) {
+                $item->metadata[CacheItem::METADATA_EXPIRY] = $v['e'] + CacheItem::METADATA_EXPIRY_OFFSET;
+                $item->metadata[CacheItem::METADATA_CTIME] = $v['c'];
+            } elseif ($innerItem instanceof CacheItem) {
                 $item->metadata = $innerItem->metadata;
             }
             $innerItem->set(null);
             return $item;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
-        $this->setInnerItem = \Closure::bind(
+        }, null, CacheItem::class));
+        self::$setInnerItem ?? (self::$setInnerItem = \Closure::bind(
             /**
              * @param array $item A CacheItem cast to (array); accessing protected properties requires adding the "\0*\0" PHP prefix
              */
-            static function (\PrefixedByPoP\Psr\Cache\CacheItemInterface $innerItem, array $item) {
+            static function (CacheItemInterface $innerItem, array $item) {
                 // Tags are stored separately, no need to account for them when considering this item's newly set metadata
-                if (isset(($metadata = $item["\0*\0newMetadata"])[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS])) {
-                    unset($metadata[\PrefixedByPoP\Symfony\Component\Cache\CacheItem::METADATA_TAGS]);
+                if (isset(($metadata = $item["\x00*\x00newMetadata"])[CacheItem::METADATA_TAGS])) {
+                    unset($metadata[CacheItem::METADATA_TAGS]);
                 }
                 if ($metadata) {
                     // For compactness, expiry and creation duration are packed in the key of an array, using magic numbers as separators
-                    $item["\0*\0value"] = ["" . \pack('VN', (int) (0.1 + $metadata[self::METADATA_EXPIRY] - self::METADATA_EXPIRY_OFFSET), $metadata[self::METADATA_CTIME]) . "_" => $item["\0*\0value"]];
+                    $item["\x00*\x00value"] = ["\x9d" . \pack('VN', (int) (0.1 + $metadata[self::METADATA_EXPIRY] - self::METADATA_EXPIRY_OFFSET), $metadata[self::METADATA_CTIME]) . "_" => $item["\x00*\x00value"]];
                 }
-                $innerItem->set($item["\0*\0value"]);
-                $innerItem->expiresAt(null !== $item["\0*\0expiry"] ? \DateTime::createFromFormat('U.u', \sprintf('%.6F', 0 === $item["\0*\0expiry"] ? \PHP_INT_MAX : $item["\0*\0expiry"])) : null);
+                $innerItem->set($item["\x00*\x00value"]);
+                $innerItem->expiresAt(null !== $item["\x00*\x00expiry"] ? \DateTime::createFromFormat('U.u', \sprintf('%.6F', 0 === $item["\x00*\x00expiry"] ? \PHP_INT_MAX : $item["\x00*\x00expiry"])) : null);
             },
             null,
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class
-        );
+            CacheItem::class
+        ));
     }
     /**
      * {@inheritdoc}
+     * @param float $beta
+     * @param mixed[] $metadata
      */
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
+    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
     {
-        if (!$this->pool instanceof \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface) {
+        if (!$this->pool instanceof CacheInterface) {
             return $this->doGet($this, $key, $callback, $beta, $metadata);
         }
         return $this->pool->get($this->getId($key), function ($innerItem, bool &$save) use($key, $callback) {
-            $item = ($this->createCacheItem)($key, $innerItem);
+            $item = (self::$createCacheItem)($key, $innerItem, $this->poolHash);
             $item->set($value = $callback($item, $save));
-            ($this->setInnerItem)($innerItem, (array) $item);
+            (self::$setInnerItem)($innerItem, (array) $item);
             return $value;
         }, $beta, $metadata);
     }
@@ -102,9 +107,8 @@ class ProxyAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      */
     public function getItem($key)
     {
-        $f = $this->createCacheItem;
         $item = $this->pool->getItem($this->getId($key));
-        return $f($key, $item);
+        return (self::$createCacheItem)($key, $item, $this->poolHash);
     }
     /**
      * {@inheritdoc}
@@ -131,10 +135,11 @@ class ProxyAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      * {@inheritdoc}
      *
      * @return bool
+     * @param string $prefix
      */
-    public function clear(string $prefix = '')
+    public function clear($prefix = '')
     {
-        if ($this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+        if ($this->pool instanceof AdapterInterface) {
             return $this->pool->clear($this->namespace . $prefix);
         }
         return $this->pool->clear();
@@ -167,7 +172,7 @@ class ProxyAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      *
      * @return bool
      */
-    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function save(CacheItemInterface $item)
     {
         return $this->doSave($item, __FUNCTION__);
     }
@@ -176,7 +181,7 @@ class ProxyAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      *
      * @return bool
      */
-    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item)
     {
         return $this->doSave($item, __FUNCTION__);
     }
@@ -189,41 +194,40 @@ class ProxyAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
     {
         return $this->pool->commit();
     }
-    private function doSave(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item, string $method)
+    private function doSave(CacheItemInterface $item, string $method)
     {
-        if (!$item instanceof \PrefixedByPoP\Symfony\Component\Cache\CacheItem) {
+        if (!$item instanceof CacheItem) {
             return \false;
         }
         $item = (array) $item;
-        if (null === $item["\0*\0expiry"] && 0 < $this->defaultLifetime) {
-            $item["\0*\0expiry"] = \microtime(\true) + $this->defaultLifetime;
+        if (null === $item["\x00*\x00expiry"] && 0 < $this->defaultLifetime) {
+            $item["\x00*\x00expiry"] = \microtime(\true) + $this->defaultLifetime;
         }
-        if ($item["\0*\0poolHash"] === $this->poolHash && $item["\0*\0innerItem"]) {
-            $innerItem = $item["\0*\0innerItem"];
-        } elseif ($this->pool instanceof \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface) {
+        if ($item["\x00*\x00poolHash"] === $this->poolHash && $item["\x00*\x00innerItem"]) {
+            $innerItem = $item["\x00*\x00innerItem"];
+        } elseif ($this->pool instanceof AdapterInterface) {
             // this is an optimization specific for AdapterInterface implementations
             // so we can save a round-trip to the backend by just creating a new item
-            $f = $this->createCacheItem;
-            $innerItem = $f($this->namespace . $item["\0*\0key"], null);
+            $innerItem = (self::$createCacheItem)($this->namespace . $item["\x00*\x00key"], null, $this->poolHash);
         } else {
-            $innerItem = $this->pool->getItem($this->namespace . $item["\0*\0key"]);
+            $innerItem = $this->pool->getItem($this->namespace . $item["\x00*\x00key"]);
         }
-        ($this->setInnerItem)($innerItem, $item);
+        (self::$setInnerItem)($innerItem, $item);
         return $this->pool->{$method}($innerItem);
     }
     private function generateItems(iterable $items)
     {
-        $f = $this->createCacheItem;
+        $f = self::$createCacheItem;
         foreach ($items as $key => $item) {
             if ($this->namespaceLen) {
                 $key = \substr($key, $this->namespaceLen);
             }
-            (yield $key => $f($key, $item));
+            (yield $key => $f($key, $item, $this->poolHash));
         }
     }
     private function getId($key) : string
     {
-        \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($key);
+        \assert('' !== CacheItem::validateKey($key));
         return $this->namespace . $key;
     }
 }

@@ -6,7 +6,7 @@ namespace PoP\ComponentModel\Registries;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
 interface TypeRegistryInterface
 {
-    public function addTypeResolver(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : void;
+    public function addTypeResolver(TypeResolverInterface $typeResolver) : void;
     /**
      * @return TypeResolverInterface[]
      */

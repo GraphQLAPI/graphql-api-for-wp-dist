@@ -6,20 +6,26 @@ namespace PoPSchema\Pages\TypeResolverPickers;
 use PoP\ComponentModel\TypeResolverPickers\AbstractTypeResolverPicker;
 use PoPSchema\Pages\Facades\PageTypeAPIFacade;
 use PoPSchema\Pages\TypeResolvers\PageTypeResolver;
-abstract class AbstractPageTypeResolverPicker extends \PoP\ComponentModel\TypeResolverPickers\AbstractTypeResolverPicker
+abstract class AbstractPageTypeResolverPicker extends AbstractTypeResolverPicker
 {
     public function getTypeResolverClass() : string
     {
-        return \PoPSchema\Pages\TypeResolvers\PageTypeResolver::class;
+        return PageTypeResolver::class;
     }
+    /**
+     * @param object $object
+     */
     public function isInstanceOfType($object) : bool
     {
-        $pageTypeAPI = \PoPSchema\Pages\Facades\PageTypeAPIFacade::getInstance();
+        $pageTypeAPI = PageTypeAPIFacade::getInstance();
         return $pageTypeAPI->isInstanceOfPageType($object);
     }
+    /**
+     * @param string|int $resultItemID
+     */
     public function isIDOfType($resultItemID) : bool
     {
-        $pageTypeAPI = \PoPSchema\Pages\Facades\PageTypeAPIFacade::getInstance();
+        $pageTypeAPI = PageTypeAPIFacade::getInstance();
         return $pageTypeAPI->pageExists($resultItemID);
     }
 }

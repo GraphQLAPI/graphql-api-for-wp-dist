@@ -7,12 +7,12 @@ use PoP\Definitions\DefinitionManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class DefinitionManagerFacade
 {
-    public static function getInstance() : \PoP\Definitions\DefinitionManagerInterface
+    public static function getInstance() : DefinitionManagerInterface
     {
         /**
          * @var DefinitionManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\Definitions\DefinitionManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(DefinitionManagerInterface::class);
         return $service;
     }
 }

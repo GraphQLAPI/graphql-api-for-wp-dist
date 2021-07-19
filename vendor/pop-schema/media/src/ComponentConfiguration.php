@@ -8,7 +8,13 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
+    /**
+     * @var int|null
+     */
     private static $getMediaListDefaultLimit;
+    /**
+     * @var int|null
+     */
     private static $getMediaListMaxLimit;
     public static function getMediaListDefaultLimit() : ?int
     {
@@ -16,7 +22,7 @@ class ComponentConfiguration
         $envVariable = \PoPSchema\Media\Environment::MEDIA_LIST_DEFAULT_LIMIT;
         $selfProperty =& self::$getMediaListDefaultLimit;
         $defaultValue = 10;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -28,7 +34,7 @@ class ComponentConfiguration
         $selfProperty =& self::$getMediaListMaxLimit;
         $defaultValue = -1;
         // Unlimited
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

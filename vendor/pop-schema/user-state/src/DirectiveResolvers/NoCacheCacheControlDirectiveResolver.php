@@ -4,9 +4,9 @@ declare (strict_types=1);
 namespace PoPSchema\UserState\DirectiveResolvers;
 
 use PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver;
-class NoCacheCacheControlDirectiveResolver extends \PoP\CacheControl\DirectiveResolvers\AbstractCacheControlDirectiveResolver
+class NoCacheCacheControlDirectiveResolver extends AbstractCacheControlDirectiveResolver
 {
-    public static function getFieldNamesToApplyTo() : array
+    public function getFieldNamesToApplyTo() : array
     {
         return ['me', 'isUserLoggedIn'];
     }

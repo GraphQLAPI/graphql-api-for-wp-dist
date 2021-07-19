@@ -4,7 +4,7 @@ declare (strict_types=1);
 namespace PoP\AccessControl\Services;
 
 use PoP\AccessControl\Services\AccessControlManagerInterface;
-class AccessControlManager implements \PoP\AccessControl\Services\AccessControlManagerInterface
+class AccessControlManager implements AccessControlManagerInterface
 {
     /**
      * @var array<string, array>

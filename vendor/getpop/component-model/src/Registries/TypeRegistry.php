@@ -10,7 +10,7 @@ class TypeRegistry implements \PoP\ComponentModel\Registries\TypeRegistryInterfa
      * @var TypeResolverInterface[]
      */
     protected $typeResolvers = [];
-    public function addTypeResolver(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : void
+    public function addTypeResolver(TypeResolverInterface $typeResolver) : void
     {
         $this->typeResolvers[] = $typeResolver;
     }

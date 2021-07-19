@@ -39,10 +39,10 @@ class ProcessorItemUtils
     }
     public static function getItemOutputName(array $item, string $definitionGroup) : string
     {
-        return \PoP\Definitions\Facades\DefinitionManagerFacade::getInstance()->getDefinition(self::getItemFullName($item), $definitionGroup);
+        return DefinitionManagerFacade::getInstance()->getDefinition(self::getItemFullName($item), $definitionGroup);
     }
     public static function getItemFromOutputName(string $itemOutputName, string $definitionGroup) : ?array
     {
-        return self::getItemFromFullName(\PoP\Definitions\Facades\DefinitionManagerFacade::getInstance()->getOriginalName($itemOutputName, $definitionGroup));
+        return self::getItemFromFullName(DefinitionManagerFacade::getInstance()->getOriginalName($itemOutputName, $definitionGroup));
     }
 }

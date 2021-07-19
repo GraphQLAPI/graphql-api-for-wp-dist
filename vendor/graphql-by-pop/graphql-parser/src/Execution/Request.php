@@ -57,13 +57,13 @@ class Request
                      * @see https://graphql.org/learn/queries/#variables
                      */
                     if (\is_null($variable)) {
-                        throw new \GraphQLByPoP\GraphQLParser\Exception\Parser\InvalidRequestException(\sprintf("Variable %s hasn't been declared", $ref->getName()), $ref->getLocation());
+                        throw new InvalidRequestException(\sprintf("Variable %s hasn't been declared", $ref->getName()), $ref->getLocation());
                     }
                     if ($variable->hasDefaultValue()) {
                         $variables[$variable->getName()] = $variable->getDefaultValue()->getValue();
                         continue;
                     }
-                    throw new \GraphQLByPoP\GraphQLParser\Exception\Parser\InvalidRequestException(\sprintf("Variable %s hasn't been submitted", $ref->getName()), $ref->getLocation());
+                    throw new InvalidRequestException(\sprintf("Variable %s hasn't been submitted", $ref->getName()), $ref->getLocation());
                 }
             }
             $this->addVariableReferences($data['variableReferences']);
@@ -127,7 +127,7 @@ class Request
     {
         return $this->fragments;
     }
-    public function addFragment(\GraphQLByPoP\GraphQLParser\Parser\Ast\Fragment $fragment)
+    public function addFragment(Fragment $fragment)
     {
         $this->fragments[] = $fragment;
     }
@@ -181,9 +181,8 @@ class Request
         return $this->variables;
     }
     /**
-     * @param array|string $variables
-     *
      * @return $this
+     * @param mixed[]|string $variables
      */
     public function setVariables($variables)
     {

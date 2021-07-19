@@ -7,9 +7,9 @@ use PrefixedByPoP\Psr\Cache\CacheItemPoolInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class PersistentCacheItemPoolFacade
 {
-    public static function getInstance() : ?\PrefixedByPoP\Psr\Cache\CacheItemPoolInterface
+    public static function getInstance() : ?CacheItemPoolInterface
     {
-        $containerBuilderFactory = \PoP\Root\Container\ContainerBuilderFactory::getInstance();
+        $containerBuilderFactory = ContainerBuilderFactory::getInstance();
         if ($containerBuilderFactory->has('persistent_cache_item_pool')) {
             return $containerBuilderFactory->get('persistent_cache_item_pool');
         }

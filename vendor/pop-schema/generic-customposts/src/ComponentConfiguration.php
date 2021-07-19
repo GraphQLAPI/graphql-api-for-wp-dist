@@ -8,16 +8,22 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
+    /**
+     * @var int|null
+     */
     private static $getGenericCustomPostListDefaultLimit;
-    // private static $getGenericCustomPostListMaxLimit;
-    private static $getGenericCustomPostTypes;
+    // private static ?int $getGenericCustomPostListMaxLimit = -1;
+    /**
+     * @var mixed[]
+     */
+    private static $getGenericCustomPostTypes = ['post'];
     public static function getGenericCustomPostListDefaultLimit() : ?int
     {
         // Define properties
         $envVariable = \PoPSchema\GenericCustomPosts\Environment::GENERIC_CUSTOMPOST_LIST_DEFAULT_LIMIT;
         $selfProperty =& self::$getGenericCustomPostListDefaultLimit;
         $defaultValue = 10;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -44,7 +50,7 @@ class ComponentConfiguration
         $envVariable = \PoPSchema\GenericCustomPosts\Environment::GENERIC_CUSTOMPOST_TYPES;
         $selfProperty =& self::$getGenericCustomPostTypes;
         $defaultValue = ['post'];
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'commaSeparatedStringToArray'];
+        $callback = [EnvironmentValueHelpers::class, 'commaSeparatedStringToArray'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

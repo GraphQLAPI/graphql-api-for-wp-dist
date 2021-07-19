@@ -16,7 +16,7 @@ use PrefixedByPoP\Psr\Container\NotFoundExceptionInterface;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class ServiceNotFoundException extends \PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException implements \PrefixedByPoP\Psr\Container\NotFoundExceptionInterface
+class ServiceNotFoundException extends InvalidArgumentException implements NotFoundExceptionInterface
 {
     private $id;
     private $sourceId;

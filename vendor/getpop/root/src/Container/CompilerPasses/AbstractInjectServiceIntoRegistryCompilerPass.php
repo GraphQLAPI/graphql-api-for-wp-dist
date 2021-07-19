@@ -3,33 +3,28 @@
 declare (strict_types=1);
 namespace PoP\Root\Container\CompilerPasses;
 
-use PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
-abstract class AbstractInjectServiceIntoRegistryCompilerPass implements \PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
+use PoP\Root\Container\ContainerBuilderWrapperInterface;
+abstract class AbstractInjectServiceIntoRegistryCompilerPass extends \PoP\Root\Container\CompilerPasses\AbstractCompilerPass
 {
-    public function process(\PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder $containerBuilder) : void
+    use AutoconfigurableServicesCompilerPassTrait;
+    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void
     {
-        if (!$this->enabled()) {
-            return;
-        }
-        $registryDefinition = $containerBuilder->getDefinition($this->getRegistryServiceDefinition());
-        $definitions = $containerBuilder->getDefinitions();
+        $registryDefinition = $containerBuilderWrapper->getDefinition($this->getRegistryServiceDefinition());
+        $definitions = $containerBuilderWrapper->getDefinitions();
         $serviceClass = $this->getServiceClass();
         foreach ($definitions as $definitionID => $definition) {
             $definitionClass = $definition->getClass();
             if ($definitionClass === null || !\is_a($definitionClass, $serviceClass, \true)) {
                 continue;
             }
-            // Register the service in the corresponding registry
-            $registryDefinition->addMethodCall($this->getRegistryMethodCallName(), [new \PrefixedByPoP\Symfony\Component\DependencyInjection\Reference($definitionID)]);
+            $onlyProcessAutoconfiguredServices = $this->onlyProcessAutoconfiguredServices();
+            if (!$onlyProcessAutoconfiguredServices || $definition->isAutoconfigured()) {
+                // Register the service in the corresponding registry
+                $registryDefinition->addMethodCall($this->getRegistryMethodCallName(), [$this->createReference($definitionID), $definitionID]);
+            }
         }
     }
     protected abstract function getRegistryServiceDefinition() : string;
     protected abstract function getServiceClass() : string;
     protected abstract function getRegistryMethodCallName() : string;
-    protected function enabled() : bool
-    {
-        return \true;
-    }
 }

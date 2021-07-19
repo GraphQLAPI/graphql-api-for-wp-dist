@@ -7,5 +7,8 @@ interface DataStructureManagerInterface
 {
     public function addDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void;
     public function setDefaultDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void;
-    public function getDataStructureFormatter(string $name = null) : \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface;
+    /**
+     * @param string $name
+     */
+    public function getDataStructureFormatter($name = null) : \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface;
 }

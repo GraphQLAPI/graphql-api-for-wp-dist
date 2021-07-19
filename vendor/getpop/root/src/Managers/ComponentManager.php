@@ -28,8 +28,15 @@ class ComponentManager
     }
     /**
      * Boot all components
-     *
-     * @return void
+     */
+    public static function bootSystem() : void
+    {
+        foreach (self::$components as $component) {
+            $component::bootSystem();
+        }
+    }
+    /**
+     * Boot all components
      */
     public static function beforeBoot() : void
     {
@@ -39,8 +46,6 @@ class ComponentManager
     }
     /**
      * Boot all components
-     *
-     * @return void
      */
     public static function boot() : void
     {
@@ -50,8 +55,6 @@ class ComponentManager
     }
     /**
      * Boot all components
-     *
-     * @return void
      */
     public static function afterBoot() : void
     {

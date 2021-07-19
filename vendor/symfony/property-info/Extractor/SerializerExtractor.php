@@ -19,10 +19,10 @@ use PrefixedByPoP\Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFact
  *
  * @final
  */
-class SerializerExtractor implements \PrefixedByPoP\Symfony\Component\PropertyInfo\PropertyListExtractorInterface
+class SerializerExtractor implements PropertyListExtractorInterface
 {
     private $classMetadataFactory;
-    public function __construct(\PrefixedByPoP\Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactoryInterface $classMetadataFactory)
+    public function __construct(ClassMetadataFactoryInterface $classMetadataFactory)
     {
         $this->classMetadataFactory = $classMetadataFactory;
     }

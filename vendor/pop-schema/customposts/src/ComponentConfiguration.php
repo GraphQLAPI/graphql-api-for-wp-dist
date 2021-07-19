@@ -8,16 +8,25 @@ use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationTrait;
 class ComponentConfiguration
 {
     use ComponentConfigurationTrait;
+    /**
+     * @var int|null
+     */
     private static $getCustomPostListDefaultLimit;
+    /**
+     * @var int|null
+     */
     private static $getCustomPostListMaxLimit;
-    private static $useSingleTypeInsteadOfCustomPostUnionType;
+    /**
+     * @var bool
+     */
+    private static $useSingleTypeInsteadOfCustomPostUnionType = \false;
     public static function getCustomPostListDefaultLimit() : ?int
     {
         // Define properties
         $envVariable = \PoPSchema\CustomPosts\Environment::CUSTOMPOST_LIST_DEFAULT_LIMIT;
         $selfProperty =& self::$getCustomPostListDefaultLimit;
         $defaultValue = 10;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -29,7 +38,7 @@ class ComponentConfiguration
         $selfProperty =& self::$getCustomPostListMaxLimit;
         $defaultValue = -1;
         // Unlimited
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toInt'];
+        $callback = [EnvironmentValueHelpers::class, 'toInt'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;
@@ -40,7 +49,7 @@ class ComponentConfiguration
         $envVariable = \PoPSchema\CustomPosts\Environment::USE_SINGLE_TYPE_INSTEAD_OF_CUSTOMPOST_UNION_TYPE;
         $selfProperty =& self::$useSingleTypeInsteadOfCustomPostUnionType;
         $defaultValue = \false;
-        $callback = [\PoP\ComponentModel\ComponentConfiguration\EnvironmentValueHelpers::class, 'toBool'];
+        $callback = [EnvironmentValueHelpers::class, 'toBool'];
         // Initialize property from the environment/hook
         self::maybeInitializeConfigurationValue($envVariable, $selfProperty, $defaultValue, $callback);
         return $selfProperty;

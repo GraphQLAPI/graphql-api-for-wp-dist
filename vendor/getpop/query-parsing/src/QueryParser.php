@@ -3,8 +3,18 @@
 declare (strict_types=1);
 namespace PoP\QueryParsing;
 
+use Exception;
+use PoP\Translation\TranslationAPIInterface;
 class QueryParser implements \PoP\QueryParsing\QueryParserInterface
 {
+    /**
+     * @var \PoP\Translation\TranslationAPIInterface
+     */
+    protected $translationAPI;
+    public function __construct(TranslationAPIInterface $translationAPI)
+    {
+        $this->translationAPI = $translationAPI;
+    }
     /**
      * Parse elements by a separator, not failing whenever the separator
      * is also inside the fieldArgs (i.e. inside the brackets "(" and ")")
@@ -18,6 +28,9 @@ class QueryParser implements \PoP\QueryParsing\QueryParserInterface
      */
     public function splitElements(string $query, string $separator = ',', $skipFromChars = '(', $skipUntilChars = ')', ?string $ignoreSkippingFromChar = null, ?string $ignoreSkippingUntilChar = null, array $options = []) : array
     {
+        if ($query === '') {
+            return [$query];
+        }
         $buffer = '';
         $stack = array();
         $depth = 0;
@@ -27,6 +40,19 @@ class QueryParser implements \PoP\QueryParsing\QueryParserInterface
         }
         if (!\is_array($skipUntilChars)) {
             $skipUntilChars = [$skipUntilChars];
+        }
+        /**
+         * Watch out! $skipFromChars and $skipUntilChars can only be chars,
+         * i.e. strings of length 1, otherwise the function doesn't work.
+         *
+         * So validate this is the case
+         *
+         * @see https://github.com/leoloso/PoP/pull/734#issuecomment-871074708
+         */
+        if ($longStrings = \array_filter(\array_unique(\array_merge($skipFromChars, $skipUntilChars)), function ($string) {
+            return \strlen($string) > 1;
+        })) {
+            throw new Exception(\sprintf($this->translationAPI->__('Only strings of length 1 are valid in function `splitElements`, for params `$skipFromChars` and `$skipUntilChars`. The following string(s) are not valid: \'%s\''), \implode($this->translationAPI->__('\', \''), $longStrings)));
         }
         // To reduce the amount of "if" statements executed, first ask if the character is any of the special chars
         $specialChars = \array_merge([$separator], $skipFromChars, $skipUntilChars);
@@ -65,7 +91,8 @@ class QueryParser implements \PoP\QueryParsing\QueryParserInterface
         while ($charPos < $len - 1) {
             $charPos++;
             $char = $query[$charPos];
-            if (\in_array($char, $specialChars)) {
+            $charStretch = \substr($query, $charPos, \strlen($separator));
+            if (\in_array($char, $specialChars) || $charStretch == $separator) {
                 if ($char == $ignoreSkippingFromChar) {
                     // Search the closing symbol and shortcut to that position
                     // (eg: opening then closing quotes for strings)
@@ -101,21 +128,21 @@ class QueryParser implements \PoP\QueryParsing\QueryParserInterface
                         // Then, we can search by strings like this (notice that the ".", "(" and ")"
                         // inside the search are ignored):
                         // /api/?query=posts(searchfor:(.)).id|title
-                        $restStr = \substr($query, $charPos + 1);
+                        $restStr = \substr($query, $charPos + \strlen($separator));
                         $restStrEndBracketPos = \strpos($restStr, (string) $skipUntilChars[0]);
                         $restStrSeparatorPos = \strpos($restStr, $separator);
                         if ($restStrEndBracketPos === \false || $restStrSeparatorPos !== \false && $restStrEndBracketPos !== \false && $restStrEndBracketPos > $restStrSeparatorPos) {
                             $depth--;
                         }
                     }
-                } elseif ($char == $separator) {
+                } elseif ($charStretch == $separator) {
                     if (!$depth) {
                         if ($buffer !== '') {
                             $stack[] = $buffer;
                             $buffer = '';
                             // If we need only one occurrence, then already return.
                             if ($onlyFirstOccurrence) {
-                                $restStr = \substr($query, $charPos + 1);
+                                $restStr = \substr($query, $charPos + \strlen($separator));
                                 $stack[] = $restStr;
                                 if ($startFromEnd) {
                                     // Reverse each result, and the order of the results
@@ -124,6 +151,9 @@ class QueryParser implements \PoP\QueryParsing\QueryParserInterface
                                 return $stack;
                             }
                         }
+                        // Advance the whole stretch
+                        // Minus one because on the new iteration it will do $charPos++ again
+                        $charPos = $charPos + \strlen($separator) - 1;
                         continue;
                     }
                 }

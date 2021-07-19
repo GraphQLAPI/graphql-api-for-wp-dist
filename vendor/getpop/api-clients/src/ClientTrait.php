@@ -11,23 +11,17 @@ trait ClientTrait
     /**
      * @var string|null
      */
-    private $clientHTMLCache = null;
+    private $clientHTMLCache;
     /**
      * Relative Path
-     *
-     * @return string
      */
     protected abstract function getClientRelativePath() : string;
     /**
      * JavaScript file name
-     *
-     * @return string
      */
     protected abstract function getJSFilename() : string;
     /**
      * HTML file name
-     *
-     * @return string
      */
     protected function getIndexFilename() : string
     {
@@ -42,14 +36,10 @@ trait ClientTrait
     }
     /**
      * Base dir
-     *
-     * @return string
      */
     protected abstract function getComponentBaseDir() : string;
     /**
      * Base URL
-     *
-     * @return string|null
      */
     protected function getComponentBaseURL() : ?string
     {
@@ -57,14 +47,10 @@ trait ClientTrait
     }
     /**
      * Endpoint URL
-     *
-     * @return string
      */
     protected abstract function getEndpointURL() : string;
     /**
      * HTML to print the client
-     *
-     * @return string
      */
     public function getClientHTML() : string
     {
@@ -86,7 +72,7 @@ trait ClientTrait
             // GraphiQL Explorer loads under "/assets...", so the dirname starts with "/"
             // But otherwise it does not. So don't add "/" again if it already has
             $assetDirname = $this->getAssetDirname();
-            $fileContents = \str_replace('"' . $assetDirname . '/', '"' . \trim($componentBaseURL, '/') . $assetRelativePath . (\str_starts_with($assetDirname, '/') ? '' : '/') . $assetDirname . '/', $fileContents);
+            $fileContents = \str_replace('"' . $assetDirname . '/', '"' . \trim($componentBaseURL, '/') . $assetRelativePath . (\strncmp($assetDirname, '/', \strlen('/')) === 0 ? '' : '/') . $assetDirname . '/', $fileContents);
         }
         // Can pass either URL or path under current domain
         $endpointURL = $this->getEndpointURL();
@@ -106,15 +92,13 @@ trait ClientTrait
         // }
         // Modify the endpoint, as a param to the script.
         // GraphiQL Explorer doesn't have other params. Otherwise it does, so check for "?"
-        $jsFileHasParams = \str_contains($fileContents, '/' . $jsFileName . '?');
+        $jsFileHasParams = \strpos($fileContents, '/' . $jsFileName . '?') !== \false;
         $fileContents = \str_replace('/' . $jsFileName . ($jsFileHasParams ? '?' : ''), '/' . $jsFileName . '?endpoint=' . \urlencode($endpointURL) . ($jsFileHasParams ? '&' : ''), $fileContents);
         $this->clientHTMLCache = $fileContents;
         return $this->clientHTMLCache;
     }
     /**
      * If the endpoint for the client is requested, print the client and exit
-     *
-     * @return void
      */
     protected function executeEndpoint() : void
     {

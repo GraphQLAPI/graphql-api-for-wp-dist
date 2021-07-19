@@ -80,20 +80,20 @@ class MatchingResult
      */
     public function handler()
     {
-        return \is_callable($this->data['handler']) || $this->data['handler'] instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface ? $this->data['handler'] : null;
+        return \is_callable($this->data['handler']) || $this->data['handler'] instanceof Controller ? $this->data['handler'] : null;
     }
     /**
      * @return callable|\Brain\Cortex\Controller\ControllerInterface|null
      */
     public function beforeHandler()
     {
-        return \is_callable($this->data['before']) || $this->data['before'] instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface ? $this->data['before'] : null;
+        return \is_callable($this->data['before']) || $this->data['before'] instanceof Controller ? $this->data['before'] : null;
     }
     /**
      * @return callable|\Brain\Cortex\Controller\ControllerInterface|null
      */
     public function afterHandler()
     {
-        return \is_callable($this->data['after']) || $this->data['after'] instanceof \PrefixedByPoP\Brain\Cortex\Controller\ControllerInterface ? $this->data['after'] : null;
+        return \is_callable($this->data['after']) || $this->data['after'] instanceof Controller ? $this->data['after'] : null;
     }
 }

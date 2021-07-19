@@ -16,6 +16,6 @@ namespace PrefixedByPoP\Symfony\Component\Config\Definition\Exception;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class UnsetKeyException extends \PrefixedByPoP\Symfony\Component\Config\Definition\Exception\Exception
+class UnsetKeyException extends Exception
 {
 }

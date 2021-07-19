@@ -212,7 +212,7 @@ class Tokenizer
     }
     protected function createException($message)
     {
-        return new \GraphQLByPoP\GraphQLParser\Exception\Parser\SyntaxErrorException(\sprintf('%s', $message), $this->getLocation());
+        return new SyntaxErrorException(\sprintf('%s', $message), $this->getLocation());
     }
     protected function getLocation()
     {

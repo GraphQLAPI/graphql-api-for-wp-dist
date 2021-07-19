@@ -7,7 +7,7 @@ use PoPSchema\GenericCustomPosts\TypeResolvers\GenericCustomPostTypeResolver;
 use PoPSchema\QueriedObject\ModuleProcessors\QueriedDBObjectModuleProcessorTrait;
 use PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor;
 use PoP\ComponentModel\QueryInputOutputHandlers\ListQueryInputOutputHandler;
-class GenericCustomPostRelationalFieldDataloadModuleProcessor extends \PoP\API\ModuleProcessors\AbstractRelationalFieldDataloadModuleProcessor
+class GenericCustomPostRelationalFieldDataloadModuleProcessor extends AbstractRelationalFieldDataloadModuleProcessor
 {
     use QueriedDBObjectModuleProcessorTrait;
     public const MODULE_DATALOAD_RELATIONALFIELDS_GENERICCUSTOMPOSTLIST = 'dataload-relationalfields-genericcustompostlist';
@@ -20,7 +20,7 @@ class GenericCustomPostRelationalFieldDataloadModuleProcessor extends \PoP\API\M
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_GENERICCUSTOMPOSTLIST:
-                return \PoPSchema\GenericCustomPosts\TypeResolvers\GenericCustomPostTypeResolver::class;
+                return GenericCustomPostTypeResolver::class;
         }
         return parent::getTypeResolverClass($module);
     }
@@ -28,7 +28,7 @@ class GenericCustomPostRelationalFieldDataloadModuleProcessor extends \PoP\API\M
     {
         switch ($module[1]) {
             case self::MODULE_DATALOAD_RELATIONALFIELDS_GENERICCUSTOMPOSTLIST:
-                return \PoP\ComponentModel\QueryInputOutputHandlers\ListQueryInputOutputHandler::class;
+                return ListQueryInputOutputHandler::class;
         }
         return parent::getQueryInputOutputHandlerClass($module);
     }

@@ -3,10 +3,12 @@
 declare (strict_types=1);
 namespace PoP\AccessControl\Hooks;
 
-use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForDirectivesTrait;
 use PoP\AccessControl\ConfigurationEntries\AccessControlConfigurableMandatoryDirectivesForDirectivesTrait;
+use PoP\AccessControl\Hooks\AccessControlConfigurableMandatoryDirectivesForDirectivesHookSetTrait;
+use PoP\MandatoryDirectivesByConfiguration\ConfigurationEntries\ConfigurableMandatoryDirectivesForDirectivesTrait;
 abstract class AbstractConfigurableAccessControlForDirectivesInPrivateSchemaHookSet extends \PoP\AccessControl\Hooks\AbstractAccessControlForDirectivesInPrivateSchemaHookSet
 {
+    use AccessControlConfigurableMandatoryDirectivesForDirectivesHookSetTrait;
     use ConfigurableMandatoryDirectivesForDirectivesTrait, AccessControlConfigurableMandatoryDirectivesForDirectivesTrait {
         AccessControlConfigurableMandatoryDirectivesForDirectivesTrait::getMatchingEntries insteadof ConfigurableMandatoryDirectivesForDirectivesTrait;
         // The conflict resolutions below should not be needed, because the functions are not repeated, but it is defined just once in the same source trait

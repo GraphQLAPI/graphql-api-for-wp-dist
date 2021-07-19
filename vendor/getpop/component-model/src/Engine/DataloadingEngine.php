@@ -10,7 +10,7 @@ class DataloadingEngine implements \PoP\ComponentModel\Engine\DataloadingEngineI
      * @var DirectiveResolverInterface[]
      */
     protected $mandatoryDirectiveResolvers = [];
-    public function addMandatoryDirectiveResolver(\PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface $directiveResolver) : void
+    public function addMandatoryDirectiveResolver(DirectiveResolverInterface $directiveResolver) : void
     {
         $this->mandatoryDirectiveResolvers[] = $directiveResolver;
     }

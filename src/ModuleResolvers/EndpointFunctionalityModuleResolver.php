@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
-use GraphQLAPI\GraphQLAPI\Plugin;
-use GraphQLAPI\GraphQLAPI\ModuleSettings\Properties;
+use GraphQLAPI\GraphQLAPI\Constants\ModuleSettingOptions;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
-use GraphQLAPI\GraphQLAPI\ModuleTypeResolvers\ModuleTypeResolver;
+use GraphQLAPI\GraphQLAPI\ModuleSettings\Properties;
+use GraphQLAPI\GraphQLAPI\Plugin;
 use GraphQLByPoP\GraphQLEndpointForWP\ComponentConfiguration as GraphQLEndpointForWPComponentConfiguration;
 
 class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleResolver
 {
     use ModuleResolverTrait;
+    use EndpointFunctionalityModuleResolverTrait;
 
     public const SINGLE_ENDPOINT = Plugin::NAMESPACE . '\single-endpoint';
     public const PERSISTED_QUERIES = Plugin::NAMESPACE . '\persisted-queries';
@@ -20,29 +21,16 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
     public const API_HIERARCHY = Plugin::NAMESPACE . '\api-hierarchy';
 
     /**
-     * Setting options
-     */
-    public const OPTION_PATH = 'path';
-
-    /**
      * @return string[]
      */
-    public static function getModulesToResolve(): array
+    public function getModulesToResolve(): array
     {
         return [
             self::SINGLE_ENDPOINT,
-            self::PERSISTED_QUERIES,
             self::CUSTOM_ENDPOINTS,
+            self::PERSISTED_QUERIES,
             self::API_HIERARCHY,
         ];
-    }
-
-    /**
-     * Enable to customize a specific UI for the module
-     */
-    public function getModuleType(string $module): string
-    {
-        return ModuleTypeResolver::ENDPOINT;
     }
 
     /**
@@ -51,10 +39,15 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
     public function getDependedModuleLists(string $module): array
     {
         switch ($module) {
-            case self::PERSISTED_QUERIES:
             case self::SINGLE_ENDPOINT:
-            case self::CUSTOM_ENDPOINTS:
                 return [];
+            case self::PERSISTED_QUERIES:
+            case self::CUSTOM_ENDPOINTS:
+                return [
+                    [
+                        SchemaConfigurationFunctionalityModuleResolver::SCHEMA_CONFIGURATION,
+                    ],
+                ];
             case self::API_HIERARCHY:
                 return [
                     [
@@ -81,7 +74,10 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
     {
         switch ($module) {
             case self::SINGLE_ENDPOINT:
-                return \sprintf(\__('Expose a single GraphQL endpoint under <code>%s</code>, with unrestricted access', 'graphql-api'), GraphQLEndpointForWPComponentConfiguration::getGraphQLAPIEndpoint());
+                return \sprintf(
+                    \__('Expose a single GraphQL endpoint under <code>%s</code>, with unrestricted access', 'graphql-api'),
+                    GraphQLEndpointForWPComponentConfiguration::getGraphQLAPIEndpoint()
+                );
             case self::PERSISTED_QUERIES:
                 return \__('Expose predefined responses through a custom URL, akin to using GraphQL queries to publish REST endpoints', 'graphql-api');
             case self::CUSTOM_ENDPOINTS:
@@ -103,25 +99,22 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
 
     /**
      * Default value for an option set by the module
-     *
-     * @param string $module
-     * @param string $option
-     * @return mixed Anything the setting might be: an array|string|bool|int|null
+     * @return mixed
      */
     public function getSettingsDefaultValue(string $module, string $option)
     {
         $defaultValues = [
             self::SINGLE_ENDPOINT => [
-                self::OPTION_PATH => '/graphql/',
+                ModuleSettingOptions::PATH => '/graphql/',
             ],
             self::CUSTOM_ENDPOINTS => [
-                self::OPTION_PATH => 'graphql',
+                ModuleSettingOptions::PATH => 'graphql',
             ],
             self::PERSISTED_QUERIES => [
-                self::OPTION_PATH => 'graphql-query',
+                ModuleSettingOptions::PATH => 'graphql-query',
             ],
         ];
-        return $defaultValues[$module][$option];
+        return $defaultValues[$module][$option] ?? null;
     }
 
     /**
@@ -134,28 +127,37 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
         $moduleSettings = parent::getSettings($module);
         // Do the if one by one, so that the SELECT do not get evaluated unless needed
         if ($module == self::SINGLE_ENDPOINT) {
-            $option = self::OPTION_PATH;
+            $option = ModuleSettingOptions::PATH;
             $moduleSettings[] = [
                 Properties::INPUT => $option,
-                Properties::NAME => $this->getSettingOptionName($module, $option),
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
                 Properties::TITLE => \__('Endpoint path', 'graphql-api'),
                 Properties::DESCRIPTION => \__('URL path to expose the single GraphQL endpoint', 'graphql-api'),
                 Properties::TYPE => Properties::TYPE_STRING,
             ];
         } elseif ($module == self::CUSTOM_ENDPOINTS) {
-            $option = self::OPTION_PATH;
+            $option = ModuleSettingOptions::PATH;
             $moduleSettings[] = [
                 Properties::INPUT => $option,
-                Properties::NAME => $this->getSettingOptionName($module, $option),
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
                 Properties::TITLE => \__('Base path', 'graphql-api'),
                 Properties::DESCRIPTION => \__('URL base path to expose the Custom Endpoint', 'graphql-api'),
                 Properties::TYPE => Properties::TYPE_STRING,
             ];
         } elseif ($module == self::PERSISTED_QUERIES) {
-            $option = self::OPTION_PATH;
+            $option = ModuleSettingOptions::PATH;
             $moduleSettings[] = [
                 Properties::INPUT => $option,
-                Properties::NAME => $this->getSettingOptionName($module, $option),
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
                 Properties::TITLE => \__('Base path', 'graphql-api'),
                 Properties::DESCRIPTION => \__('URL base path to expose the Persisted Query', 'graphql-api'),
                 Properties::TYPE => Properties::TYPE_STRING,

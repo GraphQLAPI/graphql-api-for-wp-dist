@@ -7,12 +7,12 @@ use PoP\AccessControl\Services\AccessControlManagerInterface;
 use PoP\Root\Container\ContainerBuilderFactory;
 class AccessControlManagerFacade
 {
-    public static function getInstance() : \PoP\AccessControl\Services\AccessControlManagerInterface
+    public static function getInstance() : AccessControlManagerInterface
     {
         /**
          * @var AccessControlManagerInterface
          */
-        $service = \PoP\Root\Container\ContainerBuilderFactory::getInstance()->get(\PoP\AccessControl\Services\AccessControlManagerInterface::class);
+        $service = ContainerBuilderFactory::getInstance()->get(AccessControlManagerInterface::class);
         return $service;
     }
 }

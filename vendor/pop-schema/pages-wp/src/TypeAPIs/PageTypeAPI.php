@@ -28,14 +28,16 @@ class PageTypeAPI extends CustomPostTypeAPI implements PageTypeAPIInterface
     protected function convertCustomPostsQuery(array $query, array $options = []): array
     {
         $query = parent::convertCustomPostsQuery($query, $options);
-        return HooksAPIFacade::getInstance()->applyFilters('CMSAPI:pages:query', $query, $options);
+        return HooksAPIFacade::getInstance()->applyFilters(
+            'CMSAPI:pages:query',
+            $query,
+            $options
+        );
     }
 
     /**
      * Indicates if the passed object is of type Page
-     *
      * @param object $object
-     * @return boolean
      */
     public function isInstanceOfPageType($object): bool
     {
@@ -44,9 +46,8 @@ class PageTypeAPI extends CustomPostTypeAPI implements PageTypeAPIInterface
 
     /**
      * Get the page with provided ID or, if it doesn't exist, null
-     *
-     * @param int $id
-     * @return WP_Post|null
+     * @param int|string $id
+     * @return object|null
      */
     public function getPage($id)
     {
@@ -59,9 +60,7 @@ class PageTypeAPI extends CustomPostTypeAPI implements PageTypeAPIInterface
 
     /**
      * Indicate if an page with provided ID exists
-     *
-     * @param int $id
-     * @return bool
+     * @param int|string $id
      */
     public function pageExists($id): bool
     {
@@ -71,8 +70,6 @@ class PageTypeAPI extends CustomPostTypeAPI implements PageTypeAPIInterface
     /**
      * Limit of how many custom posts can be retrieved in the query.
      * Override this value for specific custom post types
-     *
-     * @return integer
      */
     protected function getCustomPostListMaxLimit(): int
     {
@@ -95,20 +92,11 @@ class PageTypeAPI extends CustomPostTypeAPI implements PageTypeAPIInterface
     }
 
     /**
-     * Get the ID of the static page for the homepage
-     * Returns an ID (int? string?) or null
-     *
-     * @return int|null
+     * @return string|int
+     * @param object $page
      */
-    public function getHomeStaticPageID()
+    public function getPageId($page)
     {
-        if (get_option('show_on_front') !== 'page') {
-            // Errors go in here
-            return null;
-        }
-
-        // This is the expected operation
-        $static_page_id = (int) get_option('page_on_front');
-        return $static_page_id > 0 ? $static_page_id : null;
+        return $page->ID;
     }
 }

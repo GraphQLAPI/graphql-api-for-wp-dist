@@ -3,34 +3,30 @@
 declare (strict_types=1);
 namespace PoP\Engine\DirectiveResolvers;
 
-use PoP\FieldQuery\QuerySyntax;
-use PoP\FieldQuery\QueryHelpers;
+use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
+use PoP\ComponentModel\ErrorHandling\Error;
+use PoP\ComponentModel\Feedback\Tokens;
 use PoP\ComponentModel\Misc\GeneralUtils;
-use PoP\Engine\Dataloading\Expressions;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Schema\TypeCastingHelpers;
-use PoP\Translation\Facades\TranslationAPIFacade;
 use PoP\ComponentModel\TypeResolvers\AbstractTypeResolver;
 use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade;
-use PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade;
-use PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver;
-use PoP\ComponentModel\Feedback\Tokens;
-abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extends \PoP\ComponentModel\DirectiveResolvers\AbstractGlobalDirectiveResolver
+use PoP\Engine\ComponentConfiguration;
+use PoP\Engine\Dataloading\Expressions;
+use PoP\FieldQuery\QueryHelpers;
+use PoP\FieldQuery\QuerySyntax;
+abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extends AbstractGlobalDirectiveResolver
 {
     /**
      * Use a value that can't be part of a fieldName, that's legible, and that conveys the meaning of sublevel. The value "." is adequate
      */
     public const PROPERTY_SEPARATOR = '.';
-    public function getSchemaDirectiveArgs(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getSchemaDirectiveArgs(TypeResolverInterface $typeResolver) : array
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return [[\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'addExpressions', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_MIXED), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($translationAPI->__('Expressions to inject to the composed directive. The value of the affected field can be provided under special expression `%s`', 'component-model'), \PoP\FieldQuery\QueryHelpers::getExpressionQuery(\PoP\Engine\Dataloading\Expressions::NAME_VALUE))], [\PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_NAME => 'appendExpressions', \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_TYPE => \PoP\ComponentModel\Schema\TypeCastingHelpers::makeArray(\PoP\ComponentModel\Schema\SchemaDefinition::TYPE_MIXED), \PoP\ComponentModel\Schema\SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($translationAPI->__('Append a value to an expression which must be an array, to inject to the composed directive. If the array has not been set, it is initialized as an empty array. The value of the affected field can be provided under special expression `%s`', 'component-model'), \PoP\FieldQuery\QueryHelpers::getExpressionQuery(\PoP\Engine\Dataloading\Expressions::NAME_VALUE))]];
+        return ComponentConfiguration::enablePassingExpressionsByArgInNestedDirectives() ? [[SchemaDefinition::ARGNAME_NAME => 'addExpressions', SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_MIXED, SchemaDefinition::ARGNAME_IS_ARRAY => \true, SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($this->translationAPI->__('Expressions to inject to the composed directive. The value of the affected field can be provided under special expression `%s`', 'component-model'), QueryHelpers::getExpressionQuery(Expressions::NAME_VALUE))], [SchemaDefinition::ARGNAME_NAME => 'appendExpressions', SchemaDefinition::ARGNAME_TYPE => SchemaDefinition::TYPE_MIXED, SchemaDefinition::ARGNAME_IS_ARRAY => \true, SchemaDefinition::ARGNAME_DESCRIPTION => \sprintf($this->translationAPI->__('Append a value to an expression which must be an array, to inject to the composed directive. If the array has not been set, it is initialized as an empty array. The value of the affected field can be provided under special expression `%s`', 'component-model'), QueryHelpers::getExpressionQuery(Expressions::NAME_VALUE))]] : [];
     }
-    public function getSchemaDirectiveExpressions(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver) : array
+    public function getSchemaDirectiveExpressions(TypeResolverInterface $typeResolver) : array
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
-        return [\PoP\Engine\Dataloading\Expressions::NAME_VALUE => \sprintf($translationAPI->__('Value of the array element from the current iteration, available for params \'%s\' and \'%s\'', 'component-model'), 'addExpressions', 'appendExpressions')];
+        return [Expressions::NAME_VALUE => \sprintf($this->translationAPI->__('Value of the array element from the current iteration, available for params \'%s\' and \'%s\'', 'component-model'), 'addExpressions', 'appendExpressions')];
     }
     /**
      * Execute directive <transformProperty> to each of the elements on the affected field, which must be an array
@@ -38,34 +34,18 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
      * 1. Unpack the elements of the array into a temporary property for each, in the current object
      * 2. Execute <transformProperty> on each property
      * 3. Pack into the array, once again, and remove all temporary properties
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @param array $resultIDItems
-     * @param array $idsDataFields
-     * @param array $dbItems
-     * @param array $dbErrors
-     * @param array $dbWarnings
-     * @param array $schemaErrors
-     * @param array $schemaWarnings
-     * @param array $schemaDeprecations
-     * @param array $previousDBItems
-     * @param array $variables
-     * @param array $messages
-     * @return void
      */
-    public function resolveDirective(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
+    public function resolveDirective(TypeResolverInterface $typeResolver, array &$idsDataFields, array &$succeedingPipelineIDsDataFields, array &$succeedingPipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : void
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         // If there are no composed directives to execute, then nothing to do
         if (!$this->nestedDirectivePipelineData) {
-            $schemaWarnings[] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => $translationAPI->__('No composed directives were provided, so nothing to do for this directive', 'component-model')];
+            $schemaWarnings[] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => $this->translationAPI->__('No composed directives were provided, so nothing to do for this directive', 'component-model')];
             return;
         }
         /**
          * Collect all ID => dataFields for the arrayItems
          */
         $arrayItemIdsProperties = [];
-        $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
         $dbKey = $typeResolver->getTypeOutputName();
         /**
          * Execute composed directive only if the validations do not fail
@@ -75,14 +55,14 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
         // By making the property "propertyName:key", the "key" can be extracted and passed under expression `%key%` to the function
         foreach ($idsDataFields as $id => $dataFields) {
             foreach ($dataFields['direct'] as $field) {
-                $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
+                $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
                 // Validate that the property exists
                 $isValueInDBItems = \array_key_exists($fieldOutputKey, $dbItems[(string) $id] ?? []);
                 if (!$isValueInDBItems && !\array_key_exists($fieldOutputKey, $previousDBItems[$dbKey][(string) $id] ?? [])) {
                     if ($fieldOutputKey != $field) {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Field \'%s\' (under property \'%s\') hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $field, $fieldOutputKey, $id)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Field \'%s\' (under property \'%s\') hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $field, $fieldOutputKey, $id)];
                     } else {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Field \'%s\' hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $fieldOutputKey, $id)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Field \'%s\' hadn\'t been set for object with ID \'%s\', so it can\'t be transformed', 'component-model'), $fieldOutputKey, $id)];
                     }
                     continue;
                 }
@@ -94,14 +74,14 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
                 // Validate that the value is an array
                 if (!\is_array($value)) {
                     if ($fieldOutputKey != $field) {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('The value for field \'%s\' (under property \'%s\') is not an array, so execution of this directive can\'t continue', 'component-model'), $field, $fieldOutputKey, $id)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('The value for field \'%s\' (under property \'%s\') is not an array, so execution of this directive can\'t continue', 'component-model'), $field, $fieldOutputKey, $id)];
                     } else {
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('The value for field \'%s\' is not an array, so execution of this directive can\'t continue', 'component-model'), $fieldOutputKey, $id)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('The value for field \'%s\' is not an array, so execution of this directive can\'t continue', 'component-model'), $fieldOutputKey, $id)];
                     }
                     continue;
                 }
                 // Obtain the elements composing the field, to re-create a new field for each arrayItem
-                $fieldParts = $fieldQueryInterpreter->listField($field);
+                $fieldParts = $this->fieldQueryInterpreter->listField($field);
                 $fieldName = $fieldParts[0];
                 $fieldArgs = $fieldParts[1];
                 $fieldAlias = $fieldParts[2];
@@ -115,9 +95,9 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
                         // Add into the $idsDataFields object for the array items
                         // Watch out: function `regenerateAndExecuteFunction` receives `$idsDataFields` and not `$idsDataFieldOutputKeys`, so then re-create the "field" assigning a new alias
                         // If it has an alias, use it. If not, use the fieldName
-                        $arrayItemAlias = $this->createPropertyForArrayItem($fieldAlias ? $fieldAlias : \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDALIAS_PREFIX . $fieldName, $key);
-                        $arrayItemProperty = $fieldQueryInterpreter->composeField($fieldName, $fieldArgs, $arrayItemAlias, $fieldSkipOutputIfNull, $fieldDirectives);
-                        $arrayItemPropertyOutputKey = $fieldQueryInterpreter->getFieldOutputKey($arrayItemProperty);
+                        $arrayItemAlias = $this->createPropertyForArrayItem($fieldAlias ? $fieldAlias : QuerySyntax::SYMBOL_FIELDALIAS_PREFIX . $fieldName, (string) $key);
+                        $arrayItemProperty = $this->fieldQueryInterpreter->composeField($fieldName, $fieldArgs, $arrayItemAlias, $fieldSkipOutputIfNull, $fieldDirectives);
+                        $arrayItemPropertyOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($arrayItemProperty);
                         // Place into the current object
                         $dbItems[(string) $id][$arrayItemPropertyOutputKey] = $value;
                         // Place it into list of fields to process
@@ -140,6 +120,7 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
                 $pipelineArrayItemIdsProperties[] = $arrayItemIdsProperties;
             }
             // 2. Execute the composed directive pipeline on all arrayItems
+            $nestedSchemaErrors = $nestedIDDBErrors = [];
             $nestedDirectivePipeline->resolveDirectivePipeline(
                 $typeResolver,
                 $pipelineArrayItemIdsProperties,
@@ -151,21 +132,40 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
                 $previousDBItems,
                 $variables,
                 $messages,
-                $dbErrors,
+                $nestedIDDBErrors,
                 $dbWarnings,
                 $dbDeprecations,
                 $dbNotices,
                 $dbTraces,
-                $schemaErrors,
+                $nestedSchemaErrors,
                 $schemaWarnings,
                 $schemaDeprecations,
                 $schemaNotices,
                 $schemaTraces
             );
+            // If there was an error, prepend the path
+            if ($nestedSchemaErrors) {
+                $schemaError = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => $this->translationAPI->__('The nested directive has produced errors', 'component-model')];
+                foreach ($nestedSchemaErrors as $nestedSchemaError) {
+                    \array_unshift($nestedSchemaError[Tokens::PATH], $this->directive);
+                    $this->prependPathOnNestedErrors($nestedSchemaError);
+                    $schemaError[Tokens::EXTENSIONS][Tokens::NESTED][] = $nestedSchemaError;
+                }
+                $schemaErrors[] = $schemaError;
+            }
+            if ($nestedIDDBErrors) {
+                foreach ($nestedIDDBErrors as $id => $nestedDBErrors) {
+                    foreach ($nestedDBErrors as &$nestedDBError) {
+                        \array_unshift($nestedDBError[Tokens::PATH], $this->directive);
+                        $this->prependPathOnNestedErrors($nestedDBError);
+                    }
+                    $dbErrors[(string) $id] = $nestedDBErrors;
+                }
+            }
             // 3. Compose the array from the results for each array item
             foreach ($idsDataFields as $id => $dataFields) {
                 foreach ($dataFields['direct'] as $field) {
-                    $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
+                    $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
                     $isValueInDBItems = \array_key_exists($fieldOutputKey, $dbItems[(string) $id] ?? []);
                     $value = $isValueInDBItems ? $dbItems[(string) $id][$fieldOutputKey] : $previousDBItems[$dbKey][(string) $id][$fieldOutputKey];
                     // If the array is null or empty, nothing to do
@@ -176,7 +176,7 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
                         continue;
                     }
                     // Obtain the elements composing the field, to re-create a new field for each arrayItem
-                    $fieldParts = $fieldQueryInterpreter->listField($field);
+                    $fieldParts = $this->fieldQueryInterpreter->listField($field);
                     $fieldName = $fieldParts[0];
                     $fieldArgs = $fieldParts[1];
                     $fieldAlias = $fieldParts[2];
@@ -188,17 +188,18 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
                     $arrayItems = $this->getArrayItems($array, $id, $field, $typeResolver, $resultIDItems, $dbItems, $previousDBItems, $variables, $messages, $arrayItemDBErrors, $arrayItemDBWarnings, $arrayItemDBDeprecations);
                     // The value is an array. Unpack all the elements into their own property
                     foreach ($arrayItems as $key => &$value) {
-                        $arrayItemAlias = $this->createPropertyForArrayItem($fieldAlias ? $fieldAlias : \PoP\FieldQuery\QuerySyntax::SYMBOL_FIELDALIAS_PREFIX . $fieldName, $key);
-                        $arrayItemProperty = $fieldQueryInterpreter->composeField($fieldName, $fieldArgs, $arrayItemAlias, $fieldSkipOutputIfNull, $fieldDirectives);
+                        $arrayItemAlias = $this->createPropertyForArrayItem($fieldAlias ? $fieldAlias : QuerySyntax::SYMBOL_FIELDALIAS_PREFIX . $fieldName, (string) $key);
+                        $arrayItemProperty = $this->fieldQueryInterpreter->composeField($fieldName, $fieldArgs, $arrayItemAlias, $fieldSkipOutputIfNull, $fieldDirectives);
                         // Place the result of executing the function on the array item
-                        $arrayItemPropertyOutputKey = $fieldQueryInterpreter->getFieldOutputKey($arrayItemProperty);
+                        $arrayItemPropertyOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($arrayItemProperty);
                         $arrayItemValue = $dbItems[(string) $id][$arrayItemPropertyOutputKey];
                         // Remove this temporary property from $dbItems
                         unset($dbItems[(string) $id][$arrayItemPropertyOutputKey]);
                         // Validate it's not an error
-                        if (\PoP\ComponentModel\Misc\GeneralUtils::isError($arrayItemValue)) {
+                        if (GeneralUtils::isError($arrayItemValue)) {
+                            /** @var Error */
                             $error = $arrayItemValue;
-                            $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Transformation of element with key \'%s\' on array from property \'%s\' on object with ID \'%s\' failed due to error: %s', 'component-model'), $key, $fieldOutputKey, $id, $error->getErrorMessage())];
+                            $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Transformation of element with key \'%s\' on array from property \'%s\' on object with ID \'%s\' failed due to error: %s', 'component-model'), $key, $fieldOutputKey, $id, $error->getMessageOrCode())];
                             continue;
                         }
                         // Place the result for the array in the original property
@@ -212,25 +213,19 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
      * Place the result for the array in the original property
      * @param int|string $arrayItemKey
      */
-    protected function addProcessedItemBackToDBItems(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$dbItems, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, $id, string $fieldOutputKey, $arrayItemKey, $arrayItemValue) : void
+    protected function addProcessedItemBackToDBItems(TypeResolverInterface $typeResolver, array &$dbItems, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, $id, string $fieldOutputKey, $arrayItemKey, $arrayItemValue) : void
     {
         $dbItems[(string) $id][$fieldOutputKey][$arrayItemKey] = $arrayItemValue;
     }
     /**
      * Return the items to iterate on
-     *
-     * @param array $value
-     * @return void
+     * @param int|string $id
      */
-    protected abstract function getArrayItems(array &$array, $id, string $field, \PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, array &$resultIDItems, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations) : ?array;
+    protected abstract function getArrayItems(array &$array, $id, string $field, TypeResolverInterface $typeResolver, array &$resultIDItems, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations) : ?array;
     /**
      * Create a property for storing the array item in the current object
-     *
-     * @param string $fieldOutputKey
-     * @param [type] $key
-     * @return void
      */
-    protected function createPropertyForArrayItem(string $fieldAliasOrName, $key) : string
+    protected function createPropertyForArrayItem(string $fieldAliasOrName, string $key) : string
     {
         return \implode(self::PROPERTY_SEPARATOR, [$fieldAliasOrName, $key]);
     }
@@ -242,78 +237,58 @@ abstract class AbstractApplyNestedDirectivesOnArrayItemsDirectiveResolver extend
     //     // $pos = QueryUtils::findLastSymbolPosition($arrayItemProperty, self::PROPERTY_SEPARATOR);
     //     return explode(self::PROPERTY_SEPARATOR, $arrayItemProperty);
     // }
-    /**
-     * Add the $key in addition to the $value
-     *
-     * @param TypeResolverInterface $typeResolver
-     * @param [type] $id
-     * @param string $field
-     * @param array $resultIDItems
-     * @param array $dbItems
-     * @param array $dbErrors
-     * @param array $dbWarnings
-     * @param array $schemaErrors
-     * @param array $schemaWarnings
-     * @param array $schemaDeprecations
-     * @param array $previousDBItems
-     * @param array $variables
-     * @param array $messages
-     * @return void
-     */
-    protected function addExpressionsForResultItem(\PoP\ComponentModel\TypeResolvers\TypeResolverInterface $typeResolver, $id, string $field, array &$resultIDItems, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations)
+    protected function addExpressionsForResultItem(TypeResolverInterface $typeResolver, $id, string $field, array &$resultIDItems, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations) : void
     {
-        $translationAPI = \PoP\Translation\Facades\TranslationAPIFacade::getInstance();
         // Enable the query to provide variables to pass down
         $addExpressions = $this->directiveArgsForSchema['addExpressions'] ?? [];
         $appendExpressions = $this->directiveArgsForSchema['appendExpressions'] ?? [];
         if ($addExpressions || $appendExpressions) {
             // The expressions may need `$value`, so add it
-            $fieldQueryInterpreter = \PoP\ComponentModel\Facades\Schema\FieldQueryInterpreterFacade::getInstance();
-            $fieldOutputKey = $fieldQueryInterpreter->getFieldOutputKey($field);
+            $fieldOutputKey = $this->fieldQueryInterpreter->getFieldOutputKey($field);
             $isValueInDBItems = \array_key_exists($fieldOutputKey, $dbItems[(string) $id] ?? []);
             $dbKey = $typeResolver->getTypeOutputName();
             $value = $isValueInDBItems ? $dbItems[(string) $id][$fieldOutputKey] : $previousDBItems[$dbKey][(string) $id][$fieldOutputKey];
-            $this->addExpressionForResultItem($id, \PoP\Engine\Dataloading\Expressions::NAME_VALUE, $value, $messages);
+            $this->addExpressionForResultItem($id, Expressions::NAME_VALUE, $value, $messages);
             $expressions = $this->getExpressionsForResultItem($id, $variables, $messages);
-            $options = [\PoP\ComponentModel\TypeResolvers\AbstractTypeResolver::OPTION_VALIDATE_SCHEMA_ON_RESULT_ITEM => \true];
+            $options = [AbstractTypeResolver::OPTION_VALIDATE_SCHEMA_ON_RESULT_ITEM => \true];
             foreach ($addExpressions as $key => $value) {
                 // Evaluate the $value, since it may be a function
-                if ($fieldQueryInterpreter->isFieldArgumentValueAField($value)) {
+                if ($this->fieldQueryInterpreter->isFieldArgumentValueAField($value)) {
                     $resolvedValue = $typeResolver->resolveValue($resultIDItems[(string) $id], $value, $variables, $expressions, $options);
                     // Merge the dbWarnings, if any
-                    $feedbackMessageStore = \PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance();
-                    if ($resultItemDBWarnings = $feedbackMessageStore->retrieveAndClearResultItemDBWarnings($id)) {
+                    if ($resultItemDBWarnings = $this->feedbackMessageStore->retrieveAndClearResultItemDBWarnings($id)) {
                         $dbWarnings[$id] = \array_merge($dbWarnings[$id] ?? [], $resultItemDBWarnings);
                     }
-                    if (\PoP\ComponentModel\Misc\GeneralUtils::isError($resolvedValue)) {
+                    if (GeneralUtils::isError($resolvedValue)) {
                         // Show the error message, and return nothing
+                        /** @var Error */
                         $error = $resolvedValue;
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Executing field \'%s\' on object with ID \'%s\' produced error: %s. Setting expression \'%s\' was ignored', 'pop-component-model'), $value, $id, $error->getErrorMessage(), $key)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Executing field \'%s\' on object with ID \'%s\' produced error: %s. Setting expression \'%s\' was ignored', 'pop-component-model'), $value, $id, $error->getMessageOrCode(), $key)];
                         continue;
                     }
                     $value = $resolvedValue;
                 }
-                $this->addExpressionForResultItem($id, $key, $resolvedValue, $messages);
+                $this->addExpressionForResultItem($id, (string) $key, $value, $messages);
             }
             foreach ($appendExpressions as $key => $value) {
-                $existingValue = $this->getExpressionForResultItem($id, $key, $messages) ?? [];
+                $existingValue = $this->getExpressionForResultItem($id, (string) $key, $messages) ?? [];
                 // Evaluate the $value, since it may be a function
-                if ($fieldQueryInterpreter->isFieldArgumentValueAField($value)) {
+                if ($this->fieldQueryInterpreter->isFieldArgumentValueAField($value)) {
                     $resolvedValue = $typeResolver->resolveValue($resultIDItems[(string) $id], $value, $variables, $expressions, $options);
                     // Merge the dbWarnings, if any
-                    $feedbackMessageStore = \PoP\ComponentModel\Facades\Schema\FeedbackMessageStoreFacade::getInstance();
-                    if ($resultItemDBWarnings = $feedbackMessageStore->retrieveAndClearResultItemDBWarnings($id)) {
+                    if ($resultItemDBWarnings = $this->feedbackMessageStore->retrieveAndClearResultItemDBWarnings($id)) {
                         $dbWarnings[$id] = \array_merge($dbWarnings[$id] ?? [], $resultItemDBWarnings);
                     }
-                    if (\PoP\ComponentModel\Misc\GeneralUtils::isError($resolvedValue)) {
+                    if (GeneralUtils::isError($resolvedValue)) {
                         // Show the error message, and return nothing
+                        /** @var Error */
                         $error = $resolvedValue;
-                        $dbErrors[(string) $id][] = [\PoP\ComponentModel\Feedback\Tokens::PATH => [$this->directive], \PoP\ComponentModel\Feedback\Tokens::MESSAGE => \sprintf($translationAPI->__('Executing field \'%s\' on object with ID \'%s\' produced error: %s. Setting expression \'%s\' was ignored', 'pop-component-model'), $value, $id, $error->getErrorMessage(), $key)];
+                        $dbErrors[(string) $id][] = [Tokens::PATH => [$this->directive], Tokens::MESSAGE => \sprintf($this->translationAPI->__('Executing field \'%s\' on object with ID \'%s\' produced error: %s. Setting expression \'%s\' was ignored', 'pop-component-model'), $value, $id, $error->getMessageOrCode(), $key)];
                         continue;
                     }
                     $existingValue[] = $resolvedValue;
                 }
-                $this->addExpressionForResultItem($id, $key, $existingValue, $messages);
+                $this->addExpressionForResultItem($id, (string) $key, $existingValue, $messages);
             }
         }
     }

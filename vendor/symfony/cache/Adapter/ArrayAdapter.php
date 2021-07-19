@@ -24,43 +24,45 @@ use PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\AdapterInterface, \PrefixedByPoP\Symfony\Contracts\Cache\CacheInterface, \PrefixedByPoP\Psr\Log\LoggerAwareInterface, \PrefixedByPoP\Symfony\Component\Cache\ResettableInterface
+class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInterface, ResettableInterface
 {
     use LoggerAwareTrait;
     private $storeSerialized;
     private $values = [];
     private $expiries = [];
-    private $createCacheItem;
     private $defaultLifetime;
     private $maxLifetime;
     private $maxItems;
+    private static $createCacheItem;
     /**
      * @param bool $storeSerialized Disabling serialization can lead to cache corruptions when storing mutable values but increases performance otherwise
      */
     public function __construct(int $defaultLifetime = 0, bool $storeSerialized = \true, float $maxLifetime = 0, int $maxItems = 0)
     {
         if (0 > $maxLifetime) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Argument $maxLifetime must be positive, %F passed.', $maxLifetime));
+            throw new InvalidArgumentException(\sprintf('Argument $maxLifetime must be positive, %F passed.', $maxLifetime));
         }
         if (0 > $maxItems) {
-            throw new \PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException(\sprintf('Argument $maxItems must be a positive integer, %d passed.', $maxItems));
+            throw new InvalidArgumentException(\sprintf('Argument $maxItems must be a positive integer, %d passed.', $maxItems));
         }
         $this->defaultLifetime = $defaultLifetime;
         $this->storeSerialized = $storeSerialized;
         $this->maxLifetime = $maxLifetime;
         $this->maxItems = $maxItems;
-        $this->createCacheItem = \Closure::bind(static function ($key, $value, $isHit) {
-            $item = new \PrefixedByPoP\Symfony\Component\Cache\CacheItem();
+        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key, $value, $isHit) {
+            $item = new CacheItem();
             $item->key = $key;
             $item->value = $value;
             $item->isHit = $isHit;
             return $item;
-        }, null, \PrefixedByPoP\Symfony\Component\Cache\CacheItem::class);
+        }, null, CacheItem::class));
     }
     /**
      * {@inheritdoc}
+     * @param float $beta
+     * @param mixed[] $metadata
      */
-    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null)
+    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
     {
         $item = $this->getItem($key);
         $metadata = $item->getMetadata();
@@ -94,7 +96,7 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
             }
             return \true;
         }
-        \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($key);
+        \assert('' !== CacheItem::validateKey($key));
         return isset($this->expiries[$key]) && !$this->deleteItem($key);
     }
     /**
@@ -111,20 +113,15 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
         } else {
             $value = $this->storeSerialized ? $this->unfreeze($key, $isHit) : $this->values[$key];
         }
-        $f = $this->createCacheItem;
-        return $f($key, $value, $isHit);
+        return (self::$createCacheItem)($key, $value, $isHit);
     }
     /**
      * {@inheritdoc}
      */
     public function getItems(array $keys = [])
     {
-        foreach ($keys as $key) {
-            if (!\is_string($key) || !isset($this->expiries[$key])) {
-                \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($key);
-            }
-        }
-        return $this->generateItems($keys, \microtime(\true), $this->createCacheItem);
+        \assert(self::validateKeys($keys));
+        return $this->generateItems($keys, \microtime(\true), self::$createCacheItem);
     }
     /**
      * {@inheritdoc}
@@ -133,9 +130,7 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      */
     public function deleteItem($key)
     {
-        if (!\is_string($key) || !isset($this->expiries[$key])) {
-            \PrefixedByPoP\Symfony\Component\Cache\CacheItem::validateKey($key);
-        }
+        \assert('' !== CacheItem::validateKey($key));
         unset($this->values[$key], $this->expiries[$key]);
         return \true;
     }
@@ -156,15 +151,15 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      *
      * @return bool
      */
-    public function save(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function save(CacheItemInterface $item)
     {
-        if (!$item instanceof \PrefixedByPoP\Symfony\Component\Cache\CacheItem) {
+        if (!$item instanceof CacheItem) {
             return \false;
         }
         $item = (array) $item;
-        $key = $item["\0*\0key"];
-        $value = $item["\0*\0value"];
-        $expiry = $item["\0*\0expiry"];
+        $key = $item["\x00*\x00key"];
+        $value = $item["\x00*\x00value"];
+        $expiry = $item["\x00*\x00expiry"];
         $now = \microtime(\true);
         if (0 === $expiry) {
             $expiry = \PHP_INT_MAX;
@@ -201,7 +196,7 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      *
      * @return bool
      */
-    public function saveDeferred(\PrefixedByPoP\Psr\Cache\CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item)
     {
         return $this->save($item);
     }
@@ -218,8 +213,9 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
      * {@inheritdoc}
      *
      * @return bool
+     * @param string $prefix
      */
-    public function clear(string $prefix = '')
+    public function clear($prefix = '')
     {
         if ('' !== $prefix) {
             $now = \microtime(\true);
@@ -302,9 +298,10 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
             try {
                 $serialized = \serialize($value);
             } catch (\Exception $e) {
+                unset($this->values[$key]);
                 $type = \get_debug_type($value);
                 $message = \sprintf('Failed to save key "{key}" of type %s: %s', $type, $e->getMessage());
-                \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+                CacheItem::log($this->logger, $message, ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
                 return;
             }
             // Keep value serialized if it contains any objects or any internal references
@@ -323,7 +320,7 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
             try {
                 $value = \unserialize($value);
             } catch (\Exception $e) {
-                \PrefixedByPoP\Symfony\Component\Cache\CacheItem::log($this->logger, 'Failed to unserialize key "{key}": ' . $e->getMessage(), ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+                CacheItem::log($this->logger, 'Failed to unserialize key "{key}": ' . $e->getMessage(), ['key' => $key, 'exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
                 $value = \false;
             }
             if (\false === $value) {
@@ -335,5 +332,14 @@ class ArrayAdapter implements \PrefixedByPoP\Symfony\Component\Cache\Adapter\Ada
             }
         }
         return $value;
+    }
+    private function validateKeys(array $keys) : bool
+    {
+        foreach ($keys as $key) {
+            if (!\is_string($key) || !isset($this->expiries[$key])) {
+                CacheItem::validateKey($key);
+            }
+        }
+        return \true;
     }
 }
