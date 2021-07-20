@@ -6,8 +6,8 @@ $loader = require_once __DIR__.'/autoload.php';
 
 // Aliases for the whitelisted classes. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/README.md#class-whitelisting
-if (!class_exists('ComposerAutoloaderInit1756a95ed1754d4479800f8a2a120c8d', false) && !interface_exists('ComposerAutoloaderInit1756a95ed1754d4479800f8a2a120c8d', false) && !trait_exists('ComposerAutoloaderInit1756a95ed1754d4479800f8a2a120c8d', false)) {
-    spl_autoload_call('PrefixedByPoP\ComposerAutoloaderInit1756a95ed1754d4479800f8a2a120c8d');
+if (!class_exists('ComposerAutoloaderInit172b6cedac2c15f5eb33e05f688de873', false) && !interface_exists('ComposerAutoloaderInit172b6cedac2c15f5eb33e05f688de873', false) && !trait_exists('ComposerAutoloaderInit172b6cedac2c15f5eb33e05f688de873', false)) {
+    spl_autoload_call('PrefixedByPoP\ComposerAutoloaderInit172b6cedac2c15f5eb33e05f688de873');
 }
 if (!class_exists('ReturnTypeWillChange', false) && !interface_exists('ReturnTypeWillChange', false) && !trait_exists('ReturnTypeWillChange', false)) {
     spl_autoload_call('PrefixedByPoP\ReturnTypeWillChange');
@@ -41,9 +41,9 @@ if (!function_exists('uri_template')) {
         return \PrefixedByPoP\uri_template(...func_get_args());
     }
 }
-if (!function_exists('composerRequire1756a95ed1754d4479800f8a2a120c8d')) {
-    function composerRequire1756a95ed1754d4479800f8a2a120c8d() {
-        return \PrefixedByPoP\composerRequire1756a95ed1754d4479800f8a2a120c8d(...func_get_args());
+if (!function_exists('composerRequire172b6cedac2c15f5eb33e05f688de873')) {
+    function composerRequire172b6cedac2c15f5eb33e05f688de873() {
+        return \PrefixedByPoP\composerRequire172b6cedac2c15f5eb33e05f688de873(...func_get_args());
     }
 }
 if (!function_exists('array_is_list')) {

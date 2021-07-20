@@ -87,7 +87,7 @@ class RootQueryableFieldResolver extends AbstractQueryableFieldResolver
     protected function getQuery(TypeResolverInterface $typeResolver, $resultItem, string $fieldName, array $fieldArgs = []) : array
     {
         $vars = ApplicationState::getVars();
-        $query = ['status' => [Status::PUBLISHED, Status::PENDING, Status::DRAFT], 'authors' => [$vars['global-userstate']['is-user-logged-in']]];
+        $query = ['status' => [Status::PUBLISHED, Status::PENDING, Status::DRAFT], 'authors' => [$vars['global-userstate']['current-user-id']]];
         switch ($fieldName) {
             case 'myPosts':
                 return \array_merge($query, ['limit' => ComponentConfiguration::getPostListDefaultLimit()]);
