@@ -11,6 +11,7 @@
 namespace PrefixedByPoP\Symfony\Component\Cache\Traits;
 
 use PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException;
+use PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface;
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  * @author Rob Frawley 2nd <rmf@src.run>
@@ -20,11 +21,11 @@ use PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException;
 trait FilesystemTrait
 {
     use FilesystemCommonTrait;
-    private $marshaller;
     /**
-     * @return bool
+     * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface
      */
-    public function prune()
+    private $marshaller;
+    public function prune() : bool
     {
         $time = \time();
         $pruned = \true;
@@ -42,9 +43,9 @@ trait FilesystemTrait
         return $pruned;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doFetch(array $ids)
+    protected function doFetch($ids) : iterable
     {
         $values = [];
         $now = \time();
@@ -68,17 +69,19 @@ trait FilesystemTrait
         return $values;
     }
     /**
-     * {@inheritdoc}
+     * @param string $id
      */
-    protected function doHave(string $id)
+    protected function doHave($id) : bool
     {
         $file = $this->getFile($id);
         return \is_file($file) && (@\filemtime($file) > \time() || $this->doFetch([$id]));
     }
     /**
-     * {@inheritdoc}
+     * @return mixed[]|bool
+     * @param mixed[] $values
+     * @param int $lifetime
      */
-    protected function doSave(array $values, int $lifetime)
+    protected function doSave($values, $lifetime)
     {
         $expiresAt = $lifetime ? \time() + $lifetime : 0;
         $values = $this->marshaller->marshall($values, $failed);

@@ -11,16 +11,32 @@ class SchemaConfigurationBlockCategory extends AbstractBlockCategory
     public const SCHEMA_CONFIGURATION_BLOCK_CATEGORY = 'graphql-api-schema-config';
 
     /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLSchemaConfigurationCustomPostType|null
+     */
+    private $graphQLSchemaConfigurationCustomPostType;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLSchemaConfigurationCustomPostType $graphQLSchemaConfigurationCustomPostType
+     */
+    final public function setGraphQLSchemaConfigurationCustomPostType($graphQLSchemaConfigurationCustomPostType): void
+    {
+        $this->graphQLSchemaConfigurationCustomPostType = $graphQLSchemaConfigurationCustomPostType;
+    }
+    final protected function getGraphQLSchemaConfigurationCustomPostType(): GraphQLSchemaConfigurationCustomPostType
+    {
+        /** @var GraphQLSchemaConfigurationCustomPostType */
+        return $this->graphQLSchemaConfigurationCustomPostType = $this->graphQLSchemaConfigurationCustomPostType ?? $this->instanceManager->getInstance(GraphQLSchemaConfigurationCustomPostType::class);
+    }
+
+    /**
      * Custom Post Type for which to enable the block category
      *
      * @return string[]
      */
     public function getCustomPostTypes(): array
     {
-        /** @var GraphQLSchemaConfigurationCustomPostType */
-        $customPostTypeService = $this->instanceManager->getInstance(GraphQLSchemaConfigurationCustomPostType::class);
         return [
-            $customPostTypeService->getCustomPostType(),
+            $this->getGraphQLSchemaConfigurationCustomPostType()->getCustomPostType(),
         ];
     }
 

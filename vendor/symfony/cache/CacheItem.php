@@ -20,41 +20,59 @@ use PrefixedByPoP\Symfony\Contracts\Cache\ItemInterface;
 final class CacheItem implements ItemInterface
 {
     private const METADATA_EXPIRY_OFFSET = 1527506807;
-    protected $key;
-    protected $value;
-    protected $isHit = \false;
-    protected $expiry;
-    protected $metadata = [];
-    protected $newMetadata = [];
-    protected $innerItem;
-    protected $poolHash;
-    protected $isTaggable = \false;
+    private const VALUE_WRAPPER = "\xa9";
     /**
-     * {@inheritdoc}
+     * @var string
      */
+    protected $key;
+    /**
+     * @var mixed
+     */
+    protected $value = null;
+    /**
+     * @var bool
+     */
+    protected $isHit = \false;
+    /**
+     * @var float|int|null
+     */
+    protected $expiry = null;
+    /**
+     * @var mixed[]
+     */
+    protected $metadata = [];
+    /**
+     * @var mixed[]
+     */
+    protected $newMetadata = [];
+    /**
+     * @var \Symfony\Contracts\Cache\ItemInterface|null
+     */
+    protected $innerItem;
+    /**
+     * @var string|null
+     */
+    protected $poolHash;
+    /**
+     * @var bool
+     */
+    protected $isTaggable = \false;
     public function getKey() : string
     {
         return $this->key;
     }
     /**
-     * {@inheritdoc}
-     *
      * @return mixed
      */
     public function get()
     {
         return $this->value;
     }
-    /**
-     * {@inheritdoc}
-     */
     public function isHit() : bool
     {
         return $this->isHit;
     }
     /**
-     * {@inheritdoc}
-     *
      * @return $this
      */
     public function set($value)
@@ -63,32 +81,24 @@ final class CacheItem implements ItemInterface
         return $this;
     }
     /**
-     * {@inheritdoc}
-     *
      * @return $this
+     * @param \DateTimeInterface|null $expiration
      */
     public function expiresAt($expiration)
     {
-        if (null === $expiration) {
-            $this->expiry = null;
-        } elseif ($expiration instanceof \DateTimeInterface) {
-            $this->expiry = (float) $expiration->format('U.u');
-        } else {
-            throw new InvalidArgumentException(\sprintf('Expiration date must implement DateTimeInterface or be null, "%s" given.', \get_debug_type($expiration)));
-        }
+        $this->expiry = null !== $expiration ? (float) $expiration->format('U.u') : null;
         return $this;
     }
     /**
-     * {@inheritdoc}
-     *
      * @return $this
+     * @param mixed $time
      */
     public function expiresAfter($time)
     {
         if (null === $time) {
             $this->expiry = null;
         } elseif ($time instanceof \DateInterval) {
-            $this->expiry = \microtime(\true) + \DateTime::createFromFormat('U', 0)->add($time)->format('U.u');
+            $this->expiry = \microtime(\true) + \DateTimeImmutable::createFromFormat('U', 0)->add($time)->format('U.u');
         } elseif (\is_int($time)) {
             $this->expiry = $time + \microtime(\true);
         } else {
@@ -97,7 +107,7 @@ final class CacheItem implements ItemInterface
         return $this;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $tags
      * @return $this
      */
     public function tag($tags)
@@ -105,12 +115,13 @@ final class CacheItem implements ItemInterface
         if (!$this->isTaggable) {
             throw new LogicException(\sprintf('Cache item "%s" comes from a non tag-aware pool: you cannot tag it.', $this->key));
         }
-        if (!\is_iterable($tags)) {
+        if (!\is_array($tags) && !$tags instanceof \Traversable) {
+            // don't use is_iterable(), it's slow
             $tags = [$tags];
         }
         foreach ($tags as $tag) {
-            if (!\is_string($tag) && !(\is_object($tag) && \method_exists($tag, '__toString'))) {
-                throw new InvalidArgumentException(\sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', \is_object($tag) ? \get_class($tag) : \gettype($tag)));
+            if (!\is_string($tag) && !$tag instanceof \Stringable) {
+                throw new InvalidArgumentException(\sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', \get_debug_type($tag)));
             }
             $tag = (string) $tag;
             if (isset($this->newMetadata[self::METADATA_TAGS][$tag])) {
@@ -126,9 +137,6 @@ final class CacheItem implements ItemInterface
         }
         return $this;
     }
-    /**
-     * {@inheritdoc}
-     */
     public function getMetadata() : array
     {
         return $this->metadata;
@@ -136,7 +144,7 @@ final class CacheItem implements ItemInterface
     /**
      * Validates a cache key according to PSR-6.
      *
-     * @param string $key The key to validate
+     * @param mixed $key The key to validate
      *
      * @throws InvalidArgumentException When $key is not valid
      */
@@ -157,8 +165,11 @@ final class CacheItem implements ItemInterface
      * Internal logging helper.
      *
      * @internal
+     * @param \Psr\Log\LoggerInterface|null $logger
+     * @param string $message
+     * @param mixed[] $context
      */
-    public static function log(?LoggerInterface $logger, string $message, array $context = [])
+    public static function log($logger, $message, $context = [])
     {
         if ($logger) {
             $logger->warning($message, $context);
@@ -171,5 +182,35 @@ final class CacheItem implements ItemInterface
             }
             @\trigger_error(\strtr($message, $replace), \E_USER_WARNING);
         }
+    }
+    /**
+     * @return mixed
+     */
+    private function pack()
+    {
+        if (!($m = $this->newMetadata)) {
+            return $this->value;
+        }
+        $valueWrapper = self::VALUE_WRAPPER;
+        return new $valueWrapper($this->value, $m + ['expiry' => $this->expiry]);
+    }
+    private function unpack() : bool
+    {
+        $v = $this->value;
+        $valueWrapper = self::VALUE_WRAPPER;
+        if ($v instanceof $valueWrapper) {
+            $this->value = $v->value;
+            $this->metadata = $v->metadata;
+            return \true;
+        }
+        \reset($v);
+        if (!\is_array($v) || 1 !== \count($v) || 10 !== \strlen($k = (string) \key($v)) || "\x9d" !== $k[0] || "\x00" !== $k[5] || "_" !== $k[9]) {
+            return \false;
+        }
+        // BC with pools populated before v6.1
+        $this->value = $v[$k];
+        $this->metadata = \unpack('Vexpiry/Nctime', \substr($k, 1, -1));
+        $this->metadata['expiry'] += self::METADATA_EXPIRY_OFFSET;
+        return \true;
     }
 }

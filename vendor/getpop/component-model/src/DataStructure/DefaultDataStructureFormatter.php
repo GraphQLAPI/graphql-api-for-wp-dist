@@ -3,7 +3,8 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DataStructure;
 
-class DefaultDataStructureFormatter extends \PoP\ComponentModel\DataStructure\AbstractJSONDataStructureFormatter
+use PoP\ComponentModel\DataStructureFormatters\AbstractJSONDataStructureFormatter;
+class DefaultDataStructureFormatter extends AbstractJSONDataStructureFormatter
 {
     public function getName() : string
     {

@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\Services\Blocks\MainPluginBlockTrait;
+use GraphQLAPI\GraphQLAPI\Services\BlockCategories\BlockCategoryInterface;
 use GraphQLAPI\GraphQLAPI\Services\BlockCategories\CustomEndpointBlockCategory;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractEndpointOptionsBlock;
 
 /**
  * Endpoint Options block
@@ -14,6 +13,24 @@ use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractEndpointOptionsBlock;
 class CustomEndpointOptionsBlock extends AbstractEndpointOptionsBlock implements EndpointEditorBlockServiceTagInterface
 {
     use MainPluginBlockTrait;
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockCategories\CustomEndpointBlockCategory|null
+     */
+    private $customEndpointBlockCategory;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockCategories\CustomEndpointBlockCategory $customEndpointBlockCategory
+     */
+    final public function setCustomEndpointBlockCategory($customEndpointBlockCategory): void
+    {
+        $this->customEndpointBlockCategory = $customEndpointBlockCategory;
+    }
+    final protected function getCustomEndpointBlockCategory(): CustomEndpointBlockCategory
+    {
+        /** @var CustomEndpointBlockCategory */
+        return $this->customEndpointBlockCategory = $this->customEndpointBlockCategory ?? $this->instanceManager->getInstance(CustomEndpointBlockCategory::class);
+    }
 
     protected function getBlockName(): string
     {
@@ -25,8 +42,33 @@ class CustomEndpointOptionsBlock extends AbstractEndpointOptionsBlock implements
         return 160;
     }
 
-    protected function getBlockCategoryClass(): ?string
+    protected function getBlockCategory(): ?BlockCategoryInterface
     {
-        return CustomEndpointBlockCategory::class;
+        return $this->getCustomEndpointBlockCategory();
+    }
+
+    /**
+     * Add the locale language to the localized data?
+     */
+    protected function addLocalLanguage(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Default language for the script/component's documentation
+     */
+    protected function getDefaultLanguage(): ?string
+    {
+        // English
+        return 'en';
+    }
+
+    /**
+     * Register style-index.css
+     */
+    protected function registerCommonStyleCSS(): bool
+    {
+        return true;
     }
 }

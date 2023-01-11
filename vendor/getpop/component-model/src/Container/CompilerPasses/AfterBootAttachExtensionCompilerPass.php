@@ -4,8 +4,8 @@ declare (strict_types=1);
 namespace PoP\ComponentModel\Container\CompilerPasses;
 
 use PoP\ComponentModel\AttachableExtensions\AttachableExtensionGroups;
-use PoP\Root\Component\ApplicationEvents;
-use PoP\ComponentModel\TypeResolverDecorators\TypeResolverDecoratorInterface;
+use PoP\ComponentModel\RelationalTypeResolverDecorators\RelationalTypeResolverDecoratorInterface;
+use PoP\Root\Module\ApplicationEvents;
 class AfterBootAttachExtensionCompilerPass extends \PoP\ComponentModel\Container\CompilerPasses\AbstractAttachExtensionCompilerPass
 {
     protected function getAttachExtensionEvent() : string
@@ -17,6 +17,6 @@ class AfterBootAttachExtensionCompilerPass extends \PoP\ComponentModel\Container
      */
     protected function getAttachableClassGroups() : array
     {
-        return [TypeResolverDecoratorInterface::class => AttachableExtensionGroups::TYPERESOLVERDECORATORS];
+        return [RelationalTypeResolverDecoratorInterface::class => AttachableExtensionGroups::RELATIONAL_TYPE_RESOLVER_DECORATORS];
     }
 }

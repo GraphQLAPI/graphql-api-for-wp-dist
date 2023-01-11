@@ -20,8 +20,10 @@ final class ResultHandler implements ResultHandlerInterface
 {
     /**
      * @inheritdoc
+     * @param \Brain\Cortex\Router\MatchingResult $result
+     * @param \WP $wp
      */
-    public function handle(MatchingResult $result, \WP $wp, $doParseRequest)
+    public function handle($result, $wp, $doParseRequest)
     {
         /** @var \Brain\Cortex\Router\MatchingResult $result */
         $result = apply_filters('cortex.match.done', $result, $wp, $doParseRequest);

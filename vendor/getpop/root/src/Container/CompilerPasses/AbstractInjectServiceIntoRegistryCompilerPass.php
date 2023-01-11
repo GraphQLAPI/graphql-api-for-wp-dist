@@ -6,8 +6,11 @@ namespace PoP\Root\Container\CompilerPasses;
 use PoP\Root\Container\ContainerBuilderWrapperInterface;
 abstract class AbstractInjectServiceIntoRegistryCompilerPass extends \PoP\Root\Container\CompilerPasses\AbstractCompilerPass
 {
-    use AutoconfigurableServicesCompilerPassTrait;
-    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void
+    use \PoP\Root\Container\CompilerPasses\AutoconfigurableServicesCompilerPassTrait;
+    /**
+     * @param \PoP\Root\Container\ContainerBuilderWrapperInterface $containerBuilderWrapper
+     */
+    protected function doProcess($containerBuilderWrapper) : void
     {
         $registryDefinition = $containerBuilderWrapper->getDefinition($this->getRegistryServiceDefinition());
         $definitions = $containerBuilderWrapper->getDefinitions();

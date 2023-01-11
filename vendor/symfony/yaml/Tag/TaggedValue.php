@@ -16,8 +16,17 @@ namespace PrefixedByPoP\Symfony\Component\Yaml\Tag;
  */
 final class TaggedValue
 {
+    /**
+     * @var string
+     */
     private $tag;
+    /**
+     * @var mixed
+     */
     private $value;
+    /**
+     * @param mixed $value
+     */
     public function __construct(string $tag, $value)
     {
         $this->tag = $tag;

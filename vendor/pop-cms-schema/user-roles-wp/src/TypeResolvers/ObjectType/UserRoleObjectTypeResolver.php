@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PoPCMSSchema\UserRolesWP\TypeResolvers\ObjectType;
+
+use PoP\ComponentModel\RelationalTypeDataLoaders\RelationalTypeDataLoaderInterface;
+use PoP\ComponentModel\TypeResolvers\ObjectType\AbstractObjectTypeResolver;
+use PoPCMSSchema\UserRolesWP\RelationalTypeDataLoaders\ObjectType\UserRoleTypeDataLoader;
+use WP_Role;
+
+class UserRoleObjectTypeResolver extends AbstractObjectTypeResolver
+{
+    /**
+     * @var \PoPCMSSchema\UserRolesWP\RelationalTypeDataLoaders\ObjectType\UserRoleTypeDataLoader|null
+     */
+    private $userRoleTypeDataLoader;
+
+    /**
+     * @param \PoPCMSSchema\UserRolesWP\RelationalTypeDataLoaders\ObjectType\UserRoleTypeDataLoader $userRoleTypeDataLoader
+     */
+    final public function setUserRoleTypeDataLoader($userRoleTypeDataLoader): void
+    {
+        $this->userRoleTypeDataLoader = $userRoleTypeDataLoader;
+    }
+    final protected function getUserRoleTypeDataLoader(): UserRoleTypeDataLoader
+    {
+        /** @var UserRoleTypeDataLoader */
+        return $this->userRoleTypeDataLoader = $this->userRoleTypeDataLoader ?? $this->instanceManager->getInstance(UserRoleTypeDataLoader::class);
+    }
+
+    public function getTypeName(): string
+    {
+        return 'UserRole';
+    }
+
+    public function getTypeDescription(): ?string
+    {
+        return $this->__('User roles', 'user-roles');
+    }
+
+    /**
+     * @return string|int|null
+     * @param object $object
+     */
+    public function getID($object)
+    {
+        /** @var WP_Role */
+        $role = $object;
+        return $role->name;
+    }
+
+    public function getRelationalTypeDataLoader(): RelationalTypeDataLoaderInterface
+    {
+        return $this->getUserRoleTypeDataLoader();
+    }
+}

@@ -23,9 +23,9 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeExcepti
 class ResolveInstanceofConditionalsPass implements CompilerPassInterface
 {
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         foreach ($container->getAutoconfiguredInstanceof() as $interface => $definition) {
             if ($definition->getArguments()) {
@@ -62,7 +62,7 @@ class ResolveInstanceofConditionalsPass implements CompilerPassInterface
         $reflectionClass = null;
         $parent = $definition instanceof ChildDefinition ? $definition->getParent() : null;
         foreach ($conditionals as $interface => $instanceofDefs) {
-            if ($interface !== $class && !($reflectionClass ?? ($reflectionClass = $container->getReflectionClass($class, \false) ?: \false))) {
+            if ($interface !== $class && !($reflectionClass = $reflectionClass ?? ($container->getReflectionClass($class, \false) ?: \false))) {
                 continue;
             }
             if ($interface !== $class && !\is_subclass_of($class, $interface)) {

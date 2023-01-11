@@ -19,17 +19,14 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
  */
 trait ProxyTrait
 {
-    private $pool;
     /**
-     * {@inheritdoc}
+     * @var object
      */
-    public function prune()
+    private $pool;
+    public function prune() : bool
     {
         return $this->pool instanceof PruneableInterface && $this->pool->prune();
     }
-    /**
-     * {@inheritdoc}
-     */
     public function reset()
     {
         if ($this->pool instanceof ResetInterface) {

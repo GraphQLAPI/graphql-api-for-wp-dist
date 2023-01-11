@@ -5,22 +5,29 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\EndpointExecuters;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLEndpointCustomPostTypeInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 
-class ViewCustomEndpointSourceEndpointExecuter extends AbstractViewSourceEndpointExecuter implements CustomEndpointExecuterServiceTagInterface
+class ViewCustomEndpointSourceEndpointExecuter extends AbstractViewSourceEndpointExecuter
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType|null
      */
-    protected $graphQLCustomEndpointCustomPostType;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType)
+    private $graphQLCustomEndpointCustomPostType;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType
+     */
+    final public function setGraphQLCustomEndpointCustomPostType($graphQLCustomEndpointCustomPostType): void
     {
         $this->graphQLCustomEndpointCustomPostType = $graphQLCustomEndpointCustomPostType;
-        parent::__construct($instanceManager, $moduleRegistry);
     }
+    final protected function getGraphQLCustomEndpointCustomPostType(): GraphQLCustomEndpointCustomPostType
+    {
+        /** @var GraphQLCustomEndpointCustomPostType */
+        return $this->graphQLCustomEndpointCustomPostType = $this->graphQLCustomEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
+    }
+
     public function getEnablingModule(): ?string
     {
         return EndpointFunctionalityModuleResolver::CUSTOM_ENDPOINTS;
@@ -28,6 +35,6 @@ class ViewCustomEndpointSourceEndpointExecuter extends AbstractViewSourceEndpoin
 
     protected function getCustomPostType(): GraphQLEndpointCustomPostTypeInterface
     {
-        return $this->graphQLCustomEndpointCustomPostType;
+        return $this->getGraphQLCustomEndpointCustomPostType();
     }
 }

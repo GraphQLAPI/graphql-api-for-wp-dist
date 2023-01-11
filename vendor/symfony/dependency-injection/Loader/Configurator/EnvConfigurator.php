@@ -36,8 +36,9 @@ class EnvConfigurator extends ParamConfigurator
     }
     /**
      * @return $this
+     * @param string $processor
      */
-    public function custom(string $processor, ...$args)
+    public function custom($processor, ...$args)
     {
         \array_unshift($this->stack, $processor, ...$args);
         return $this;
@@ -116,8 +117,9 @@ class EnvConfigurator extends ParamConfigurator
     }
     /**
      * @return $this
+     * @param string $key
      */
-    public function key(string $key)
+    public function key($key)
     {
         \array_unshift($this->stack, 'key', $key);
         return $this;
@@ -148,8 +150,9 @@ class EnvConfigurator extends ParamConfigurator
     }
     /**
      * @return $this
+     * @param string $fallbackParam
      */
-    public function default(string $fallbackParam)
+    public function default($fallbackParam)
     {
         \array_unshift($this->stack, 'default', $fallbackParam);
         return $this;
@@ -176,6 +179,16 @@ class EnvConfigurator extends ParamConfigurator
     public function require()
     {
         \array_unshift($this->stack, 'require');
+        return $this;
+    }
+    /**
+     * @param class-string<\BackedEnum> $backedEnumClassName
+     *
+     * @return $this
+     */
+    public function enum($backedEnumClassName)
+    {
+        \array_unshift($this->stack, 'enum', $backedEnumClassName);
         return $this;
     }
 }

@@ -6,8 +6,6 @@ namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
 use GraphQLAPI\GraphQLAPI\ContentProcessors\ContentParserOptions;
 use GraphQLAPI\GraphQLAPI\ContentProcessors\PluginMarkdownContentRetrieverTrait;
-use GraphQLAPI\GraphQLAPI\Facades\ContentProcessors\MarkdownContentParserFacade;
-use InvalidArgumentException;
 
 /**
  * About menu page
@@ -32,13 +30,13 @@ class AboutMenuPage extends AbstractDocsMenuPage
      */
     protected function isCurrentScreen(): bool
     {
-        return !$this->menuPageHelper->isDocumentationScreen() && parent::isCurrentScreen();
+        return !$this->getMenuPageHelper()->isDocumentationScreen() && parent::isCurrentScreen();
     }
 
     protected function getContentToPrint(): string
     {
         return $this->getMarkdownContent(
-            'about.md',
+            'general/about',
             '',
             [
                 ContentParserOptions::TAB_CONTENT => true,

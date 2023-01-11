@@ -1,0 +1,10 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+
+    PoPCMSSchema\Comments\TypeResolvers\EnumType\CommentOrderByEnumTypeResolver:
+        class: PoPWPSchema\Comments\Overrides\TypeResolvers\EnumType\CommentOrderByEnumTypeResolver
+
+    PoPCMSSchema\Comments\RelationalTypeDataLoaders\ObjectType\CommentTypeDataLoader:
+        class: PoPWPSchema\Comments\Overrides\RelationalTypeDataLoaders\ObjectType\CommentTypeDataLoader

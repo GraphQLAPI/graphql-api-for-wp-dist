@@ -6,30 +6,47 @@ namespace GraphQLAPI\GraphQLAPI\Services\EndpointExecuters;
 
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ClientFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointGraphiQLClient;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
 use GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\ClientEndpointAnnotatorInterface;
 use GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\GraphiQLClientEndpointAnnotator;
 use GraphQLByPoP\GraphQLClientsForWP\Clients\AbstractClient;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 
-class GraphiQLClientEndpointExecuter extends AbstractClientEndpointExecuter implements CustomEndpointExecuterServiceTagInterface
+class GraphiQLClientEndpointExecuter extends AbstractClientEndpointExecuter
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointGraphiQLClient
+     * @var \GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointGraphiQLClient|null
      */
-    protected $customEndpointGraphiQLClient;
+    private $customEndpointGraphiQLClient;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\GraphiQLClientEndpointAnnotator
+     * @var \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\GraphiQLClientEndpointAnnotator|null
      */
-    protected $graphiQLClientEndpointAnnotator;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType, CustomEndpointGraphiQLClient $customEndpointGraphiQLClient, GraphiQLClientEndpointAnnotator $graphiQLClientEndpointAnnotator)
+    private $graphiQLClientEndpointAnnotator;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointGraphiQLClient $customEndpointGraphiQLClient
+     */
+    final public function setCustomEndpointGraphiQLClient($customEndpointGraphiQLClient): void
     {
         $this->customEndpointGraphiQLClient = $customEndpointGraphiQLClient;
-        $this->graphiQLClientEndpointAnnotator = $graphiQLClientEndpointAnnotator;
-        parent::__construct($instanceManager, $moduleRegistry, $graphQLCustomEndpointCustomPostType);
     }
+    final protected function getCustomEndpointGraphiQLClient(): CustomEndpointGraphiQLClient
+    {
+        /** @var CustomEndpointGraphiQLClient */
+        return $this->customEndpointGraphiQLClient = $this->customEndpointGraphiQLClient ?? $this->instanceManager->getInstance(CustomEndpointGraphiQLClient::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\GraphiQLClientEndpointAnnotator $graphiQLClientEndpointAnnotator
+     */
+    final public function setGraphiQLClientEndpointAnnotator($graphiQLClientEndpointAnnotator): void
+    {
+        $this->graphiQLClientEndpointAnnotator = $graphiQLClientEndpointAnnotator;
+    }
+    final protected function getGraphiQLClientEndpointAnnotator(): GraphiQLClientEndpointAnnotator
+    {
+        /** @var GraphiQLClientEndpointAnnotator */
+        return $this->graphiQLClientEndpointAnnotator = $this->graphiQLClientEndpointAnnotator ?? $this->instanceManager->getInstance(GraphiQLClientEndpointAnnotator::class);
+    }
+
     public function getEnablingModule(): ?string
     {
         return ClientFunctionalityModuleResolver::GRAPHIQL_FOR_CUSTOM_ENDPOINTS;
@@ -42,11 +59,11 @@ class GraphiQLClientEndpointExecuter extends AbstractClientEndpointExecuter impl
 
     protected function getClient(): AbstractClient
     {
-        return $this->customEndpointGraphiQLClient;
+        return $this->getCustomEndpointGraphiQLClient();
     }
 
     protected function getClientEndpointAnnotator(): ClientEndpointAnnotatorInterface
     {
-        return $this->graphiQLClientEndpointAnnotator;
+        return $this->getGraphiQLClientEndpointAnnotator();
     }
 }

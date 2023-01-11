@@ -3,8 +3,8 @@
 declare (strict_types=1);
 namespace PoP\Definitions\Facades;
 
+use PoP\Root\App;
 use PoP\Definitions\DefinitionManagerInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
 class DefinitionManagerFacade
 {
     public static function getInstance() : DefinitionManagerInterface
@@ -12,7 +12,7 @@ class DefinitionManagerFacade
         /**
          * @var DefinitionManagerInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(DefinitionManagerInterface::class);
+        $service = App::getContainer()->get(DefinitionManagerInterface::class);
         return $service;
     }
 }

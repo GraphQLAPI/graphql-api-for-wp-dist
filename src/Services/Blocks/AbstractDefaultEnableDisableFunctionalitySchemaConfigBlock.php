@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
+use PoP\Root\App;
+use GraphQLAPI\GraphQLAPI\Module;
+use GraphQLAPI\GraphQLAPI\ModuleConfiguration;
 use GraphQLAPI\GraphQLAPI\Constants\BlockAttributeNames;
 
 abstract class AbstractDefaultEnableDisableFunctionalitySchemaConfigBlock extends AbstractSchemaConfigBlock
@@ -15,20 +17,23 @@ abstract class AbstractDefaultEnableDisableFunctionalitySchemaConfigBlock extend
     abstract protected function getBlockTitle(): string;
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         // Append "-front" because this style must be used only on the client, not on the admin
         $className = $this->getBlockClassName() . '-front';
 
         $blockContentPlaceholder = '<p><strong>%s</strong></p><p>%s</p>';
 
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
         $enabledDisabledLabels = $this->getEnabledDisabledLabels();
         $blockContent = sprintf(
             $blockContentPlaceholder,
             $this->getBlockLabel(),
-            $enabledDisabledLabels[$attributes[BlockAttributeNames::ENABLED_CONST] ?? ''] ?? ComponentConfiguration::getSettingsValueLabel()
+            $enabledDisabledLabels[$attributes[BlockAttributeNames::ENABLED_CONST] ?? ''] ?? $moduleConfiguration->getSettingsValueLabel()
         );
 
         $blockContentPlaceholder = <<<EOT
@@ -39,20 +44,13 @@ abstract class AbstractDefaultEnableDisableFunctionalitySchemaConfigBlock extend
 EOT;
         return sprintf(
             $blockContentPlaceholder,
-            $className . ' ' . $this->getAlignClass(),
+            $className . ' ' . $this->getAlignClassName(),
             $className . '__title',
             $this->getBlockTitle(),
             $blockContent
         );
     }
 
-    /**
-     * Register index.css
-     */
-    protected function registerEditorCSS(): bool
-    {
-        return true;
-    }
     /**
      * Register style-index.css
      */

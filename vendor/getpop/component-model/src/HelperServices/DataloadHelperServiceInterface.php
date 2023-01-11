@@ -3,12 +3,16 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\HelperServices;
 
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface;
+use PoP\GraphQLParser\Spec\Parser\Ast\FieldInterface;
 interface DataloadHelperServiceInterface
 {
-    public function getTypeResolverClassFromSubcomponentDataField(TypeResolverInterface $typeResolver, string $subcomponent_data_field) : ?string;
     /**
-     * @param array<array<string, mixed>> $moduleValues
+     * Accept RelationalTypeResolverInterface as param, instead of the more natural
+     * ObjectTypeResolverInterface, to make it easy within the application to check
+     * for this result without checking in advance what's the typeResolver.
+     * @param \PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface $relationalTypeResolver
+     * @param \PoP\GraphQLParser\Spec\Parser\Ast\FieldInterface $field
      */
-    public function addFilterParams(string $url, array $moduleValues = []) : string;
+    public function getTypeResolverFromSubcomponentField($relationalTypeResolver, $field) : ?RelationalTypeResolverInterface;
 }

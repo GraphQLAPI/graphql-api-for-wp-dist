@@ -3,27 +3,29 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\QueryInputOutputHandlers;
 
-use PoP\ComponentModel\Constants\Params;
-use PoP\ComponentModel\QueryInputOutputHandlers\AbstractQueryInputOutputHandler;
-class ListQueryInputOutputHandler extends AbstractQueryInputOutputHandler
+use PoP\ComponentModel\Constants\PaginationParams;
+class ListQueryInputOutputHandler extends \PoP\ComponentModel\QueryInputOutputHandlers\AbstractQueryInputOutputHandler
 {
-    public function prepareQueryArgs(&$query_args)
+    /**
+     * @param array<string,mixed> $query_args
+     */
+    public function prepareQueryArgs(&$query_args) : void
     {
         parent::prepareQueryArgs($query_args);
         // Handle edge cases for the limit (for security measures)
         $configuredLimit = $this->getLimit();
-        if (isset($query_args[Params::LIMIT])) {
-            $limit = $query_args[Params::LIMIT];
+        if (isset($query_args[PaginationParams::LIMIT])) {
+            $limit = $query_args[PaginationParams::LIMIT];
             if ($limit === -1 || $limit === 0 || $limit > $configuredLimit) {
                 $limit = $configuredLimit;
             }
         } else {
             $limit = $configuredLimit;
         }
-        $query_args[Params::LIMIT] = \intval($limit);
-        $query_args[Params::PAGE_NUMBER] = isset($query_args[Params::PAGE_NUMBER]) ? \intval($query_args[Params::PAGE_NUMBER]) : 1;
+        $query_args[PaginationParams::LIMIT] = \intval($limit);
+        $query_args[PaginationParams::PAGE_NUMBER] = isset($query_args[PaginationParams::PAGE_NUMBER]) ? \intval($query_args[PaginationParams::PAGE_NUMBER]) : 1;
     }
-    protected function getLimit()
+    protected function getLimit() : int
     {
         // By default: no limit
         return -1;

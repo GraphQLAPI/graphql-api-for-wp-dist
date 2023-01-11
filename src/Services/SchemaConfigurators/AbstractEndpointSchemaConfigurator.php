@@ -4,44 +4,64 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\SchemaConfigurators;
 
-use GraphQLAPI\GraphQLAPI\Facades\UserSettingsManagerFacade;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\SchemaConfigurationExecuterRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\EndpointSchemaConfigurationBlock;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use WP_Post;
+use PoP\Root\Services\BasicServiceTrait;
 
 abstract class AbstractEndpointSchemaConfigurator implements SchemaConfiguratorInterface
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $instanceManager;
+    private $moduleRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers|null
      */
-    protected $moduleRegistry;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry)
+    private $blockHelpers;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
+     */
+    final public function setModuleRegistry($moduleRegistry): void
     {
-        $this->instanceManager = $instanceManager;
         $this->moduleRegistry = $moduleRegistry;
     }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers $blockHelpers
+     */
+    final public function setBlockHelpers($blockHelpers): void
+    {
+        $this->blockHelpers = $blockHelpers;
+    }
+    final protected function getBlockHelpers(): BlockHelpers
+    {
+        /** @var BlockHelpers */
+        return $this->blockHelpers = $this->blockHelpers ?? $this->instanceManager->getInstance(BlockHelpers::class);
+    }
+
     /**
      * Only enable the service, if the corresponding module is also enabled
      */
     public function isServiceEnabled(): bool
     {
-        return $this->moduleRegistry->isModuleEnabled(SchemaConfigurationFunctionalityModuleResolver::SCHEMA_CONFIGURATION);
+        return $this->getModuleRegistry()->isModuleEnabled(SchemaConfigurationFunctionalityModuleResolver::SCHEMA_CONFIGURATION);
     }
 
     /**
      * Extract the items defined in the Schema Configuration,
      * and inject them into the service as to take effect in the current GraphQL query
+     * @param int $customPostID
      */
-    public function executeSchemaConfiguration(int $customPostID): void
+    public function executeSchemaConfiguration($customPostID): void
     {
         // Only if the module is not disabled
         if (!$this->isServiceEnabled()) {
@@ -54,8 +74,9 @@ abstract class AbstractEndpointSchemaConfigurator implements SchemaConfiguratorI
     /**
      * Extract the items defined in the Schema Configuration,
      * and inject them into the service as to take effect in the current GraphQL query
+     * @param int $customPostID
      */
-    protected function doExecuteSchemaConfiguration(int $customPostID): void
+    protected function doExecuteSchemaConfiguration($customPostID): void
     {
         if ($schemaConfigurationID = $this->getSchemaConfigurationID($customPostID)) {
             // Get that Schema Configuration, and load its settings
@@ -64,73 +85,14 @@ abstract class AbstractEndpointSchemaConfigurator implements SchemaConfiguratorI
     }
 
     /**
-     * Return the stored Schema Configuration ID
+     * @param int $customPostID
      */
-    protected function getUserSettingSchemaConfigurationID(): ?int
-    {
-        $userSettingsManager = UserSettingsManagerFacade::getInstance();
-        $schemaConfigurationID = $userSettingsManager->getSetting(
-            SchemaConfigurationFunctionalityModuleResolver::SCHEMA_CONFIGURATION,
-            SchemaConfigurationFunctionalityModuleResolver::OPTION_SCHEMA_CONFIGURATION_ID
-        );
-        // `null` is stored as OPTION_VALUE_NO_VALUE_ID
-        if ($schemaConfigurationID == SchemaConfigurationFunctionalityModuleResolver::OPTION_VALUE_NO_VALUE_ID) {
-            return null;
-        }
-        return $schemaConfigurationID;
-    }
+    abstract protected function getSchemaConfigurationID($customPostID): ?int;
 
     /**
-     * Extract the Schema Configuration ID from the block stored in the post
+     * @param int $schemaConfigurationID
      */
-    protected function getSchemaConfigurationID(int $customPostID): ?int
-    {
-        /** @var BlockHelpers */
-        $blockHelpers = $this->instanceManager->getInstance(BlockHelpers::class);
-        /**
-         * @var EndpointSchemaConfigurationBlock
-         */
-        $block = $this->instanceManager->getInstance(EndpointSchemaConfigurationBlock::class);
-        $schemaConfigurationBlockDataItem = $blockHelpers->getSingleBlockOfTypeFromCustomPost(
-            $customPostID,
-            $block
-        );
-        // If there was no schema configuration, then the default one has been selected
-        // It is not saved in the DB, because it has been set as the default value in
-        // blocks/schema-configuration/src/index.js
-        if (is_null($schemaConfigurationBlockDataItem)) {
-            return $this->getUserSettingSchemaConfigurationID();
-        }
-
-        $schemaConfiguration = $schemaConfigurationBlockDataItem['attrs'][EndpointSchemaConfigurationBlock::ATTRIBUTE_NAME_SCHEMA_CONFIGURATION] ?? null;
-        // Check if $schemaConfiguration is one of the meta options (default, none, inherit)
-        if ($schemaConfiguration == EndpointSchemaConfigurationBlock::ATTRIBUTE_VALUE_SCHEMA_CONFIGURATION_NONE) {
-            return null;
-        } elseif ($schemaConfiguration == EndpointSchemaConfigurationBlock::ATTRIBUTE_VALUE_SCHEMA_CONFIGURATION_DEFAULT) {
-            return $this->getUserSettingSchemaConfigurationID();
-        } elseif ($schemaConfiguration == EndpointSchemaConfigurationBlock::ATTRIBUTE_VALUE_SCHEMA_CONFIGURATION_INHERIT) {
-            // If disabled by module, then return nothing
-            if (!$this->moduleRegistry->isModuleEnabled(EndpointFunctionalityModuleResolver::API_HIERARCHY)) {
-                return null;
-            }
-            // Return the schema configuration from the parent, or null if no parent exists
-            /**
-             * @var WP_Post|null
-             */
-            $customPost = \get_post($customPostID);
-            if (!is_null($customPost) && $customPost->post_parent) {
-                return $this->getSchemaConfigurationID($customPost->post_parent);
-            }
-            return null;
-        }
-        // It is already the ID, or null if blocks returned empty
-        // (eg: because parent post was trashed)
-        return $schemaConfiguration;
-    }
-
-
-
-    protected function executeSchemaConfigurationItems(int $schemaConfigurationID): void
+    protected function executeSchemaConfigurationItems($schemaConfigurationID): void
     {
         foreach ($this->getSchemaConfigurationExecuterRegistry()->getEnabledSchemaConfigurationExecuters() as $schemaConfigurationExecuter) {
             $schemaConfigurationExecuter->executeSchemaConfiguration($schemaConfigurationID);

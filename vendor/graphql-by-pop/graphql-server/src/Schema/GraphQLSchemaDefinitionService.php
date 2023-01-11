@@ -3,73 +3,104 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Schema;
 
-use PoP\ComponentModel\State\ApplicationState;
-use PoP\Engine\Schema\SchemaDefinitionService;
-use GraphQLByPoP\GraphQLServer\ComponentConfiguration;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use PoP\API\ComponentConfiguration as APIComponentConfiguration;
-use GraphQLByPoP\GraphQLServer\TypeResolvers\QueryRootTypeResolver;
-use GraphQLByPoP\GraphQLServer\TypeResolvers\MutationRootTypeResolver;
-use GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface;
-class GraphQLSchemaDefinitionService extends SchemaDefinitionService implements GraphQLSchemaDefinitionServiceInterface
+use GraphQLByPoP\GraphQLServer\Module;
+use GraphQLByPoP\GraphQLServer\ModuleConfiguration;
+use GraphQLByPoP\GraphQLServer\ObjectModels\SchemaDefinition\RootObjectTypeSchemaDefinitionProvider;
+use GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\MutationRootObjectTypeResolver;
+use GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\QueryRootObjectTypeResolver;
+use PoP\ComponentModel\Module as ComponentModelModule;
+use PoP\ComponentModel\ModuleConfiguration as ComponentModelModuleConfiguration;
+use PoP\ComponentModel\TypeResolvers\ObjectType\ObjectTypeResolverInterface;
+use PoP\Engine\TypeResolvers\ObjectType\RootObjectTypeResolver;
+use PoP\Root\App;
+use PoPAPI\API\ObjectModels\SchemaDefinition\RootObjectTypeSchemaDefinitionProvider as UpstreamRootObjectTypeSchemaDefinitionProvider;
+use PoPAPI\API\Schema\SchemaDefinitionService;
+class GraphQLSchemaDefinitionService extends SchemaDefinitionService implements \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface
 {
-    public function getQueryRootTypeSchemaKey() : string
+    /**
+     * @var \GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\QueryRootObjectTypeResolver|null
+     */
+    private $queryRootObjectTypeResolver;
+    /**
+     * @var \GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\MutationRootObjectTypeResolver|null
+     */
+    private $mutationRootObjectTypeResolver;
+    /**
+     * @param \GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\QueryRootObjectTypeResolver $queryRootObjectTypeResolver
+     */
+    public final function setQueryRootObjectTypeResolver($queryRootObjectTypeResolver) : void
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
-        $queryTypeResolverClass = $this->getQueryRootTypeResolverClass();
-        $queryTypeResolver = $instanceManager->getInstance($queryTypeResolverClass);
-        return $this->getTypeSchemaKey($queryTypeResolver);
+        $this->queryRootObjectTypeResolver = $queryRootObjectTypeResolver;
+    }
+    protected final function getQueryRootObjectTypeResolver() : QueryRootObjectTypeResolver
+    {
+        /** @var QueryRootObjectTypeResolver */
+        return $this->queryRootObjectTypeResolver = $this->queryRootObjectTypeResolver ?? $this->instanceManager->getInstance(QueryRootObjectTypeResolver::class);
+    }
+    /**
+     * @param \GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\MutationRootObjectTypeResolver $mutationRootObjectTypeResolver
+     */
+    public final function setMutationRootObjectTypeResolver($mutationRootObjectTypeResolver) : void
+    {
+        $this->mutationRootObjectTypeResolver = $mutationRootObjectTypeResolver;
+    }
+    protected final function getMutationRootObjectTypeResolver() : MutationRootObjectTypeResolver
+    {
+        /** @var MutationRootObjectTypeResolver */
+        return $this->mutationRootObjectTypeResolver = $this->mutationRootObjectTypeResolver ?? $this->instanceManager->getInstance(MutationRootObjectTypeResolver::class);
     }
     /**
      * If nested mutations are enabled, use "Root".
      * Otherwise, use "Query"
      */
-    public function getQueryRootTypeResolverClass() : string
+    public function getSchemaQueryRootObjectTypeResolver() : ObjectTypeResolverInterface
     {
-        $vars = ApplicationState::getVars();
-        if ($vars['nested-mutations-enabled']) {
-            return $this->getRootTypeResolverClass();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        if ($moduleConfiguration->enableNestedMutations()) {
+            return $this->getSchemaRootObjectTypeResolver();
         }
-        return QueryRootTypeResolver::class;
-    }
-    public function getMutationRootTypeSchemaKey() : ?string
-    {
-        if ($mutationTypeResolverClass = $this->getMutationRootTypeResolverClass()) {
-            $instanceManager = InstanceManagerFacade::getInstance();
-            $mutationTypeResolver = $instanceManager->getInstance($mutationTypeResolverClass);
-            return $this->getTypeSchemaKey($mutationTypeResolver);
-        }
-        return null;
+        return $this->getQueryRootObjectTypeResolver();
     }
     /**
      * If nested mutations are enabled, use "Root".
      * Otherwise, use "Mutation"
      */
-    public function getMutationRootTypeResolverClass() : ?string
+    public function getSchemaMutationRootObjectTypeResolver() : ?ObjectTypeResolverInterface
     {
-        if (!APIComponentConfiguration::enableMutations()) {
+        /** @var ComponentModelModuleConfiguration */
+        $moduleConfiguration = App::getModule(ComponentModelModule::class)->getConfiguration();
+        if (!$moduleConfiguration->enableMutations()) {
             return null;
         }
-        $vars = ApplicationState::getVars();
-        if ($vars['nested-mutations-enabled']) {
-            return $this->getRootTypeResolverClass();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        if ($moduleConfiguration->enableNestedMutations()) {
+            return $this->getSchemaRootObjectTypeResolver();
         }
-        return MutationRootTypeResolver::class;
+        return $this->getMutationRootObjectTypeResolver();
     }
-    public function getSubscriptionRootTypeSchemaKey() : ?string
+    /**
+     * @todo Implement
+     */
+    public function getSchemaSubscriptionRootTypeResolver() : ?ObjectTypeResolverInterface
     {
-        if ($subscriptionTypeResolverClass = $this->getSubscriptionRootTypeResolverClass()) {
-            $instanceManager = InstanceManagerFacade::getInstance();
-            $subscriptionTypeResolver = $instanceManager->getInstance($subscriptionTypeResolverClass);
-            return $this->getTypeSchemaKey($subscriptionTypeResolver);
-        }
         return null;
     }
     /**
-     * Not yet implemented
+     * @param \PoP\Engine\TypeResolvers\ObjectType\RootObjectTypeResolver $rootObjectTypeResolver
      */
-    public function getSubscriptionRootTypeResolverClass() : ?string
+    protected function createRootObjectTypeSchemaDefinitionProvider($rootObjectTypeResolver) : UpstreamRootObjectTypeSchemaDefinitionProvider
     {
-        return null;
+        return new RootObjectTypeSchemaDefinitionProvider($rootObjectTypeResolver);
+    }
+    /**
+     * Global fields are only added if enabled
+     */
+    protected function skipExposingGlobalFieldsInSchema() : bool
+    {
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return !$moduleConfiguration->exposeGlobalFieldsInGraphQLSchema();
     }
 }

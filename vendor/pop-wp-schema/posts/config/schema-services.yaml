@@ -1,0 +1,10 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+
+    PoPWPSchema\Posts\FieldResolvers\:
+        resource: '../src/FieldResolvers/*'
+
+    PoPWPSchema\Posts\SchemaHooks\:
+        resource: '../src/SchemaHooks/*'

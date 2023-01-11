@@ -13,8 +13,9 @@ class MarkdownConvertor implements \GraphQLAPI\MarkdownConvertor\MarkdownConvert
 {
     /**
      * Parse the file's Markdown into HTML Content
+     * @param string $markdownContent
      */
-    public function convertMarkdownToHTML(string $markdownContent) : string
+    public function convertMarkdownToHTML($markdownContent) : string
     {
         return MarkdownExtra::defaultTransform($markdownContent);
     }

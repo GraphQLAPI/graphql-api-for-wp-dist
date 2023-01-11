@@ -24,20 +24,20 @@ class VariableNode extends BaseNode implements PrototypeNodeInterface
     protected $defaultValueSet = \false;
     protected $defaultValue;
     protected $allowEmptyValue = \true;
+    /**
+     * @param mixed $value
+     */
     public function setDefaultValue($value)
     {
         $this->defaultValueSet = \true;
         $this->defaultValue = $value;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function hasDefaultValue()
+    public function hasDefaultValue() : bool
     {
         return $this->defaultValueSet;
     }
     /**
-     * {@inheritdoc}
+     * @return mixed
      */
     public function getDefaultValue()
     {
@@ -49,25 +49,26 @@ class VariableNode extends BaseNode implements PrototypeNodeInterface
      *
      * @param bool $boolean True if this entity will accept empty values
      */
-    public function setAllowEmptyValue(bool $boolean)
+    public function setAllowEmptyValue($boolean)
     {
         $this->allowEmptyValue = $boolean;
     }
     /**
-     * {@inheritdoc}
+     * @param string $name
      */
-    public function setName(string $name)
+    public function setName($name)
     {
         $this->name = $name;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
      */
     protected function validateType($value)
     {
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
      */
     protected function finalizeValue($value)
     {
@@ -92,14 +93,17 @@ class VariableNode extends BaseNode implements PrototypeNodeInterface
         return $value;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
      */
     protected function normalizeValue($value)
     {
         return $value;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $leftSide
+     * @param mixed $rightSide
+     * @return mixed
      */
     protected function mergeValues($leftSide, $rightSide)
     {
@@ -112,13 +116,10 @@ class VariableNode extends BaseNode implements PrototypeNodeInterface
      * method may be overridden by subtypes to better match their understanding
      * of empty data.
      *
-     * @param mixed $value
-     *
-     * @return bool
-     *
      * @see finalizeValue()
+     * @param mixed $value
      */
-    protected function isValueEmpty($value)
+    protected function isValueEmpty($value) : bool
     {
         return empty($value);
     }

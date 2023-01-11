@@ -21,10 +21,25 @@ use PrefixedByPoP\Symfony\Component\Cache\Adapter\ArrayAdapter;
  */
 class ExpressionLanguage
 {
+    /**
+     * @var \Psr\Cache\CacheItemPoolInterface
+     */
     private $cache;
+    /**
+     * @var \Symfony\Component\ExpressionLanguage\Lexer
+     */
     private $lexer;
+    /**
+     * @var \Symfony\Component\ExpressionLanguage\Parser
+     */
     private $parser;
+    /**
+     * @var \Symfony\Component\ExpressionLanguage\Compiler
+     */
     private $compiler;
+    /**
+     * @var mixed[]
+     */
     protected $functions = [];
     /**
      * @param ExpressionFunctionProviderInterface[] $providers
@@ -39,34 +54,29 @@ class ExpressionLanguage
     }
     /**
      * Compiles an expression source code.
-     *
-     * @param Expression|string $expression The expression to compile
-     *
-     * @return string The compiled PHP source code
+     * @param \Symfony\Component\ExpressionLanguage\Expression|string $expression
+     * @param mixed[] $names
      */
-    public function compile($expression, array $names = [])
+    public function compile($expression, $names = []) : string
     {
         return $this->getCompiler()->compile($this->parse($expression, $names)->getNodes())->getSource();
     }
     /**
      * Evaluate an expression.
-     *
-     * @param Expression|string $expression The expression to compile
-     *
-     * @return mixed The result of the evaluation of the expression
+     * @param \Symfony\Component\ExpressionLanguage\Expression|string $expression
+     * @return mixed
+     * @param mixed[] $values
      */
-    public function evaluate($expression, array $values = [])
+    public function evaluate($expression, $values = [])
     {
         return $this->parse($expression, \array_keys($values))->getNodes()->evaluate($this->functions, $values);
     }
     /**
      * Parses an expression.
-     *
-     * @param Expression|string $expression The expression to parse
-     *
-     * @return ParsedExpression A ParsedExpression instance
+     * @param \Symfony\Component\ExpressionLanguage\Expression|string $expression
+     * @param mixed[] $names
      */
-    public function parse($expression, array $names)
+    public function parse($expression, $names) : ParsedExpression
     {
         if ($expression instanceof ParsedExpression) {
             return $expression;
@@ -88,12 +98,12 @@ class ExpressionLanguage
     /**
      * Validates the syntax of an expression.
      *
-     * @param Expression|string $expression The expression to validate
-     * @param array|null        $names      The list of acceptable variable names in the expression, or null to accept any names
+     * @param array|null $names The list of acceptable variable names in the expression, or null to accept any names
      *
      * @throws SyntaxError When the passed expression is invalid
+     * @param \Symfony\Component\ExpressionLanguage\Expression|string $expression
      */
-    public function lint($expression, ?array $names) : void
+    public function lint($expression, $names) : void
     {
         if ($expression instanceof ParsedExpression) {
             return;
@@ -109,19 +119,26 @@ class ExpressionLanguage
      * @throws \LogicException when registering a function after calling evaluate(), compile() or parse()
      *
      * @see ExpressionFunction
+     * @param string $name
      */
-    public function register(string $name, callable $compiler, callable $evaluator)
+    public function register($name, $compiler, $evaluator)
     {
-        if (null !== $this->parser) {
+        if (isset($this->parser)) {
             throw new \LogicException('Registering functions after calling evaluate(), compile() or parse() is not supported.');
         }
         $this->functions[$name] = ['compiler' => $compiler, 'evaluator' => $evaluator];
     }
-    public function addFunction(ExpressionFunction $function)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\ExpressionFunction $function
+     */
+    public function addFunction($function)
     {
         $this->register($function->getName(), $function->getCompiler(), $function->getEvaluator());
     }
-    public function registerProvider(ExpressionFunctionProviderInterface $provider)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface $provider
+     */
+    public function registerProvider($provider)
     {
         foreach ($provider->getFunctions() as $function) {
             $this->addFunction($function);
@@ -133,23 +150,15 @@ class ExpressionLanguage
     }
     private function getLexer() : Lexer
     {
-        if (null === $this->lexer) {
-            $this->lexer = new Lexer();
-        }
-        return $this->lexer;
+        return $this->lexer = $this->lexer ?? new Lexer();
     }
     private function getParser() : Parser
     {
-        if (null === $this->parser) {
-            $this->parser = new Parser($this->functions);
-        }
-        return $this->parser;
+        return $this->parser = $this->parser ?? new Parser($this->functions);
     }
     private function getCompiler() : Compiler
     {
-        if (null === $this->compiler) {
-            $this->compiler = new Compiler($this->functions);
-        }
+        $this->compiler = $this->compiler ?? new Compiler($this->functions);
         return $this->compiler->reset();
     }
 }

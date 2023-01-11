@@ -6,5 +6,5 @@ namespace PoP\Engine\FormInputs;
 use PoP\ComponentModel\FormInputs\FormInput;
 class BooleanFormInput extends FormInput
 {
-    use BooleanFormInputTrait;
+    use \PoP\Engine\FormInputs\BooleanFormInputTrait;
 }

@@ -28,25 +28,26 @@ class TreeBuilder implements NodeParentInterface
     /**
      * @return NodeDefinition|ArrayNodeDefinition The root node (as an ArrayNodeDefinition when the type is 'array')
      */
-    public function getRootNode() : NodeDefinition
+    public function getRootNode()
     {
         return $this->root;
     }
     /**
      * Builds the tree.
      *
-     * @return NodeInterface
-     *
      * @throws \RuntimeException
      */
-    public function buildTree()
+    public function buildTree() : NodeInterface
     {
         if (null !== $this->tree) {
             return $this->tree;
         }
         return $this->tree = $this->root->getNode(\true);
     }
-    public function setPathSeparator(string $separator)
+    /**
+     * @param string $separator
+     */
+    public function setPathSeparator($separator)
     {
         // unset last built as changing path separator changes all nodes
         $this->tree = null;

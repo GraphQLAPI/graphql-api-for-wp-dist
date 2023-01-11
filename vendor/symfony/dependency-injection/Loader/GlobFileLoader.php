@@ -18,8 +18,9 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader;
 class GlobFileLoader extends FileLoader
 {
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @return mixed
+     * @param string|null $type
      */
     public function load($resource, $type = null)
     {
@@ -27,12 +28,13 @@ class GlobFileLoader extends FileLoader
             $this->import($path);
         }
         $this->container->addResource($globResource);
+        return null;
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @param string|null $type
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, $type = null) : bool
     {
         return 'glob' === $type;
     }

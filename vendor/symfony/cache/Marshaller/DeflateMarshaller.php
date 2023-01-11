@@ -18,6 +18,9 @@ use PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException;
  */
 class DeflateMarshaller implements MarshallerInterface
 {
+    /**
+     * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface
+     */
     private $marshaller;
     public function __construct(MarshallerInterface $marshaller)
     {
@@ -27,16 +30,18 @@ class DeflateMarshaller implements MarshallerInterface
         $this->marshaller = $marshaller;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $values
+     * @param mixed[]|null $failed
      */
-    public function marshall(array $values, ?array &$failed) : array
+    public function marshall($values, &$failed) : array
     {
         return \array_map('gzdeflate', $this->marshaller->marshall($values, $failed));
     }
     /**
-     * {@inheritdoc}
+     * @return mixed
+     * @param string $value
      */
-    public function unmarshall(string $value)
+    public function unmarshall($value)
     {
         if (\false !== ($inflatedValue = @\gzinflate($value))) {
             $value = $inflatedValue;

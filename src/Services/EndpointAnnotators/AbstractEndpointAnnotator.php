@@ -6,29 +6,37 @@ namespace GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators;
 
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLEndpointCustomPostTypeInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Root\Services\BasicServiceTrait;
 use WP_Post;
 
 abstract class AbstractEndpointAnnotator implements EndpointAnnotatorInterface
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $instanceManager;
+    private $moduleRegistry;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
      */
-    protected $moduleRegistry;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry)
+    final public function setModuleRegistry($moduleRegistry): void
     {
-        $this->instanceManager = $instanceManager;
         $this->moduleRegistry = $moduleRegistry;
     }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+
     /**
      * Add actions to the CPT list
-     * @param array<string, string> $actions
+     * @param array<string,string> $actions
+     * @param \WP_Post $post
      */
-    public function addCustomPostTypeTableActions(array &$actions, WP_Post $post): void
+    public function addCustomPostTypeTableActions(&$actions, $post): void
     {
         // Do nothing
     }
@@ -44,7 +52,7 @@ abstract class AbstractEndpointAnnotator implements EndpointAnnotatorInterface
     public function isServiceEnabled(): bool
     {
         $enablingModule = $this->getEnablingModule();
-        if ($enablingModule !== null && !$this->moduleRegistry->isModuleEnabled($enablingModule)) {
+        if ($enablingModule !== null && !$this->getModuleRegistry()->isModuleEnabled($enablingModule)) {
             return false;
         }
 

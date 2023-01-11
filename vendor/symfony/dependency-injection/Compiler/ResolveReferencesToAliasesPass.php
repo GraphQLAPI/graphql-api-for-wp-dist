@@ -21,9 +21,9 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 class ResolveReferencesToAliasesPass extends AbstractRecursivePass
 {
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         parent::process($container);
         foreach ($container->getAliases() as $id => $alias) {
@@ -35,9 +35,11 @@ class ResolveReferencesToAliasesPass extends AbstractRecursivePass
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if (!$value instanceof Reference) {
             return parent::processValue($value, $isRoot);

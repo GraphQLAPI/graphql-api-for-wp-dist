@@ -23,12 +23,15 @@ namespace PrefixedByPoP\Symfony\Component\Cache\Traits;
  */
 class RedisClusterNodeProxy
 {
-    private $host;
-    private $redis;
     /**
-     * @param \RedisCluster|RedisClusterProxy $redis
+     * @var mixed[]
      */
-    public function __construct(array $host, $redis)
+    private $host;
+    /**
+     * @var \RedisCluster
+     */
+    private $redis;
+    public function __construct(array $host, \RedisCluster $redis)
     {
         $this->host = $host;
         $this->redis = $redis;

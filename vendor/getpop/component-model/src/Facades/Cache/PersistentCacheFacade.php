@@ -3,16 +3,16 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Facades\Cache;
 
-use PoP\ComponentModel\Cache\CacheInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
+use PoP\Root\App;
+use PoP\ComponentModel\Cache\PersistentCacheInterface;
 class PersistentCacheFacade
 {
-    public static function getInstance() : ?CacheInterface
+    public static function getInstance() : PersistentCacheInterface
     {
-        $containerBuilderFactory = ContainerBuilderFactory::getInstance();
-        if ($containerBuilderFactory->has('persistent_cache')) {
-            return $containerBuilderFactory->get('persistent_cache');
-        }
-        return null;
+        /**
+         * @var PersistentCacheInterface
+         */
+        $service = App::getContainer()->get(PersistentCacheInterface::class);
+        return $service;
     }
 }

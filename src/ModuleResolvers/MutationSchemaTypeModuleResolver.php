@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\AbstractModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
+use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface;
 use GraphQLAPI\GraphQLAPI\Plugin;
 
 class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
@@ -20,11 +19,32 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
     public const SCHEMA_MUTATIONS = Plugin::NAMESPACE . '\schema-mutations';
     public const SCHEMA_USER_STATE_MUTATIONS = Plugin::NAMESPACE . '\schema-user-state-mutations';
     public const SCHEMA_CUSTOMPOST_MUTATIONS = Plugin::NAMESPACE . '\schema-custompost-mutations';
+    public const SCHEMA_PAGE_MUTATIONS = Plugin::NAMESPACE . '\schema-page-mutations';
     public const SCHEMA_POST_MUTATIONS = Plugin::NAMESPACE . '\schema-post-mutations';
     public const SCHEMA_CUSTOMPOSTMEDIA_MUTATIONS = Plugin::NAMESPACE . '\schema-custompostmedia-mutations';
+    public const SCHEMA_PAGEMEDIA_MUTATIONS = Plugin::NAMESPACE . '\schema-pagemedia-mutations';
+    public const SCHEMA_POSTMEDIA_MUTATIONS = Plugin::NAMESPACE . '\schema-postmedia-mutations';
     public const SCHEMA_POST_TAG_MUTATIONS = Plugin::NAMESPACE . '\schema-post-tag-mutations';
     public const SCHEMA_POST_CATEGORY_MUTATIONS = Plugin::NAMESPACE . '\schema-post-category-mutations';
     public const SCHEMA_COMMENT_MUTATIONS = Plugin::NAMESPACE . '\schema-comment-mutations';
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface|null
+     */
+    private $markdownContentParser;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface $markdownContentParser
+     */
+    final public function setMarkdownContentParser($markdownContentParser): void
+    {
+        $this->markdownContentParser = $markdownContentParser;
+    }
+    final protected function getMarkdownContentParser(): MarkdownContentParserInterface
+    {
+        /** @var MarkdownContentParserInterface */
+        return $this->markdownContentParser = $this->markdownContentParser ?? $this->instanceManager->getInstance(MarkdownContentParserInterface::class);
+    }
 
     /**
      * @return string[]
@@ -35,8 +55,11 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
             self::SCHEMA_MUTATIONS,
             self::SCHEMA_USER_STATE_MUTATIONS,
             self::SCHEMA_CUSTOMPOST_MUTATIONS,
+            self::SCHEMA_PAGE_MUTATIONS,
             self::SCHEMA_POST_MUTATIONS,
             self::SCHEMA_CUSTOMPOSTMEDIA_MUTATIONS,
+            self::SCHEMA_PAGEMEDIA_MUTATIONS,
+            self::SCHEMA_POSTMEDIA_MUTATIONS,
             self::SCHEMA_POST_TAG_MUTATIONS,
             self::SCHEMA_POST_CATEGORY_MUTATIONS,
             self::SCHEMA_COMMENT_MUTATIONS,
@@ -49,9 +72,10 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
     }
 
     /**
-     * @return array<array> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @return array<string[]> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @param string $module
      */
-    public function getDependedModuleLists(string $module): array
+    public function getDependedModuleLists($module): array
     {
         switch ($module) {
             case self::SCHEMA_USER_STATE_MUTATIONS:
@@ -67,6 +91,15 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
                     ],
                     [
                         SchemaTypeModuleResolver::SCHEMA_CUSTOMPOSTS,
+                    ],
+                ];
+            case self::SCHEMA_PAGE_MUTATIONS:
+                return [
+                    [
+                        SchemaTypeModuleResolver::SCHEMA_PAGES,
+                    ],
+                    [
+                        self::SCHEMA_CUSTOMPOST_MUTATIONS,
                     ],
                 ];
             case self::SCHEMA_POST_MUTATIONS:
@@ -85,6 +118,24 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
                     ],
                     [
                         self::SCHEMA_CUSTOMPOST_MUTATIONS,
+                    ],
+                ];
+            case self::SCHEMA_PAGEMEDIA_MUTATIONS:
+                return [
+                    [
+                        self::SCHEMA_CUSTOMPOSTMEDIA_MUTATIONS,
+                    ],
+                    [
+                        self::SCHEMA_PAGE_MUTATIONS,
+                    ],
+                ];
+            case self::SCHEMA_POSTMEDIA_MUTATIONS:
+                return [
+                    [
+                        self::SCHEMA_CUSTOMPOSTMEDIA_MUTATIONS,
+                    ],
+                    [
+                        self::SCHEMA_POST_MUTATIONS,
                     ],
                 ];
             case self::SCHEMA_POST_TAG_MUTATIONS:
@@ -118,31 +169,43 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
         return parent::getDependedModuleLists($module);
     }
 
-    public function getName(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getName($module): string
     {
         switch ($module) {
             case self::SCHEMA_MUTATIONS:
-                return \__('Schema Mutations', 'graphql-api');
+                return \__('Mutations', 'graphql-api');
             case self::SCHEMA_USER_STATE_MUTATIONS:
-                return \__('Schema User State Mutations', 'graphql-api');
+                return \__('User State Mutations', 'graphql-api');
             case self::SCHEMA_CUSTOMPOST_MUTATIONS:
-                return \__('Schema Custom Post Mutations', 'graphql-api');
+                return \__('Custom Post Mutations', 'graphql-api');
+            case self::SCHEMA_PAGE_MUTATIONS:
+                return \__('Page Mutations', 'graphql-api');
             case self::SCHEMA_POST_MUTATIONS:
-                return \__('Schema Post Mutations', 'graphql-api');
+                return \__('Post Mutations', 'graphql-api');
             case self::SCHEMA_CUSTOMPOSTMEDIA_MUTATIONS:
-                return \__('Schema Custom Post Media Mutations', 'graphql-api');
+                return \__('Custom Post Media Mutations', 'graphql-api');
+            case self::SCHEMA_PAGEMEDIA_MUTATIONS:
+                return \__('Page Media Mutations', 'graphql-api');
+            case self::SCHEMA_POSTMEDIA_MUTATIONS:
+                return \__('Post Media Mutations', 'graphql-api');
             case self::SCHEMA_POST_TAG_MUTATIONS:
-                return \__('Schema Post Tag Mutations', 'graphql-api');
+                return \__('Post Tag Mutations', 'graphql-api');
             case self::SCHEMA_POST_CATEGORY_MUTATIONS:
-                return \__('Schema Post Category Mutations', 'graphql-api');
+                return \__('Post Category Mutations', 'graphql-api');
             case self::SCHEMA_COMMENT_MUTATIONS:
-                return \__('Schema Comment Mutations', 'graphql-api');
+                return \__('Comment Mutations', 'graphql-api');
             default:
                 return $module;
         }
     }
 
-    public function getDescription(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getDescription($module): string
     {
         switch ($module) {
             case self::SCHEMA_MUTATIONS:
@@ -151,13 +214,18 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
                 return \__('Have the user log-in, and be able to perform mutations', 'graphql-api');
             case self::SCHEMA_CUSTOMPOST_MUTATIONS:
                 return \__('Base functionality to mutate custom posts', 'graphql-api');
+            case self::SCHEMA_PAGE_MUTATIONS:
             case self::SCHEMA_POST_MUTATIONS:
                 return sprintf(
                     \__('Execute mutations on %1$s', 'graphql-api'),
-                    \__('posts', 'graphql-api')
+                    $module === self::SCHEMA_PAGE_MUTATIONS ? \__('pages', 'graphql-api') : \__('posts', 'graphql-api')
                 );
             case self::SCHEMA_CUSTOMPOSTMEDIA_MUTATIONS:
                 return \__('Execute mutations concerning media items on custom posts', 'graphql-api');
+            case self::SCHEMA_PAGEMEDIA_MUTATIONS:
+                return \__('Execute mutations concerning media items on pages', 'graphql-api');
+            case self::SCHEMA_POSTMEDIA_MUTATIONS:
+                return \__('Execute mutations concerning media items on posts', 'graphql-api');
             case self::SCHEMA_POST_TAG_MUTATIONS:
                 return \__('Add tags to posts', 'graphql-api');
             case self::SCHEMA_POST_CATEGORY_MUTATIONS:
@@ -170,13 +238,17 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
 
     /**
      * Does the module have HTML Documentation?
+     * @param string $module
      */
-    public function hasDocumentation(string $module): bool
+    public function hasDocumentation($module): bool
     {
         switch ($module) {
             case self::SCHEMA_CUSTOMPOST_MUTATIONS:
+            case self::SCHEMA_PAGE_MUTATIONS:
             case self::SCHEMA_POST_MUTATIONS:
             case self::SCHEMA_CUSTOMPOSTMEDIA_MUTATIONS:
+            case self::SCHEMA_PAGEMEDIA_MUTATIONS:
+            case self::SCHEMA_POSTMEDIA_MUTATIONS:
             case self::SCHEMA_POST_TAG_MUTATIONS:
             case self::SCHEMA_POST_CATEGORY_MUTATIONS:
             case self::SCHEMA_COMMENT_MUTATIONS:

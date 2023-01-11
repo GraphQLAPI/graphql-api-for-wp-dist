@@ -6,23 +6,37 @@ namespace PoP\ComponentModel\Cache;
 use DateInterval;
 interface CacheInterface
 {
-    public function hasCache(string $id, string $type) : bool;
+    /**
+     * @param string $id
+     * @param string $type
+     */
+    public function hasCache($id, $type) : bool;
     /**
      * @return boolean True if the item was successfully removed. False if there was an error.
+     * @param string $id
+     * @param string $type
      */
-    public function deleteCache(string $id, string $type) : bool;
+    public function deleteCache($id, $type) : bool;
     /**
      * Remove all entries in the cache
      */
     public function clear() : void;
     /**
-     * @return mixed
+     * Commit entries in the pool
      */
-    public function getCache(string $id, string $type);
+    public function commit() : void;
     /**
      * @return mixed
+     * @param string $id
+     * @param string $type
      */
-    public function getComponentModelCache(string $id, string $type);
+    public function getCache($id, $type);
+    /**
+     * @return mixed
+     * @param string $id
+     * @param string $type
+     */
+    public function getComponentModelCache($id, $type);
     /**
      * Store the cache
      *
@@ -31,18 +45,22 @@ interface CacheInterface
      * @param mixed $content the value to cache
      * @param int|DateInterval|null $time time after which the cache expires, in seconds
      */
-    public function storeCache(string $id, string $type, $content, $time = null) : void;
+    public function storeCache($id, $type, $content, $time = null) : void;
     /**
      * @param int|\DateInterval|null $time
      * @param mixed $content
+     * @param string $id
+     * @param string $type
      */
-    public function storeComponentModelCache(string $id, string $type, $content, $time = null) : void;
+    public function storeComponentModelCache($id, $type, $content, $time = null) : void;
     /**
      * @return mixed
+     * @param string $type
      */
-    public function getCacheByModelInstance(string $type);
+    public function getCacheByModelInstance($type);
     /**
      * @param mixed $content
+     * @param string $type
      */
-    public function storeCacheByModelInstance(string $type, $content) : void;
+    public function storeCacheByModelInstance($type, $content) : void;
 }

@@ -23,23 +23,30 @@ class ArrayNode extends Node
     {
         $this->index = -1;
     }
-    public function addElement(Node $value, Node $key = null)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Node\Node $value
+     * @param \Symfony\Component\ExpressionLanguage\Node\Node|null $key
+     */
+    public function addElement($value, $key = null)
     {
-        if (null === $key) {
-            $key = new ConstantNode(++$this->index);
-        }
+        $key = $key ?? new ConstantNode(++$this->index);
         \array_push($this->nodes, $key, $value);
     }
     /**
      * Compiles the node to PHP.
+     * @param \Symfony\Component\ExpressionLanguage\Compiler $compiler
      */
-    public function compile(Compiler $compiler)
+    public function compile($compiler)
     {
         $compiler->raw('[');
         $this->compileArguments($compiler);
         $compiler->raw(']');
     }
-    public function evaluate(array $functions, array $values)
+    /**
+     * @param mixed[] $functions
+     * @param mixed[] $values
+     */
+    public function evaluate($functions, $values)
     {
         $result = [];
         foreach ($this->getKeyValuePairs() as $pair) {
@@ -81,7 +88,11 @@ class ArrayNode extends Node
         }
         return $pairs;
     }
-    protected function compileArguments(Compiler $compiler, $withKeys = \true)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Compiler $compiler
+     * @param bool $withKeys
+     */
+    protected function compileArguments($compiler, $withKeys = \true)
     {
         $first = \true;
         foreach ($this->getKeyValuePairs() as $pair) {

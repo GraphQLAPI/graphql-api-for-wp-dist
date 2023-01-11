@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
-use GraphQLAPI\GraphQLAPI\PluginManagement\MainPluginManager;
+use GraphQLAPI\GraphQLAPI\App;
 
 /**
  * GraphiQL page
@@ -45,8 +45,8 @@ class GraphiQLMenuPage extends AbstractPluginMenuPage
      */
     protected function enqueueGraphiQLClientAssets(): void
     {
-        $mainPluginURL = (string) MainPluginManager::getConfig('url');
-        $mainPluginVersion = (string) MainPluginManager::getConfig('version');
+        $mainPluginURL = App::getMainPlugin()->getPluginURL();
+        $mainPluginVersion = App::getMainPlugin()->getPluginVersion();
 
         \wp_enqueue_style(
             'graphql-api-graphiql-client',
@@ -67,12 +67,12 @@ class GraphiQLMenuPage extends AbstractPluginMenuPage
             'response' => $this->getResponse(),
         );
 
-        $mainPluginURL = (string) MainPluginManager::getConfig('url');
-        $mainPluginVersion = (string) MainPluginManager::getConfig('version');
+        $mainPluginURL = App::getMainPlugin()->getPluginURL();
+        $mainPluginVersion = App::getMainPlugin()->getPluginVersion();
 
         \wp_enqueue_style(
             'graphql-api-graphiql',
-            $mainPluginURL . 'assets/css/vendors/graphiql.min.css',
+            $mainPluginURL . 'assets/css/vendors/graphiql.1.5.7.min.css',
             array(),
             $mainPluginVersion
         );
@@ -82,7 +82,7 @@ class GraphiQLMenuPage extends AbstractPluginMenuPage
 
         \wp_enqueue_script(
             'graphql-api-graphiql',
-            $mainPluginURL . 'assets/js/vendors/graphiql.min.js',
+            $mainPluginURL . 'assets/js/vendors/graphiql.1.5.7.min.js',
             array('graphql-api-react-dom'),
             $mainPluginVersion,
             true
@@ -102,7 +102,7 @@ class GraphiQLMenuPage extends AbstractPluginMenuPage
             array_merge(
                 [
                     'defaultQuery' => $this->getDefaultQuery(),
-                    'endpoint' => $this->endpointHelpers->getAdminConfigurableSchemaGraphQLEndpoint(),
+                    'endpoint' => $this->getEndpointHelpers()->getAdminConfigurableSchemaGraphQLEndpoint(),
                 ],
                 $scriptSettings
             )
@@ -155,10 +155,10 @@ class GraphiQLMenuPage extends AbstractPluginMenuPage
 #
 
 query {
-  posts(limit:3) {
+  posts(pagination: { limit: 3 }) {
     id
     title
-    date(format:"d/m/Y")
+    date
     url
     author {
       id

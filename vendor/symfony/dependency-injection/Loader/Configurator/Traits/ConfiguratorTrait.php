@@ -10,14 +10,14 @@
  */
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\Traits;
 
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator;
 trait ConfiguratorTrait
 {
     /**
      * Sets a configurator to call after the service is fully initialized.
      *
-     * @param string|array $configurator A PHP callable reference
-     *
      * @return $this
+     * @param string|mixed[]|\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator $configurator
      */
     public final function configurator($configurator)
     {

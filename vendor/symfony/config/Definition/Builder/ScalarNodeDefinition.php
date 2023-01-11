@@ -20,10 +20,8 @@ class ScalarNodeDefinition extends VariableNodeDefinition
 {
     /**
      * Instantiate a Node.
-     *
-     * @return ScalarNode The node
      */
-    protected function instantiateNode()
+    protected function instantiateNode() : \PrefixedByPoP\Symfony\Component\Config\Definition\VariableNode
     {
         return new ScalarNode($this->name, $this->parent, $this->pathSeparator);
     }

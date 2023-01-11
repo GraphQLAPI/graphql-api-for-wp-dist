@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Admin\Tables;
 
-use GraphQLAPI\GraphQLAPI\PluginManagement\MainPluginManager;
+use GraphQLAPI\GraphQLAPI\App;
 use WP_List_Table;
 
 /**
@@ -21,11 +21,17 @@ abstract class AbstractItemListTable extends WP_List_Table
      */
     protected $defaultItemsPerPage = 10;
 
-    public function setItemsPerPageOptionName(string $itemsPerPageOptionName): void
+    /**
+     * @param string $itemsPerPageOptionName
+     */
+    public function setItemsPerPageOptionName($itemsPerPageOptionName): void
     {
         $this->itemsPerPageOptionName = $itemsPerPageOptionName;
     }
-    public function setDefaultItemsPerPage(int $defaultItemsPerPage): void
+    /**
+     * @param int $defaultItemsPerPage
+     */
+    public function setDefaultItemsPerPage($defaultItemsPerPage): void
     {
         $this->defaultItemsPerPage = $defaultItemsPerPage;
     }
@@ -60,11 +66,11 @@ abstract class AbstractItemListTable extends WP_List_Table
 
         \add_action(
             'admin_enqueue_scripts',
-            [$this, 'enqueueAssets']
+            \Closure::fromCallable([$this, 'enqueueAssets'])
         );
         add_action(
             'admin_head',
-            [$this, 'printStyles']
+            \Closure::fromCallable([$this, 'printStyles'])
         );
     }
 
@@ -81,8 +87,8 @@ abstract class AbstractItemListTable extends WP_List_Table
      */
     public function enqueueAssets(): void
     {
-        $mainPluginURL = (string) MainPluginManager::getConfig('url');
-        $mainPluginVersion = (string) MainPluginManager::getConfig('version');
+        $mainPluginURL = App::getMainPlugin()->getPluginURL();
+        $mainPluginVersion = App::getMainPlugin()->getPluginVersion();
 
         /**
          * Fix the issues with the WP List Table

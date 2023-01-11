@@ -14,11 +14,12 @@ trait WithBlockRegistryCustomPostTypeTrait
     /**
      * Gutenberg templates to lock down the Custom Post Type to
      *
-     * @return array<array> Every element is an array with template name in first pos, and attributes then
+     * @return array<string[]> Every element is an array with template name in first pos, and attributes then
      */
     protected function getGutenbergTemplate(): array
     {
         $template = [];
+        /** @var EditorBlockInterface[] */
         $blocks = $this->getBlockRegistry()->getEnabledBlocks();
         // Order them by priority
         uasort(

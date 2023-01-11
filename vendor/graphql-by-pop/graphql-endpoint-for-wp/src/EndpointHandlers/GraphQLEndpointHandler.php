@@ -4,16 +4,35 @@ declare(strict_types=1);
 
 namespace GraphQLByPoP\GraphQLEndpointForWP\EndpointHandlers;
 
-use GraphQLByPoP\GraphQLEndpointForWP\ComponentConfiguration;
-use PoP\API\Response\Schemes as APISchemes;
-use PoP\APIEndpointsForWP\EndpointHandlers\AbstractEndpointHandler;
-use PoP\ComponentModel\Constants\Params;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use PoP\GraphQLAPI\Component;
-use PoP\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter;
+use PoP\Root\App;
+use GraphQLByPoP\GraphQLEndpointForWP\Module;
+use GraphQLByPoP\GraphQLEndpointForWP\ModuleConfiguration;
+use PoPAPI\APIEndpointsForWP\EndpointHandlers\AbstractEndpointHandler;
+use PoP\Root\Services\BasicServiceTrait;
+use PoPAPI\GraphQLAPI\Module as GraphQLAPIModule;
+use PoPAPI\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter;
 
 class GraphQLEndpointHandler extends AbstractEndpointHandler
 {
+    use BasicServiceTrait;
+
+    /**
+     * @var \PoPAPI\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter|null
+     */
+    private $graphQLDataStructureFormatter;
+
+    /**
+     * @param \PoPAPI\GraphQLAPI\DataStructureFormatters\GraphQLDataStructureFormatter $graphQLDataStructureFormatter
+     */
+    final public function setGraphQLDataStructureFormatter($graphQLDataStructureFormatter): void
+    {
+        $this->graphQLDataStructureFormatter = $graphQLDataStructureFormatter;
+    }
+    final protected function getGraphQLDataStructureFormatter(): GraphQLDataStructureFormatter
+    {
+        /** @var GraphQLDataStructureFormatter */
+        return $this->graphQLDataStructureFormatter = $this->graphQLDataStructureFormatter ?? $this->instanceManager->getInstance(GraphQLDataStructureFormatter::class);
+    }
     /**
      * Initialize the endpoints
      */
@@ -26,12 +45,12 @@ class GraphQLEndpointHandler extends AbstractEndpointHandler
 
     /**
      * Provide the endpoint
-     *
-     * @var string
      */
-    protected function getEndpoint(): string
+    public function getEndpoint(): string
     {
-        return ComponentConfiguration::getGraphQLAPIEndpoint();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return $moduleConfiguration->getGraphQLAPIEndpoint();
     }
 
     /**
@@ -39,25 +58,11 @@ class GraphQLEndpointHandler extends AbstractEndpointHandler
      */
     protected function isGraphQLAPIEnabled(): bool
     {
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
         return
-            class_exists(Component::class)
-            && Component::isEnabled()
-            && !ComponentConfiguration::isGraphQLAPIEndpointDisabled();
-    }
-
-    /**
-     * Indicate this is a GraphQL request
-     */
-    protected function executeEndpoint(): void
-    {
-        // Set the params on the request, to emulate that they were added by the user
-        $_REQUEST[Params::SCHEME] = APISchemes::API;
-        // Include qualified namespace here (instead of `use`) since we do didn't know if component is installed
-        $instanceManager = InstanceManagerFacade::getInstance();
-        /** @var GraphQLDataStructureFormatter */
-        $graphQLDataStructureFormatter = $instanceManager->getInstance(GraphQLDataStructureFormatter::class);
-        $_REQUEST[Params::DATASTRUCTURE] = $graphQLDataStructureFormatter->getName();
-        // Enable hooks
-        \do_action('EndpointHandler:setDoingGraphQL');
+            class_exists(GraphQLAPIModule::class)
+            && App::getModule(GraphQLAPIModule::class)->isEnabled()
+            && !$moduleConfiguration->isGraphQLAPIEndpointDisabled();
     }
 }

@@ -32,15 +32,19 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\Cont
 class PhpFileLoader extends FileLoader
 {
     protected $autoRegisterAliasesForSinglyImplementedInterfaces = \false;
+    /**
+     * @var \Symfony\Component\Config\Builder\ConfigBuilderGeneratorInterface|null
+     */
     private $generator;
-    public function __construct(ContainerBuilder $container, FileLocatorInterface $locator, string $env = null, ?ConfigBuilderGeneratorInterface $generator = null)
+    public function __construct(ContainerBuilder $container, FileLocatorInterface $locator, string $env = null, ConfigBuilderGeneratorInterface $generator = null)
     {
         parent::__construct($container, $locator, $env);
         $this->generator = $generator;
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @return mixed
+     * @param string|null $type
      */
     public function load($resource, $type = null)
     {
@@ -63,12 +67,13 @@ class PhpFileLoader extends FileLoader
             $this->instanceof = [];
             $this->registerAliasesForSinglyImplementedInterfaces();
         }
+        return null;
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @param string|null $type
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, $type = null) : bool
     {
         if (!\is_string($resource)) {
             return \false;
@@ -83,23 +88,19 @@ class PhpFileLoader extends FileLoader
      */
     private function executeCallback(callable $callback, ContainerConfigurator $containerConfigurator, string $path)
     {
-        if (!$callback instanceof \Closure) {
-            $callback = \Closure::fromCallable($callback);
-        }
+        $callback = \Closure::fromCallable($callback);
         $arguments = [];
         $configBuilders = [];
         $r = new \ReflectionFunction($callback);
-        if (\PHP_VERSION_ID >= 80000) {
-            $attribute = null;
-            foreach ($r->getAttributes(When::class) as $attribute) {
-                if ($this->env === $attribute->newInstance()->env) {
-                    $attribute = null;
-                    break;
-                }
+        $attribute = null;
+        foreach (\method_exists($r, 'getAttributes') ? $r->getAttributes(When::class, \ReflectionAttribute::IS_INSTANCEOF) : [] as $attribute) {
+            if ($this->env === $attribute->newInstance()->env) {
+                $attribute = null;
+                break;
             }
-            if (null !== $attribute) {
-                return;
-            }
+        }
+        if (null !== $attribute) {
+            return;
         }
         foreach ($r->getParameters() as $parameter) {
             $reflectionType = $parameter->getType();
@@ -118,6 +119,12 @@ class PhpFileLoader extends FileLoader
                 case self::class:
                     $arguments[] = $this;
                     break;
+                case 'string':
+                    if (null !== $this->env && 'env' === $parameter->getName()) {
+                        $arguments[] = $this->env;
+                        break;
+                    }
+                // no break
                 default:
                     try {
                         $configBuilder = $this->configBuilder($type);
@@ -151,13 +158,13 @@ class PhpFileLoader extends FileLoader
         if (\class_exists($namespace) && \is_subclass_of($namespace, ConfigBuilderInterface::class)) {
             return new $namespace();
         }
-        // If it does not start with Symfony\Config\ we dont know how to handle this
-        if ('Symfony\\Config\\' !== \substr($namespace, 0, 15)) {
+        // If it does not start with Symfony\Config\ we don't know how to handle this
+        if (\strncmp($namespace, 'Symfony\\Config\\', \strlen('Symfony\\Config\\')) !== 0) {
             throw new InvalidArgumentException(\sprintf('Could not find or generate class "%s".', $namespace));
         }
         // Try to get the extension alias
         $alias = Container::underscore(\substr($namespace, 15, -6));
-        if (\false !== \strpos($alias, '\\')) {
+        if (\strpos($alias, '\\') !== \false) {
             throw new InvalidArgumentException('You can only use "root" ConfigBuilders from "Symfony\\Config\\" namespace. Nested classes like "Symfony\\Config\\Framework\\CacheConfig" cannot be used.');
         }
         if (!$this->container->hasExtension($alias)) {

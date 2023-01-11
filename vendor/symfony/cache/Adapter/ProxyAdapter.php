@@ -25,72 +25,69 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 {
     use ContractsTrait;
     use ProxyTrait;
+    /**
+     * @var string
+     */
     private $namespace = '';
+    /**
+     * @var int
+     */
     private $namespaceLen;
+    /**
+     * @var string
+     */
     private $poolHash;
+    /**
+     * @var int
+     */
     private $defaultLifetime;
+    /**
+     * @var \Closure
+     */
     private static $createCacheItem;
+    /**
+     * @var \Closure
+     */
     private static $setInnerItem;
     public function __construct(CacheItemPoolInterface $pool, string $namespace = '', int $defaultLifetime = 0)
     {
         $this->pool = $pool;
-        $this->poolHash = $poolHash = \spl_object_hash($pool);
+        $this->poolHash = \spl_object_hash($pool);
         if ('' !== $namespace) {
             \assert('' !== CacheItem::validateKey($namespace));
             $this->namespace = $namespace;
         }
         $this->namespaceLen = \strlen($namespace);
         $this->defaultLifetime = $defaultLifetime;
-        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key, $innerItem, $poolHash) {
+        self::$createCacheItem = self::$createCacheItem ?? \Closure::bind(static function ($key, $innerItem, $poolHash) {
             $item = new CacheItem();
             $item->key = $key;
             if (null === $innerItem) {
                 return $item;
             }
-            $item->value = $v = $innerItem->get();
+            $item->value = $innerItem->get();
             $item->isHit = $innerItem->isHit();
             $item->innerItem = $innerItem;
             $item->poolHash = $poolHash;
-            // Detect wrapped values that encode for their expiry and creation duration
-            // For compactness, these values are packed in the key of an array using
-            // magic numbers in the form 9D-..-..-..-..-00-..-..-..-5F
-            if (\is_array($v) && 1 === \count($v) && 10 === \strlen($k = (string) \key($v)) && "\x9d" === $k[0] && "\x00" === $k[5] && "_" === $k[9]) {
-                $item->value = $v[$k];
-                $v = \unpack('Ve/Nc', \substr($k, 1, -1));
-                $item->metadata[CacheItem::METADATA_EXPIRY] = $v['e'] + CacheItem::METADATA_EXPIRY_OFFSET;
-                $item->metadata[CacheItem::METADATA_CTIME] = $v['c'];
-            } elseif ($innerItem instanceof CacheItem) {
+            if (!$item->unpack() && $innerItem instanceof CacheItem) {
                 $item->metadata = $innerItem->metadata;
             }
             $innerItem->set(null);
             return $item;
-        }, null, CacheItem::class));
-        self::$setInnerItem ?? (self::$setInnerItem = \Closure::bind(
-            /**
-             * @param array $item A CacheItem cast to (array); accessing protected properties requires adding the "\0*\0" PHP prefix
-             */
-            static function (CacheItemInterface $innerItem, array $item) {
-                // Tags are stored separately, no need to account for them when considering this item's newly set metadata
-                if (isset(($metadata = $item["\x00*\x00newMetadata"])[CacheItem::METADATA_TAGS])) {
-                    unset($metadata[CacheItem::METADATA_TAGS]);
-                }
-                if ($metadata) {
-                    // For compactness, expiry and creation duration are packed in the key of an array, using magic numbers as separators
-                    $item["\x00*\x00value"] = ["\x9d" . \pack('VN', (int) (0.1 + $metadata[self::METADATA_EXPIRY] - self::METADATA_EXPIRY_OFFSET), $metadata[self::METADATA_CTIME]) . "_" => $item["\x00*\x00value"]];
-                }
-                $innerItem->set($item["\x00*\x00value"]);
-                $innerItem->expiresAt(null !== $item["\x00*\x00expiry"] ? \DateTime::createFromFormat('U.u', \sprintf('%.6F', 0 === $item["\x00*\x00expiry"] ? \PHP_INT_MAX : $item["\x00*\x00expiry"])) : null);
-            },
-            null,
-            CacheItem::class
-        ));
+        }, null, CacheItem::class);
+        self::$setInnerItem = self::$setInnerItem ?? \Closure::bind(static function (CacheItemInterface $innerItem, CacheItem $item, $expiry = null) {
+            $innerItem->set($item->pack());
+            $innerItem->expiresAt($expiry ?? $item->expiry ? \DateTimeImmutable::createFromFormat('U.u', \sprintf('%.6F', $expiry ?? $item->expiry)) : null);
+        }, null, CacheItem::class);
     }
     /**
-     * {@inheritdoc}
-     * @param float $beta
-     * @param mixed[] $metadata
+     * @return mixed
+     * @param string $key
+     * @param callable $callback
+     * @param float|null $beta
+     * @param mixed[]|null $metadata
      */
-    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
+    public function get($key, $callback, $beta = null, &$metadata = null)
     {
         if (!$this->pool instanceof CacheInterface) {
             return $this->doGet($this, $key, $callback, $beta, $metadata);
@@ -98,22 +95,22 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         return $this->pool->get($this->getId($key), function ($innerItem, bool &$save) use($key, $callback) {
             $item = (self::$createCacheItem)($key, $innerItem, $this->poolHash);
             $item->set($value = $callback($item, $save));
-            (self::$setInnerItem)($innerItem, (array) $item);
+            (self::$setInnerItem)($innerItem, $item);
             return $value;
         }, $beta, $metadata);
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $key
      */
-    public function getItem($key)
+    public function getItem($key) : \PrefixedByPoP\Psr\Cache\CacheItemInterface
     {
         $item = $this->pool->getItem($this->getId($key));
         return (self::$createCacheItem)($key, $item, $this->poolHash);
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $keys
      */
-    public function getItems(array $keys = [])
+    public function getItems($keys = []) : iterable
     {
         if ($this->namespaceLen) {
             foreach ($keys as $i => $key) {
@@ -123,21 +120,16 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         return $this->generateItems($this->pool->getItems($keys));
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed $key
      */
-    public function hasItem($key)
+    public function hasItem($key) : bool
     {
         return $this->pool->hasItem($this->getId($key));
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
      * @param string $prefix
      */
-    public function clear($prefix = '')
+    public function clear($prefix = '') : bool
     {
         if ($this->pool instanceof AdapterInterface) {
             return $this->pool->clear($this->namespace . $prefix);
@@ -145,20 +137,16 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         return $this->pool->clear();
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed $key
      */
-    public function deleteItem($key)
+    public function deleteItem($key) : bool
     {
         return $this->pool->deleteItem($this->getId($key));
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed[] $keys
      */
-    public function deleteItems(array $keys)
+    public function deleteItems($keys) : bool
     {
         if ($this->namespaceLen) {
             foreach ($keys as $i => $key) {
@@ -168,54 +156,45 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         return $this->pool->deleteItems($keys);
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param \Psr\Cache\CacheItemInterface $item
      */
-    public function save(CacheItemInterface $item)
+    public function save($item) : bool
     {
         return $this->doSave($item, __FUNCTION__);
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param \Psr\Cache\CacheItemInterface $item
      */
-    public function saveDeferred(CacheItemInterface $item)
+    public function saveDeferred($item) : bool
     {
         return $this->doSave($item, __FUNCTION__);
     }
-    /**
-     * {@inheritdoc}
-     *
-     * @return bool
-     */
-    public function commit()
+    public function commit() : bool
     {
         return $this->pool->commit();
     }
-    private function doSave(CacheItemInterface $item, string $method)
+    private function doSave(CacheItemInterface $item, string $method) : bool
     {
         if (!$item instanceof CacheItem) {
             return \false;
         }
-        $item = (array) $item;
-        if (null === $item["\x00*\x00expiry"] && 0 < $this->defaultLifetime) {
-            $item["\x00*\x00expiry"] = \microtime(\true) + $this->defaultLifetime;
+        $castItem = (array) $item;
+        if (null === $castItem["\x00*\x00expiry"] && 0 < $this->defaultLifetime) {
+            $castItem["\x00*\x00expiry"] = \microtime(\true) + $this->defaultLifetime;
         }
-        if ($item["\x00*\x00poolHash"] === $this->poolHash && $item["\x00*\x00innerItem"]) {
-            $innerItem = $item["\x00*\x00innerItem"];
+        if ($castItem["\x00*\x00poolHash"] === $this->poolHash && $castItem["\x00*\x00innerItem"]) {
+            $innerItem = $castItem["\x00*\x00innerItem"];
         } elseif ($this->pool instanceof AdapterInterface) {
             // this is an optimization specific for AdapterInterface implementations
             // so we can save a round-trip to the backend by just creating a new item
-            $innerItem = (self::$createCacheItem)($this->namespace . $item["\x00*\x00key"], null, $this->poolHash);
+            $innerItem = (self::$createCacheItem)($this->namespace . $castItem["\x00*\x00key"], null, $this->poolHash);
         } else {
-            $innerItem = $this->pool->getItem($this->namespace . $item["\x00*\x00key"]);
+            $innerItem = $this->pool->getItem($this->namespace . $castItem["\x00*\x00key"]);
         }
-        (self::$setInnerItem)($innerItem, $item);
+        (self::$setInnerItem)($innerItem, $item, $castItem["\x00*\x00expiry"]);
         return $this->pool->{$method}($innerItem);
     }
-    private function generateItems(iterable $items)
+    private function generateItems(iterable $items) : \Generator
     {
         $f = self::$createCacheItem;
         foreach ($items as $key => $item) {
@@ -225,6 +204,9 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
             (yield $key => $f($key, $item, $this->poolHash));
         }
     }
+    /**
+     * @param mixed $key
+     */
     private function getId($key) : string
     {
         \assert('' !== CacheItem::validateKey($key));

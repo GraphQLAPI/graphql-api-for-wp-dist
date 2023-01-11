@@ -3,12 +3,19 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Registries;
 
-use PoP\ComponentModel\DirectiveResolvers\DirectiveResolverInterface;
+use PoP\ComponentModel\DirectiveResolvers\FieldDirectiveResolverInterface;
 interface DirectiveRegistryInterface
 {
-    public function addDirectiveResolver(DirectiveResolverInterface $directiveResolver) : void;
     /**
-     * @return DirectiveResolverInterface[]
+     * @param \PoP\ComponentModel\DirectiveResolvers\FieldDirectiveResolverInterface $directiveResolver
      */
-    public function getDirectiveResolvers() : array;
+    public function addFieldDirectiveResolver($directiveResolver) : void;
+    /**
+     * @return array<string,FieldDirectiveResolverInterface>
+     */
+    public function getFieldDirectiveResolvers() : array;
+    /**
+     * @param string $directiveName
+     */
+    public function getFieldDirectiveResolver($directiveName) : ?FieldDirectiveResolverInterface;
 }

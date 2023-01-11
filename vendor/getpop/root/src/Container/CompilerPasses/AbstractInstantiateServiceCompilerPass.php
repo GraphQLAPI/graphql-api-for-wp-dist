@@ -7,8 +7,11 @@ use PoP\Root\Container\ContainerBuilderWrapperInterface;
 use PoP\Root\Container\ServiceInstantiatorInterface;
 abstract class AbstractInstantiateServiceCompilerPass extends \PoP\Root\Container\CompilerPasses\AbstractCompilerPass
 {
-    use AutoconfigurableServicesCompilerPassTrait;
-    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void
+    use \PoP\Root\Container\CompilerPasses\AutoconfigurableServicesCompilerPassTrait;
+    /**
+     * @param \PoP\Root\Container\ContainerBuilderWrapperInterface $containerBuilderWrapper
+     */
+    protected function doProcess($containerBuilderWrapper) : void
     {
         $serviceInstantiatorDefinition = $containerBuilderWrapper->getDefinition(ServiceInstantiatorInterface::class);
         $serviceClass = $this->getServiceClass();

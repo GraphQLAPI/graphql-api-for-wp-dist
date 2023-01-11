@@ -17,9 +17,9 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Argument;
  */
 interface ArgumentInterface
 {
+    public function getValues() : array;
     /**
-     * @return array
+     * @param mixed[] $values
      */
-    public function getValues();
-    public function setValues(array $values);
+    public function setValues($values);
 }

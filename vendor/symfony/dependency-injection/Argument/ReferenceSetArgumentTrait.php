@@ -10,14 +10,20 @@
  */
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Argument;
 
+trigger_deprecation('symfony/dependency-injection', '6.1', '"%s" is deprecated.', ReferenceSetArgumentTrait::class);
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 /**
  * @author Titouan Galopin <galopintitouan@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
+ *
+ * @deprecated since Symfony 6.1
  */
 trait ReferenceSetArgumentTrait
 {
+    /**
+     * @var mixed[]
+     */
     private $values;
     /**
      * @param Reference[] $values
@@ -27,16 +33,16 @@ trait ReferenceSetArgumentTrait
         $this->setValues($values);
     }
     /**
-     * @return Reference[] The values in the set
+     * @return Reference[]
      */
-    public function getValues()
+    public function getValues() : array
     {
         return $this->values;
     }
     /**
      * @param Reference[] $values The service references to put in the set
      */
-    public function setValues(array $values)
+    public function setValues($values)
     {
         foreach ($values as $k => $v) {
             if (null !== $v && !$v instanceof Reference) {

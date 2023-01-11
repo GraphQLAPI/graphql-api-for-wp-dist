@@ -19,8 +19,10 @@ final class QueryVarsController implements ControllerInterface
 {
     /**
      * @inheritdoc
+     * @param mixed[] $vars
+     * @param \WP $wp
      */
-    public function run(array $vars, \WP $wp, $template = '')
+    public function run($vars, $wp, $template = '')
     {
         $wp->query_vars = $vars;
         return \false;

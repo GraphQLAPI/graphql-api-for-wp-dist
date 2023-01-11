@@ -21,9 +21,9 @@ class TraceableTagAwareAdapter extends TraceableAdapter implements TagAwareAdapt
         parent::__construct($pool);
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $tags
      */
-    public function invalidateTags(array $tags)
+    public function invalidateTags($tags) : bool
     {
         $event = $this->start(__FUNCTION__);
         try {

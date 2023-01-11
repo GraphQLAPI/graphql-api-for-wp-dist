@@ -3,69 +3,94 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
-use GraphQLByPoP\GraphQLServer\Environment;
-use GraphQLByPoP\GraphQLServer\ObjectModels\Field;
-use PoP\API\Schema\SchemaDefinition;
+use PoP\Root\App;
+use GraphQLByPoP\GraphQLServer\Module;
+use GraphQLByPoP\GraphQLServer\ModuleConfiguration;
 use GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers;
+use PoPAPI\API\Schema\SchemaDefinition;
 trait HasFieldsTypeTrait
 {
     /**
      * @var Field[]
      */
     protected $fields;
-    protected function initFields(array &$fullSchemaDefinition, array $schemaDefinitionPath, bool $includeConnections) : void
+    /**
+     * @param array<string,mixed> $fullSchemaDefinition
+     * @param string[] $schemaDefinitionPath
+     */
+    protected function initFields(&$fullSchemaDefinition, $schemaDefinitionPath) : void
     {
-        $this->fields = [];
-        $interfaceNames = $this->getInterfaceNames();
-        // Iterate to the definition of the fields in the schema, and create an object for each of them
-        // Print connections and then fields, it looks better in the Interactive Schema
-        // 1. Connections under this type
-        if ($includeConnections) {
-            $this->initFieldsFromPath($fullSchemaDefinition, \array_merge($schemaDefinitionPath, [SchemaDefinition::ARGNAME_CONNECTIONS]), $interfaceNames);
+        /**
+         * Iterate to the definition of the fields in the schema,
+         * and create an object for each of them
+         */
+        $this->fields = SchemaDefinitionHelpers::createFieldsFromPath($fullSchemaDefinition, \array_merge($schemaDefinitionPath, [SchemaDefinition::FIELDS]));
+        $globalFields = [];
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        if ($moduleConfiguration->exposeGlobalFieldsInGraphQLSchema()) {
+            /**
+             * Global fields have already been initialized,
+             * simply get the reference to the existing objects
+             * from the registryMap
+             */
+            $globalFields = SchemaDefinitionHelpers::getFieldsFromPath($fullSchemaDefinition, [SchemaDefinition::GLOBAL_FIELDS]);
         }
-        // 2. Fields under this type
-        $this->initFieldsFromPath($fullSchemaDefinition, \array_merge($schemaDefinitionPath, [SchemaDefinition::ARGNAME_FIELDS]), $interfaceNames);
-        if (Environment::addGlobalFieldsToSchema()) {
-            // Global fields and connections have already been initialized, simply get the reference to the existing objects from the registryMap
-            // 1. Global fields
-            $this->retrieveFieldsFromPath($fullSchemaDefinition, [SchemaDefinition::ARGNAME_GLOBAL_FIELDS]);
-            // 2. Global connections
-            if ($includeConnections) {
-                $this->retrieveFieldsFromPath($fullSchemaDefinition, [SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS]);
+        // Maybe sort fields and connections all together
+        if ($moduleConfiguration->sortGraphQLSchemaAlphabetically()) {
+            if ($moduleConfiguration->sortGlobalFieldsAfterNormalFieldsInGraphQLSchema()) {
+                /**
+                 * Sort them separately, then merge them
+                 */
+                \uasort($this->fields, function (\GraphQLByPoP\GraphQLServer\ObjectModels\Field $a, \GraphQLByPoP\GraphQLServer\ObjectModels\Field $b) {
+                    return $a->getName() <=> $b->getName();
+                });
+                \uasort($globalFields, function (\GraphQLByPoP\GraphQLServer\ObjectModels\Field $a, \GraphQLByPoP\GraphQLServer\ObjectModels\Field $b) {
+                    return $a->getName() <=> $b->getName();
+                });
+                $this->fields = \array_merge($this->fields, $globalFields);
+            } else {
+                /**
+                 * Merge them, then sort them together
+                 */
+                $this->fields = \array_merge($this->fields, $globalFields);
+                \uasort($this->fields, function (\GraphQLByPoP\GraphQLServer\ObjectModels\Field $a, \GraphQLByPoP\GraphQLServer\ObjectModels\Field $b) {
+                    return $a->getName() <=> $b->getName();
+                });
             }
+        } else {
+            $this->fields = \array_merge($this->fields, $globalFields);
         }
     }
-    protected function getInterfaceNames()
+    /**
+     * @param bool $includeGlobal Custom parameter by this GraphQL Server (i.e. it is not present in the GraphQL spec)
+     * @return Field[]
+     * @param bool $includeDeprecated
+     */
+    public function getFields($includeDeprecated = \false, $includeGlobal = \true) : array
     {
-        if ($this instanceof \GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeInterface) {
-            return $this->schemaDefinition[SchemaDefinition::ARGNAME_INTERFACES];
+        $fields = $this->fields;
+        if (!$includeDeprecated) {
+            $fields = \array_filter($fields, function (\GraphQLByPoP\GraphQLServer\ObjectModels\Field $field) {
+                return !$field->isDeprecated();
+            });
         }
-        return [];
-    }
-    protected function initFieldsFromPath(array &$fullSchemaDefinition, array $fieldSchemaDefinitionPath, array $interfaceNames) : void
-    {
-        $this->fields = \array_merge($this->fields, SchemaDefinitionHelpers::initFieldsFromPath($fullSchemaDefinition, $fieldSchemaDefinitionPath, $interfaceNames));
-    }
-    protected function retrieveFieldsFromPath(array &$fullSchemaDefinition, array $fieldSchemaDefinitionPath) : void
-    {
-        $this->fields = \array_merge($this->fields, SchemaDefinitionHelpers::retrieveFieldsFromPath($fullSchemaDefinition, $fieldSchemaDefinitionPath));
-    }
-    public function initializeFieldTypeDependencies() : void
-    {
-        foreach ($this->fields as $field) {
-            $field->initializeTypeDependencies();
+        if (!$includeGlobal) {
+            $fields = \array_filter($fields, function (\GraphQLByPoP\GraphQLServer\ObjectModels\Field $field) {
+                return !$field->getExtensions()->isGlobal();
+            });
         }
+        return $fields;
     }
-    public function getFields(bool $includeDeprecated = \false) : array
+    /**
+     * @param bool $includeGlobal Custom parameter by this GraphQL Server (i.e. it is not present in the GraphQL spec)
+     * @return string[]
+     * @param bool $includeDeprecated
+     */
+    public function getFieldIDs($includeDeprecated = \false, $includeGlobal = \true) : array
     {
-        return $includeDeprecated ? $this->fields : \array_filter($this->fields, function (Field $field) {
-            return !$field->isDeprecated();
-        });
-    }
-    public function getFieldIDs(bool $includeDeprecated = \false) : array
-    {
-        return \array_map(function (Field $field) {
+        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\Field $field) {
             return $field->getID();
-        }, $this->getFields($includeDeprecated));
+        }, $this->getFields($includeDeprecated, $includeGlobal));
     }
 }

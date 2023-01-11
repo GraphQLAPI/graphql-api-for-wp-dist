@@ -26,26 +26,49 @@ interface ModuleResolverInterface
      * ]
      */
     /**
-     * @return array<array> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @return array<string[]> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @param string $module
      */
-    public function getDependedModuleLists(string $module): array;
+    public function getDependedModuleLists($module): array;
     /**
      * Indicates if a module has all requirements satisfied (such as version of WordPress) to be enabled
+     * @param string $module
      */
-    public function areRequirementsSatisfied(string $module): bool;
+    public function areRequirementsSatisfied($module): bool;
     /**
      * Can the module be disabled by the user?
+     * @param string $module
      */
-    public function canBeDisabled(string $module): bool;
-    public function isHidden(string $module): bool;
-    public function getID(string $module): string;
-    public function getName(string $module): string;
-    public function getDescription(string $module): string;
-    public function hasSettings(string $module): bool;
+    public function canBeDisabled($module): bool;
+    /**
+     * @param string $module
+     */
+    public function isHidden($module): bool;
+    /**
+     * @param string $module
+     */
+    public function areSettingsHidden($module): bool;
+    /**
+     * @param string $module
+     */
+    public function getID($module): string;
+    /**
+     * @param string $module
+     */
+    public function getName($module): string;
+    /**
+     * @param string $module
+     */
+    public function getDescription($module): string;
+    /**
+     * @param string $module
+     */
+    public function hasSettings($module): bool;
     /**
      * The type of the module
+     * @param string $module
      */
-    public function getModuleType(string $module): string;
+    public function getModuleType($module): string;
     /**
      * Array with the inputs to show as settings for the module:
      * - name
@@ -53,32 +76,47 @@ interface ModuleResolverInterface
      * - possible values
      * - is multiple
      *
-     * @return array<array> List of settings for the module, each entry is an array with property => value
+     * @return array<array<string,mixed>> List of settings for the module, each entry is an array with property => value
+     * @param string $module
      */
-    public function getSettings(string $module): array;
+    public function getSettings($module): array;
     /**
      * Default value for an option set by the module
+     * @param string $module
+     * @param string $option
      */
-    public function getSettingOptionName(string $module, string $option): string;
+    public function getSettingOptionName($module, $option): string;
     /**
      * Indicate if the given value is valid for that option
      * @param mixed $value
+     * @param string $module
+     * @param string $option
      */
-    public function isValidValue(string $module, string $option, $value): bool;
+    public function isValidValue($module, $option, $value): bool;
     /**
      * Default value for an option set by the module
      * @return mixed
+     * @param string $module
+     * @param string $option
      */
-    public function getSettingsDefaultValue(string $module, string $option);
-    public function isEnabledByDefault(string $module): bool;
+    public function getSettingsDefaultValue($module, $option);
+    /**
+     * @param string $module
+     */
+    public function isEnabledByDefault($module): bool;
     // public function getURL(string $module): ?string;
-    public function getSlug(string $module): string;
+    /**
+     * @param string $module
+     */
+    public function getSlug($module): string;
     /**
      * Does the module have HTML Documentation?
+     * @param string $module
      */
-    public function hasDocumentation(string $module): bool;
+    public function hasDocumentation($module): bool;
     /**
      * HTML Documentation for the module
+     * @param string $module
      */
-    public function getDocumentation(string $module): ?string;
+    public function getDocumentation($module): ?string;
 }

@@ -19,7 +19,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidTypeExcep
 class IntegerNode extends NumericNode
 {
     /**
-     * {@inheritdoc}
+     * @param mixed $value
      */
     protected function validateType($value)
     {
@@ -32,9 +32,6 @@ class IntegerNode extends NumericNode
             throw $ex;
         }
     }
-    /**
-     * {@inheritdoc}
-     */
     protected function getValidPlaceholderTypes() : array
     {
         return ['int'];

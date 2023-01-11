@@ -18,23 +18,26 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class ContainerParametersResourceChecker implements ResourceCheckerInterface
 {
-    /** @var ContainerInterface */
+    /**
+     * @var \Symfony\Component\DependencyInjection\ContainerInterface
+     */
     private $container;
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
     }
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\Config\Resource\ResourceInterface $metadata
      */
-    public function supports(ResourceInterface $metadata)
+    public function supports($metadata) : bool
     {
         return $metadata instanceof ContainerParametersResource;
     }
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\Config\Resource\ResourceInterface $resource
+     * @param int $timestamp
      */
-    public function isFresh(ResourceInterface $resource, int $timestamp)
+    public function isFresh($resource, $timestamp) : bool
     {
         foreach ($resource->getParameters() as $key => $value) {
             if (!$this->container->hasParameter($key) || $this->container->getParameter($key) !== $value) {

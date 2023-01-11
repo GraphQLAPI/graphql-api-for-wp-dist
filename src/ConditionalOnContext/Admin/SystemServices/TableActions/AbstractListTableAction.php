@@ -18,7 +18,9 @@ abstract class AbstractListTableAction extends AbstractAutomaticallyInstantiated
      *
      * @since 3.1.0
      *
-     * @return string|bool The action name or False if no action was selected
+     * @return string|false The action name or False if no action was selected
+     * phpcs:disable Generic.PHP.DisallowRequestSuperglobal
+     * phpcs:disable SlevomatCodingStandard.Variables.DisallowSuperGlobalVariable
      */
     public function currentAction()
     {

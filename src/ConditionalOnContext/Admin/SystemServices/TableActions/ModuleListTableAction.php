@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\SystemServices\TableActions;
 
 use GraphQLAPI\GraphQLAPI\Facades\UserSettingsManagerFacade;
+use GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface;
+use PoP\Root\App;
 
 /**
  * Module List Table Action
@@ -29,13 +31,28 @@ class ModuleListTableAction extends AbstractListTableAction
     private $mutatedEnabled = false;
 
     /**
+     * @var \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface|null
+     */
+    private $userSettingsManager;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface $userSettingsManager
+     */
+    public function setUserSettingsManager($userSettingsManager): void
+    {
+        $this->userSettingsManager = $userSettingsManager;
+    }
+    protected function getUserSettingsManager(): UserSettingsManagerInterface
+    {
+        return $this->userSettingsManager = $this->userSettingsManager ?? UserSettingsManagerFacade::getInstance();
+    }
+
+    /**
      * If executing an operation, print a success message
      */
     public function initialize(): void
     {
-        \add_action('admin_notices', function () {
-            $this->maybeAddAdminNotice();
-        });
+        \add_action('admin_notices', \Closure::fromCallable([$this, 'maybeAddAdminNotice']));
     }
 
     /**
@@ -70,7 +87,7 @@ class ModuleListTableAction extends AbstractListTableAction
              */
             // See if executing any of the actions
             $actions = $this->getActions();
-            $isBulkAction = in_array($_POST['action'] ?? null, $actions) || in_array($_POST['action2'] ?? null, $actions);
+            $isBulkAction = in_array(App::request('action'), $actions) || in_array(App::request('action2'), $actions);
             $isSingleAction = in_array($this->currentAction(), $actions);
             if ($isBulkAction || $isSingleAction) {
                 $message = \__('Operation successful', 'graphql-api');
@@ -99,19 +116,19 @@ class ModuleListTableAction extends AbstractListTableAction
         $this->processed = true;
 
         $actions = $this->getActions();
-        $isBulkAction = in_array($_POST['action'] ?? null, $actions) || in_array($_POST['action2'] ?? null, $actions);
+        $isBulkAction = in_array(App::request('action'), $actions) || in_array(App::request('action2'), $actions);
         /**
          * The Bulk takes precedence, because it's executed as a POST on the current URL
          * Then, the URL can contain an ?action=... which was just executed,
          * and we don't want to execute it again
          */
         if ($isBulkAction) {
-            $moduleIDs = (array) \esc_sql($_POST[self::INPUT_BULK_ACTION_IDS] ?? []);
-            if (!empty($moduleIDs)) {
+            $moduleIDs = (array) \esc_sql(App::getRequest()->request->all()[self::INPUT_BULK_ACTION_IDS] ?? []);
+            if ($moduleIDs !== []) {
                 // Enable or disable
-                if (($_POST['action'] ?? null) == self::ACTION_ENABLE || ($_POST['action2'] ?? null) == self::ACTION_ENABLE) {
+                if (App::request('action') === self::ACTION_ENABLE || App::request('action2') === self::ACTION_ENABLE) {
                     $this->setModulesEnabledValue($moduleIDs, true);
-                } elseif (($_POST['action'] ?? null) == self::ACTION_DISABLE || ($_POST['action2'] ?? null) == self::ACTION_DISABLE) {
+                } elseif (App::request('action') === self::ACTION_DISABLE || App::request('action2') === self::ACTION_DISABLE) {
                     $this->setModulesEnabledValue($moduleIDs, false);
                 }
             }
@@ -120,18 +137,18 @@ class ModuleListTableAction extends AbstractListTableAction
         $isSingleAction = in_array($this->currentAction(), $actions);
         if ($isSingleAction) {
             // Verify the nonce
-            $nonce = \esc_attr($_REQUEST['_wpnonce'] ?? '');
+            $nonce = \esc_attr(App::request('_wpnonce') ?? App::query('_wpnonce', ''));
             if (!\wp_verify_nonce($nonce, 'graphql_api_enable_or_disable_module')) {
                 $noParamsCurrentURL = \admin_url(sprintf(
                     'admin.php?page=%s',
-                    $_GET['page'] ?? ''
+                    App::query('page', '')
                 ));
                 \wp_die(sprintf(
                     __('This URL is either stale or not valid. Please <a href="%s">click here to reload the page</a>, and try again', 'graphql-api'),
                     $noParamsCurrentURL
                 ));
             }
-            if ($moduleID = $_GET['item'] ?? null) {
+            if ($moduleID = App::query('item')) {
                 // Enable or disable
                 if (self::ACTION_ENABLE === $this->currentAction()) {
                     $this->setModulesEnabledValue([$moduleID], true);
@@ -146,15 +163,15 @@ class ModuleListTableAction extends AbstractListTableAction
      * Enable or Disable a list of modules
      *
      * @param string[] $moduleIDs
+     * @param bool $isEnabled
      */
-    protected function setModulesEnabledValue(array $moduleIDs, bool $isEnabled): void
+    protected function setModulesEnabledValue($moduleIDs, $isEnabled): void
     {
-        $userSettingsManager = UserSettingsManagerFacade::getInstance();
         $moduleIDValues = [];
         foreach ($moduleIDs as $moduleID) {
             $moduleIDValues[$moduleID] = $isEnabled;
         }
-        $userSettingsManager->setModulesEnabled($moduleIDValues);
+        $this->getUserSettingsManager()->setModulesEnabled($moduleIDValues);
 
         // Flags to indicate that data was mutated, which and how
         $this->mutatedModuleIDs = $moduleIDs;
@@ -164,12 +181,11 @@ class ModuleListTableAction extends AbstractListTableAction
         // But do it at the end! Once the new configuration has been applied
         \add_action(
             'init',
-            function () {
+            function (): void {
                 \flush_rewrite_rules();
 
                 // Update the timestamp
-                $userSettingsManager = UserSettingsManagerFacade::getInstance();
-                $userSettingsManager->storeTimestamp();
+                $this->getUserSettingsManager()->storeContainerTimestamp();
             },
             PHP_INT_MAX
         );

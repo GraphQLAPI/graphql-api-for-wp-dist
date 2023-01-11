@@ -19,9 +19,9 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumen
 class AutoAliasServicePass implements CompilerPassInterface
 {
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         foreach ($container->findTaggedServiceIds('auto_alias') as $serviceId => $tags) {
             foreach ($tags as $tag) {
@@ -30,7 +30,8 @@ class AutoAliasServicePass implements CompilerPassInterface
                 }
                 $aliasId = $container->getParameterBag()->resolveValue($tag['format']);
                 if ($container->hasDefinition($aliasId) || $container->hasAlias($aliasId)) {
-                    $container->setAlias($serviceId, new Alias($aliasId, \true));
+                    $alias = new Alias($aliasId, $container->getDefinition($serviceId)->isPublic());
+                    $container->setAlias($serviceId, $alias);
                 }
             }
         }

@@ -4,22 +4,39 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Security;
 
-use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
+use GraphQLAPI\GraphQLAPI\Module;
+use GraphQLAPI\GraphQLAPI\ModuleConfiguration;
+use GraphQLAPI\GraphQLAPI\Exception\UserAuthorizationException;
 use GraphQLAPI\GraphQLAPI\Registries\UserAuthorizationSchemeRegistryInterface;
-use InvalidArgumentException;
+use PoP\Root\App;
+use PoP\Root\Services\BasicServiceTrait;
+
+use function current_user_can;
+use function is_user_logged_in;
 
 /**
  * UserAuthorization
  */
 class UserAuthorization implements UserAuthorizationInterface
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\UserAuthorizationSchemeRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\UserAuthorizationSchemeRegistryInterface|null
      */
-    protected $userAuthorizationSchemeRegistry;
-    public function __construct(UserAuthorizationSchemeRegistryInterface $userAuthorizationSchemeRegistry)
+    private $userAuthorizationSchemeRegistry;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\UserAuthorizationSchemeRegistryInterface $userAuthorizationSchemeRegistry
+     */
+    final public function setUserAuthorizationSchemeRegistry($userAuthorizationSchemeRegistry): void
     {
         $this->userAuthorizationSchemeRegistry = $userAuthorizationSchemeRegistry;
+    }
+    final protected function getUserAuthorizationSchemeRegistry(): UserAuthorizationSchemeRegistryInterface
+    {
+        /** @var UserAuthorizationSchemeRegistryInterface */
+        return $this->userAuthorizationSchemeRegistry = $this->userAuthorizationSchemeRegistry ?? $this->instanceManager->getInstance(UserAuthorizationSchemeRegistryInterface::class);
     }
     /**
      * The capability needed to access the schema editor (i.e. access clients GraphiQL/Voyager
@@ -29,18 +46,20 @@ class UserAuthorization implements UserAuthorizationInterface
     public function getSchemaEditorAccessCapability(): string
     {
         $accessSchemeCapability = null;
-        if ($accessScheme = ComponentConfiguration::getEditingAccessScheme()) {
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        if ($accessScheme = $moduleConfiguration->getEditingAccessScheme()) {
             // If the capability does not exist, catch the exception
             try {
-                $accessSchemeCapability = $this->userAuthorizationSchemeRegistry->getUserAuthorizationScheme($accessScheme)->getSchemaEditorAccessCapability();
-            } catch (InvalidArgumentException $exception) {
+                $accessSchemeCapability = $this->getUserAuthorizationSchemeRegistry()->getUserAuthorizationScheme($accessScheme)->getSchemaEditorAccessCapability();
+            } catch (UserAuthorizationException $exception) {
             }
         }
 
         // Return the default access
         if ($accessSchemeCapability === null) {
             // This function also throws an exception. Let it bubble up - that's an application error
-            $defaultUserAuthorizationScheme = $this->userAuthorizationSchemeRegistry->getDefaultUserAuthorizationScheme();
+            $defaultUserAuthorizationScheme = $this->getUserAuthorizationSchemeRegistry()->getDefaultUserAuthorizationScheme();
             return $defaultUserAuthorizationScheme->getSchemaEditorAccessCapability();
         }
         return $accessSchemeCapability;
@@ -48,6 +67,9 @@ class UserAuthorization implements UserAuthorizationInterface
 
     public function canAccessSchemaEditor(): bool
     {
-        return \current_user_can($this->getSchemaEditorAccessCapability());
+        if (!is_user_logged_in()) {
+            return false;
+        }
+        return current_user_can($this->getSchemaEditorAccessCapability());
     }
 }

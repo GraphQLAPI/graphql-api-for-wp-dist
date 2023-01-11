@@ -4,24 +4,12 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Menus;
 
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Root\Services\BasicServiceTrait;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 
-/**
- * Admin menu class
- */
-abstract class AbstractMenu extends AbstractAutomaticallyInstantiatedService
+abstract class AbstractMenu extends AbstractAutomaticallyInstantiatedService implements MenuInterface
 {
-    /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
-     */
-    protected $instanceManager;
-    public function __construct(InstanceManagerInterface $instanceManager)
-    {
-        $this->instanceManager = $instanceManager;
-    }
-    abstract public function getName(): string;
-    abstract public function addMenuPage(): void;
+    use BasicServiceTrait;
 
     /**
      * Initialize the endpoints
@@ -30,7 +18,7 @@ abstract class AbstractMenu extends AbstractAutomaticallyInstantiatedService
     {
         \add_action(
             'admin_menu',
-            [$this, 'addMenuPage'],
+            \Closure::fromCallable([$this, 'addMenuPage']),
             5
         );
     }

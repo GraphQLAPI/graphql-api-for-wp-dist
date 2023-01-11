@@ -18,8 +18,17 @@ namespace PrefixedByPoP\Symfony\Component\ExpressionLanguage;
 class TokenStream
 {
     public $current;
+    /**
+     * @var mixed[]
+     */
     private $tokens;
+    /**
+     * @var int
+     */
     private $position = 0;
+    /**
+     * @var string
+     */
     private $expression;
     public function __construct(array $tokens, string $expression = '')
     {
@@ -29,10 +38,8 @@ class TokenStream
     }
     /**
      * Returns a string representation of the token stream.
-     *
-     * @return string
      */
-    public function __toString()
+    public function __toString() : string
     {
         return \implode("\n", $this->tokens);
     }
@@ -48,12 +55,11 @@ class TokenStream
         $this->current = $this->tokens[$this->position];
     }
     /**
-     * Tests a token.
-     *
-     * @param array|int   $type    The type to test
      * @param string|null $message The syntax error message
+     * @param string $type
+     * @param string|null $value
      */
-    public function expect($type, string $value = null, string $message = null)
+    public function expect($type, $value = null, $message = null)
     {
         $token = $this->current;
         if (!$token->test($type, $value)) {
@@ -63,10 +69,8 @@ class TokenStream
     }
     /**
      * Checks if end of stream was reached.
-     *
-     * @return bool
      */
-    public function isEOF()
+    public function isEOF() : bool
     {
         return Token::EOF_TYPE === $this->current->type;
     }

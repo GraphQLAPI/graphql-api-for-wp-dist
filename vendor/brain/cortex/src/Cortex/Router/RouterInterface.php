@@ -23,5 +23,5 @@ interface RouterInterface
      * @param  string                         $httpMethod
      * @return \Brain\Cortex\Router\MatchingResult
      */
-    public function match(UriInterface $uri, $httpMethod);
+    public function match($uri, $httpMethod);
 }

@@ -6,30 +6,30 @@ namespace GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators;
 
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ClientFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
+use GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface;
 use GraphQLAPI\GraphQLAPI\Services\Blocks\EndpointVoyagerBlock;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use WP_Post;
 
 class VoyagerClientEndpointAnnotator extends AbstractClientEndpointAnnotator implements CustomEndpointAnnotatorServiceTagInterface
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\EndpointVoyagerBlock
+     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\EndpointVoyagerBlock|null
      */
-    protected $endpointVoyagerBlock;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, BlockHelpers $blockHelpers, GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType, EndpointVoyagerBlock $endpointVoyagerBlock)
+    private $endpointVoyagerBlock;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Blocks\EndpointVoyagerBlock $endpointVoyagerBlock
+     */
+    final public function setEndpointVoyagerBlock($endpointVoyagerBlock): void
     {
         $this->endpointVoyagerBlock = $endpointVoyagerBlock;
-        parent::__construct(
-            $instanceManager,
-            $moduleRegistry,
-            $blockHelpers,
-            $graphQLCustomEndpointCustomPostType
-        );
     }
+    final protected function getEndpointVoyagerBlock(): EndpointVoyagerBlock
+    {
+        /** @var EndpointVoyagerBlock */
+        return $this->endpointVoyagerBlock = $this->endpointVoyagerBlock ?? $this->instanceManager->getInstance(EndpointVoyagerBlock::class);
+    }
+
     public function getEnablingModule(): ?string
     {
         return ClientFunctionalityModuleResolver::INTERACTIVE_SCHEMA_FOR_CUSTOM_ENDPOINTS;
@@ -37,9 +37,10 @@ class VoyagerClientEndpointAnnotator extends AbstractClientEndpointAnnotator imp
 
     /**
      * Add actions to the CPT list
-     * @param array<string, string> $actions
+     * @param array<string,string> $actions
+     * @param \WP_Post $post
      */
-    public function addCustomPostTypeTableActions(array &$actions, WP_Post $post): void
+    public function addCustomPostTypeTableActions(&$actions, $post): void
     {
         // Check the client has not been disabled in the CPT
         if (!$this->isClientEnabled($post)) {
@@ -62,8 +63,8 @@ class VoyagerClientEndpointAnnotator extends AbstractClientEndpointAnnotator imp
         }
     }
 
-    protected function getBlock(): AbstractBlock
+    protected function getBlock(): BlockInterface
     {
-        return $this->endpointVoyagerBlock;
+        return $this->getEndpointVoyagerBlock();
     }
 }

@@ -10,6 +10,7 @@ interface SchemaConfiguratorInterface extends ServiceInterface
 {
     /**
      * Execute the schema configuration contained in the custom post with certain ID
+     * @param int $customPostID
      */
-    public function executeSchemaConfiguration(int $customPostID): void;
+    public function executeSchemaConfiguration($customPostID): void;
 }

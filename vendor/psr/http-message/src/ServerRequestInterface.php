@@ -80,7 +80,7 @@ interface ServerRequestInterface extends RequestInterface
      * @param array $cookies Array of key/value pairs representing cookies.
      * @return static
      */
-    public function withCookieParams(array $cookies);
+    public function withCookieParams($cookies);
     /**
      * Retrieve query string arguments.
      *
@@ -116,7 +116,7 @@ interface ServerRequestInterface extends RequestInterface
      *     $_GET.
      * @return static
      */
-    public function withQueryParams(array $query);
+    public function withQueryParams($query);
     /**
      * Retrieve normalized file upload data.
      *
@@ -141,7 +141,7 @@ interface ServerRequestInterface extends RequestInterface
      * @return static
      * @throws \InvalidArgumentException if an invalid structure is provided.
      */
-    public function withUploadedFiles(array $uploadedFiles);
+    public function withUploadedFiles($uploadedFiles);
     /**
      * Retrieve any parameters provided in the request body.
      *

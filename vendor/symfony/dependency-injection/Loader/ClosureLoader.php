@@ -21,6 +21,9 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 class ClosureLoader extends Loader
 {
+    /**
+     * @var \Symfony\Component\DependencyInjection\ContainerBuilder
+     */
     private $container;
     public function __construct(ContainerBuilder $container, string $env = null)
     {
@@ -28,18 +31,19 @@ class ClosureLoader extends Loader
         parent::__construct($env);
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @return mixed
+     * @param string|null $type
      */
     public function load($resource, $type = null)
     {
-        $resource($this->container, $this->env);
+        return $resource($this->container, $this->env);
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @param string|null $type
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, $type = null) : bool
     {
         return $resource instanceof \Closure;
     }

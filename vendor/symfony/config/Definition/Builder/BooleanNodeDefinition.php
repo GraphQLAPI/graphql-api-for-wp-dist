@@ -19,9 +19,6 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidDefinitio
  */
 class BooleanNodeDefinition extends ScalarNodeDefinition
 {
-    /**
-     * {@inheritdoc}
-     */
     public function __construct(?string $name, NodeParentInterface $parent = null)
     {
         parent::__construct($name, $parent);
@@ -29,17 +26,14 @@ class BooleanNodeDefinition extends ScalarNodeDefinition
     }
     /**
      * Instantiate a Node.
-     *
-     * @return BooleanNode The node
      */
-    protected function instantiateNode()
+    protected function instantiateNode() : \PrefixedByPoP\Symfony\Component\Config\Definition\ScalarNode
     {
         return new BooleanNode($this->name, $this->parent, $this->pathSeparator);
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws InvalidDefinitionException
+     * @return $this
      */
     public function cannotBeEmpty()
     {

@@ -21,109 +21,93 @@ class NullAdapter implements AdapterInterface, CacheInterface
     private static $createCacheItem;
     public function __construct()
     {
-        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key) {
+        self::$createCacheItem = self::$createCacheItem ?? \Closure::bind(static function ($key) {
             $item = new CacheItem();
             $item->key = $key;
             $item->isHit = \false;
             return $item;
-        }, null, CacheItem::class));
+        }, null, CacheItem::class);
     }
     /**
-     * {@inheritdoc}
-     * @param float $beta
-     * @param mixed[] $metadata
+     * @return mixed
+     * @param string $key
+     * @param callable $callback
+     * @param float|null $beta
+     * @param mixed[]|null $metadata
      */
-    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
+    public function get($key, $callback, $beta = null, &$metadata = null)
     {
         $save = \true;
         return $callback((self::$createCacheItem)($key), $save);
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $key
      */
-    public function getItem($key)
+    public function getItem($key) : \PrefixedByPoP\Psr\Cache\CacheItemInterface
     {
         return (self::$createCacheItem)($key);
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $keys
      */
-    public function getItems(array $keys = [])
+    public function getItems($keys = []) : iterable
     {
         return $this->generateItems($keys);
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed $key
      */
-    public function hasItem($key)
+    public function hasItem($key) : bool
     {
         return \false;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
      * @param string $prefix
      */
-    public function clear($prefix = '')
+    public function clear($prefix = '') : bool
     {
         return \true;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed $key
      */
-    public function deleteItem($key)
+    public function deleteItem($key) : bool
     {
         return \true;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed[] $keys
      */
-    public function deleteItems(array $keys)
+    public function deleteItems($keys) : bool
     {
         return \true;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param \Psr\Cache\CacheItemInterface $item
      */
-    public function save(CacheItemInterface $item)
+    public function save($item) : bool
     {
         return \true;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param \Psr\Cache\CacheItemInterface $item
      */
-    public function saveDeferred(CacheItemInterface $item)
+    public function saveDeferred($item) : bool
+    {
+        return \true;
+    }
+    public function commit() : bool
     {
         return \true;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param string $key
      */
-    public function commit()
-    {
-        return \true;
-    }
-    /**
-     * {@inheritdoc}
-     */
-    public function delete(string $key) : bool
+    public function delete($key) : bool
     {
         return $this->deleteItem($key);
     }
-    private function generateItems(array $keys)
+    private function generateItems(array $keys) : \Generator
     {
         $f = self::$createCacheItem;
         foreach ($keys as $key) {

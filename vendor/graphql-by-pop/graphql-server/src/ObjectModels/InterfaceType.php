@@ -3,28 +3,19 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
-use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeTrait;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeInterface;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeTrait;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeTrait;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeInterface;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface;
-class InterfaceType extends AbstractType implements HasFieldsTypeInterface, HasPossibleTypesTypeInterface, HasInterfacesTypeInterface
+class InterfaceType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNamedType implements \GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeInterface, \GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface, \GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeInterface
 {
-    use HasFieldsTypeTrait;
-    use HasPossibleTypesTypeTrait;
-    use HasInterfacesTypeTrait;
-    public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath, array $customDefinition = [])
+    use \GraphQLByPoP\GraphQLServer\ObjectModels\HasFieldsTypeTrait;
+    use \GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeTrait;
+    use \GraphQLByPoP\GraphQLServer\ObjectModels\HasInterfacesTypeTrait;
+    /**
+     * @param array<string,mixed> $fullSchemaDefinition
+     * @param string[] $schemaDefinitionPath
+     */
+    public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath)
     {
-        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath, $customDefinition);
-        $this->initFields($fullSchemaDefinition, $schemaDefinitionPath, \false);
-        $this->initInterfaces($fullSchemaDefinition, $schemaDefinitionPath);
-    }
-    public function initializeTypeDependencies() : void
-    {
-        $this->initPossibleTypes();
-        $this->initializeFieldTypeDependencies();
+        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath);
+        $this->initFields($fullSchemaDefinition, $schemaDefinitionPath);
     }
     public function getKind() : string
     {

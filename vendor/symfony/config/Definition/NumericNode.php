@@ -21,8 +21,8 @@ class NumericNode extends ScalarNode
     protected $min;
     protected $max;
     /**
-     * @param int|float|null $min
-     * @param int|float|null $max
+     * @param int|float $min
+     * @param int|float $max
      */
     public function __construct(?string $name, NodeInterface $parent = null, $min = null, $max = null, string $pathSeparator = BaseNode::DEFAULT_PATH_SEPARATOR)
     {
@@ -31,7 +31,8 @@ class NumericNode extends ScalarNode
         $this->max = $max;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
      */
     protected function finalizeValue($value)
     {
@@ -51,9 +52,9 @@ class NumericNode extends ScalarNode
         return $value;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
      */
-    protected function isValueEmpty($value)
+    protected function isValueEmpty($value) : bool
     {
         // a numeric value cannot be empty
         return \false;

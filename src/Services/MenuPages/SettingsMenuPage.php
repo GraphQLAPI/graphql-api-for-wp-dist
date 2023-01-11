@@ -8,11 +8,10 @@ use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\Facades\UserSettingsManagerFacade;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\PluginManagementFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\ModuleSettings\Properties;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\MenuPageHelper;
+use GraphQLAPI\GraphQLAPI\Settings\SettingsNormalizerInterface;
 use GraphQLAPI\GraphQLAPI\Settings\Options;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface;
+use PoP\Root\App;
 
 /**
  * Settings menu page
@@ -23,23 +22,38 @@ class SettingsMenuPage extends AbstractPluginMenuPage
 
     public const FORM_ORIGIN = 'form-origin';
     public const SETTINGS_FIELD = 'graphql-api-settings';
-    /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
-     */
-    protected $moduleRegistry;
 
-    public function __construct(
-        InstanceManagerInterface $instanceManager,
-        MenuPageHelper $menuPageHelper,
-        EndpointHelpers $endpointHelpers,
-        ModuleRegistryInterface $moduleRegistry
-    ) {
-        $this->moduleRegistry = $moduleRegistry;
-        parent::__construct(
-            $instanceManager,
-            $menuPageHelper,
-            $endpointHelpers
-        );
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface|null
+     */
+    private $userSettingsManager;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Settings\SettingsNormalizerInterface|null
+     */
+    private $settingsNormalizer;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface $userSettingsManager
+     */
+    public function setUserSettingsManager($userSettingsManager): void
+    {
+        $this->userSettingsManager = $userSettingsManager;
+    }
+    protected function getUserSettingsManager(): UserSettingsManagerInterface
+    {
+        return $this->userSettingsManager = $this->userSettingsManager ?? UserSettingsManagerFacade::getInstance();
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Settings\SettingsNormalizerInterface $settingsNormalizer
+     */
+    final public function setSettingsNormalizer($settingsNormalizer): void
+    {
+        $this->settingsNormalizer = $settingsNormalizer;
+    }
+    final protected function getSettingsNormalizer(): SettingsNormalizerInterface
+    {
+        /** @var SettingsNormalizerInterface */
+        return $this->settingsNormalizer = $this->settingsNormalizer ?? $this->instanceManager->getInstance(SettingsNormalizerInterface::class);
     }
 
     public function getMenuPageSlug(): string
@@ -64,22 +78,24 @@ class SettingsMenuPage extends AbstractPluginMenuPage
         $option = self::SETTINGS_FIELD;
         // \add_filter(
         //     "pre_update_option_{$option}",
-        //     [$this, 'normalizeSettings']
+        //     $this->normalizeSettings(...)
         // );
 
         /**
          * After saving the settings in the DB:
          * - Flush the rewrite rules, so different URL slugs take effect
          * - Update the timestamp
+         *
+         * This hooks is also triggered the first time the user saves the settings
+         * (i.e. there's no update) thanks to `maybeStoreEmptySettings`
          */
         \add_action(
             "update_option_{$option}",
-            function () {
+            function (): void {
                 \flush_rewrite_rules();
 
                 // Update the timestamp
-                $userSettingsManager = UserSettingsManagerFacade::getInstance();
-                $userSettingsManager->storeTimestamp();
+                $this->getUserSettingsManager()->storeContainerTimestamp();
             }
         );
 
@@ -88,8 +104,8 @@ class SettingsMenuPage extends AbstractPluginMenuPage
          */
         \add_action(
             'admin_init',
-            function () {
-                $items = $this->getAllItems();
+            function (): void {
+                $items = $this->getSettingsNormalizer()->getAllSettingsItems();
                 foreach ($items as $item) {
                     $settingsFieldForModule = $this->getSettingsFieldForModule($item['id']);
                     $module = $item['module'];
@@ -97,7 +113,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
                         $settingsFieldForModule,
                         // The empty string ensures the render function won't output a h2.
                         '',
-                        function () {
+                        function (): void {
                         },
                         self::SETTINGS_FIELD
                     );
@@ -105,7 +121,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
                         \add_settings_field(
                             $itemSetting[Properties::NAME],
                             $itemSetting[Properties::TITLE] ?? '',
-                            function () use ($module, $itemSetting) {
+                            function () use ($module, $itemSetting): void {
                                 $type = $itemSetting[Properties::TYPE] ?? null;
                                 $possibleValues = $itemSetting[Properties::POSSIBLE_VALUES] ?? [];
                                 if (!empty($possibleValues)) {
@@ -114,6 +130,8 @@ class SettingsMenuPage extends AbstractPluginMenuPage
                                     $this->printTextareaField($module, $itemSetting);
                                 } elseif ($type == Properties::TYPE_BOOL) {
                                     $this->printCheckboxField($module, $itemSetting);
+                                } elseif ($type == Properties::TYPE_NULL) {
+                                    $this->printLabelField($module, $itemSetting);
                                 } else {
                                     $this->printInputField($module, $itemSetting);
                                 }
@@ -139,7 +157,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
                         'description' => \__('Settings for the GraphQL API', 'graphql-api'),
                         // This call is needed to cast the data
                         // before saving to the DB
-                        'sanitize_callback' => [$this, 'normalizeSettings'],
+                        'sanitize_callback' => \Closure::fromCallable([$this->getSettingsNormalizer(), 'normalizeSettings']),
                         'show_in_rest' => false,
                     ]
                 );
@@ -148,93 +166,9 @@ class SettingsMenuPage extends AbstractPluginMenuPage
     }
 
     /**
-     * Normalize the form values:
-     *
-     * - If the input is empty, replace with the default
-     * - Convert from string to int/bool
-     *
-     * @param array<string, string> $value All values submitted, each under its optionName as key
-     * @return array<string, mixed> Normalized values
+     * @param string $moduleID
      */
-    public function normalizeSettings(array $value): array
-    {
-        $items = $this->getAllItems();
-        foreach ($items as $item) {
-            $module = $item['module'];
-            $moduleResolver = $this->moduleRegistry->getModuleResolver($module);
-            foreach ($item['settings'] as $itemSetting) {
-                $type = $itemSetting[Properties::TYPE] ?? null;
-                /**
-                 * Cast type so PHPStan doesn't throw error
-                 */
-                $name = (string)$itemSetting[Properties::NAME];
-                $option = $itemSetting[Properties::INPUT];
-                $canBeEmpty = $itemSetting[Properties::CAN_BE_EMPTY] ?? false;
-                /**
-                 * If the input is empty, replace with the default
-                 * It can't be empty, because that could be equivalent
-                 * to disabling the module, which is done
-                 * from the Modules page, not from Settings.
-                 * Ignore for bool since empty means `false` (tackled below)
-                 * For int, "0" is valid, it must not be considered empty
-                 */
-                if (
-                    (!$canBeEmpty && empty($value[$name]))
-                    && $type != Properties::TYPE_BOOL
-                    && !($type == Properties::TYPE_INT && $value[$name] == '0')
-                ) {
-                    $value[$name] = $moduleResolver->getSettingsDefaultValue($module, $option);
-                } elseif ($type == Properties::TYPE_BOOL) {
-                    $value[$name] = !empty($value[$name]);
-                } elseif ($type == Properties::TYPE_INT) {
-                    $value[$name] = (int) $value[$name];
-                    // If the value is below its minimum, reset to the default one
-                    $minNumber = $itemSetting[Properties::MIN_NUMBER] ?? null;
-                    if (!is_null($minNumber) && $value[$name] < $minNumber) {
-                        $value[$name] = $moduleResolver->getSettingsDefaultValue($module, $option);
-                    }
-                } elseif (
-                    $type == Properties::TYPE_ARRAY
-                    && is_string($value[$name])
-                ) {
-                    // Check if the type is array, but it's delivered as a string via a textarea
-                    $possibleValues = $itemSetting[Properties::POSSIBLE_VALUES] ?? [];
-                    if (empty($possibleValues)) {
-                        $value[$name] = explode("\n", $value[$name]);
-                    }
-                }
-
-                // Validate it is a valid value, or reset
-                if (!$moduleResolver->isValidValue($module, $option, $value[$name])) {
-                    $value[$name] = $moduleResolver->getSettingsDefaultValue($module, $option);
-                }
-            }
-        }
-        return $value;
-    }
-
-    /**
-     * Return all the modules with settings
-     *
-     * @return array<array> Each item is an array of prop => value
-     */
-    protected function getAllItems(): array
-    {
-        $items = [];
-        $modules = $this->moduleRegistry->getAllModules(true, true, false);
-        foreach ($modules as $module) {
-            $moduleResolver = $this->moduleRegistry->getModuleResolver($module);
-            $items[] = [
-                'module' => $module,
-                'id' => $moduleResolver->getID($module),
-                'name' => $moduleResolver->getName($module),
-                'settings' => $moduleResolver->getSettings($module),
-            ];
-        }
-        return $items;
-    }
-
-    protected function getSettingsFieldForModule(string $moduleID): string
+    protected function getSettingsFieldForModule($moduleID): string
     {
         return self::SETTINGS_FIELD . '-' . $moduleID;
     }
@@ -246,8 +180,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
      */
     protected function printWithTabs(): bool
     {
-        $userSettingsManager = UserSettingsManagerFacade::getInstance();
-        return $userSettingsManager->getSetting(
+        return $this->getUserSettingsManager()->getSetting(
             PluginManagementFunctionalityModuleResolver::GENERAL,
             PluginManagementFunctionalityModuleResolver::OPTION_PRINT_SETTINGS_WITH_TABS
         );
@@ -258,7 +191,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
      */
     public function print(): void
     {
-        $items = $this->getAllItems();
+        $items = $this->getSettingsNormalizer()->getAllSettingsItems();
         if (!$items) {
             _e('There are no items to be configured', 'graphql-api');
             return;
@@ -268,8 +201,8 @@ class SettingsMenuPage extends AbstractPluginMenuPage
         // By default, focus on the first module
         $activeModuleID = $items[0]['id'];
         // If passing a tab, focus on that one, if the module exists
-        if (isset($_GET[RequestParams::TAB])) {
-            $tab = $_GET[RequestParams::TAB];
+        $tab = App::query(RequestParams::TAB);
+        if ($tab !== null) {
             $moduleIDs = array_map(
                 function ($item) {
                     return $item['id'];
@@ -300,7 +233,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
                         printf(
                             '<a href="#%s" class="nav-tab %s">%s</a>',
                             $item['id'],
-                            $item['id'] == $activeModuleID ? 'nav-tab-active' : '',
+                            $item['id'] === $activeModuleID ? 'nav-tab-active' : '',
                             $item['name']
                         );
                     }
@@ -311,6 +244,14 @@ class SettingsMenuPage extends AbstractPluginMenuPage
             <form method="post" action="options.php">
                 <!-- Artificial input as flag that the form belongs to this plugin -->
                 <input type="hidden" name="<?php echo self::FORM_ORIGIN ?>" value="<?php echo self::SETTINGS_FIELD ?>" />
+                <!--
+                    Artificial input to trigger the update of the form always, as to always purge the container/operational cache
+                    (eg: to include 3rd party extensions in the service container, or new Gutenberg blocks)
+                    This is needed because "If the new and old values are the same, no need to update."
+                    which makes "update_option_{$option}" not be triggered when there are no changes
+                    @see wp-includes/option.php
+                -->
+                <input type="hidden" name="<?php echo self::SETTINGS_FIELD?>[last_saved_timestamp]" value="<?php echo time() ?>">
                 <!-- Panels -->
                 <?php
                 $sectionClass = $printWithTabs ? 'tab-content' : '';
@@ -325,7 +266,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
                     if ($printWithTabs) {
                         $sectionStyle = sprintf(
                             'display: %s;',
-                            $item['id'] == $activeModuleID ? 'block' : 'none'
+                            $item['id'] === $activeModuleID ? 'block' : 'none'
                         );
                     }
                     ?>
@@ -359,19 +300,21 @@ class SettingsMenuPage extends AbstractPluginMenuPage
     /**
      * Get the option value
      * @return mixed
+     * @param string $module
+     * @param string $option
      */
-    protected function getOptionValue(string $module, string $option)
+    protected function getOptionValue($module, $option)
     {
-        $userSettingsManager = UserSettingsManagerFacade::getInstance();
-        return $userSettingsManager->getSetting($module, $option);
+        return $this->getUserSettingsManager()->getSetting($module, $option);
     }
 
     /**
      * Display a checkbox field.
      *
-     * @param array<string, mixed> $itemSetting
+     * @param array<string,mixed> $itemSetting
+     * @param string $module
      */
-    protected function printCheckboxField(string $module, array $itemSetting): void
+    protected function printCheckboxField($module, $itemSetting): void
     {
         $name = $itemSetting[Properties::NAME];
         $input = $itemSetting[Properties::INPUT];
@@ -385,11 +328,27 @@ class SettingsMenuPage extends AbstractPluginMenuPage
     }
 
     /**
+     * Display a label
+     *
+     * @param array<string,mixed> $itemSetting
+     * @param string $module
+     */
+    protected function printLabelField($module, $itemSetting): void
+    {
+        ?>
+            <p>
+                <?php echo $itemSetting[Properties::DESCRIPTION] ?? ''; ?>
+            </p>
+        <?php
+    }
+
+    /**
      * Display an input field.
      *
-     * @param array<string, mixed> $itemSetting
+     * @param array<string,mixed> $itemSetting
+     * @param string $module
      */
-    protected function printInputField(string $module, array $itemSetting): void
+    protected function printInputField($module, $itemSetting): void
     {
         $name = $itemSetting[Properties::NAME];
         $input = $itemSetting[Properties::INPUT];
@@ -411,9 +370,10 @@ class SettingsMenuPage extends AbstractPluginMenuPage
     /**
      * Display a select field.
      *
-     * @param array<string, mixed> $itemSetting
+     * @param array<string,mixed> $itemSetting
+     * @param string $module
      */
-    protected function printSelectField(string $module, array $itemSetting): void
+    protected function printSelectField($module, $itemSetting): void
     {
         $name = $itemSetting[Properties::NAME];
         $input = $itemSetting[Properties::INPUT];
@@ -428,7 +388,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
         $possibleValues = $itemSetting[Properties::POSSIBLE_VALUES] ?? [];
         ?>
             <label for="<?php echo $name; ?>">
-                <select name="<?php echo self::SETTINGS_FIELD . '[' . $name . ']' . ($isMultiple ? '[]' : ''); ?>" id="<?php echo $name; ?>" <?php echo $isMultiple ? 'multiple="multiple"' : ''; ?>>
+                <select name="<?php echo self::SETTINGS_FIELD . '[' . $name . ']' . ($isMultiple ? '[]' : ''); ?>" id="<?php echo $name; ?>" <?php echo $isMultiple ? 'multiple="multiple" size="10"' : ''; ?>>
                 <?php foreach ($possibleValues as $optionValue => $optionLabel) : ?>
                     <?php $maybeSelected = in_array($optionValue, $value) ? 'selected="selected"' : ''; ?>
                     <option value="<?php echo $optionValue ?>" <?php echo $maybeSelected ?>>
@@ -444,9 +404,10 @@ class SettingsMenuPage extends AbstractPluginMenuPage
     /**
      * Display a textarea field.
      *
-     * @param array<string, mixed> $itemSetting
+     * @param array<string,mixed> $itemSetting
+     * @param string $module
      */
-    protected function printTextareaField(string $module, array $itemSetting): void
+    protected function printTextareaField($module, $itemSetting): void
     {
         $name = $itemSetting[Properties::NAME];
         $input = $itemSetting[Properties::INPUT];
@@ -455,7 +416,7 @@ class SettingsMenuPage extends AbstractPluginMenuPage
         $label = isset($itemSetting[Properties::DESCRIPTION]) ? '<br/>' . $itemSetting[Properties::DESCRIPTION] : '';
         ?>
             <label for="<?php echo $name; ?>">
-                <textarea name="<?php echo self::SETTINGS_FIELD . '[' . $name . ']'; ?>" id="<?php echo $name; ?>" rows="10"><?php echo implode("\n", $value) ?></textarea>
+                <textarea name="<?php echo self::SETTINGS_FIELD . '[' . $name . ']'; ?>" id="<?php echo $name; ?>" rows="10" cols="40"><?php echo implode("\n", $value) ?></textarea>
                 <?php echo $label; ?>
             </label>
         <?php

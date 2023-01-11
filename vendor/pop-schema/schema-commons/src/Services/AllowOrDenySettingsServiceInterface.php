@@ -10,6 +10,8 @@ interface AllowOrDenySettingsServiceInterface
      * Compare for full match or regex
      *
      * @param string[] $entries
+     * @param string $name
+     * @param string $behavior
      */
-    public function isEntryAllowed(string $name, array $entries, string $behavior) : bool;
+    public function isEntryAllowed($name, $entries, $behavior) : bool;
 }

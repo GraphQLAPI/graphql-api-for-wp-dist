@@ -3,49 +3,58 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
-use GraphQLByPoP\GraphQLServer\ObjectModels\EnumValue;
-use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractDynamicType;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use GraphQLByPoP\GraphQLServer\ObjectModels\NonDocumentableTypeTrait;
-class EnumType extends AbstractDynamicType
+class EnumType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNamedType
 {
-    use NonDocumentableTypeTrait;
     /**
      * @var EnumValue[]
      */
     protected $enumValues;
-    public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath, array $customDefinition = [])
+    /**
+     * @param array<string,mixed> $fullSchemaDefinition
+     * @param string[] $schemaDefinitionPath
+     */
+    public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath)
     {
-        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath, $customDefinition);
+        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath);
         $this->initEnumValues($fullSchemaDefinition, $schemaDefinitionPath);
     }
-    protected function initEnumValues(array &$fullSchemaDefinition, array $schemaDefinitionPath) : void
+    /**
+     * @param array<string,mixed> $fullSchemaDefinition
+     * @param string[] $schemaDefinitionPath
+     */
+    protected function initEnumValues(&$fullSchemaDefinition, $schemaDefinitionPath) : void
     {
         $this->enumValues = [];
-        if ($enumValues = $this->schemaDefinition[SchemaDefinition::ARGNAME_ENUM_VALUES] ?? null) {
-            foreach (\array_keys($enumValues) as $enumValueName) {
-                $enumValueSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [SchemaDefinition::ARGNAME_ENUM_VALUES, $enumValueName]);
-                $this->enumValues[] = new EnumValue($fullSchemaDefinition, $enumValueSchemaDefinitionPath);
-            }
+        $enumItems = $this->schemaDefinition[SchemaDefinition::ITEMS];
+        /** @var string $enumValue */
+        foreach (\array_keys($enumItems) as $enumValue) {
+            /** @var string[] */
+            $enumValueSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [SchemaDefinition::ITEMS, $enumValue]);
+            $this->enumValues[] = new \GraphQLByPoP\GraphQLServer\ObjectModels\EnumValue($fullSchemaDefinition, $enumValueSchemaDefinitionPath);
         }
-    }
-    protected function getDynamicTypeNamePropertyInSchema() : string
-    {
-        return SchemaDefinition::ARGNAME_ENUM_NAME;
     }
     public function getKind() : string
     {
         return \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::ENUM;
     }
-    public function getEnumValues(bool $includeDeprecated = \false) : array
+    /**
+     * @return EnumValue[]
+     * @param bool $includeDeprecated
+     */
+    public function getEnumValues($includeDeprecated = \false) : array
     {
-        return $includeDeprecated ? $this->enumValues : \array_filter($this->enumValues, function (EnumValue $enumValue) {
+        return $includeDeprecated ? $this->enumValues : \array_filter($this->enumValues, function (\GraphQLByPoP\GraphQLServer\ObjectModels\EnumValue $enumValue) : bool {
             return !$enumValue->isDeprecated();
         });
     }
-    public function getEnumValueIDs(bool $includeDeprecated = \false) : array
+    /**
+     * @return string[]
+     * @param bool $includeDeprecated
+     */
+    public function getEnumValueIDs($includeDeprecated = \false) : array
     {
-        return \array_map(function (EnumValue $enumValue) {
+        return \array_map(function (\GraphQLByPoP\GraphQLServer\ObjectModels\EnumValue $enumValue) : string {
             return $enumValue->getID();
         }, $this->getEnumValues($includeDeprecated));
     }

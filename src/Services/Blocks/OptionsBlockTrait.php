@@ -13,8 +13,9 @@ trait OptionsBlockTrait
 {
     /**
      * Given a bool, return its label for rendering
+     * @param bool $value
      */
-    protected function getBooleanLabel(bool $value): string
+    protected function getBooleanLabel($value): string
     {
         if ($value) {
             return \__('✅ Yes', 'graphql-api');

@@ -12,10 +12,14 @@ namespace PrefixedByPoP\Symfony\Component\Config\Definition\Dumper;
 
 use PrefixedByPoP\Symfony\Component\Config\Definition\ArrayNode;
 use PrefixedByPoP\Symfony\Component\Config\Definition\BaseNode;
+use PrefixedByPoP\Symfony\Component\Config\Definition\BooleanNode;
 use PrefixedByPoP\Symfony\Component\Config\Definition\ConfigurationInterface;
 use PrefixedByPoP\Symfony\Component\Config\Definition\EnumNode;
+use PrefixedByPoP\Symfony\Component\Config\Definition\FloatNode;
+use PrefixedByPoP\Symfony\Component\Config\Definition\IntegerNode;
 use PrefixedByPoP\Symfony\Component\Config\Definition\NodeInterface;
 use PrefixedByPoP\Symfony\Component\Config\Definition\PrototypedArrayNode;
+use PrefixedByPoP\Symfony\Component\Config\Definition\ScalarNode;
 /**
  * Dumps an XML reference configuration for the given configuration/node instance.
  *
@@ -23,12 +27,23 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\PrototypedArrayNode;
  */
 class XmlReferenceDumper
 {
+    /**
+     * @var string|null
+     */
     private $reference;
-    public function dump(ConfigurationInterface $configuration, string $namespace = null)
+    /**
+     * @param \Symfony\Component\Config\Definition\ConfigurationInterface $configuration
+     * @param string|null $namespace
+     */
+    public function dump($configuration, $namespace = null)
     {
         return $this->dumpNode($configuration->getConfigTreeBuilder()->buildTree(), $namespace);
     }
-    public function dumpNode(NodeInterface $node, string $namespace = null)
+    /**
+     * @param \Symfony\Component\Config\Definition\NodeInterface $node
+     * @param string|null $namespace
+     */
+    public function dumpNode($node, $namespace = null)
     {
         $this->reference = '';
         $this->writeNode($node, 0, \true, $namespace);
@@ -85,21 +100,22 @@ class XmlReferenceDumper
                         $prototypeValue = $prototype->getDefaultValue();
                     } else {
                         switch (\get_class($prototype)) {
-                            case 'Symfony\\Component\\Config\\Definition\\ScalarNode':
+                            case ScalarNode::class:
                                 $prototypeValue = 'scalar value';
                                 break;
-                            case 'Symfony\\Component\\Config\\Definition\\FloatNode':
-                            case 'Symfony\\Component\\Config\\Definition\\IntegerNode':
+                            case FloatNode::class:
+                            case IntegerNode::class:
                                 $prototypeValue = 'numeric value';
                                 break;
-                            case 'Symfony\\Component\\Config\\Definition\\BooleanNode':
+                            case BooleanNode::class:
                                 $prototypeValue = 'true|false';
                                 break;
-                            case 'Symfony\\Component\\Config\\Definition\\EnumNode':
+                            case EnumNode::class:
                                 $prototypeValue = \implode('|', \array_map('json_encode', $prototype->getValues()));
                                 break;
                             default:
                                 $prototypeValue = 'value';
+                                break;
                         }
                     }
                 }
@@ -218,7 +234,6 @@ class XmlReferenceDumper
     }
     /**
      * Renders the string conversion of the value.
-     *
      * @param mixed $value
      */
     private function writeValue($value) : string

@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\Services\Blocks\MainPluginBlockTrait;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractEndpointOptionsBlock;
+use GraphQLAPI\GraphQLAPI\Services\BlockCategories\BlockCategoryInterface;
 use GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory;
 
 /**
@@ -16,6 +15,24 @@ class PersistedQueryEndpointOptionsBlock extends AbstractEndpointOptionsBlock im
     use MainPluginBlockTrait;
 
     public const ATTRIBUTE_NAME_ACCEPT_VARIABLES_AS_URL_PARAMS = 'acceptVariablesAsURLParams';
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory|null
+     */
+    private $persistedQueryEndpointBlockCategory;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory $persistedQueryEndpointBlockCategory
+     */
+    final public function setPersistedQueryEndpointBlockCategory($persistedQueryEndpointBlockCategory): void
+    {
+        $this->persistedQueryEndpointBlockCategory = $persistedQueryEndpointBlockCategory;
+    }
+    final protected function getPersistedQueryEndpointBlockCategory(): PersistedQueryEndpointBlockCategory
+    {
+        /** @var PersistedQueryEndpointBlockCategory */
+        return $this->persistedQueryEndpointBlockCategory = $this->persistedQueryEndpointBlockCategory ?? $this->instanceManager->getInstance(PersistedQueryEndpointBlockCategory::class);
+    }
 
     protected function getBlockName(): string
     {
@@ -44,15 +61,24 @@ class PersistedQueryEndpointOptionsBlock extends AbstractEndpointOptionsBlock im
         return 'en';
     }
 
-    protected function getBlockCategoryClass(): ?string
+    /**
+     * Register style-index.css
+     */
+    protected function registerCommonStyleCSS(): bool
     {
-        return PersistedQueryEndpointBlockCategory::class;
+        return true;
+    }
+
+    protected function getBlockCategory(): ?BlockCategoryInterface
+    {
+        return $this->getPersistedQueryEndpointBlockCategory();
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    protected function getBlockContent(array $attributes, string $content): string
+    protected function getBlockContent($attributes, $content): string
     {
         $blockContent = parent::getBlockContent($attributes, $content);
 

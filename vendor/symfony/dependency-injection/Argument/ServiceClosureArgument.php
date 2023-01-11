@@ -11,7 +11,6 @@
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Argument;
 
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 /**
  * Represents a service wrapped in a memoizing closure.
  *
@@ -19,25 +18,28 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class ServiceClosureArgument implements ArgumentInterface
 {
-    private $values;
-    public function __construct(Reference $reference)
-    {
-        $this->values = [$reference];
-    }
     /**
-     * {@inheritdoc}
+     * @var mixed[]
      */
-    public function getValues()
+    private $values;
+    /**
+     * @param mixed $value
+     */
+    public function __construct($value)
+    {
+        $this->values = [$value];
+    }
+    public function getValues() : array
     {
         return $this->values;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $values
      */
-    public function setValues(array $values)
+    public function setValues($values)
     {
-        if ([0] !== \array_keys($values) || !($values[0] instanceof Reference || null === $values[0])) {
-            throw new InvalidArgumentException('A ServiceClosureArgument must hold one and only one Reference.');
+        if ([0] !== \array_keys($values)) {
+            throw new InvalidArgumentException('A ServiceClosureArgument must hold one and only one value.');
         }
         $this->values = $values;
     }

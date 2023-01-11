@@ -20,10 +20,9 @@ interface LoaderResolverInterface
     /**
      * Returns a loader able to load the resource.
      *
-     * @param mixed       $resource A resource
-     * @param string $type The resource type or null if unknown
-     *
-     * @return LoaderInterface|false The loader or false if none is able to load the resource
+     * @param string|null $type The resource type or null if unknown
+     * @return \Symfony\Component\Config\Loader\LoaderInterface|true
+     * @param mixed $resource
      */
     public function resolve($resource, $type = null);
 }

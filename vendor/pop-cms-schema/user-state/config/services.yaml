@@ -1,0 +1,17 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPCMSSchema\UserState\State\:
+        resource: '../src/State/*'
+
+    PoPCMSSchema\UserState\Hooks\:
+        resource: '../src/Hooks/*'
+
+    PoPCMSSchema\UserState\Checkpoints\:
+        resource: '../src/Checkpoints/*'
+
+    PoPCMSSchema\UserState\FeedbackItemProviders\:
+        resource: '../src/FeedbackItemProviders/*'

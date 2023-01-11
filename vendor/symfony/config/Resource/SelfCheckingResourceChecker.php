@@ -21,13 +21,28 @@ use PrefixedByPoP\Symfony\Component\Config\ResourceCheckerInterface;
  */
 class SelfCheckingResourceChecker implements ResourceCheckerInterface
 {
-    public function supports(ResourceInterface $metadata)
+    // Common shared cache, because this checker can be used in different
+    // situations. For example, when using the full stack framework, the router
+    // and the container have their own cache. But they may check the very same
+    // resources
+    /**
+     * @var mixed[]
+     */
+    private static $cache = [];
+    /**
+     * @param \Symfony\Component\Config\Resource\ResourceInterface $metadata
+     */
+    public function supports($metadata) : bool
     {
         return $metadata instanceof SelfCheckingResourceInterface;
     }
-    public function isFresh(ResourceInterface $resource, int $timestamp)
+    /**
+     * @param SelfCheckingResourceInterface $resource
+     * @param int $timestamp
+     */
+    public function isFresh($resource, $timestamp) : bool
     {
-        /* @var SelfCheckingResourceInterface $resource */
-        return $resource->isFresh($timestamp);
+        $key = "{$resource}:{$timestamp}";
+        return self::$cache[$key] = self::$cache[$key] ?? $resource->isFresh($timestamp);
     }
 }

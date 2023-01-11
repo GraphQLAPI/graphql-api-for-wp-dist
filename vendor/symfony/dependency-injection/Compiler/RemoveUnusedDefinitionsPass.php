@@ -20,11 +20,15 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class RemoveUnusedDefinitionsPass extends AbstractRecursivePass
 {
+    /**
+     * @var mixed[]
+     */
     private $connectedIds = [];
     /**
      * Processes the ContainerBuilder to remove unused definitions.
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         try {
             $this->enableExpressionProcessing();
@@ -65,9 +69,11 @@ class RemoveUnusedDefinitionsPass extends AbstractRecursivePass
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if (!$value instanceof Reference) {
             return parent::processValue($value, $isRoot);

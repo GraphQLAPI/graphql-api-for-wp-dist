@@ -18,7 +18,10 @@ class Pipeline implements PipelineInterface
         $this->processor = $processor ?? new FingersCrossedProcessor();
         $this->stages = $stages;
     }
-    public function pipe(callable $stage) : PipelineInterface
+    /**
+     * @param callable $stage
+     */
+    public function pipe($stage) : PipelineInterface
     {
         $pipeline = clone $this;
         $pipeline->stages[] = $stage;

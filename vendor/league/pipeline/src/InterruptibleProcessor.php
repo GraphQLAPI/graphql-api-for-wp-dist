@@ -13,7 +13,10 @@ class InterruptibleProcessor implements ProcessorInterface
     {
         $this->check = $check;
     }
-    public function process($payload, callable ...$stages)
+    /**
+     * @param callable ...$stages
+     */
+    public function process($payload, ...$stages)
     {
         $check = $this->check;
         foreach ($stages as $stage) {

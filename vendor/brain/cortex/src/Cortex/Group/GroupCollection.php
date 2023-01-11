@@ -24,16 +24,18 @@ final class GroupCollection implements GroupCollectionInterface
     private $groups = [];
     /**
      * @inheritdoc
+     * @param \Brain\Cortex\Group\GroupInterface $group
      */
-    public function addGroup(GroupInterface $group)
+    public function addGroup($group)
     {
         $this->groups[$group->id()] = $group;
         return $this;
     }
     /**
      * @inheritdoc
+     * @param \Brain\Cortex\Route\RouteInterface $route
      */
-    public function mergeGroup(RouteInterface $route)
+    public function mergeGroup($route)
     {
         $groups = $route->offsetGet('group');
         if (empty($groups)) {

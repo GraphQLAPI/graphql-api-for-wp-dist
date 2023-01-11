@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\PluginSkeleton;
 
+use PoP\Root\Helpers\ClassHelpers;
+use PoP\Root\Module\ModuleInterface;
+
 /**
  * This class is hosted within the graphql-api-for-wp plugin, and not
  * within the extension plugin. That means that the main plugin
@@ -19,52 +22,96 @@ namespace GraphQLAPI\GraphQLAPI\PluginSkeleton;
  *
  * @see https://github.com/leoloso/PoP/blob/bccf2f0/layers/GraphQLAPIForWP/plugins/extension-demo/graphql-api-extension-demo.php#L73-L77
  */
-abstract class AbstractExtension extends AbstractPlugin
+abstract class AbstractExtension extends AbstractPlugin implements ExtensionInterface
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\PluginSkeleton\AbstractExtensionConfiguration|null
+     * @var \GraphQLAPI\GraphQLAPI\PluginSkeleton\ExtensionInitializationConfigurationInterface|null
      */
-    protected $extensionConfiguration;
+    protected $extensionInitializationConfiguration;
+
     public function __construct(
         string $pluginFile,
         /** The main plugin file */
         string $pluginVersion,
         ?string $pluginName = null,
-        ?AbstractExtensionConfiguration $extensionConfiguration = null
+        ?string $commitHash = null,
+        ?ExtensionInitializationConfigurationInterface $extensionInitializationConfiguration = null
     )
     {
-        $this->extensionConfiguration = $extensionConfiguration;
-        parent::__construct($pluginFile, $pluginVersion, $pluginName);
+        parent::__construct($pluginFile, $pluginVersion, $pluginName, $commitHash);
+        $this->extensionInitializationConfiguration = $extensionInitializationConfiguration ?? $this->maybeCreateInitializationConfiguration();
     }
+
+    protected function maybeCreateInitializationConfiguration(): ?ExtensionInitializationConfigurationInterface
+    {
+        $extensionInitializationConfigurationClass = $this->getExtensionInitializationConfigurationClass();
+        if ($extensionInitializationConfigurationClass === null) {
+            return null;
+        }
+        return new $extensionInitializationConfigurationClass();
+    }
+
+    /**
+     * ExtensionInitializationConfiguration class for the Plugin
+     *
+     * @return class-string<ExtensionInitializationConfigurationInterface>
+     */
+    protected function getExtensionInitializationConfigurationClass(): ?string
+    {
+        $classNamespace = ClassHelpers::getClassPSR4Namespace(\get_called_class());
+        $pluginInitializationConfigurationClass = $classNamespace . '\\' . $this->getExtensionInitializationConfigurationClassName();
+        if (!class_exists($pluginInitializationConfigurationClass)) {
+            return null;
+        }
+        /** @var class-string<ExtensionInitializationConfigurationInterface> */
+        return $pluginInitializationConfigurationClass;
+    }
+
+    /**
+     * ExtensionInitializationConfiguration class name for the Extension
+     */
+    protected function getExtensionInitializationConfigurationClassName(): ?string
+    {
+        return 'ExtensionInitializationConfiguration';
+    }
+
+    /**
+     * ExtensionInfo class name for the Extension
+     */
+    protected function getPluginInfoClassName(): ?string
+    {
+        return 'ExtensionInfo';
+    }
+
     /**
      * Configure the plugin.
      * This defines hooks to set environment variables,
      * so must be executed before those hooks are triggered for first time
-     * (in ComponentConfiguration classes)
+     * (in ModuleConfiguration classes)
      */
-    protected function callPluginConfiguration(): void
+    protected function callPluginInitializationConfiguration(): void
     {
-        ($extensionConfiguration = $this->extensionConfiguration) ? $extensionConfiguration->initialize() : null;
+        ($extensionInitializationConfiguration = $this->extensionInitializationConfiguration) ? $extensionInitializationConfiguration->initialize() : null;
     }
 
     /**
-     * Add configuration for the Component classes
+     * Add configuration for the Module classes
      *
-     * @return array<string, mixed> [key]: Component class, [value]: Configuration
+     * @return array<class-string<ModuleInterface>,mixed> [key]: Module class, [value]: Configuration
      */
-    public function getComponentClassConfiguration(): array
+    public function getModuleClassConfiguration(): array
     {
-        return (($extensionConfiguration = $this->extensionConfiguration) ? $extensionConfiguration->getComponentClassConfiguration() : null) ?? parent::getComponentClassConfiguration();
+        return (($extensionInitializationConfiguration = $this->extensionInitializationConfiguration) ? $extensionInitializationConfiguration->getModuleClassConfiguration() : null) ?? parent::getModuleClassConfiguration();
     }
 
     /**
-     * Add schema Component classes to skip initializing
+     * Add schema Module classes to skip initializing
      *
-     * @return string[] List of `Component` class which must not initialize their Schema services
+     * @return array<class-string<ModuleInterface>> List of `Module` class which must not initialize their Schema services
      */
-    public function getSchemaComponentClassesToSkip(): array
+    public function getSchemaModuleClassesToSkip(): array
     {
-        return (($extensionConfiguration = $this->extensionConfiguration) ? $extensionConfiguration->getSchemaComponentClassesToSkip() : null) ?? parent::getSchemaComponentClassesToSkip();
+        return (($extensionInitializationConfiguration = $this->extensionInitializationConfiguration) ? $extensionInitializationConfiguration->getSchemaModuleClassesToSkip() : null) ?? [];
     }
 
     /**
@@ -86,15 +133,19 @@ abstract class AbstractExtension extends AbstractPlugin
                  */
                 \add_action(
                     PluginLifecycleHooks::INITIALIZE_EXTENSION,
-                    [$this, 'initialize']
+                    \Closure::fromCallable([$this, 'initialize'])
+                );
+                \add_action(
+                    PluginLifecycleHooks::CONFIGURE_EXTENSION_COMPONENTS,
+                    \Closure::fromCallable([$this, 'configureComponents'])
                 );
                 \add_action(
                     PluginLifecycleHooks::CONFIGURE_EXTENSION,
-                    [$this, 'configure']
+                    \Closure::fromCallable([$this, 'configure'])
                 );
                 \add_action(
                     PluginLifecycleHooks::BOOT_EXTENSION,
-                    [$this, 'boot']
+                    \Closure::fromCallable([$this, 'boot'])
                 );
 
                 // Execute the plugin's custom setup, if any

@@ -6,41 +6,45 @@ namespace GraphQLAPI\GraphQLAPI\Services\Clients;
 
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
-use PoP\ComponentModel\Facades\HelperServices\RequestHelperServiceFacade;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
+use PoP\ComponentModel\HelperServices\RequestHelperServiceInterface;
 
 trait CustomEndpointClientTrait
 {
+    abstract protected function getGraphQLCustomEndpointCustomPostType(): GraphQLCustomEndpointCustomPostType;
+    abstract protected function getRequestHelperService(): RequestHelperServiceInterface;
+
     /**
      * Enable only when executing a single CPT
      */
     protected function isClientDisabled(): bool
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
-        /** @var GraphQLCustomEndpointCustomPostType */
-        $customPostTypeService = $instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
-        if (!\is_singular($customPostTypeService->getCustomPostType())) {
+        if (!\is_singular($this->getGraphQLCustomEndpointCustomPostType()->getCustomPostType())) {
             return true;
         }
         return parent::isClientDisabled();
     }
 
     /**
-     * Endpoint URL
+     * Endpoint URL or URL Path
      */
-    protected function getEndpointURL(): string
+    protected function getEndpointURLOrURLPath(): ?string
     {
-        $requestHelperService = RequestHelperServiceFacade::getInstance();
         /**
          * If accessing from Nginx, the server_name might point to localhost
          * instead of the actual server domain. So use the user-requested host
          */
-        $fullURL = $requestHelperService->getRequestedFullURL(true);
+        $fullURL = $this->getRequestHelperService()->getRequestedFullURL(true);
+        if ($fullURL === null) {
+            return null;
+        }
+
         // Remove the ?view=...
         $endpointURL = \remove_query_arg(RequestParams::VIEW, $fullURL);
         // // Maybe add ?use_namespace=true
-        // if (ComponentModelComponentConfiguration::namespaceTypesAndInterfaces()) {
-        //     $endpointURL = \add_query_arg(APIRequest::URLPARAM_USE_NAMESPACE, true, $endpointURL);
+        // /** @var ComponentModelModuleConfiguration */
+        // $moduleConfiguration = \PoP\Root\App::getModule(ComponentModelModule::class)->getConfiguration();
+        // if ($moduleConfiguration->mustNamespaceTypes()) {
+        //     $endpointURL = \add_query_arg(APIParams::USE_NAMESPACE, true, $endpointURL);
         // }
         return $endpointURL;
     }

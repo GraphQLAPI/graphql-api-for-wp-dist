@@ -17,6 +17,9 @@ namespace PrefixedByPoP\Symfony\Component\Config\Loader;
  */
 class ParamConfigurator
 {
+    /**
+     * @var string
+     */
     private $name;
     public function __construct(string $name)
     {

@@ -1,0 +1,12 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPAPI\APIEndpointsForWP\EndpointHandlers\:
+        resource: '../src/EndpointHandlers/*'
+
+    PoPAPI\APIEndpointsForWP\State\:
+        resource: '../src/State/*'
+

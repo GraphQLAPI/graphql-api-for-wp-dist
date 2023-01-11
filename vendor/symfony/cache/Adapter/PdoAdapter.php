@@ -11,12 +11,6 @@
 namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 
 use PrefixedByPoP\Doctrine\DBAL\Connection;
-use PrefixedByPoP\Doctrine\DBAL\DBALException;
-use PrefixedByPoP\Doctrine\DBAL\Driver\ServerInfoAwareConnection;
-use PrefixedByPoP\Doctrine\DBAL\DriverManager;
-use PrefixedByPoP\Doctrine\DBAL\Exception;
-use PrefixedByPoP\Doctrine\DBAL\Exception\TableNotFoundException;
-use PrefixedByPoP\Doctrine\DBAL\Schema\Schema;
 use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\Cache\Marshaller\DefaultMarshaller;
 use PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface;
@@ -24,27 +18,66 @@ use PrefixedByPoP\Symfony\Component\Cache\PruneableInterface;
 class PdoAdapter extends AbstractAdapter implements PruneableInterface
 {
     protected $maxIdLength = 255;
+    /**
+     * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface
+     */
     private $marshaller;
+    /**
+     * @var \PDO|\Doctrine\DBAL\Connection
+     */
     private $conn;
+    /**
+     * @var string
+     */
     private $dsn;
+    /**
+     * @var string
+     */
     private $driver;
+    /**
+     * @var string
+     */
     private $serverVersion;
+    /**
+     * @var mixed
+     */
     private $table = 'cache_items';
+    /**
+     * @var mixed
+     */
     private $idCol = 'item_id';
+    /**
+     * @var mixed
+     */
     private $dataCol = 'item_data';
+    /**
+     * @var mixed
+     */
     private $lifetimeCol = 'item_lifetime';
+    /**
+     * @var mixed
+     */
     private $timeCol = 'item_time';
+    /**
+     * @var mixed
+     */
     private $username = '';
+    /**
+     * @var mixed
+     */
     private $password = '';
+    /**
+     * @var mixed
+     */
     private $connectionOptions = [];
+    /**
+     * @var string
+     */
     private $namespace;
     /**
      * You can either pass an existing database connection as PDO instance or
-     * a Doctrine DBAL Connection or a DSN string that will be used to
-     * lazy-connect to the database when the cache is actually used.
-     *
-     * When a Doctrine DBAL Connection is passed, the cache table is created
-     * automatically when possible. Otherwise, use the createTable() method.
+     * a DSN string that will be used to lazy-connect to the database when the
+     * cache is actually used.
      *
      * List of available options:
      *  * db_table: The name of the table [default: cache_items]
@@ -56,14 +89,16 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
      *  * db_password: The password when lazy-connect [default: '']
      *  * db_connection_options: An array of driver-specific connection options [default: []]
      *
-     * @param \PDO|Connection|string $connOrDsn a \PDO or Connection instance or DSN string or null
-     *
      * @throws InvalidArgumentException When first argument is not PDO nor Connection nor string
      * @throws InvalidArgumentException When PDO error mode is not PDO::ERRMODE_EXCEPTION
      * @throws InvalidArgumentException When namespace contains invalid characters
+     * @param \PDO|string $connOrDsn
      */
     public function __construct($connOrDsn, string $namespace = '', int $defaultLifetime = 0, array $options = [], MarshallerInterface $marshaller = null)
     {
+        if (\is_string($connOrDsn) && \strpos($connOrDsn, '://') !== \false) {
+            throw new InvalidArgumentException(\sprintf('Usage of Doctrine DBAL URL with "%s" is not supported. Use a PDO DSN or "%s" instead. Got "%s".', __CLASS__, DoctrineDbalAdapter::class, $connOrDsn));
+        }
         if (isset($namespace[0]) && \preg_match('#[^-+.A-Za-z0-9]#', $namespace, $match)) {
             throw new InvalidArgumentException(\sprintf('Namespace contains "%s" but only characters in [-+.A-Za-z0-9] are allowed.', $match[0]));
         }
@@ -72,12 +107,8 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
                 throw new InvalidArgumentException(\sprintf('"%s" requires PDO error mode attribute be set to throw Exceptions (i.e. $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION)).', __CLASS__));
             }
             $this->conn = $connOrDsn;
-        } elseif ($connOrDsn instanceof Connection) {
-            $this->conn = $connOrDsn;
-        } elseif (\is_string($connOrDsn)) {
-            $this->dsn = $connOrDsn;
         } else {
-            throw new InvalidArgumentException(\sprintf('"%s" requires PDO or Doctrine\\DBAL\\Connection instance or DSN string as first argument, "%s" given.', __CLASS__, \get_debug_type($connOrDsn)));
+            $this->dsn = $connOrDsn;
         }
         $this->table = $options['db_table'] ?? $this->table;
         $this->idCol = $options['db_id_col'] ?? $this->idCol;
@@ -98,33 +129,14 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
      * saved in a BLOB.
      *
      * @throws \PDOException    When the table already exists
-     * @throws DBALException    When the table already exists
-     * @throws Exception        When the table already exists
      * @throws \DomainException When an unsupported PDO driver is used
      */
     public function createTable()
     {
         // connect if we are not yet
         $conn = $this->getConnection();
-        if ($conn instanceof Connection) {
-            $schema = new Schema();
-            $this->addTableToSchema($schema);
-            foreach ($schema->toSql($conn->getDatabasePlatform()) as $sql) {
-                if (\method_exists($conn, 'executeStatement')) {
-                    $conn->executeStatement($sql);
-                } else {
-                    $conn->exec($sql);
-                }
-            }
-            return;
-        }
         switch ($this->driver) {
             case 'mysql':
-                // We use varbinary for the ID column because it prevents unwanted conversions:
-                // - character set conversions between server and client
-                // - trailing space removal
-                // - case-insensitivity
-                // - language processing like é == e
                 $sql = "CREATE TABLE {$this->table} ({$this->idCol} VARBINARY(255) NOT NULL PRIMARY KEY, {$this->dataCol} MEDIUMBLOB NOT NULL, {$this->lifetimeCol} INTEGER UNSIGNED, {$this->timeCol} INTEGER UNSIGNED NOT NULL) COLLATE utf8mb4_bin, ENGINE = InnoDB";
                 break;
             case 'sqlite':
@@ -142,40 +154,18 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
             default:
                 throw new \DomainException(\sprintf('Creating the cache table is currently not implemented for PDO driver "%s".', $this->driver));
         }
-        if (\method_exists($conn, 'executeStatement')) {
-            $conn->executeStatement($sql);
-        } else {
-            $conn->exec($sql);
-        }
+        $conn->exec($sql);
     }
-    /**
-     * Adds the Table to the Schema if the adapter uses this Connection.
-     */
-    public function configureSchema(Schema $schema, Connection $forConnection) : void
-    {
-        // only update the schema for this connection
-        if ($forConnection !== $this->getConnection()) {
-            return;
-        }
-        if ($schema->hasTable($this->table)) {
-            return;
-        }
-        $this->addTableToSchema($schema);
-    }
-    /**
-     * {@inheritdoc}
-     */
-    public function prune()
+    public function prune() : bool
     {
         $deleteSql = "DELETE FROM {$this->table} WHERE {$this->lifetimeCol} + {$this->timeCol} <= :time";
         if ('' !== $this->namespace) {
             $deleteSql .= " AND {$this->idCol} LIKE :namespace";
         }
+        $connection = $this->getConnection();
         try {
-            $delete = $this->getConnection()->prepare($deleteSql);
-        } catch (TableNotFoundException $e) {
-            return \true;
-        } catch (\PDOException $e) {
+            $delete = $connection->prepare($deleteSql);
+        } catch (\PDOException $exception) {
             return \true;
         }
         $delete->bindValue(':time', \time(), \PDO::PARAM_INT);
@@ -184,22 +174,21 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         }
         try {
             return $delete->execute();
-        } catch (TableNotFoundException $e) {
-            return \true;
-        } catch (\PDOException $e) {
+        } catch (\PDOException $exception) {
             return \true;
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doFetch(array $ids)
+    protected function doFetch($ids) : iterable
     {
+        $connection = $this->getConnection();
         $now = \time();
         $expired = [];
         $sql = \str_pad('', (\count($ids) << 1) - 1, '?,');
         $sql = "SELECT {$this->idCol}, CASE WHEN {$this->lifetimeCol} IS NULL OR {$this->lifetimeCol} + {$this->timeCol} > ? THEN {$this->dataCol} ELSE NULL END FROM {$this->table} WHERE {$this->idCol} IN ({$sql})";
-        $stmt = $this->getConnection()->prepare($sql);
+        $stmt = $connection->prepare($sql);
         $stmt->bindValue($i = 1, $now, \PDO::PARAM_INT);
         foreach ($ids as $id) {
             $stmt->bindValue(++$i, $id);
@@ -221,7 +210,7 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         if ($expired) {
             $sql = \str_pad('', (\count($expired) << 1) - 1, '?,');
             $sql = "DELETE FROM {$this->table} WHERE {$this->lifetimeCol} + {$this->timeCol} <= ? AND {$this->idCol} IN ({$sql})";
-            $stmt = $this->getConnection()->prepare($sql);
+            $stmt = $connection->prepare($sql);
             $stmt->bindValue($i = 1, $now, \PDO::PARAM_INT);
             foreach ($expired as $id) {
                 $stmt->bindValue(++$i, $id);
@@ -230,21 +219,22 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         }
     }
     /**
-     * {@inheritdoc}
+     * @param string $id
      */
-    protected function doHave(string $id)
+    protected function doHave($id) : bool
     {
+        $connection = $this->getConnection();
         $sql = "SELECT 1 FROM {$this->table} WHERE {$this->idCol} = :id AND ({$this->lifetimeCol} IS NULL OR {$this->lifetimeCol} + {$this->timeCol} > :time)";
-        $stmt = $this->getConnection()->prepare($sql);
+        $stmt = $connection->prepare($sql);
         $stmt->bindValue(':id', $id);
         $stmt->bindValue(':time', \time(), \PDO::PARAM_INT);
-        $result = $stmt->execute();
-        return (bool) (\is_object($result) ? $result->fetchOne() : $stmt->fetchColumn());
+        $stmt->execute();
+        return (bool) $stmt->fetchColumn();
     }
     /**
-     * {@inheritdoc}
+     * @param string $namespace
      */
-    protected function doClear(string $namespace)
+    protected function doClear($namespace) : bool
     {
         $conn = $this->getConnection();
         if ('' === $namespace) {
@@ -257,35 +247,31 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
             $sql = "DELETE FROM {$this->table} WHERE {$this->idCol} LIKE '{$namespace}%'";
         }
         try {
-            if (\method_exists($conn, 'executeStatement')) {
-                $conn->executeStatement($sql);
-            } else {
-                $conn->exec($sql);
-            }
-        } catch (TableNotFoundException $e) {
-        } catch (\PDOException $e) {
+            $conn->exec($sql);
+        } catch (\PDOException $exception) {
         }
         return \true;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doDelete(array $ids)
+    protected function doDelete($ids) : bool
     {
         $sql = \str_pad('', (\count($ids) << 1) - 1, '?,');
         $sql = "DELETE FROM {$this->table} WHERE {$this->idCol} IN ({$sql})";
         try {
             $stmt = $this->getConnection()->prepare($sql);
             $stmt->execute(\array_values($ids));
-        } catch (TableNotFoundException $e) {
-        } catch (\PDOException $e) {
+        } catch (\PDOException $exception) {
         }
         return \true;
     }
     /**
-     * {@inheritdoc}
+     * @return mixed[]|bool
+     * @param mixed[] $values
+     * @param int $lifetime
      */
-    protected function doSave(array $values, int $lifetime)
+    protected function doSave($values, $lifetime)
     {
         if (!($values = $this->marshaller->marshall($values, $failed))) {
             return $failed;
@@ -321,17 +307,13 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         $lifetime = $lifetime ?: null;
         try {
             $stmt = $conn->prepare($sql);
-        } catch (TableNotFoundException $e) {
-            if (!$conn->isTransactionActive() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], \true)) {
-                $this->createTable();
-            }
-            $stmt = $conn->prepare($sql);
-        } catch (\PDOException $e) {
+        } catch (\PDOException $exception) {
             if (!$conn->inTransaction() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], \true)) {
                 $this->createTable();
             }
             $stmt = $conn->prepare($sql);
         }
+        // $id and $data are defined later in the loop. Binding is done by reference, values are read on execution.
         if ('sqlsrv' === $driver || 'oci' === $driver) {
             $stmt->bindParam(1, $id);
             $stmt->bindParam(2, $id);
@@ -356,107 +338,34 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         }
         foreach ($values as $id => $data) {
             try {
-                $result = $stmt->execute();
-            } catch (TableNotFoundException $e) {
-                if (!$conn->isTransactionActive() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], \true)) {
-                    $this->createTable();
-                }
-                $result = $stmt->execute();
-            } catch (\PDOException $e) {
+                $stmt->execute();
+            } catch (\PDOException $exception) {
                 if (!$conn->inTransaction() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], \true)) {
                     $this->createTable();
                 }
-                $result = $stmt->execute();
+                $stmt->execute();
             }
-            if (null === $driver && !(\is_object($result) ? $result->rowCount() : $stmt->rowCount())) {
+            if (null === $driver && !$stmt->rowCount()) {
                 try {
                     $insertStmt->execute();
-                } catch (DBALException|Exception $e) {
-                } catch (\PDOException $e) {
+                } catch (\PDOException $exception) {
                     // A concurrent write won, let it be
                 }
             }
         }
         return $failed;
     }
-    /**
-     * @return object
-     */
-    private function getConnection()
+    private function getConnection() : \PDO
     {
-        if (null === $this->conn) {
-            if (\strpos($this->dsn, '://')) {
-                if (!\class_exists(DriverManager::class)) {
-                    throw new InvalidArgumentException(\sprintf('Failed to parse the DSN "%s". Try running "composer require doctrine/dbal".', $this->dsn));
-                }
-                $this->conn = DriverManager::getConnection(['url' => $this->dsn]);
-            } else {
-                $this->conn = new \PDO($this->dsn, $this->username, $this->password, $this->connectionOptions);
-                $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-            }
+        if (!isset($this->conn)) {
+            $this->conn = new \PDO($this->dsn, $this->username, $this->password, $this->connectionOptions);
+            $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         }
-        if (null === $this->driver) {
-            if ($this->conn instanceof \PDO) {
-                $this->driver = $this->conn->getAttribute(\PDO::ATTR_DRIVER_NAME);
-            } else {
-                $driver = $this->conn->getDriver();
-                switch (\true) {
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\Mysqli\Driver:
-                        throw new \LogicException(\sprintf('The adapter "%s" does not support the mysqli driver, use pdo_mysql instead.', static::class));
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\AbstractMySQLDriver:
-                        $this->driver = 'mysql';
-                        break;
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDOSqlite\Driver:
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDO\SQLite\Driver:
-                        $this->driver = 'sqlite';
-                        break;
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDOPgSql\Driver:
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDO\PgSQL\Driver:
-                        $this->driver = 'pgsql';
-                        break;
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\OCI8\Driver:
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDOOracle\Driver:
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDO\OCI\Driver:
-                        $this->driver = 'oci';
-                        break;
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\SQLSrv\Driver:
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDOSqlsrv\Driver:
-                    case $driver instanceof \PrefixedByPoP\Doctrine\DBAL\Driver\PDO\SQLSrv\Driver:
-                        $this->driver = 'sqlsrv';
-                        break;
-                    default:
-                        $this->driver = \get_class($driver);
-                        break;
-                }
-            }
-        }
+        $this->driver = $this->driver ?? $this->conn->getAttribute(\PDO::ATTR_DRIVER_NAME);
         return $this->conn;
     }
     private function getServerVersion() : string
     {
-        if (null === $this->serverVersion) {
-            $conn = $this->conn instanceof \PDO ? $this->conn : $this->conn->getWrappedConnection();
-            if ($conn instanceof \PDO) {
-                $this->serverVersion = $conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
-            } elseif ($conn instanceof ServerInfoAwareConnection) {
-                $this->serverVersion = $conn->getServerVersion();
-            } else {
-                $this->serverVersion = '0';
-            }
-        }
-        return $this->serverVersion;
-    }
-    private function addTableToSchema(Schema $schema) : void
-    {
-        $types = ['mysql' => 'binary', 'sqlite' => 'text', 'pgsql' => 'string', 'oci' => 'string', 'sqlsrv' => 'string'];
-        if (!isset($types[$this->driver])) {
-            throw new \DomainException(\sprintf('Creating the cache table is currently not implemented for PDO driver "%s".', $this->driver));
-        }
-        $table = $schema->createTable($this->table);
-        $table->addColumn($this->idCol, $types[$this->driver], ['length' => 255]);
-        $table->addColumn($this->dataCol, 'blob', ['length' => 16777215]);
-        $table->addColumn($this->lifetimeCol, 'integer', ['unsigned' => \true, 'notnull' => \false]);
-        $table->addColumn($this->timeCol, 'integer', ['unsigned' => \true]);
-        $table->setPrimaryKey([$this->idCol]);
+        return $this->serverVersion = $this->serverVersion ?? $this->conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
     }
 }

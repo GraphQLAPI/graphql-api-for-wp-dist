@@ -29,10 +29,8 @@ class Unescaper
      * Unescapes a single quoted string.
      *
      * @param string $value A single quoted string
-     *
-     * @return string The unescaped string
      */
-    public function unescapeSingleQuotedString(string $value) : string
+    public function unescapeSingleQuotedString($value) : string
     {
         return \str_replace('\'\'', '\'', $value);
     }
@@ -40,10 +38,8 @@ class Unescaper
      * Unescapes a double quoted string.
      *
      * @param string $value A double quoted string
-     *
-     * @return string The unescaped string
      */
-    public function unescapeDoubleQuotedString(string $value) : string
+    public function unescapeDoubleQuotedString($value) : string
     {
         $callback = function ($match) {
             return $this->unescapeCharacter($match[0]);
@@ -55,8 +51,6 @@ class Unescaper
      * Unescapes a character that was found in a double-quoted string.
      *
      * @param string $value An escaped character
-     *
-     * @return string The unescaped character
      */
     private function unescapeCharacter(string $value) : string
     {
@@ -90,16 +84,12 @@ class Unescaper
             case '\\':
                 return '\\';
             case 'N':
-                // U+0085 NEXT LINE
                 return "";
             case '_':
-                // U+00A0 NO-BREAK SPACE
                 return " ";
             case 'L':
-                // U+2028 LINE SEPARATOR
                 return " ";
             case 'P':
-                // U+2029 PARAGRAPH SEPARATOR
                 return " ";
             case 'x':
                 return self::utf8chr(\hexdec(\substr($value, 2, 2)));

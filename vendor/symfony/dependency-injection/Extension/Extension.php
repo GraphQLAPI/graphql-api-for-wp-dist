@@ -24,17 +24,14 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\LogicException
  */
 abstract class Extension implements ExtensionInterface, ConfigurationExtensionInterface
 {
-    private $processedConfigs = [];
     /**
-     * {@inheritdoc}
+     * @var mixed[]
      */
+    private $processedConfigs = [];
     public function getXsdValidationBasePath()
     {
         return \false;
     }
-    /**
-     * {@inheritdoc}
-     */
     public function getNamespace()
     {
         return 'http://example.org/schema/dic/' . $this->getAlias();
@@ -55,26 +52,25 @@ abstract class Extension implements ExtensionInterface, ConfigurationExtensionIn
      *
      * This can be overridden in a sub-class to specify the alias manually.
      *
-     * @return string The alias
-     *
      * @throws BadMethodCallException When the extension name does not follow conventions
      */
-    public function getAlias()
+    public function getAlias() : string
     {
         $className = static::class;
-        if ('Extension' != \substr($className, -9)) {
+        if (\substr_compare($className, 'Extension', -\strlen('Extension')) !== 0) {
             throw new BadMethodCallException('This extension does not follow the naming convention; you must overwrite the getAlias() method.');
         }
         $classBaseName = \substr(\strrchr($className, '\\'), 1, -9);
         return Container::underscore($classBaseName);
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $config
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function getConfiguration(array $config, ContainerBuilder $container)
+    public function getConfiguration($config, $container)
     {
         $class = static::class;
-        if (\false !== \strpos($class, "\x00")) {
+        if (\strpos($class, "\x00") !== \false) {
             return null;
             // ignore anonymous classes
         }
@@ -91,7 +87,11 @@ abstract class Extension implements ExtensionInterface, ConfigurationExtensionIn
         }
         return null;
     }
-    protected final function processConfiguration(ConfigurationInterface $configuration, array $configs) : array
+    /**
+     * @param \Symfony\Component\Config\Definition\ConfigurationInterface $configuration
+     * @param mixed[] $configs
+     */
+    protected final function processConfiguration($configuration, $configs) : array
     {
         $processor = new Processor();
         return $this->processedConfigs[] = $processor->processConfiguration($configuration, $configs);
@@ -108,11 +108,11 @@ abstract class Extension implements ExtensionInterface, ConfigurationExtensionIn
         }
     }
     /**
-     * @return bool Whether the configuration is enabled
-     *
      * @throws InvalidArgumentException When the config is not enableable
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
+     * @param mixed[] $config
      */
-    protected function isConfigEnabled(ContainerBuilder $container, array $config)
+    protected function isConfigEnabled($container, $config) : bool
     {
         if (!\array_key_exists('enabled', $config)) {
             throw new InvalidArgumentException("The config array has no 'enabled' key.");

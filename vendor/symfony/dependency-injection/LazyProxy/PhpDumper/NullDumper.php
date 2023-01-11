@@ -21,23 +21,28 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 class NullDumper implements DumperInterface
 {
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\Definition $definition
+     * @param bool|null $asGhostObject
+     * @param string|null $id
      */
-    public function isProxyCandidate(Definition $definition) : bool
+    public function isProxyCandidate($definition, &$asGhostObject = null, $id = null) : bool
     {
-        return \false;
+        return $asGhostObject = \false;
     }
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\Definition $definition
+     * @param string $id
+     * @param string $factoryCode
      */
-    public function getProxyFactoryCode(Definition $definition, string $id, string $factoryCode) : string
+    public function getProxyFactoryCode($definition, $id, $factoryCode) : string
     {
         return '';
     }
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\Definition $definition
+     * @param string|null $id
      */
-    public function getProxyCode(Definition $definition) : string
+    public function getProxyCode($definition, $id = null) : string
     {
         return '';
     }

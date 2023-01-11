@@ -34,8 +34,9 @@ class PrototypedArrayNode extends ArrayNode
     /**
      * Sets the minimum number of elements that a prototype based node must
      * contain. By default this is zero, meaning no elements.
+     * @param int $number
      */
-    public function setMinNumberOfElements(int $number)
+    public function setMinNumberOfElements($number)
     {
         $this->minNumberOfElements = $number;
     }
@@ -63,31 +64,27 @@ class PrototypedArrayNode extends ArrayNode
      * @param string $attribute The name of the attribute which value is to be used as a key
      * @param bool   $remove    Whether or not to remove the key
      */
-    public function setKeyAttribute(string $attribute, bool $remove = \true)
+    public function setKeyAttribute($attribute, $remove = \true)
     {
         $this->keyAttribute = $attribute;
         $this->removeKeyAttribute = $remove;
     }
     /**
      * Retrieves the name of the attribute which value should be used as key.
-     *
-     * @return string|null The name of the attribute
      */
-    public function getKeyAttribute()
+    public function getKeyAttribute() : ?string
     {
         return $this->keyAttribute;
     }
     /**
      * Sets the default value of this node.
+     * @param mixed[] $value
      */
-    public function setDefaultValue(array $value)
+    public function setDefaultValue($value)
     {
         $this->defaultValue = $value;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function hasDefaultValue()
+    public function hasDefaultValue() : bool
     {
         return \true;
     }
@@ -105,10 +102,9 @@ class PrototypedArrayNode extends ArrayNode
         }
     }
     /**
-     * {@inheritdoc}
-     *
      * The default value could be either explicited or derived from the prototype
      * default value.
+     * @return mixed
      */
     public function getDefaultValue()
     {
@@ -124,17 +120,16 @@ class PrototypedArrayNode extends ArrayNode
     }
     /**
      * Sets the node prototype.
+     * @param \Symfony\Component\Config\Definition\PrototypeNodeInterface $node
      */
-    public function setPrototype(PrototypeNodeInterface $node)
+    public function setPrototype($node)
     {
         $this->prototype = $node;
     }
     /**
      * Retrieves the prototype.
-     *
-     * @return PrototypeNodeInterface The prototype
      */
-    public function getPrototype()
+    public function getPrototype() : PrototypeNodeInterface
     {
         return $this->prototype;
     }
@@ -142,13 +137,15 @@ class PrototypedArrayNode extends ArrayNode
      * Disable adding concrete children for prototyped nodes.
      *
      * @throws Exception
+     * @param \Symfony\Component\Config\Definition\NodeInterface $node
      */
-    public function addChild(NodeInterface $node)
+    public function addChild($node)
     {
-        throw new Exception('A prototyped array node can not have concrete children.');
+        throw new Exception('A prototyped array node cannot have concrete children.');
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
      */
     protected function finalizeValue($value)
     {
@@ -159,7 +156,7 @@ class PrototypedArrayNode extends ArrayNode
             $prototype = $this->getPrototypeForChild($k);
             try {
                 $value[$k] = $prototype->finalize($v);
-            } catch (UnsetKeyException $e) {
+            } catch (UnsetKeyException $exception) {
                 unset($value[$k]);
             }
         }
@@ -171,9 +168,9 @@ class PrototypedArrayNode extends ArrayNode
         return $value;
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws DuplicateKeyException
+     * @param mixed $value
+     * @return mixed
      */
     protected function normalizeValue($value)
     {
@@ -181,7 +178,23 @@ class PrototypedArrayNode extends ArrayNode
             return $value;
         }
         $value = $this->remapXml($value);
-        $isList = array_is_list($value);
+        $arrayIsList = function (array $array) : bool {
+            if (\function_exists('array_is_list')) {
+                return \array_is_list($array);
+            }
+            if ($array === []) {
+                return \true;
+            }
+            $current_key = 0;
+            foreach ($array as $key => $noop) {
+                if ($key !== $current_key) {
+                    return \false;
+                }
+                ++$current_key;
+            }
+            return \true;
+        };
+        $isList = $arrayIsList($value);
         $normalized = [];
         foreach ($value as $k => $v) {
             if (null !== $this->keyAttribute && \is_array($v)) {
@@ -229,7 +242,9 @@ class PrototypedArrayNode extends ArrayNode
         return $normalized;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $leftSide
+     * @param mixed $rightSide
+     * @return mixed
      */
     protected function mergeValues($leftSide, $rightSide)
     {
@@ -241,7 +256,23 @@ class PrototypedArrayNode extends ArrayNode
         if (\false === $leftSide || !$this->performDeepMerging) {
             return $rightSide;
         }
-        $isList = array_is_list($rightSide);
+        $arrayIsList = function (array $array) : bool {
+            if (\function_exists('array_is_list')) {
+                return \array_is_list($array);
+            }
+            if ($array === []) {
+                return \true;
+            }
+            $current_key = 0;
+            foreach ($array as $key => $noop) {
+                if ($key !== $current_key) {
+                    return \false;
+                }
+                ++$current_key;
+            }
+            return \true;
+        };
+        $isList = $arrayIsList($rightSide);
         foreach ($rightSide as $k => $v) {
             // prototype, and key is irrelevant there are no named keys, append the element
             if (null === $this->keyAttribute && $isList) {
@@ -298,8 +329,7 @@ class PrototypedArrayNode extends ArrayNode
      *
      * Now, the key becomes 'name001' and the child node becomes 'value001' and
      * the prototype of child node 'name001' should be a ScalarNode instead of an ArrayNode instance.
-     *
-     * @return mixed The prototype instance
+     * @return mixed
      */
     private function getPrototypeForChild(string $key)
     {

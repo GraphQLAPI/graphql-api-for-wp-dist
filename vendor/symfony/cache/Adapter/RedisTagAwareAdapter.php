@@ -13,7 +13,9 @@ namespace PrefixedByPoP\Symfony\Component\Cache\Adapter;
 use PrefixedByPoP\Predis\Connection\Aggregate\ClusterInterface;
 use PrefixedByPoP\Predis\Connection\Aggregate\PredisCluster;
 use PrefixedByPoP\Predis\Connection\Aggregate\ReplicationInterface;
+use PrefixedByPoP\Predis\Response\ErrorInterface;
 use PrefixedByPoP\Predis\Response\Status;
+use PrefixedByPoP\Symfony\Component\Cache\CacheItem;
 use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\Cache\Exception\LogicException;
 use PrefixedByPoP\Symfony\Component\Cache\Marshaller\DeflateMarshaller;
@@ -48,36 +50,43 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
      */
     private const DEFAULT_CACHE_TTL = 8640000;
     /**
-     * @var string|null detected eviction policy used on Redis server
+     * detected eviction policy used on Redis server.
+     * @var string
      */
     private $redisEvictionPolicy;
     /**
-     * @param \Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface $redisClient     The redis client
-     * @param string                                                   $namespace       The default namespace
-     * @param int                                                      $defaultLifetime The default lifetime
+     * @var string
      */
-    public function __construct($redisClient, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
+    private $namespace;
+    /**
+     * @param \Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface $redis
+     */
+    public function __construct($redis, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
     {
-        if ($redisClient instanceof \PrefixedByPoP\Predis\ClientInterface && $redisClient->getConnection() instanceof ClusterInterface && !$redisClient->getConnection() instanceof PredisCluster) {
-            throw new InvalidArgumentException(\sprintf('Unsupported Predis cluster connection: only "%s" is, "%s" given.', PredisCluster::class, \get_debug_type($redisClient->getConnection())));
+        if ($redis instanceof \PrefixedByPoP\Predis\ClientInterface && $redis->getConnection() instanceof ClusterInterface && !$redis->getConnection() instanceof PredisCluster) {
+            throw new InvalidArgumentException(\sprintf('Unsupported Predis cluster connection: only "%s" is, "%s" given.', PredisCluster::class, \get_debug_type($redis->getConnection())));
         }
-        if (\defined('Redis::OPT_COMPRESSION') && ($redisClient instanceof \Redis || $redisClient instanceof \RedisArray || $redisClient instanceof \RedisCluster)) {
-            $compression = $redisClient->getOption(\Redis::OPT_COMPRESSION);
+        if (\defined('Redis::OPT_COMPRESSION') && \in_array(\get_class($redis), [\Redis::class, \RedisArray::class, \RedisCluster::class], \true)) {
+            $compression = $redis->getOption(\Redis::OPT_COMPRESSION);
             foreach (\is_array($compression) ? $compression : [$compression] as $c) {
                 if (\Redis::COMPRESSION_NONE !== $c) {
                     throw new InvalidArgumentException(\sprintf('phpredis compression must be disabled when using "%s", use "%s" instead.', static::class, DeflateMarshaller::class));
                 }
             }
         }
-        $this->init($redisClient, $namespace, $defaultLifetime, new TagAwareMarshaller($marshaller));
+        $this->init($redis, $namespace, $defaultLifetime, new TagAwareMarshaller($marshaller));
+        $this->namespace = $namespace;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $values
+     * @param int $lifetime
+     * @param mixed[] $addTagData
+     * @param mixed[] $delTagData
      */
-    protected function doSave(array $values, int $lifetime, array $addTagData = [], array $delTagData = []) : array
+    protected function doSave($values, $lifetime, $addTagData = [], $delTagData = []) : array
     {
         $eviction = $this->getRedisEvictionPolicy();
-        if ('noeviction' !== $eviction && 0 !== \strpos($eviction, 'volatile-')) {
+        if ('noeviction' !== $eviction && \strncmp($eviction, 'volatile-', \strlen('volatile-')) !== 0) {
             throw new LogicException(\sprintf('Redis maxmemory-policy setting "%s" is *not* supported by RedisTagAwareAdapter, use "noeviction" or "volatile-*" eviction policies.', $eviction));
         }
         // serialize values
@@ -115,9 +124,9 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
         return $failed;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doDeleteYieldTags(array $ids) : iterable
+    protected function doDeleteYieldTags($ids) : iterable
     {
         $lua = <<<'EOLUA'
             local v = redis.call('GET', KEYS[1])
@@ -139,17 +148,21 @@ EOLUA;
             }
         });
         foreach ($results as $id => $result) {
+            if ($result instanceof \RedisException || $result instanceof ErrorInterface) {
+                CacheItem::log($this->logger, 'Failed to delete key "{key}": ' . $result->getMessage(), ['key' => \substr($id, \strlen($this->namespace)), 'exception' => $result]);
+                continue;
+            }
             try {
                 (yield $id => !\is_string($result) || '' === $result ? [] : $this->marshaller->unmarshall($result));
-            } catch (\Exception $e) {
+            } catch (\Exception $exception) {
                 (yield $id => []);
             }
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $tagData
      */
-    protected function doDeleteTagRelations(array $tagData) : bool
+    protected function doDeleteTagRelations($tagData) : bool
     {
         $results = $this->pipeline(static function () use($tagData) {
             foreach ($tagData as $tagId => $idList) {
@@ -163,16 +176,18 @@ EOLUA;
         return \true;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $tagIds
      */
-    protected function doInvalidate(array $tagIds) : bool
+    protected function doInvalidate($tagIds) : bool
     {
         // This script scans the set of items linked to tag: it empties the set
         // and removes the linked items. When the set is still not empty after
         // the scan, it means we're in cluster mode and that the linked items
         // are on other nodes: we move the links to a temporary set and we
-        // gargage collect that set from the client side.
+        // garbage collect that set from the client side.
         $lua = <<<'EOLUA'
+            redis.replicate_commands()
+
             local cursor = '0'
             local id = KEYS[1]
             repeat
@@ -207,13 +222,22 @@ EOLUA;
             }
         });
         $lua = <<<'EOLUA'
+            redis.replicate_commands()
+
             local id = KEYS[1]
             local cursor = table.remove(ARGV)
             redis.call('SREM', '{'..id..'}'..id, unpack(ARGV))
 
             return redis.call('SSCAN', '{'..id..'}'..id, cursor, 'COUNT', 5000)
 EOLUA;
-        foreach ($results as $id => [$cursor, $ids]) {
+        $success = \true;
+        foreach ($results as $id => $values) {
+            if ($values instanceof \RedisException || $values instanceof ErrorInterface) {
+                CacheItem::log($this->logger, 'Failed to invalidate key "{key}": ' . $values->getMessage(), ['key' => \substr($id, \strlen($this->namespace)), 'exception' => $values]);
+                $success = \false;
+                continue;
+            }
+            [$cursor, $ids] = $values;
             while ($ids || '0' !== $cursor) {
                 $this->doDelete($ids);
                 $evalArgs = [$id, $cursor];
@@ -231,11 +255,11 @@ EOLUA;
                 }
             }
         }
-        return \true;
+        return $success;
     }
     private function getRedisEvictionPolicy() : string
     {
-        if (null !== $this->redisEvictionPolicy) {
+        if (isset($this->redisEvictionPolicy)) {
             return $this->redisEvictionPolicy;
         }
         $hosts = $this->getHosts();
@@ -246,6 +270,9 @@ EOLUA;
         }
         foreach ($hosts as $host) {
             $info = $host->info('Memory');
+            if ($info instanceof ErrorInterface) {
+                continue;
+            }
             $info = $info['Memory'] ?? $info;
             return $this->redisEvictionPolicy = $info['maxmemory_policy'];
         }

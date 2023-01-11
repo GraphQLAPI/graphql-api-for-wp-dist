@@ -22,9 +22,11 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 class DefinitionErrorExceptionPass extends AbstractRecursivePass
 {
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if (!$value instanceof Definition || !$value->hasErrors()) {
             return parent::processValue($value, $isRoot);

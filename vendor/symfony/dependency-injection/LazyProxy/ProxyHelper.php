@@ -10,17 +10,21 @@
  */
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\LazyProxy;
 
+trigger_deprecation('symfony/dependency-injection', '6.2', 'The "%s" class is deprecated, use "%s" instead.', ProxyHelper::class, \PrefixedByPoP\Symfony\Component\VarExporter\ProxyHelper::class);
 /**
  * @author Nicolas Grekas <p@tchwork.com>
  *
- * @internal
+ * @deprecated since Symfony 6.2, use VarExporter's ProxyHelper instead
  */
 class ProxyHelper
 {
     /**
      * @return string|null The FQCN or builtin name of the type hint, or null when the type hint references an invalid self|parent context
+     * @param \ReflectionFunctionAbstract $r
+     * @param \ReflectionParameter|null $p
+     * @param bool $noBuiltin
      */
-    public static function getTypeHint(\ReflectionFunctionAbstract $r, \ReflectionParameter $p = null, bool $noBuiltin = \false) : ?string
+    public static function getTypeHint($r, $p = null, $noBuiltin = \false) : ?string
     {
         if ($p instanceof \ReflectionParameter) {
             $type = $p->getType();
@@ -30,19 +34,41 @@ class ProxyHelper
         if (!$type) {
             return null;
         }
+        return self::getTypeHintForType($type, $r, $noBuiltin);
+    }
+    private static function getTypeHintForType(\ReflectionType $type, \ReflectionFunctionAbstract $r, bool $noBuiltin) : ?string
+    {
         $types = [];
-        foreach ($type instanceof \ReflectionUnionType ? $type->getTypes() : [$type] as $type) {
-            $name = $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type;
+        $glue = '|';
+        if ($type instanceof \ReflectionUnionType) {
+            $reflectionTypes = $type->getTypes();
+        } elseif ($type instanceof \ReflectionIntersectionType) {
+            $reflectionTypes = $type->getTypes();
+            $glue = '&';
+        } elseif ($type instanceof \ReflectionNamedType) {
+            $reflectionTypes = [$type];
+        } else {
+            return null;
+        }
+        foreach ($reflectionTypes as $type) {
+            if ($type instanceof \ReflectionIntersectionType) {
+                $typeHint = self::getTypeHintForType($type, $r, $noBuiltin);
+                if (null === $typeHint) {
+                    return null;
+                }
+                $types[] = \sprintf('(%s)', $typeHint);
+                continue;
+            }
             if ($type->isBuiltin()) {
                 if (!$noBuiltin) {
-                    $types[] = $name;
+                    $types[] = $type->getName();
                 }
                 continue;
             }
-            $lcName = \strtolower($name);
+            $lcName = \strtolower($type->getName());
             $prefix = $noBuiltin ? '' : '\\';
             if ('self' !== $lcName && 'parent' !== $lcName) {
-                $types[] = '' !== $prefix ? $prefix . $name : $name;
+                $types[] = $prefix . $type->getName();
                 continue;
             }
             if (!$r instanceof \ReflectionMethod) {
@@ -54,6 +80,7 @@ class ProxyHelper
                 $types[] = ($parent = $r->getDeclaringClass()->getParentClass()) ? $prefix . $parent->name : null;
             }
         }
-        return $types ? \implode('|', $types) : null;
+        \sort($types);
+        return $types ? \implode($glue, $types) : null;
     }
 }

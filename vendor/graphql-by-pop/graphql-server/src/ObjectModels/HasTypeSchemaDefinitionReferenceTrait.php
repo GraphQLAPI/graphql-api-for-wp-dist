@@ -3,36 +3,18 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
-use PoP\API\Schema\SchemaDefinition;
-use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
-use GraphQLByPoP\GraphQLServer\ObjectModels\ResolveTypeSchemaDefinitionReferenceTrait;
+use GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers;
+use GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaHelpers;
+use PoPAPI\API\Schema\SchemaDefinition;
 trait HasTypeSchemaDefinitionReferenceTrait
 {
-    use ResolveTypeSchemaDefinitionReferenceTrait;
     /**
-     * @var \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType
+     * Append the GraphQL wrappers to the ID, to select any entity
+     * of type NamedType or WrappingType
      */
-    protected $type;
-    public function getType() : AbstractType
-    {
-        return $this->type;
-    }
-    /**
-     * Obtain the reference to the type from the registryMap
-     */
-    protected function initType() : void
-    {
-        // Create a reference to the type in the referenceMap.
-        // Either it has already been created, or will be created later on
-        // It is done this way because from the Schema we initialize the Types,
-        // each of which initializes their Fields (we are here), which may reference
-        // a different Type that doesn't exist yet, and can't be created here
-        // or it creates an endless loop
-        $typeName = $this->schemaDefinition[SchemaDefinition::ARGNAME_TYPE];
-        $this->type = $this->getTypeFromTypeName($typeName);
-    }
     public function getTypeID() : string
     {
-        return $this->getType()->getID();
+        $typeID = SchemaDefinitionHelpers::getSchemaDefinitionReferenceObjectID([SchemaDefinition::TYPES, $this->schemaDefinition[SchemaDefinition::TYPE_KIND], $this->schemaDefinition[SchemaDefinition::TYPE_NAME]]);
+        return GraphQLSchemaHelpers::getMaybeWrappedTypeName($typeID, $this->schemaDefinition[SchemaDefinition::NON_NULLABLE] ?? $this->schemaDefinition[SchemaDefinition::MANDATORY] ?? null, $this->schemaDefinition[SchemaDefinition::IS_ARRAY] ?? \false, $this->schemaDefinition[SchemaDefinition::IS_NON_NULLABLE_ITEMS_IN_ARRAY] ?? \false, $this->schemaDefinition[SchemaDefinition::IS_ARRAY_OF_ARRAYS] ?? \false, $this->schemaDefinition[SchemaDefinition::IS_NON_NULLABLE_ITEMS_IN_ARRAY_OF_ARRAYS] ?? \false);
     }
 }

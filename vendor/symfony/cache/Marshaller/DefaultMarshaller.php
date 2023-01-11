@@ -18,20 +18,29 @@ use PrefixedByPoP\Symfony\Component\Cache\Exception\CacheException;
  */
 class DefaultMarshaller implements MarshallerInterface
 {
+    /**
+     * @var bool
+     */
     private $useIgbinarySerialize = \true;
-    public function __construct(bool $useIgbinarySerialize = null)
+    /**
+     * @var bool
+     */
+    private $throwOnSerializationFailure = \false;
+    public function __construct(bool $useIgbinarySerialize = null, bool $throwOnSerializationFailure = \false)
     {
         if (null === $useIgbinarySerialize) {
-            $useIgbinarySerialize = \extension_loaded('igbinary') && (\PHP_VERSION_ID < 70400 || \version_compare('3.1.6', \phpversion('igbinary'), '<='));
-        } elseif ($useIgbinarySerialize && (!\extension_loaded('igbinary') || \PHP_VERSION_ID >= 70400 && \version_compare('3.1.6', \phpversion('igbinary'), '>'))) {
-            throw new CacheException(\extension_loaded('igbinary') && \PHP_VERSION_ID >= 70400 ? 'Please upgrade the "igbinary" PHP extension to v3.1.6 or higher.' : 'The "igbinary" PHP extension is not loaded.');
+            $useIgbinarySerialize = \extension_loaded('igbinary') && \version_compare('3.1.6', \phpversion('igbinary'), '<=');
+        } elseif ($useIgbinarySerialize && (!\extension_loaded('igbinary') || \version_compare('3.1.6', \phpversion('igbinary'), '>'))) {
+            throw new CacheException(\extension_loaded('igbinary') ? 'Please upgrade the "igbinary" PHP extension to v3.1.6 or higher.' : 'The "igbinary" PHP extension is not loaded.');
         }
         $this->useIgbinarySerialize = $useIgbinarySerialize;
+        $this->throwOnSerializationFailure = $throwOnSerializationFailure;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $values
+     * @param mixed[]|null $failed
      */
-    public function marshall(array $values, ?array &$failed) : array
+    public function marshall($values, &$failed) : array
     {
         $serialized = $failed = [];
         foreach ($values as $id => $value) {
@@ -42,15 +51,19 @@ class DefaultMarshaller implements MarshallerInterface
                     $serialized[$id] = \serialize($value);
                 }
             } catch (\Exception $e) {
+                if ($this->throwOnSerializationFailure) {
+                    throw new \ValueError($e->getMessage(), 0, $e);
+                }
                 $failed[] = $id;
             }
         }
         return $serialized;
     }
     /**
-     * {@inheritdoc}
+     * @return mixed
+     * @param string $value
      */
-    public function unmarshall(string $value)
+    public function unmarshall($value)
     {
         if ('b:0;' === $value) {
             return \false;
@@ -59,7 +72,7 @@ class DefaultMarshaller implements MarshallerInterface
             return null;
         }
         static $igbinaryNull;
-        if ($value === ($igbinaryNull ?? ($igbinaryNull = \extension_loaded('igbinary') ? \igbinary_serialize(null) : \false))) {
+        if ($value === ($igbinaryNull = $igbinaryNull ?? (\extension_loaded('igbinary') ? \igbinary_serialize(null) : \false))) {
             return null;
         }
         $unserializeCallbackHandler = \ini_set('unserialize_callback_func', __CLASS__ . '::handleUnserializeCallback');
@@ -82,8 +95,9 @@ class DefaultMarshaller implements MarshallerInterface
     }
     /**
      * @internal
+     * @param string $class
      */
-    public static function handleUnserializeCallback(string $class)
+    public static function handleUnserializeCallback($class)
     {
         throw new \DomainException('Class not found: ' . $class);
     }

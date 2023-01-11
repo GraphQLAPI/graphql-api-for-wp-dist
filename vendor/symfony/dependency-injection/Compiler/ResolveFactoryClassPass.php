@@ -18,9 +18,11 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeExcepti
 class ResolveFactoryClassPass extends AbstractRecursivePass
 {
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if ($value instanceof Definition && \is_array($factory = $value->getFactory()) && null === $factory[0]) {
             if (null === ($class = $value->getClass())) {

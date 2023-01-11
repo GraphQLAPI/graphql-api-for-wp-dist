@@ -3,29 +3,42 @@
 declare (strict_types=1);
 namespace PoP\LooseContracts;
 
-use PoP\Hooks\HooksAPIInterface;
-use PoP\LooseContracts\LooseContractManagerInterface;
-use PoP\LooseContracts\NameResolverInterface;
+use PoP\Root\Services\BasicServiceTrait;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 abstract class AbstractLooseContractResolutionSet extends AbstractAutomaticallyInstantiatedService
 {
+    use BasicServiceTrait;
     /**
-     * @var \PoP\LooseContracts\LooseContractManagerInterface
+     * @var \PoP\LooseContracts\LooseContractManagerInterface|null
      */
-    protected $looseContractManager;
+    private $looseContractManager;
     /**
-     * @var \PoP\LooseContracts\NameResolverInterface
+     * @var \PoP\LooseContracts\NameResolverInterface|null
      */
-    protected $nameResolver;
+    private $nameResolver;
     /**
-     * @var \PoP\Hooks\HooksAPIInterface
+     * @param \PoP\LooseContracts\LooseContractManagerInterface $looseContractManager
      */
-    protected $hooksAPI;
-    public function __construct(LooseContractManagerInterface $looseContractManager, NameResolverInterface $nameResolver, HooksAPIInterface $hooksAPI)
+    public final function setLooseContractManager($looseContractManager) : void
     {
         $this->looseContractManager = $looseContractManager;
+    }
+    protected final function getLooseContractManager() : \PoP\LooseContracts\LooseContractManagerInterface
+    {
+        /** @var LooseContractManagerInterface */
+        return $this->looseContractManager = $this->looseContractManager ?? $this->instanceManager->getInstance(\PoP\LooseContracts\LooseContractManagerInterface::class);
+    }
+    /**
+     * @param \PoP\LooseContracts\NameResolverInterface $nameResolver
+     */
+    public final function setNameResolver($nameResolver) : void
+    {
         $this->nameResolver = $nameResolver;
-        $this->hooksAPI = $hooksAPI;
+    }
+    protected final function getNameResolver() : \PoP\LooseContracts\NameResolverInterface
+    {
+        /** @var NameResolverInterface */
+        return $this->nameResolver = $this->nameResolver ?? $this->instanceManager->getInstance(\PoP\LooseContracts\NameResolverInterface::class);
     }
     public final function initialize() : void
     {

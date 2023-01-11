@@ -19,6 +19,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumen
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference;
 use PrefixedByPoP\Symfony\Component\HttpFoundation\Session\SessionInterface;
+use PrefixedByPoP\Symfony\Contracts\Service\Attribute\SubscribedService;
 use PrefixedByPoP\Symfony\Contracts\Service\ServiceProviderInterface;
 use PrefixedByPoP\Symfony\Contracts\Service\ServiceSubscriberInterface;
 /**
@@ -28,7 +29,12 @@ use PrefixedByPoP\Symfony\Contracts\Service\ServiceSubscriberInterface;
  */
 class RegisterServiceSubscribersPass extends AbstractRecursivePass
 {
-    protected function processValue($value, bool $isRoot = \false)
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
+     */
+    protected function processValue($value, $isRoot = \false)
     {
         if (!$value instanceof Definition || $value->isAbstract() || $value->isSynthetic() || !$value->hasTag('container.service_subscriber')) {
             return parent::processValue($value, $isRoot);
@@ -63,10 +69,20 @@ class RegisterServiceSubscribersPass extends AbstractRecursivePass
             throw new InvalidArgumentException(\sprintf('Service "%s" must implement interface "%s".', $this->currentId, ServiceSubscriberInterface::class));
         }
         $class = $r->name;
+        // to remove when symfony/dependency-injection will stop being compatible with symfony/framework-bundle<6.0
         $replaceDeprecatedSession = $this->container->has('.session.deprecated') && $r->isSubclassOf(AbstractController::class);
         $subscriberMap = [];
         foreach ($class::getSubscribedServices() as $key => $type) {
-            if (!\is_string($type) || !\preg_match('/^\\??[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+)*+$/', $type)) {
+            $attributes = [];
+            if ($type instanceof SubscribedService) {
+                $key = $type->key;
+                $attributes = $type->attributes;
+                if ($type->type === null) {
+                    throw new InvalidArgumentException(\sprintf('When "%s::getSubscribedServices()" returns "%s", a type must be set.', $class, SubscribedService::class));
+                }
+                $type = ($type->nullable ? '?' : '') . $type->type;
+            }
+            if (!\is_string($type) || !\preg_match('/(?(DEFINE)(?<cn>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+))(?(DEFINE)(?<fqcn>(?&cn)(?:\\\\(?&cn))*+))^\\??(?&fqcn)(?:(?:\\|(?&fqcn))*+|(?:&(?&fqcn))*+)$/', $type)) {
                 throw new InvalidArgumentException(\sprintf('"%s::getSubscribedServices()" must return valid PHP types for service "%s" key "%s", "%s" returned.', $class, $this->currentId, $key, \is_string($type) ? $type : \get_debug_type($type)));
             }
             if ($optionalBehavior = '?' === $type[0]) {
@@ -83,7 +99,7 @@ class RegisterServiceSubscribersPass extends AbstractRecursivePass
                 }
                 if ($replaceDeprecatedSession && SessionInterface::class === $type) {
                     // This prevents triggering the deprecation when building the container
-                    // Should be removed in Symfony 6.0
+                    // to remove when symfony/dependency-injection will stop being compatible with symfony/framework-bundle<6.0
                     $type = '.session.deprecated';
                 }
                 $serviceMap[$key] = new Reference($type);
@@ -91,7 +107,7 @@ class RegisterServiceSubscribersPass extends AbstractRecursivePass
             if ($name) {
                 if (\false !== ($i = \strpos($name, '::get'))) {
                     $name = \lcfirst(\substr($name, 5 + $i));
-                } elseif (\false !== \strpos($name, '::')) {
+                } elseif (\strpos($name, '::') !== \false) {
                     $name = null;
                 }
             }
@@ -99,7 +115,7 @@ class RegisterServiceSubscribersPass extends AbstractRecursivePass
                 $camelCaseName = \lcfirst(\str_replace(' ', '', \ucwords(\preg_replace('/[^a-zA-Z0-9\\x7f-\\xff]++/', ' ', $name))));
                 $name = $this->container->has($type . ' $' . $camelCaseName) ? $camelCaseName : $name;
             }
-            $subscriberMap[$key] = new TypedReference((string) $serviceMap[$key], $type, $optionalBehavior ?: ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE, $name);
+            $subscriberMap[$key] = new TypedReference((string) $serviceMap[$key], $type, $optionalBehavior ?: ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE, $name, $attributes);
             unset($serviceMap[$key]);
         }
         if ($serviceMap = \array_keys($serviceMap)) {

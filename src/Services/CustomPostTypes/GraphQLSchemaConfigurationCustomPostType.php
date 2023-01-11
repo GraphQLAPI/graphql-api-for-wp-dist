@@ -6,28 +6,28 @@ namespace GraphQLAPI\GraphQLAPI\Services\CustomPostTypes;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\Registries\BlockRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\SchemaConfigBlockRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\AbstractCustomPostType;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 
 class GraphQLSchemaConfigurationCustomPostType extends AbstractCustomPostType
 {
     use WithBlockRegistryCustomPostTypeTrait;
-    /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\SchemaConfigBlockRegistryInterface
-     */
-    protected $schemaConfigBlockRegistry;
 
-    public function __construct(
-        InstanceManagerInterface $instanceManager,
-        ModuleRegistryInterface $moduleRegistry,
-        UserAuthorizationInterface $userAuthorization,
-        SchemaConfigBlockRegistryInterface $schemaConfigBlockRegistry
-    ) {
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Registries\SchemaConfigBlockRegistryInterface|null
+     */
+    private $schemaConfigBlockRegistry;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\SchemaConfigBlockRegistryInterface $schemaConfigBlockRegistry
+     */
+    final public function setSchemaConfigBlockRegistry($schemaConfigBlockRegistry): void
+    {
         $this->schemaConfigBlockRegistry = $schemaConfigBlockRegistry;
-        parent::__construct($instanceManager, $moduleRegistry, $userAuthorization);
+    }
+    final protected function getSchemaConfigBlockRegistry(): SchemaConfigBlockRegistryInterface
+    {
+        /** @var SchemaConfigBlockRegistryInterface */
+        return $this->schemaConfigBlockRegistry = $this->schemaConfigBlockRegistry ?? $this->instanceManager->getInstance(SchemaConfigBlockRegistryInterface::class);
     }
 
     /**
@@ -57,7 +57,7 @@ class GraphQLSchemaConfigurationCustomPostType extends AbstractCustomPostType
     /**
      * Custom post type name
      */
-    public function getCustomPostTypeName(): string
+    protected function getCustomPostTypeName(): string
     {
         return \__('Schema Configuration', 'graphql-api');
     }
@@ -65,9 +65,9 @@ class GraphQLSchemaConfigurationCustomPostType extends AbstractCustomPostType
     /**
      * Custom Post Type plural name
      *
-     * @param bool $uppercase Indicate if the name must be uppercase (for starting a sentence) or, otherwise, lowercase
+     * @param bool $titleCase Indicate if the name must be title case (for starting a sentence) or, otherwise, lowercase
      */
-    protected function getCustomPostTypePluralNames(bool $uppercase): string
+    protected function getCustomPostTypePluralNames($titleCase): string
     {
         return \__('Schema Configurations', 'graphql-api');
     }
@@ -92,6 +92,6 @@ class GraphQLSchemaConfigurationCustomPostType extends AbstractCustomPostType
 
     protected function getBlockRegistry(): BlockRegistryInterface
     {
-        return $this->schemaConfigBlockRegistry;
+        return $this->getSchemaConfigBlockRegistry();
     }
 }

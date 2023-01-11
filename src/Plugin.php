@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI;
 
+use PoP\Root\Module\ModuleInterface;
 use GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\SystemServices\TableActions\ModuleListTableAction;
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\Facades\Registries\ModuleRegistryFacade;
@@ -14,8 +15,8 @@ use GraphQLAPI\GraphQLAPI\Services\Helpers\MenuPageHelper;
 use GraphQLAPI\GraphQLAPI\Services\MenuPages\AboutMenuPage;
 use GraphQLAPI\GraphQLAPI\Services\MenuPages\ModulesMenuPage;
 use GraphQLAPI\GraphQLAPI\Services\MenuPages\SettingsMenuPage;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use PoP\ComponentModel\Facades\Instances\SystemInstanceManagerFacade;
+use PoP\Root\Facades\Instances\InstanceManagerFacade;
+use PoP\Root\Facades\Instances\SystemInstanceManagerFacade;
 
 class Plugin extends AbstractMainPlugin
 {
@@ -26,8 +27,9 @@ class Plugin extends AbstractMainPlugin
 
     /**
      * Show an admin notice with a link to the latest release notes
+     * @param string $storedVersion
      */
-    protected function pluginJustUpdated(string $storedVersion): void
+    public function pluginJustUpdated($storedVersion): void
     {
         parent::pluginJustUpdated($storedVersion);
 
@@ -64,7 +66,7 @@ class Plugin extends AbstractMainPlugin
     protected function showReleaseNotesInAdminNotice(): void
     {
         // Load the assets to open in a modal
-        \add_action('admin_enqueue_scripts', function () {
+        \add_action('admin_enqueue_scripts', function (): void {
             /**
              * Hack to open the modal thickbox iframe with the documentation
              */
@@ -76,7 +78,7 @@ class Plugin extends AbstractMainPlugin
             );
         });
         // Add the admin notice
-        \add_action('admin_notices', function () {
+        \add_action('admin_notices', function (): void {
             $instanceManager = InstanceManagerFacade::getInstance();
             /**
              * @var AboutMenuPage
@@ -126,22 +128,23 @@ class Plugin extends AbstractMainPlugin
     /**
      * Given a version in semver (MAJOR.MINOR.PATCH),
      * return the minor version (MAJOR.MINOR)
+     * @param string $version
      */
-    protected function getMinorReleaseVersion(string $version): string
+    protected function getMinorReleaseVersion($version): string
     {
         $versionParts = explode('.', $version);
         return $versionParts[0] . '.' . $versionParts[1];
     }
 
     /**
-     * Add Component classes to be initialized
+     * Add Module classes to be initialized
      *
-     * @return string[] List of `Component` class to initialize
+     * @return array<class-string<ModuleInterface>> List of `Module` class to initialize
      */
-    public function getComponentClassesToInitialize(): array
+    public function getModuleClassesToInitialize(): array
     {
         return [
-            Component::class,
+            Module::class,
         ];
     }
 
@@ -155,7 +158,7 @@ class Plugin extends AbstractMainPlugin
          * a module, then already take that new state!
          *
          * This is because `maybeProcessAction`, which is where modules are
-         * enabled/disabled, must be executed before PluginConfiguration->initialize(),
+         * enabled/disabled, must be executed before PluginInitializationConfiguration->initialize(),
          * which is where the plugin reads if a module is enabled/disabled as to
          * set the environment constants.
          *
@@ -172,7 +175,7 @@ class Plugin extends AbstractMainPlugin
             /** @var ModulesMenuPage */
             $modulesMenuPage = $systemInstanceManager->getInstance(ModulesMenuPage::class);
             if (
-                (isset($_GET['page']) && $_GET['page'] == $modulesMenuPage->getScreenID())
+                (App::query('page') === $modulesMenuPage->getScreenID())
                 && !$menuPageHelper->isDocumentationScreen()
             ) {
                 /** @var ModuleListTableAction */

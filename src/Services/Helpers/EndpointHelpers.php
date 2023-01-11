@@ -5,25 +5,34 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\Helpers;
 
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\UserInterfaceFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
+use GraphQLAPI\GraphQLAPI\Module;
+use GraphQLAPI\GraphQLAPI\ModuleConfiguration;
 use GraphQLAPI\GraphQLAPI\Services\Menus\PluginMenu;
-use GraphQLByPoP\GraphQLServer\Configuration\Request as GraphQLServerRequest;
+use GraphQLByPoP\GraphQLServer\Constants\Params as GraphQLServerParams;
+use PoP\ComponentModel\Configuration\RequestHelpers;
+use PoP\Root\App;
+use PoP\Root\Services\BasicServiceTrait;
 
 class EndpointHelpers
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Menus\PluginMenu
+     * @var \GraphQLAPI\GraphQLAPI\Services\Menus\PluginMenu|null
      */
-    protected $pluginMenu;
+    private $pluginMenu;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @param \GraphQLAPI\GraphQLAPI\Services\Menus\PluginMenu $pluginMenu
      */
-    protected $moduleRegistry;
-    public function __construct(PluginMenu $pluginMenu, ModuleRegistryInterface $moduleRegistry)
+    final public function setPluginMenu($pluginMenu): void
     {
         $this->pluginMenu = $pluginMenu;
-        $this->moduleRegistry = $moduleRegistry;
+    }
+    final protected function getPluginMenu(): PluginMenu
+    {
+        /** @var PluginMenu */
+        return $this->pluginMenu = $this->pluginMenu ?? $this->instanceManager->getInstance(PluginMenu::class);
     }
 
     /**
@@ -33,11 +42,9 @@ class EndpointHelpers
     public function isRequestingAdminConfigurableSchemaGraphQLEndpoint(): bool
     {
         return \is_admin()
-            && 'POST' == $_SERVER['REQUEST_METHOD']
-            && isset($_GET['page'])
-            && $_GET['page'] == $this->pluginMenu->getName()
-            && isset($_GET[RequestParams::ACTION])
-            && $_GET[RequestParams::ACTION] == RequestParams::ACTION_EXECUTE_QUERY;
+            && 'POST' === App::server('REQUEST_METHOD')
+            && App::query('page') === $this->getPluginMenu()->getName()
+            && App::query(RequestParams::ACTION) === RequestParams::ACTION_EXECUTE_QUERY;
     }
 
     /**
@@ -47,8 +54,7 @@ class EndpointHelpers
     public function isRequestingAdminFixedSchemaGraphQLEndpoint(): bool
     {
         return $this->isRequestingAdminConfigurableSchemaGraphQLEndpoint()
-            && isset($_GET[RequestParams::BEHAVIOR])
-            && $_GET[RequestParams::BEHAVIOR] == RequestParams::BEHAVIOR_UNRESTRICTED;
+            && App::query(RequestParams::BEHAVIOR) === RequestParams::BEHAVIOR_UNRESTRICTED;
     }
 
     /**
@@ -58,7 +64,28 @@ class EndpointHelpers
     public function isRequestingAdminPersistedQueryGraphQLEndpoint(): bool
     {
         return $this->isRequestingAdminConfigurableSchemaGraphQLEndpoint()
-            && isset($_GET[RequestParams::PERSISTED_QUERY_ID]);
+            && App::getRequest()->query->has(RequestParams::PERSISTED_QUERY_ID);
+    }
+
+    /**
+     * Indicate if we are requesting in the wp-admin:
+     * Only GraphiQL and Voyager clients
+     */
+    public function isRequestingGraphQLEndpointForAdminClientOnly(): bool
+    {
+        return $this->isRequestingAdminConfigurableSchemaGraphQLEndpoint()
+            && !$this->isRequestingAdminFixedSchemaGraphQLEndpoint()
+            && !$this->isRequestingAdminPersistedQueryGraphQLEndpoint();
+    }
+
+    /**
+     * Indicate if we are requesting in the wp-admin:
+     * GraphiQL and Voyager clients + ACL/CCL configurations
+     */
+    public function isRequestingGraphQLEndpointForAdminClientOrConfiguration(): bool
+    {
+        return $this->isRequestingAdminConfigurableSchemaGraphQLEndpoint()
+            && !$this->isRequestingAdminPersistedQueryGraphQLEndpoint();
     }
 
     /**
@@ -66,30 +93,38 @@ class EndpointHelpers
      *
      * @param boolean $enableLowLevelQueryEditing Enable persisted queries to access schema-type directives
      */
-    public function getAdminConfigurableSchemaGraphQLEndpoint(bool $enableLowLevelQueryEditing = false): string
+    public function getAdminConfigurableSchemaGraphQLEndpoint($enableLowLevelQueryEditing = false): string
     {
         $endpoint = \admin_url(sprintf(
             'edit.php?page=%s&%s=%s',
-            $this->pluginMenu->getName(),
+            $this->getPluginMenu()->getName(),
             RequestParams::ACTION,
             RequestParams::ACTION_EXECUTE_QUERY
         ));
         if ($enableLowLevelQueryEditing) {
             // Add /?edit_schema=1 so the query-type directives are also visible
-            if ($this->moduleRegistry->isModuleEnabled(UserInterfaceFunctionalityModuleResolver::LOW_LEVEL_PERSISTED_QUERY_EDITING)) {
-                $endpoint = \add_query_arg(GraphQLServerRequest::URLPARAM_EDIT_SCHEMA, true, $endpoint);
+            /** @var ModuleConfiguration */
+            $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+            if ($moduleConfiguration->enableLowLevelPersistedQueryEditing()) {
+                $endpoint = \add_query_arg(GraphQLServerParams::EDIT_SCHEMA, true, $endpoint);
             }
         }
+
+        // Maybe enable XDebug
+        $endpoint = RequestHelpers::maybeAddParamToDebugRequest($endpoint);
+
         // If namespaced, add /?use_namespace=1 to the endpoint
-        // if (ComponentModelComponentConfiguration::namespaceTypesAndInterfaces()) {
-        //     $endpoint = \add_query_arg(APIRequest::URLPARAM_USE_NAMESPACE, true, $endpoint);
+        // /** @var ComponentModelModuleConfiguration */
+        // $moduleConfiguration = App::getModule(ComponentModelModule::class)->getConfiguration();
+        // if ($moduleConfiguration->mustNamespaceTypes()) {
+        //     $endpoint = \add_query_arg(APIParams::USE_NAMESPACE, true, $endpoint);
         // }
         return $endpoint;
     }
 
     /**
      * GraphQL endpoint to be used in the WordPress editor.
-     * It has the full schema, including "unrestricted" admin fields.
+     * It has the full schema, including "admin" fields.
      */
     public function getAdminFixedSchemaGraphQLEndpoint(): string
     {
@@ -106,7 +141,7 @@ class EndpointHelpers
      * @param boolean $enableLowLevelQueryEditing Enable persisted queries to access schema-type directives
      * @param string|int $persistedQueryEndpointCustomPostID
      */
-    public function getAdminPersistedQueryGraphQLEndpoint($persistedQueryEndpointCustomPostID, bool $enableLowLevelQueryEditing = false): string
+    public function getAdminPersistedQueryGraphQLEndpoint($persistedQueryEndpointCustomPostID, $enableLowLevelQueryEditing = false): string
     {
         return \add_query_arg(
             RequestParams::PERSISTED_QUERY_ID,
@@ -117,6 +152,9 @@ class EndpointHelpers
 
     public function getAdminPersistedQueryCustomPostID(): ?int
     {
-        return (int) $_REQUEST[RequestParams::PERSISTED_QUERY_ID] ?? null;
+        if ($persistedQueryID = App::query(RequestParams::PERSISTED_QUERY_ID)) {
+            return (int) $persistedQueryID;
+        }
+        return null;
     }
 }

@@ -39,7 +39,7 @@ final class PriorityRouteCollection implements RouteCollectionInterface
      * @param  \Brain\Cortex\Route\RouteInterface $route
      * @return \Brain\Cortex\Route\RouteCollectionInterface
      */
-    public function addRoute(RouteInterface $route)
+    public function addRoute($route)
     {
         if (!$route->offsetExists('priority') || !\is_numeric($route->offsetGet('priority'))) {
             $next = $this->priorities ? \max($this->priorities) + 1 : 10;

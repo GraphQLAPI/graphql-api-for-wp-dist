@@ -3,8 +3,10 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
-interface HasPossibleTypesTypeInterface
+interface HasPossibleTypesTypeInterface extends \GraphQLByPoP\GraphQLServer\ObjectModels\NamedTypeInterface
 {
-    public function getPossibleTypes() : array;
+    /**
+     * @return string[]
+     */
     public function getPossibleTypeIDs() : array;
 }

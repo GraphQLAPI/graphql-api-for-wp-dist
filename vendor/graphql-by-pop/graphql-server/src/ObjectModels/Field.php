@@ -3,48 +3,45 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
-use PoP\API\Schema\SchemaDefinition;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasArgsSchemaDefinitionReferenceTrait;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasTypeSchemaDefinitionReferenceTrait;
+use PoPAPI\API\Schema\SchemaDefinition;
 class Field extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject
 {
-    use HasTypeSchemaDefinitionReferenceTrait;
-    use HasArgsSchemaDefinitionReferenceTrait;
-    public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath, array $customDefinition = [])
+    use \GraphQLByPoP\GraphQLServer\ObjectModels\HasTypeSchemaDefinitionReferenceTrait;
+    use \GraphQLByPoP\GraphQLServer\ObjectModels\HasArgsSchemaDefinitionReferenceTrait;
+    /**
+     * @var \GraphQLByPoP\GraphQLServer\ObjectModels\FieldExtensions
+     */
+    protected $fieldExtensions;
+    /**
+     * @param array<string,mixed> $fullSchemaDefinition
+     * @param string[] $schemaDefinitionPath
+     */
+    public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath)
     {
-        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath, $customDefinition);
+        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath);
+        /** @var string[] */
+        $fieldExtensionsSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [SchemaDefinition::EXTENSIONS]);
+        $this->fieldExtensions = new \GraphQLByPoP\GraphQLServer\ObjectModels\FieldExtensions($fullSchemaDefinition, $fieldExtensionsSchemaDefinitionPath);
         $this->initArgs($fullSchemaDefinition, $schemaDefinitionPath);
-    }
-    public function initializeTypeDependencies() : void
-    {
-        $this->initType();
-        $this->initializeArgsTypeDependencies();
     }
     public function getName() : string
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_NAME];
+        return $this->schemaDefinition[SchemaDefinition::NAME];
     }
     public function getDescription() : ?string
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] ?? null;
+        return $this->schemaDefinition[SchemaDefinition::DESCRIPTION] ?? null;
     }
     public function isDeprecated() : bool
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATED] ?? \false;
+        return $this->schemaDefinition[SchemaDefinition::DEPRECATED] ?? \false;
     }
-    public function getDeprecationDescription() : ?string
+    public function getDeprecationMessage() : ?string
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DEPRECATIONDESCRIPTION] ?? null;
+        return $this->schemaDefinition[SchemaDefinition::DEPRECATION_MESSAGE] ?? null;
     }
-    public function getExtensions() : array
+    public function getExtensions() : \GraphQLByPoP\GraphQLServer\ObjectModels\FieldExtensions
     {
-        $extensions = [];
-        if ($version = $this->schemaDefinition[SchemaDefinition::ARGNAME_VERSION] ?? null) {
-            $extensions[SchemaDefinition::ARGNAME_VERSION] = $version;
-        }
-        if ($this->schemaDefinition[SchemaDefinition::ARGNAME_FIELD_IS_MUTATION] ?? null) {
-            $extensions[SchemaDefinition::ARGNAME_FIELD_IS_MUTATION] = \true;
-        }
-        return $extensions;
+        return $this->fieldExtensions;
     }
 }

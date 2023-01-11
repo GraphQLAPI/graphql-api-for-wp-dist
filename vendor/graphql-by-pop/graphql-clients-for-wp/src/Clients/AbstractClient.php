@@ -4,14 +4,36 @@ declare(strict_types=1);
 
 namespace GraphQLByPoP\GraphQLClientsForWP\Clients;
 
-use PoP\APIClients\ClientTrait;
-use GraphQLByPoP\GraphQLClientsForWP\Clients\WPClientTrait;
-use PoP\APIEndpointsForWP\EndpointHandlers\AbstractEndpointHandler;
+use GraphQLByPoP\GraphQLClientsForWP\Constants\CustomHeaders;
+use PoP\EngineWP\HelperServices\TemplateHelpersInterface;
+use PoP\Root\App;
+use PoP\Root\Services\BasicServiceTrait;
+use PoPAPI\APIClients\ClientTrait;
+use PoPAPI\APIEndpointsForWP\EndpointHandlers\AbstractEndpointHandler;
 
 abstract class AbstractClient extends AbstractEndpointHandler
 {
+    use BasicServiceTrait;
     use ClientTrait, WPClientTrait {
-        WPClientTrait::getComponentBaseURL insteadof ClientTrait;
+        WPClientTrait::getModuleBaseURL insteadof ClientTrait;
+    }
+
+    /**
+     * @var \PoP\EngineWP\HelperServices\TemplateHelpersInterface|null
+     */
+    private $templateHelpers;
+
+    /**
+     * @param \PoP\EngineWP\HelperServices\TemplateHelpersInterface $templateHelpers
+     */
+    final public function setTemplateHelpers($templateHelpers): void
+    {
+        $this->templateHelpers = $templateHelpers;
+    }
+    final protected function getTemplateHelpers(): TemplateHelpersInterface
+    {
+        /** @var TemplateHelpersInterface */
+        return $this->templateHelpers = $this->templateHelpers ?? $this->instanceManager->getInstance(TemplateHelpersInterface::class);
     }
 
     /**
@@ -34,7 +56,7 @@ abstract class AbstractClient extends AbstractEndpointHandler
          *
          * @see https://github.com/leoloso/PoP/issues/710
          */
-        \add_action('init', function (): void {
+        App::addAction('init', function (): void {
             if (!$this->isClientDisabled()) {
                 parent::initialize();
             }
@@ -47,5 +69,31 @@ abstract class AbstractClient extends AbstractEndpointHandler
     protected function isClientDisabled(): bool
     {
         return false;
+    }
+
+    /**
+     * If the endpoint for the client is requested,
+     * load the client's HTML code into the Response.
+     */
+    protected function executeEndpoint(): void
+    {
+        $response = App::getResponse();
+        $response->setContent($this->getClientHTML());
+        $response->headers->set('content-type', 'text/html');
+
+        /**
+         * Add a Custom Header with the GraphQL endpoint to the response.
+         *
+         * Add it always (i.e. for both PROD and DEV) so that:
+         *
+         * - DEV: Can test that enabling/disabling the client works.
+         * - PROD: Can execute the "PROD Integration Tests"
+         * - In General: it's easier to find this useful information
+         *               (the endpoint is also printed in the HTML)
+         */
+        $response->headers->set(CustomHeaders::CLIENT_ENDPOINT, $this->getEndpoint());
+
+        // Add a hook to send the Response to the client.
+        $this->getTemplateHelpers()->sendResponseToClient();
     }
 }

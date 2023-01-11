@@ -28,8 +28,9 @@ class MergeBuilder
      * Sets whether the node can be unset.
      *
      * @return $this
+     * @param bool $allow
      */
-    public function allowUnset(bool $allow = \true)
+    public function allowUnset($allow = \true)
     {
         $this->allowFalse = $allow;
         return $this;
@@ -38,16 +39,16 @@ class MergeBuilder
      * Sets whether the node can be overwritten.
      *
      * @return $this
+     * @param bool $deny
      */
-    public function denyOverwrite(bool $deny = \true)
+    public function denyOverwrite($deny = \true)
     {
         $this->allowOverwrite = !$deny;
         return $this;
     }
     /**
      * Returns the related node.
-     *
-     * @return NodeDefinition|ArrayNodeDefinition|VariableNodeDefinition
+     * @return \Symfony\Component\Config\Definition\Builder\NodeDefinition|\Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition|\Symfony\Component\Config\Definition\Builder\VariableNodeDefinition
      */
     public function end()
     {

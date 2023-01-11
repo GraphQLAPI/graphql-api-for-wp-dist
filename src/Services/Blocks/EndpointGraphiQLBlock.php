@@ -6,13 +6,31 @@ namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
 use GraphQLAPI\GraphQLAPI\Constants\BlockAttributeNames;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ClientFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\Services\BlockCategories\BlockCategoryInterface;
 use GraphQLAPI\GraphQLAPI\Services\BlockCategories\CustomEndpointBlockCategory;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\MainPluginBlockTrait;
 
 class EndpointGraphiQLBlock extends AbstractBlock implements EndpointEditorBlockServiceTagInterface
 {
     use MainPluginBlockTrait;
     use OptionsBlockTrait;
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockCategories\CustomEndpointBlockCategory|null
+     */
+    private $customEndpointBlockCategory;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockCategories\CustomEndpointBlockCategory $customEndpointBlockCategory
+     */
+    final public function setCustomEndpointBlockCategory($customEndpointBlockCategory): void
+    {
+        $this->customEndpointBlockCategory = $customEndpointBlockCategory;
+    }
+    final protected function getCustomEndpointBlockCategory(): CustomEndpointBlockCategory
+    {
+        /** @var CustomEndpointBlockCategory */
+        return $this->customEndpointBlockCategory = $this->customEndpointBlockCategory ?? $this->instanceManager->getInstance(CustomEndpointBlockCategory::class);
+    }
 
     protected function getBlockName(): string
     {
@@ -29,9 +47,9 @@ class EndpointGraphiQLBlock extends AbstractBlock implements EndpointEditorBlock
         return 140;
     }
 
-    protected function getBlockCategoryClass(): ?string
+    protected function getBlockCategory(): ?BlockCategoryInterface
     {
-        return CustomEndpointBlockCategory::class;
+        return $this->getCustomEndpointBlockCategory();
     }
 
     protected function isDynamicBlock(): bool
@@ -40,9 +58,10 @@ class EndpointGraphiQLBlock extends AbstractBlock implements EndpointEditorBlock
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         // Append "-front" because this style must be used only on the client, not on the admin
         $className = $this->getBlockClassName() . '-front';
@@ -62,10 +81,35 @@ class EndpointGraphiQLBlock extends AbstractBlock implements EndpointEditorBlock
 EOT;
         return sprintf(
             $blockContentPlaceholder,
-            $className . ' ' . $this->getAlignClass(),
+            $className . ' ' . $this->getAlignClassName(),
             $className . '__title',
             \__('GraphiQL', 'graphql-api'),
             $blockContent
         );
+    }
+
+    /**
+     * Add the locale language to the localized data?
+     */
+    protected function addLocalLanguage(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Default language for the script/component's documentation
+     */
+    protected function getDefaultLanguage(): ?string
+    {
+        // English
+        return 'en';
+    }
+
+    /**
+     * Register style-index.css
+     */
+    protected function registerCommonStyleCSS(): bool
+    {
+        return true;
     }
 }

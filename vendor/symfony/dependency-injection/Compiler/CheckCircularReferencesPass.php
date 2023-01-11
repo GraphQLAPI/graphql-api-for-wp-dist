@@ -24,12 +24,19 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceCircula
  */
 class CheckCircularReferencesPass implements CompilerPassInterface
 {
+    /**
+     * @var mixed[]
+     */
     private $currentPath;
+    /**
+     * @var mixed[]
+     */
     private $checkedNodes;
     /**
      * Checks the ContainerBuilder object for circular references.
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         $graph = $container->getCompiler()->getServiceReferenceGraph();
         $this->checkedNodes = [];

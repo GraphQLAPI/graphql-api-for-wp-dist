@@ -4,24 +4,37 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\ConditionalOnContext\GraphiQLExplorerInAdminClient\Overrides\Services\MenuPages;
 
+use GraphQLAPI\GraphQLAPI\App;
 use GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\Services\Clients\AdminGraphiQLWithExplorerClient;
-use GraphQLAPI\GraphQLAPI\PluginManagement\MainPluginManager;
 use GraphQLAPI\GraphQLAPI\Services\MenuPages\GraphiQLMenuPage as UpstreamGraphiQLMenuPage;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
+use PoPAPI\API\Schema\QueryInputs;
 
 /**
  * GraphiQL with Explorer page
  */
 class GraphiQLMenuPage extends UpstreamGraphiQLMenuPage
 {
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\Services\Clients\AdminGraphiQLWithExplorerClient|null
+     */
+    private $adminGraphiQLWithExplorerClient;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\Services\Clients\AdminGraphiQLWithExplorerClient $adminGraphiQLWithExplorerClient
+     */
+    final public function setAdminGraphiQLWithExplorerClient($adminGraphiQLWithExplorerClient): void
+    {
+        $this->adminGraphiQLWithExplorerClient = $adminGraphiQLWithExplorerClient;
+    }
+    final protected function getAdminGraphiQLWithExplorerClient(): AdminGraphiQLWithExplorerClient
+    {
+        /** @var AdminGraphiQLWithExplorerClient */
+        return $this->adminGraphiQLWithExplorerClient = $this->adminGraphiQLWithExplorerClient ?? $this->instanceManager->getInstance(AdminGraphiQLWithExplorerClient::class);
+    }
+
     protected function getGraphiQLWithExplorerClientHTML(): string
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
-        /**
-         * @var AdminGraphiQLWithExplorerClient
-         */
-        $client = $instanceManager->getInstance(AdminGraphiQLWithExplorerClient::class);
-        return $client->getClientHTML();
+        return $this->getAdminGraphiQLWithExplorerClient()->getClientHTML();
     }
 
     public function print(): void
@@ -52,11 +65,12 @@ class GraphiQLMenuPage extends UpstreamGraphiQLMenuPage
         $scriptSettings = array(
             'nonce' => \wp_create_nonce('wp_rest'),
             'response' => $this->getResponse(),
+            'requestedQuery' => $this->getRequestedQuery(),
             'queryDecodeURIComponent' => true,
         );
 
-        $mainPluginURL = (string) MainPluginManager::getConfig('url');
-        $mainPluginVersion = (string) MainPluginManager::getConfig('version');
+        $mainPluginURL = App::getMainPlugin()->getPluginURL();
+        $mainPluginVersion = App::getMainPlugin()->getPluginVersion();
 
         // Print the HTML from the Client
         $htmlContent = $this->getGraphiQLWithExplorerClientHTML();
@@ -98,6 +112,25 @@ class GraphiQLMenuPage extends UpstreamGraphiQLMenuPage
             'graphql-api-graphiql-with-explorer-0',
             'graphiQLWithExplorerClientForWP',
             $scriptSettings
+        );
+    }
+
+    /**
+     * By providing the initial query via PHP, we avoid the issue
+     * of it not properly decoded in JS (happening in the GraphiQL with Explorer
+     * only), where the newlines are removed
+     */
+    protected function getRequestedQuery(): ?string
+    {
+        $query = \PoP\Root\App::request(QueryInputs::QUERY) ?? \PoP\Root\App::query(QueryInputs::QUERY);
+        if (!$query) {
+            return null;
+        }
+        // All the '"' are encoded as '\"', replace back
+        return str_replace(
+            '\"',
+            '"',
+            $query
         );
     }
 }

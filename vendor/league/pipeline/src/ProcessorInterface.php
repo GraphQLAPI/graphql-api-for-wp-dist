@@ -11,6 +11,7 @@ interface ProcessorInterface
      * @param mixed $payload
      *
      * @return mixed
+     * @param callable ...$stages
      */
-    public function process($payload, callable ...$stages);
+    public function process($payload, ...$stages);
 }

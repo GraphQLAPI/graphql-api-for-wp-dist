@@ -14,7 +14,10 @@ abstract class AbstractSchemaConfigurationExecuterRegistry implements SchemaConf
      */
     protected $schemaConfigurationExecuters = [];
 
-    public function addSchemaConfigurationExecuter(SchemaConfigurationExecuterInterface $schemaConfigurationExecuter): void
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\SchemaConfigurationExecuters\SchemaConfigurationExecuterInterface $schemaConfigurationExecuter
+     */
+    public function addSchemaConfigurationExecuter($schemaConfigurationExecuter): void
     {
         $this->schemaConfigurationExecuters[] = $schemaConfigurationExecuter;
     }
@@ -30,11 +33,11 @@ abstract class AbstractSchemaConfigurationExecuterRegistry implements SchemaConf
      */
     public function getEnabledSchemaConfigurationExecuters(): array
     {
-        return array_filter(
+        return array_values(array_filter(
             $this->getSchemaConfigurationExecuters(),
             function (ServiceInterface $service) {
                 return $service->isServiceEnabled();
             }
-        );
+        ));
     }
 }

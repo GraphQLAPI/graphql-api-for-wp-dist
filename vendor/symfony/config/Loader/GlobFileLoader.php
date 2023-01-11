@@ -18,18 +18,19 @@ namespace PrefixedByPoP\Symfony\Component\Config\Loader;
 class GlobFileLoader extends FileLoader
 {
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @return mixed
+     * @param string|null $type
      */
     public function load($resource, $type = null)
     {
         return $this->import($resource);
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @param string|null $type
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, $type = null) : bool
     {
         return 'glob' === $type;
     }

@@ -4,40 +4,129 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\CustomPostTypes;
 
-use WP_Post;
-use WP_Block_Editor_Context;
-use GraphQLAPI\GraphQLAPI\Services\Menus\AbstractMenu;
-use PoP\ComponentModel\State\ApplicationState;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use GraphQLAPI\GraphQLAPI\Facades\UserSettingsManagerFacade;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointConfigurationFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\UserInterfaceFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
-use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\UserInterfaceFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers;
+use GraphQLAPI\GraphQLAPI\Services\Menus\MenuInterface;
 use GraphQLAPI\GraphQLAPI\Services\Menus\PluginMenu;
+use GraphQLAPI\GraphQLAPI\Services\Taxonomies\TaxonomyInterface;
+use GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface;
+use PoP\Root\App;
+use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
+use PoP\Root\Services\BasicServiceTrait;
+use WP_Block_Editor_Context;
+use WP_Post;
+use WP_Taxonomy;
+
+use function get_taxonomy;
+use function is_object_in_taxonomy;
+use function wp_dropdown_categories;
 
 abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedService implements CustomPostTypeInterface
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface|null
      */
-    protected $instanceManager;
+    private $userSettingsManager;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $moduleRegistry;
+    private $moduleRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface
+     * @var \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface|null
      */
-    protected $userAuthorization;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, UserAuthorizationInterface $userAuthorization)
+    private $userAuthorization;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils|null
+     */
+    private $cptUtils;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Menus\PluginMenu|null
+     */
+    private $pluginMenu;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers|null
+     */
+    private $endpointHelpers;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface $userSettingsManager
+     */
+    public function setUserSettingsManager($userSettingsManager): void
     {
-        $this->instanceManager = $instanceManager;
+        $this->userSettingsManager = $userSettingsManager;
+    }
+    protected function getUserSettingsManager(): UserSettingsManagerInterface
+    {
+        return $this->userSettingsManager = $this->userSettingsManager ?? UserSettingsManagerFacade::getInstance();
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
+     */
+    final public function setModuleRegistry($moduleRegistry): void
+    {
         $this->moduleRegistry = $moduleRegistry;
+    }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface $userAuthorization
+     */
+    final public function setUserAuthorization($userAuthorization): void
+    {
         $this->userAuthorization = $userAuthorization;
     }
+    final protected function getUserAuthorization(): UserAuthorizationInterface
+    {
+        /** @var UserAuthorizationInterface */
+        return $this->userAuthorization = $this->userAuthorization ?? $this->instanceManager->getInstance(UserAuthorizationInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils $cptUtils
+     */
+    final public function setCPTUtils($cptUtils): void
+    {
+        $this->cptUtils = $cptUtils;
+    }
+    final protected function getCPTUtils(): CPTUtils
+    {
+        /** @var CPTUtils */
+        return $this->cptUtils = $this->cptUtils ?? $this->instanceManager->getInstance(CPTUtils::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Menus\PluginMenu $pluginMenu
+     */
+    final public function setPluginMenu($pluginMenu): void
+    {
+        $this->pluginMenu = $pluginMenu;
+    }
+    final protected function getPluginMenu(): PluginMenu
+    {
+        /** @var PluginMenu */
+        return $this->pluginMenu = $this->pluginMenu ?? $this->instanceManager->getInstance(PluginMenu::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers $endpointHelpers
+     */
+    final public function setEndpointHelpers($endpointHelpers): void
+    {
+        $this->endpointHelpers = $endpointHelpers;
+    }
+    final protected function getEndpointHelpers(): EndpointHelpers
+    {
+        /** @var EndpointHelpers */
+        return $this->endpointHelpers = $this->endpointHelpers ?? $this->instanceManager->getInstance(EndpointHelpers::class);
+    }
+
     /**
      * Add the hook to initialize the different post types
      */
@@ -48,12 +137,12 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
         // earlier or later
         \add_action(
             'init',
-            [$this, 'initCustomPostType'],
+            \Closure::fromCallable([$this, 'initCustomPostType']),
             $this->getMenuPosition()
         );
         \add_action(
             'init',
-            [$this, 'maybeLockGutenbergTemplate']
+            \Closure::fromCallable([$this, 'maybeLockGutenbergTemplate'])
         );
         /**
          * Starting from WP 5.8 the hook is a different one
@@ -63,18 +152,25 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
         if (\is_wp_version_compatible('5.8')) {
             \add_filter(
                 'allowed_block_types_all',
-                [$this, 'allowGutenbergBlocksForCustomPostTypeViaBlockEditorContext'],
+                \Closure::fromCallable([$this, 'allowGutenbergBlocksForCustomPostTypeViaBlockEditorContext']),
                 10,
                 2
             );
         } else {
             \add_filter(
                 'allowed_block_types',
-                [$this, 'allowGutenbergBlocksForCustomPostType'],
+                \Closure::fromCallable([$this, 'allowGutenbergBlocksForCustomPostType']),
                 10,
                 2
             );
         }
+        /**
+         * Print the global JS variables, required by the blocks
+         */
+        \add_action(
+            'admin_print_scripts',
+            \Closure::fromCallable([$this, 'printAdminGraphQLEndpointVariables'])
+        );
 
         /**
          * Add the excerpt, which is the description of the
@@ -84,17 +180,23 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
             // Execute last as to always add the description at the top
             \add_filter(
                 'the_content',
-                [$this, 'maybeAddExcerptAsDescription'],
+                \Closure::fromCallable([$this, 'maybeAddExcerptAsDescription']),
                 PHP_INT_MAX
             );
             // Add the custom columns to the post type
             add_filter(
                 "manage_{$postType}_posts_columns",
-                [$this, 'setTableColumns']
+                \Closure::fromCallable([$this, 'setTableColumns'])
             );
             add_action(
                 "manage_{$postType}_posts_custom_column",
-                [$this, 'resolveCustomColumn'],
+                \Closure::fromCallable([$this, 'resolveCustomColumn']),
+                10,
+                2
+            );
+            add_action(
+                "restrict_manage_posts",
+                \Closure::fromCallable([$this, 'restrictManageCustomPosts']),
                 10,
                 2
             );
@@ -106,13 +208,13 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
          */
         \add_filter(
             'post_row_actions',
-            [$this, 'maybeAddCustomPostTypeTableActions'],
+            \Closure::fromCallable([$this, 'maybeAddCustomPostTypeTableActions']),
             10,
             2
         );
         \add_filter(
             'page_row_actions',
-            [$this, 'maybeAddCustomPostTypeTableActions'],
+            \Closure::fromCallable([$this, 'maybeAddCustomPostTypeTableActions']),
             10,
             2
         );
@@ -134,15 +236,56 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
             \add_action(
                 "save_post_{$postType}",
                 function ($postID, $post): void {
-                    if ($post->post_status != 'auto-draft') {
-                        $userSettingsManager = UserSettingsManagerFacade::getInstance();
-                        $userSettingsManager->storeTimestamp();
+                    if ($post->post_status == 'auto-draft') {
+                        return;
                     }
+                    $this->getUserSettingsManager()->storeOperationalTimestamp();
                 },
                 10,
                 2
             );
         }
+    }
+
+    /**
+     * Print JS variables which are used by several blocks,
+     * before the blocks are loaded
+     */
+    public function printAdminGraphQLEndpointVariables(): void
+    {
+        // Make sure the user has access to the editor
+        if (!$this->getUserAuthorization()->canAccessSchemaEditor()) {
+            return;
+        }
+
+        $scriptTag = '<script type="text/javascript">var %s = "%s"</script>';
+        /**
+         * The endpoint against which to execute GraphQL queries on the admin.
+         * This GraphQL schema is modified by user preferences:
+         * - Disabled types/directives are not in the schema
+         * - Nested mutations enabled or not
+         * - Schema namespaced or not
+         * - etc
+         */
+        \printf(
+            $scriptTag,
+            'GRAPHQL_API_ADMIN_CONFIGURABLESCHEMA_ENDPOINT',
+            $this->getEndpointHelpers()->getAdminConfigurableSchemaGraphQLEndpoint()
+        );
+        /**
+         * The endpoint against which to execute GraphQL queries on the WordPress editor,
+         * for Gutenberg blocks which require some field that must necessarily be enabled.
+         * This GraphQL schema is not modified by user preferences:
+         * - All types/directives are always in the schema
+         * - The "admin" fields are in the schema
+         * - Nested mutations enabled, without removing the redundant fields in the Root
+         * - No namespacing
+         */
+        \printf(
+            $scriptTag,
+            'GRAPHQL_API_ADMIN_FIXEDSCHEMA_ENDPOINT',
+            $this->getEndpointHelpers()->getAdminFixedSchemaGraphQLEndpoint()
+        );
     }
 
     public function getEnablingModule(): ?string
@@ -157,7 +300,7 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     {
         $enablingModule = $this->getEnablingModule();
         if ($enablingModule !== null) {
-            return $this->moduleRegistry->isModuleEnabled($enablingModule);
+            return $this->getModuleRegistry()->isModuleEnabled($enablingModule);
         }
         return parent::isServiceEnabled();
     }
@@ -172,10 +315,10 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     }
 
     /**
-     * @param array<string, string> $columns
-     * @return array<string, string>
+     * @param array<string,string> $columns
+     * @return array<string,string>
      */
-    public function setTableColumns(array $columns): array
+    public function setTableColumns($columns): array
     {
         // Add the description column after the title
         $titlePos = array_search('title', array_keys($columns));
@@ -199,7 +342,11 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     }
 
     // Add the data to the custom columns for the book post type:
-    public function resolveCustomColumn(string $column, int $post_id): void
+    /**
+     * @param string $column
+     * @param int $post_id
+     */
+    public function resolveCustomColumn($column, $post_id): void
     {
         switch ($column) {
             case 'description':
@@ -208,11 +355,82 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
                  */
                 $post = \get_post($post_id);
                 if (!is_null($post)) {
-                    /** @var CPTUtils */
-                    $cptUtils = $this->instanceManager->getInstance(CPTUtils::class);
-                    echo $cptUtils->getCustomPostDescription($post);
+                    echo $this->getCPTUtils()->getCustomPostDescription($post);
                 }
                 break;
+        }
+    }
+
+    /**
+     * Filter by taxonomies
+     *
+     * @see wp-admin/includes/class-wp-posts-list-table.php
+     * @param string $customPostType
+     * @param string $which
+     */
+    public function restrictManageCustomPosts($customPostType, $which): void
+    {
+        if ($customPostType !== $this->getCustomPostType()) {
+            return;
+        }
+        if ($which !== 'top') {
+            return;
+        }
+        $taxonomies = $this->getTaxonomies();
+        if ($taxonomies === []) {
+            return;
+        }
+        foreach ($taxonomies as $taxonomy) {
+            // Skip tags, only categories
+            if (!$taxonomy->isHierarchical()) {
+                continue;
+            }
+            $this->printTaxonomyDropdowns($taxonomy);
+        }
+    }
+
+    /**
+     * Based on function `categories_dropdown`
+     *
+     * @see function `categories_dropdown` in wp-admin/includes/class-wp-posts-list-table.php
+     * @param \GraphQLAPI\GraphQLAPI\Services\Taxonomies\TaxonomyInterface $taxonomy
+     */
+    protected function printTaxonomyDropdowns($taxonomy): void
+    {
+        // global $cat;
+        $post_type = $this->getCustomPostType();
+
+        /**
+         * Filters whether to remove the 'Categories' drop-down from the post list table.
+         *
+         * @since 4.6.0
+         *
+         * @param bool   $disable   Whether to disable the categories drop-down. Default false.
+         * @param string $post_type Post type slug.
+         */
+        if (false !== apply_filters('disable_categories_dropdown', false, $post_type)) {
+            return;
+        }
+
+        $taxonomyName = $taxonomy->getTaxonomy();
+        if (is_object_in_taxonomy($post_type, $taxonomyName)) {
+            /** @var WP_Taxonomy */
+            $taxonomyObject = get_taxonomy($taxonomyName);
+            $dropdown_options = array(
+                'show_option_all' => $taxonomyObject->labels->all_items,
+                'hide_empty'      => 0,
+                'hierarchical'    => 1,
+                'show_count'      => 0,
+                'orderby'         => 'name',
+                // 'selected'        => $cat,
+                'taxonomy'        => $taxonomyName,
+                'name'            => $taxonomyName,
+                'value_field'     => 'slug',
+            );
+
+            echo '<label class="screen-reader-text" for="' . $taxonomyName . '">' . $taxonomyObject->labels->filter_by_item . '</label>';
+
+            wp_dropdown_categories($dropdown_options);
         }
     }
 
@@ -220,13 +438,13 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
      * Add extra actions to the Custom Post Type list
      *
      * @see https://developer.wordpress.org/reference/hooks/post_row_actions/
-     * @param array<string, string> $actions
-     * @param WP_Post $post
-     * @return array<string, string>
+     * @param array<string,string> $actions
+     * @return array<string,string>
+     * @param \WP_Post $post
      */
-    public function maybeAddCustomPostTypeTableActions(array $actions, $post): array
+    public function maybeAddCustomPostTypeTableActions($actions, $post): array
     {
-        if ($post->post_type == $this->getCustomPostType()) {
+        if ($post->post_type === $this->getCustomPostType()) {
             $actions = \array_merge(
                 $actions,
                 $this->getCustomPostTypeTableActions($post)
@@ -238,8 +456,8 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     /**
      * Get actions to add for this CPT
      *
-     * @param WP_Post $post
-     * @return array<string, string>
+     * @return array<string,string>
+     * @param \WP_Post $post
      */
     protected function getCustomPostTypeTableActions($post): array
     {
@@ -257,7 +475,7 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     /**
      * Block align class
      */
-    public function getAlignClass(): string
+    public function getAlignClassName(): string
     {
         return 'aligncenter';
     }
@@ -265,29 +483,27 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     /**
      * Render the excerpt as the description for the current CPT
      * Can enable/disable through environment variable
+     * @param string $content
      */
-    public function maybeAddExcerptAsDescription(string $content): string
+    public function maybeAddExcerptAsDescription($content): string
     {
         /**
          * Check if it is enabled and it is this CPT...
          */
         if (
-            $this->userAuthorization->canAccessSchemaEditor()
+            $this->getUserAuthorization()->canAccessSchemaEditor()
             && \is_singular($this->getCustomPostType())
         ) {
             /**
              * Add the excerpt (if not empty) as description of the GraphQL query
              */
-            $vars = ApplicationState::getVars();
-            $customPost = $vars['routing-state']['queried-object'];
+            $customPost = App::getState(['routing', 'queried-object']);
             // Make sure there is a post (eg: it has not been deleted)
             if ($customPost !== null) {
-                /** @var CPTUtils */
-                $cptUtils = $this->instanceManager->getInstance(CPTUtils::class);
-                if ($excerpt = $cptUtils->getCustomPostDescription($customPost)) {
+                if ($excerpt = $this->getCPTUtils()->getCustomPostDescription($customPost)) {
                     $content = \sprintf(
                         \__('<p class="%s"><strong>Description: </strong>%s</p>'),
-                        $this->getAlignClass(),
+                        $this->getAlignClassName(),
                         $excerpt
                     ) . $content;
                 }
@@ -300,6 +516,7 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
      * Custom Post Type singular name
      */
     abstract protected function getCustomPostTypeName(): string;
+
     /**
      * Custom Post Type under which it will be registered
      * From documentation: Max. 20 characters and may only contain lowercase alphanumeric characters,
@@ -313,12 +530,12 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     /**
      * Custom Post Type plural name
      *
-     * @param bool $uppercase Indicate if the name must be uppercase (for starting a sentence) or, otherwise, lowercase
+     * @param bool $titleCase Indicate if the name must be title case (for starting a sentence) or, otherwise, lowercase
      */
-    protected function getCustomPostTypePluralNames(bool $uppercase): string
+    protected function getCustomPostTypePluralNames($titleCase): string
     {
         $postTypeName = $this->getCustomPostTypeName();
-        if ($uppercase) {
+        if ($titleCase) {
             return $postTypeName;
         }
         return strtolower($postTypeName);
@@ -340,7 +557,7 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
      */
     protected function isExcerptAsDescriptionEnabled(): bool
     {
-        return $this->moduleRegistry->isModuleEnabled(UserInterfaceFunctionalityModuleResolver::EXCERPT_AS_DESCRIPTION);
+        return $this->getModuleRegistry()->isModuleEnabled(UserInterfaceFunctionalityModuleResolver::EXCERPT_AS_DESCRIPTION);
     }
 
     /**
@@ -348,7 +565,7 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
      */
     protected function isAPIHierarchyModuleEnabled(): bool
     {
-        return $this->moduleRegistry->isModuleEnabled(EndpointFunctionalityModuleResolver::API_HIERARCHY);
+        return $this->getModuleRegistry()->isModuleEnabled(EndpointConfigurationFunctionalityModuleResolver::API_HIERARCHY);
     }
 
     /**
@@ -387,24 +604,30 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     /**
      * Arguments for registering the post type
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getCustomPostTypeArgs(): array
     {
         $name_uc = $this->getCustomPostTypeName();
         $names_uc = $this->getCustomPostTypePluralNames(true);
         $names_lc = $this->getCustomPostTypePluralNames(false);
-        // Configuration CPTs are to configure data, and not to be directly accessible by themselves
-        // Then, do not make them public, but still allow to access them
-        // This way, executing query `{ posts(postTypes:["graphql-acl"]) }` will fail,
-        // and we execute instead `{ accessControlLists }` which can be @validated
+        /**
+         * Configuration CPTs are to configure data,
+         * and not to be directly accessible by themselves.
+         *
+         * Then, do not make them public, but still allow to access them.
+         *
+         * This way, executing query `{ posts(postTypes:["graphql-schemaconfig"]) }`
+         * will fail, and we execute instead `{ schemaConfigurations }`
+         * which can be @validated
+         */
         $securityPostTypeArgs = array(
             'public' => $this->isPublic(),
             'show_in_nav_menus' => true,
             'show_ui' => true,
             'publicly_queryable' => true,
         );
-        $canAccessSchemaEditor = $this->userAuthorization->canAccessSchemaEditor();
+        $canAccessSchemaEditor = $this->getUserAuthorization()->canAccessSchemaEditor();
         /** @var array<string,mixed> */
         $postTypeArgs = array_merge(
             $securityPostTypeArgs,
@@ -430,7 +653,12 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
             $postTypeArgs['rewrite'] = ['slug' => $slugBase];
         }
         if ($taxonomies = $this->getTaxonomies()) {
-            $postTypeArgs['taxonomies'] = $taxonomies;
+            $postTypeArgs['taxonomies'] = array_map(
+                function (TaxonomyInterface $taxonomy) {
+                    return $taxonomy->getTaxonomy();
+                },
+                $taxonomies
+            );
         }
         if ($this->isAPIHierarchyModuleEnabled() && $this->isHierarchical()) {
             $postTypeArgs['supports'][] = 'page-attributes';
@@ -444,16 +672,9 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
         return $postTypeArgs;
     }
 
-    public function getMenuClass(): string
+    public function getMenu(): MenuInterface
     {
-        return PluginMenu::class;
-    }
-
-    protected function getMenu(): AbstractMenu
-    {
-        $menuClass = $this->getMenuClass();
-        /** @var AbstractMenu */
-        return $this->instanceManager->getInstance($menuClass);
+        return $this->getPluginMenu();
     }
 
     /**
@@ -462,9 +683,9 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
      * @param string $name_uc Singular name uppercase
      * @param string $names_uc Plural name uppercase
      * @param string $names_lc Plural name lowercase
-     * @return array<string, string>
+     * @return array<string,string>
      */
-    protected function getCustomPostTypeLabels(string $name_uc, string $names_uc, string $names_lc): array
+    protected function getCustomPostTypeLabels($name_uc, $names_uc, $names_lc): array
     {
         return array(
             'name'               => $names_uc,
@@ -509,7 +730,7 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     /**
      * Taxonomies
      *
-     * @return string[]
+     * @return TaxonomyInterface[]
      */
     protected function getTaxonomies(): array
     {
@@ -535,10 +756,14 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
      * Restrict the Gutenberg blocks available for this Custom Post Type
      *
      * @param string[]|bool $allowedBlocks The list of blocks, or `true` for all of them
-     * @return mixed[]|bool The list of blocks, or `true` for all of them
+     * @return string[]|bool The list of blocks, or `true` for all of them
+     * @param \WP_Block_Editor_Context $blockEditorContext
      */
-    public function allowGutenbergBlocksForCustomPostTypeViaBlockEditorContext($allowedBlocks, WP_Block_Editor_Context $blockEditorContext)
+    public function allowGutenbergBlocksForCustomPostTypeViaBlockEditorContext($allowedBlocks, $blockEditorContext)
     {
+        if ($blockEditorContext->post === null) {
+            return $allowedBlocks;
+        }
         return $this->allowGutenbergBlocksForCustomPostType(
             $allowedBlocks,
             $blockEditorContext->post
@@ -549,70 +774,21 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
      * Restrict the Gutenberg blocks available for this Custom Post Type
      *
      * @param string[]|bool $allowedBlocks The list of blocks, or `true` for all of them
-     * @return mixed[]|bool The list of blocks, or `true` for all of them
+     * @return string[]|bool The list of blocks, or `true` for all of them
+     * @param \WP_Post $post
      */
-    public function allowGutenbergBlocksForCustomPostType($allowedBlocks, WP_Post $post)
+    public function allowGutenbergBlocksForCustomPostType($allowedBlocks, $post)
     {
         /**
          * Check if it is this CPT
          */
-        if ($post->post_type == $this->getCustomPostType()) {
+        if ($post->post_type === $this->getCustomPostType()) {
             if ($blocks = $this->getGutenbergBlocksForCustomPostType()) {
                 return $blocks;
             }
         }
         return $allowedBlocks;
     }
-
-    /**
-     * Comment: this function below to remove block types doesn't work,
-     * because some of the most basic ones, such as "core/paragraph",
-     * are never registered using `register_block_types`, then they can't be obtained
-     * from `\WP_Block_Type_Registry::get_instance()->get_all_registered()`,
-     * and this information exists nowhere.
-     *
-     * As a consequence, I am currently disabling blocks by assigning them a category
-     * (Eg: "Access Control for GraphiQL") which is not registered for other CPTs
-     * Unluckily, this produces an error on JavaScript:
-     * > The block "graphql-api/access-control" must have a registered category.
-     * > The block "graphql-api/access-control-disable-access" must have a registered category.
-     * > ...
-     *
-     * But at least it works
-     */
-    // /**
-    //  * Restrict the Gutenberg blocks available for this Custom Post Type
-    //  */
-    // public function allowGutenbergBlocksForCustomPostType($allowedBlocks, $post)
-    // {
-    //     if ($blocks = $this->getGutenbergBlocksForCustomPostType()) {
-    //         /**
-    //          * Check if it is this CPT
-    //          */
-    //         if ($post->post_type == $this->getCustomPostType()) {
-    //             return $blocks;
-    //         } elseif ($this->removeGutenbergBlocksForOtherPostTypes($post)) {
-    //             // Remove this CPT's blocks from other post types.
-    //             // $allowedBlocks can be a boolean. In that case, retrieve all blocks types, and substract the blocks
-    //             if (!is_array($allowedBlocks)) {
-    //                 $blockTypes = \WP_Block_Type_Registry::get_instance()->get_all_registered();
-    //                 $allowedBlocks = array_keys($blockTypes);
-    //             }
-    //             $allowedBlocks = array_values(array_diff(
-    //                 $allowedBlocks,
-    //                 $blocks
-    //             ));
-    //         }
-    //     }
-    //     return $allowedBlocks;
-    // }
-    // /**
-    //  * Indicate if to not allow this CPT's blocks in other Custom Post Types
-    //  */
-    // protected function removeGutenbergBlocksForOtherPostTypes($post): bool
-    // {
-    //     return true;
-    // }
 
     /**
      * By default, if providing a template, then restrict the CPT to the blocks involved in the template
@@ -651,7 +827,7 @@ abstract class AbstractCustomPostType extends AbstractAutomaticallyInstantiatedS
     /**
      * Gutenberg templates to lock down the Custom Post Type to
      *
-     * @return array<array> Every element is an array with template name in first pos, and attributes then
+     * @return array<string[]> Every element is an array with template name in first pos, and attributes then
      */
     protected function getGutenbergTemplate(): array
     {

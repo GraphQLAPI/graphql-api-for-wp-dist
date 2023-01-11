@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\MainPluginBlockTrait;
 
 class SchemaConfigNamespacingBlock extends AbstractDefaultEnableDisableFunctionalitySchemaConfigBlock
 {
@@ -18,7 +17,7 @@ class SchemaConfigNamespacingBlock extends AbstractDefaultEnableDisableFunctiona
 
     public function getBlockPriority(): int
     {
-        return 110;
+        return 10110;
     }
 
     public function getEnablingModule(): ?string
@@ -34,5 +33,30 @@ class SchemaConfigNamespacingBlock extends AbstractDefaultEnableDisableFunctiona
     protected function getBlockTitle(): string
     {
         return \__('Namespacing', 'graphql-api');
+    }
+
+    /**
+     * Add the locale language to the localized data?
+     */
+    protected function addLocalLanguage(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Default language for the script/component's documentation
+     */
+    protected function getDefaultLanguage(): ?string
+    {
+        // English
+        return 'en';
+    }
+
+    /**
+     * Register style-index.css
+     */
+    protected function registerCommonStyleCSS(): bool
+    {
+        return true;
     }
 }

@@ -17,7 +17,7 @@ if (\PHP_VERSION_ID >= 70300) {
 if (!\function_exists('is_countable')) {
     function is_countable($value)
     {
-        return \is_array($value) || $value instanceof \Countable || $value instanceof \ResourceBundle || $value instanceof SimpleXmlElement;
+        return \is_array($value) || $value instanceof \Countable || $value instanceof \ResourceBundle || $value instanceof \SimpleXmlElement;
     }
 }
 if (!\function_exists('hrtime')) {

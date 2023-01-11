@@ -1,0 +1,394 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PoPCMSSchema\CommentsWP\TypeAPIs;
+
+use PoP\Root\App;
+use PoP\Root\Services\BasicServiceTrait;
+use PoPCMSSchema\Comments\Constants\CommentOrderBy;
+use PoPCMSSchema\Comments\Constants\CommentStatus;
+use PoPCMSSchema\Comments\Constants\CommentTypes;
+use PoPCMSSchema\Comments\TypeAPIs\CommentTypeAPIInterface;
+use PoPCMSSchema\SchemaCommons\DataLoading\ReturnTypes;
+use PoPSchema\SchemaCommons\Constants\QueryOptions;
+use WP_Comment;
+use WP_Post;
+
+use function comments_open;
+use function esc_sql;
+use function get_comment;
+use function get_comments_number;
+use function get_comments;
+use function post_type_supports;
+
+/**
+ * Methods to interact with the Type, to be implemented by the underlying CMS
+ */
+class CommentTypeAPI implements CommentTypeAPIInterface
+{
+    use BasicServiceTrait;
+
+    public const HOOK_QUERY = __CLASS__ . ':query';
+    public const HOOK_ORDERBY_QUERY_ARG_VALUE = __CLASS__ . ':orderby-query-arg-value';
+
+    /**
+     * Indicates if the passed object is of type Comment
+     * @param object $object
+     */
+    public function isInstanceOfCommentType($object): bool
+    {
+        return $object instanceof WP_Comment;
+    }
+
+    /**
+     * @return array<string|int>|object[]
+     * @param array<string,mixed> $query
+     * @param array<string,mixed> $options
+     */
+    public function getComments($query, $options = []): array
+    {
+        $query = $this->convertCommentsQuery($query, $options);
+        return (array) get_comments($query);
+    }
+
+    /**
+     * @return array<string,mixed>
+     * @param array<string,mixed> $query
+     * @param array<string,mixed> $options
+     */
+    protected function convertCommentsQuery($query, $options): array
+    {
+        if (($options[QueryOptions::RETURN_TYPE] ?? null) === ReturnTypes::IDS) {
+            $query['fields'] = 'ids';
+        }
+
+        // Convert the parameters
+        if (isset($query['status'])) {
+            // This can be both an array and a single value
+            // Same name => do nothing
+        } else {
+            // Because the "status" input is sensitive it may not be present, then default to only published content
+            $query['status'] = 'approve';
+        }
+        if (isset($query['types'])) {
+            $query['type__in'] = $query['types'];
+            unset($query['types']);
+        }
+        if (!isset($query['type']) && !isset($query['type__in'])) {
+            // Only comments, no trackbacks or pingbacks
+            $query['type'] = CommentTypes::COMMENT;
+        }
+        if (isset($query['include'])) {
+            // It can be an array or a string
+            $query['comment__in'] = is_array($query['include']) ? $query['include'] : [$query['include']];
+            unset($query['include']);
+        }
+        if (isset($query['exclude-ids'])) {
+            $query['comment__not_in'] = $query['exclude-ids'];
+            unset($query['exclude-ids']);
+        }
+        if (isset($query['customPostID'])) {
+            $query['post_id'] = $query['customPostID'];
+            unset($query['customPostID']);
+        }
+        if (isset($query['customPostIDs'])) {
+            $query['post__in'] = $query['customPostIDs'];
+            unset($query['customPostIDs']);
+        }
+        if (isset($query['exclude-customPostIDs'])) {
+            $query['post__not_in'] = $query['customPostIDs'];
+            unset($query['customPostIDs']);
+        }
+        if (isset($query['custompost-types'])) {
+            $query['post_type'] = $query['custompost-types'];
+            unset($query['custompost-types']);
+        }
+        if (isset($query['custompost-status'])) {
+            $query['post_status'] = $query['custompost-status'];
+            unset($query['custompost-status']);
+        } else {
+            /**
+             * Because the "status" input is sensitive it may not be present,
+             * then default to only published content and comments on media
+             * items (hence "inherit")
+             */
+            $query['post_status'] = 'publish,inherit';
+        }
+        // Comment parent ID
+        // Pass "0" to retrieve 1st layer of comments added to the post
+        if (isset($query['parent-id'])) {
+            $query['parent'] = $query['parent-id'];
+            unset($query['parent-id']);
+        }
+        if (isset($query['parent-ids'])) {
+            $query['parent__in'] = $query['parent-ids'];
+            unset($query['parent-ids']);
+        }
+        if (isset($query['exclude-parent-ids'])) {
+            $query['parent__not_in'] = $query['exclude-parent-ids'];
+            unset($query['exclude-parent-ids']);
+        }
+
+        if (isset($query['order'])) {
+            $query['order'] = esc_sql($query['order']);
+        }
+        if (isset($query['orderby'])) {
+            // Maybe replace the provided value
+            $query['orderby'] = esc_sql($this->getOrderByQueryArgValue($query['orderby']));
+        }
+        // For the comments, if there's no limit then it brings all results
+        if (isset($query['limit'])) {
+            $limit = (int) $query['limit'];
+            // To bring all results, must use "number => 0" instead of -1
+            $query['number'] = ($limit == -1) ? 0 : $limit;
+            unset($query['limit']);
+        }
+        if (isset($query['search'])) {
+            // Same param name, so do nothing
+        }
+        // Filtering by date: Instead of operating on the query, it does it through filter 'posts_where'
+        if (isset($query['date-from'])) {
+            $query['date_query'][] = [
+                'after' => $query['date-from'],
+                'inclusive' => false,
+            ];
+            unset($query['date-from']);
+        }
+        if (isset($query['date-to'])) {
+            $query['date_query'][] = [
+                'before' => $query['date-to'],
+                'inclusive' => false,
+            ];
+            unset($query['date-to']);
+        }
+
+        $query = App::applyFilters(
+            self::HOOK_QUERY,
+            $query,
+            $options
+        );
+        return $query;
+    }
+
+    /**
+     * @param array<string,mixed> $query
+     * @param array<string,mixed> $options
+     */
+    public function getCommentCount($query, $options = []): int
+    {
+        $query = $this->convertCommentsQuery($query, $options);
+        $query['number'] = 0;
+        unset($query['offset']);
+        $query['count'] = true;
+        /** @var int */
+        $count = get_comments($query);
+        return $count;
+    }
+
+    /**
+     * @param string|int $comment_id
+     */
+    public function getComment($comment_id)
+    {
+        return get_comment($comment_id);
+    }
+
+    /**
+     * @param string|int $post_id
+     */
+    public function getCommentNumber($post_id): int
+    {
+        return (int) get_comments_number((int) $post_id);
+    }
+
+    /**
+     * @param string|int|object $customPostObjectOrID
+     */
+    public function areCommentsOpen($customPostObjectOrID): bool
+    {
+        if (is_object($customPostObjectOrID)) {
+            /** @var WP_Post */
+            $customPost = $customPostObjectOrID;
+            $customPostID = $customPost->ID;
+        } else {
+            $customPostID = (int)$customPostObjectOrID;
+        }
+        return comments_open($customPostID);
+    }
+
+    /**
+     * @param string $orderBy
+     */
+    protected function getOrderByQueryArgValue($orderBy): string
+    {
+        switch ($orderBy) {
+            case CommentOrderBy::ID:
+                $orderBy = 'comment_ID';
+                break;
+            case CommentOrderBy::DATE:
+                $orderBy = 'comment_date_gmt';
+                break;
+            case CommentOrderBy::CONTENT:
+                $orderBy = 'comment_content';
+                break;
+            case CommentOrderBy::PARENT:
+                $orderBy = 'comment_parent';
+                break;
+            case CommentOrderBy::CUSTOM_POST:
+                $orderBy = 'comment_post_ID';
+                break;
+            case CommentOrderBy::TYPE:
+                $orderBy = 'comment_type';
+                break;
+            case CommentOrderBy::STATUS:
+                $orderBy = 'comment_approved';
+                break;
+            default:
+                $orderBy = $orderBy;
+                break;
+        }
+        return App::applyFilters(
+            self::HOOK_ORDERBY_QUERY_ARG_VALUE,
+            $orderBy
+        );
+    }
+
+    /**
+     * @param object $comment
+     */
+    public function getCommentContent($comment): string
+    {
+        /** @var WP_Comment $comment */
+        return App::applyFilters(
+            'comment_text',
+            $comment->comment_content
+        );
+    }
+    /**
+     * @param object $comment
+     */
+    public function getCommentRawContent($comment): string
+    {
+        /** @var WP_Comment $comment */
+        // Do not allow HTML tags
+        return strip_tags($comment->comment_content);
+    }
+    /**
+     * @return string|int
+     * @param object $comment
+     */
+    public function getCommentPostID($comment)
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        return (int)$comment->comment_post_ID;
+    }
+    /**
+     * @param object $comment
+     */
+    public function isCommentApproved($comment): bool
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        return $comment->comment_approved == "1";
+    }
+    /**
+     * @param object $comment
+     */
+    public function getCommentType($comment): string
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        return $comment->comment_type;
+    }
+    /**
+     * @param object $comment
+     */
+    public function getCommentStatus($comment): string
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        if ($comment->comment_approved == "1") {
+            return CommentStatus::APPROVE;
+        } elseif ($comment->comment_approved == "spam") {
+            return CommentStatus::SPAM;
+        } elseif ($comment->comment_approved == "trash") {
+            return CommentStatus::TRASH;
+        };
+        return CommentStatus::HOLD;
+    }
+    /**
+     * @return string|int|null
+     * @param object $comment
+     */
+    public function getCommentParent($comment)
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        // If it has no parent, it is assigned 0. In that case, return null
+        if ($parent = $comment->comment_parent) {
+            return (int)$parent;
+        }
+        return null;
+    }
+    /**
+     * @param object $comment
+     * @param bool $gmt
+     */
+    public function getCommentDate($comment, $gmt = false): string
+    {
+        /** @var WP_Comment $comment*/
+        return $gmt ? $comment->comment_date_gmt : $comment->comment_date;
+    }
+    /**
+     * @return string|int
+     * @param object $comment
+     */
+    public function getCommentID($comment)
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        return (int)$comment->comment_ID;
+    }
+    /**
+     * @param object $comment
+     */
+    public function getCommentAuthorName($comment): string
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        return $comment->comment_author;
+    }
+    /**
+     * @param object $comment
+     */
+    public function getCommentAuthorEmail($comment): string
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        return $comment->comment_author_email;
+    }
+    /**
+     * @param object $comment
+     */
+    public function getCommentAuthorURL($comment): ?string
+    {
+        /** @var WP_Comment */
+        $comment = $comment;
+        $authorURL = $comment->comment_author_url;
+        if (empty($authorURL)) {
+            return null;
+        }
+        return $authorURL;
+    }
+
+    /**
+     * @see https://developer.wordpress.org/reference/functions/post_type_supports/
+     * @param string $customPostType
+     */
+    public function doesCustomPostTypeSupportComments($customPostType): bool
+    {
+        return post_type_supports($customPostType, 'comments');
+    }
+}

@@ -32,8 +32,9 @@ class CheckDefinitionValidityPass implements CompilerPassInterface
      * Processes the ContainerBuilder to validate the Definition.
      *
      * @throws RuntimeException When the Definition is invalid
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         foreach ($container->getDefinitions() as $id => $definition) {
             // synthetic service is public
@@ -46,7 +47,7 @@ class CheckDefinitionValidityPass implements CompilerPassInterface
                     throw new RuntimeException(\sprintf('Please add the class to service "%s" even if it is constructed by a factory since we might need to add method calls based on compile-time checks.', $id));
                 }
                 if (\class_exists($id) || \interface_exists($id, \false)) {
-                    if (0 === \strpos($id, '\\') && 1 < \substr_count($id, '\\')) {
+                    if (\strncmp($id, '\\', \strlen('\\')) === 0 && 1 < \substr_count($id, '\\')) {
                         throw new RuntimeException(\sprintf('The definition for "%s" has no class attribute, and appears to reference a class or interface. Please specify the class attribute explicitly or remove the leading backslash by renaming the service to "%s" to get rid of this error.', $id, \substr($id, 1)));
                     }
                     throw new RuntimeException(\sprintf('The definition for "%s" has no class attribute, and appears to reference a class or interface in the global namespace. Leaving out the "class" attribute is only allowed for namespaced classes. Please specify the class attribute explicitly to get rid of this error.', $id));

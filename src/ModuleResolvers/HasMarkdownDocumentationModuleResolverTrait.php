@@ -13,30 +13,34 @@ trait HasMarkdownDocumentationModuleResolverTrait
 
     /**
      * The module slug
+     * @param string $module
      */
-    abstract public function getSlug(string $module): string;
+    abstract public function getSlug($module): string;
 
     /**
      * The name of the Markdown filename.
      * By default, it's the same as the slug
+     * @param string $module
      */
-    public function getMarkdownFilename(string $module): ?string
+    final public function getMarkdownFilename($module): ?string
     {
-        return $this->getSlug($module) . '.md';
+        return $this->getSlug($module);
     }
 
     /**
      * Does the module have HTML Documentation?
+     * @param string $module
      */
-    public function hasDocumentation(string $module): bool
+    public function hasDocumentation($module): bool
     {
         return !empty($this->getMarkdownFilename($module));
     }
 
     /**
      * HTML Documentation for the module
+     * @param string $module
      */
-    public function getDocumentation(string $module): ?string
+    public function getDocumentation($module): ?string
     {
         if ($markdownFilename = $this->getMarkdownFilename($module)) {
             return $this->getMarkdownContent(

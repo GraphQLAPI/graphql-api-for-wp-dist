@@ -17,18 +17,33 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeExcepti
  */
 class EnvPlaceholderParameterBag extends ParameterBag
 {
+    /**
+     * @var string
+     */
     private $envPlaceholderUniquePrefix;
+    /**
+     * @var mixed[]
+     */
     private $envPlaceholders = [];
+    /**
+     * @var mixed[]
+     */
     private $unusedEnvPlaceholders = [];
+    /**
+     * @var mixed[]
+     */
     private $providedTypes = [];
+    /**
+     * @var int
+     */
     private static $counter = 0;
     /**
-     * {@inheritdoc}
+     * @return mixed[]|bool|string|int|float|\UnitEnum|null
      * @param string $name
      */
     public function get($name)
     {
-        if (0 === \strpos($name, 'env(') && ')' === \substr($name, -1) && 'env()' !== $name) {
+        if (\strncmp($name, 'env(', \strlen('env(')) === 0 && \substr_compare($name, ')', -\strlen(')')) === 0 && 'env()' !== $name) {
             $env = \substr($name, 4, -1);
             if (isset($this->envPlaceholders[$env])) {
                 foreach ($this->envPlaceholders[$env] as $placeholder) {
@@ -42,14 +57,14 @@ class EnvPlaceholderParameterBag extends ParameterBag
                     // return first result
                 }
             }
-            if (!\preg_match('/^(?:[-.\\w]*+:)*+\\w++$/', $env)) {
+            if (!\preg_match('/^(?:[-.\\w\\\\]*+:)*+\\w++$/', $env)) {
                 throw new InvalidArgumentException(\sprintf('Invalid %s name: only "word" characters are allowed.', $name));
             }
             if ($this->has($name) && null !== ($defaultValue = parent::get($name)) && !\is_string($defaultValue)) {
                 throw new RuntimeException(\sprintf('The default value of an env() parameter must be a string or null, but "%s" given to "%s".', \get_debug_type($defaultValue), $name));
             }
             $uniqueName = \md5($name . '_' . self::$counter++);
-            $placeholder = \sprintf('%s_%s_%s', $this->getEnvPlaceholderUniquePrefix(), \strtr($env, ':-.', '___'), $uniqueName);
+            $placeholder = \sprintf('%s_%s_%s', $this->getEnvPlaceholderUniquePrefix(), \strtr($env, ':-.\\', '____'), $uniqueName);
             $this->envPlaceholders[$env][$placeholder] = $placeholder;
             return $placeholder;
         }
@@ -60,7 +75,7 @@ class EnvPlaceholderParameterBag extends ParameterBag
      */
     public function getEnvPlaceholderUniquePrefix() : string
     {
-        if (null === $this->envPlaceholderUniquePrefix) {
+        if (!isset($this->envPlaceholderUniquePrefix)) {
             $reproducibleEntropy = \unserialize(\serialize($this->parameters));
             \array_walk_recursive($reproducibleEntropy, function (&$v) {
                 $v = null;
@@ -74,7 +89,7 @@ class EnvPlaceholderParameterBag extends ParameterBag
      *
      * @return string[][] A map of env var names to their placeholders
      */
-    public function getEnvPlaceholders()
+    public function getEnvPlaceholders() : array
     {
         return $this->envPlaceholders;
     }
@@ -107,8 +122,9 @@ class EnvPlaceholderParameterBag extends ParameterBag
     }
     /**
      * Maps env prefixes to their corresponding PHP types.
+     * @param mixed[] $providedTypes
      */
-    public function setProvidedTypes(array $providedTypes)
+    public function setProvidedTypes($providedTypes)
     {
         $this->providedTypes = $providedTypes;
     }
@@ -117,13 +133,10 @@ class EnvPlaceholderParameterBag extends ParameterBag
      *
      * @return string[][]
      */
-    public function getProvidedTypes()
+    public function getProvidedTypes() : array
     {
         return $this->providedTypes;
     }
-    /**
-     * {@inheritdoc}
-     */
     public function resolve()
     {
         if ($this->resolved) {

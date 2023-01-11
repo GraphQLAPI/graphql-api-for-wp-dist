@@ -27,5 +27,5 @@ interface ControllerInterface
      * @param  string $template
      * @return bool
      */
-    public function run(array $vars, \WP $wp, $template = '');
+    public function run($vars, $wp, $template = '');
 }

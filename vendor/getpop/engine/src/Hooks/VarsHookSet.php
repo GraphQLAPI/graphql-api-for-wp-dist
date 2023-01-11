@@ -3,19 +3,27 @@
 declare (strict_types=1);
 namespace PoP\Engine\Hooks;
 
-use PoP\Hooks\AbstractHookSet;
+use PoP\Root\App;
 use PoP\ComponentModel\ModelInstance\ModelInstance;
-use PoP\Engine\ComponentConfiguration;
+use PoP\Engine\Module;
+use PoP\Engine\ModuleConfiguration;
+use PoP\Root\Hooks\AbstractHookSet;
 class VarsHookSet extends AbstractHookSet
 {
     protected function init() : void
     {
-        $this->hooksAPI->addFilter(ModelInstance::HOOK_COMPONENTS_RESULT, array($this, 'getModelInstanceComponentsFromVars'));
+        App::addFilter(ModelInstance::HOOK_ELEMENTS_RESULT, \Closure::fromCallable([$this, 'getModelInstanceElementsFromAppState']));
     }
-    public function getModelInstanceComponentsFromVars($components)
+    /**
+     * @return string[]
+     * @param string[] $elements
+     */
+    public function getModelInstanceElementsFromAppState($elements) : array
     {
         // Removing fields changes the configuration
-        $components[] = $this->translationAPI->__('disable redundant root fields:', 'pop-engine') . ComponentConfiguration::disableRedundantRootTypeMutationFields();
-        return $components;
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        $elements[] = $this->__('disable redundant root fields:', 'pop-engine') . $moduleConfiguration->disableRedundantRootTypeMutationFields();
+        return $elements;
     }
 }

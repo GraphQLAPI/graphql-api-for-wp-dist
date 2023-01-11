@@ -3,7 +3,7 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Container\CompilerPasses;
 
-use PoP\ComponentModel\DataStructure\DataStructureFormatterInterface;
+use PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface;
 use PoP\ComponentModel\DataStructure\DataStructureManagerInterface;
 use PoP\Root\Container\CompilerPasses\AbstractInjectServiceIntoRegistryCompilerPass;
 class RegisterDataStructureFormatterCompilerPass extends AbstractInjectServiceIntoRegistryCompilerPass

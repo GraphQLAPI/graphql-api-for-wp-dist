@@ -3,15 +3,38 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DirectivePipeline;
 
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
+use PoP\ComponentModel\DirectiveResolvers\FieldDirectiveResolverInterface;
+use PoP\ComponentModel\Engine\EngineIterationFieldSet;
+use PoP\ComponentModel\Feedback\EngineIterationFeedbackStore;
+use PoP\ComponentModel\QueryResolution\FieldDataAccessProviderInterface;
+use PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface;
+use PoP\GraphQLParser\Spec\Parser\Ast\FieldInterface;
+use SplObjectStorage;
 class DirectivePipelineUtils
 {
-    public static function convertArgumentsToPayload(TypeResolverInterface $typeResolver, array &$pipelineIDsDataFields, array &$pipelineDirectiveResolverInstances, array &$resultIDItems, array &$unionDBKeyIDs, array &$dbItems, array &$previousDBItems, array &$variables, array &$messages, array &$dbErrors, array &$dbWarnings, array &$dbDeprecations, array &$dbNotices, array &$dbTraces, array &$schemaErrors, array &$schemaWarnings, array &$schemaDeprecations, array &$schemaNotices, array &$schemaTraces) : array
+    /**
+     * @param array<array<string|int,EngineIterationFieldSet>> $pipelineIDFieldSet
+     * @param array<FieldDataAccessProviderInterface> $pipelineFieldDataAccessProviders
+     * @param array<string,array<string|int,SplObjectStorage<FieldInterface,mixed>>> $previouslyResolvedIDFieldValues
+     * @param array<string|int,SplObjectStorage<FieldInterface,mixed>> $resolvedIDFieldValues
+     * @return array<string,mixed>
+     * @param array<FieldDirectiveResolverInterface> $pipelineFieldDirectiveResolvers
+     * @param array<string|int,object> $idObjects
+     * @param array<string,array<string|int,SplObjectStorage<FieldInterface,array<string|int>>>> $unionTypeOutputKeyIDs
+     * @param array<string,mixed> $messages
+     * @param \PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface $relationalTypeResolver
+     * @param \PoP\ComponentModel\Feedback\EngineIterationFeedbackStore $engineIterationFeedbackStore
+     */
+    public static function convertArgumentsToPayload($relationalTypeResolver, $pipelineFieldDirectiveResolvers, $idObjects, $unionTypeOutputKeyIDs, $previouslyResolvedIDFieldValues, $pipelineIDFieldSet, $pipelineFieldDataAccessProviders, &$resolvedIDFieldValues, &$messages, $engineIterationFeedbackStore) : array
     {
-        return ['typeResolver' => &$typeResolver, 'pipelineIDsDataFields' => &$pipelineIDsDataFields, 'pipelineDirectiveResolverInstances' => &$pipelineDirectiveResolverInstances, 'resultIDItems' => &$resultIDItems, 'unionDBKeyIDs' => &$unionDBKeyIDs, 'dbItems' => &$dbItems, 'previousDBItems' => &$previousDBItems, 'variables' => &$variables, 'messages' => &$messages, 'dbErrors' => &$dbErrors, 'dbWarnings' => &$dbWarnings, 'dbDeprecations' => &$dbDeprecations, 'dbNotices' => &$dbNotices, 'dbTraces' => &$dbTraces, 'schemaErrors' => &$schemaErrors, 'schemaWarnings' => &$schemaWarnings, 'schemaDeprecations' => &$schemaDeprecations, 'schemaNotices' => &$schemaNotices, 'schemaTraces' => &$schemaTraces];
+        return ['typeResolver' => &$relationalTypeResolver, 'pipelineFieldDirectiveResolvers' => &$pipelineFieldDirectiveResolvers, 'idObjects' => &$idObjects, 'unionTypeOutputKeyIDs' => &$unionTypeOutputKeyIDs, 'previouslyResolvedIDFieldValues' => &$previouslyResolvedIDFieldValues, 'pipelineIDFieldSet' => &$pipelineIDFieldSet, 'pipelineFieldDataAccessProviders' => &$pipelineFieldDataAccessProviders, 'resolvedIDFieldValues' => &$resolvedIDFieldValues, 'messages' => &$messages, 'engineIterationFeedbackStore' => &$engineIterationFeedbackStore];
     }
-    public static function extractArgumentsFromPayload(array $payload) : array
+    /**
+     * @return mixed[]
+     * @param array<string,mixed> $payload
+     */
+    public static function extractArgumentsFromPayload($payload) : array
     {
-        return [&$payload['typeResolver'], &$payload['pipelineIDsDataFields'], &$payload['pipelineDirectiveResolverInstances'], &$payload['resultIDItems'], &$payload['unionDBKeyIDs'], &$payload['dbItems'], &$payload['previousDBItems'], &$payload['variables'], &$payload['messages'], &$payload['dbErrors'], &$payload['dbWarnings'], &$payload['dbDeprecations'], &$payload['dbNotices'], &$payload['dbTraces'], &$payload['schemaErrors'], &$payload['schemaWarnings'], &$payload['schemaDeprecations'], &$payload['schemaNotices'], &$payload['schemaTraces']];
+        return [&$payload['typeResolver'], &$payload['pipelineFieldDirectiveResolvers'], &$payload['idObjects'], &$payload['unionTypeOutputKeyIDs'], &$payload['previouslyResolvedIDFieldValues'], &$payload['pipelineIDFieldSet'], &$payload['pipelineFieldDataAccessProviders'], &$payload['resolvedIDFieldValues'], &$payload['messages'], &$payload['engineIterationFeedbackStore']];
     }
 }

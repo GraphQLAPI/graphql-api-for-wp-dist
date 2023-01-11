@@ -26,17 +26,22 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
 class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInterface, ResettableInterface
 {
     protected $pool;
+    /**
+     * @var mixed[]
+     */
     private $calls = [];
     public function __construct(AdapterInterface $pool)
     {
         $this->pool = $pool;
     }
     /**
-     * {@inheritdoc}
-     * @param float $beta
-     * @param mixed[] $metadata
+     * @return mixed
+     * @param string $key
+     * @param callable $callback
+     * @param float|null $beta
+     * @param mixed[]|null $metadata
      */
-    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
+    public function get($key, $callback, $beta = null, &$metadata = null)
     {
         if (!$this->pool instanceof CacheInterface) {
             throw new \BadMethodCallException(\sprintf('Cannot call "%s::get()": this class doesn\'t implement "%s".', \get_debug_type($this->pool), CacheInterface::class));
@@ -61,9 +66,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         return $value;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $key
      */
-    public function getItem($key)
+    public function getItem($key) : \PrefixedByPoP\Psr\Cache\CacheItemInterface
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -79,11 +84,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         return $item;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed $key
      */
-    public function hasItem($key)
+    public function hasItem($key) : bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -93,11 +96,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         }
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed $key
      */
-    public function deleteItem($key)
+    public function deleteItem($key) : bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -107,11 +108,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         }
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param \Psr\Cache\CacheItemInterface $item
      */
-    public function save(CacheItemInterface $item)
+    public function save($item) : bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -121,11 +120,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         }
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param \Psr\Cache\CacheItemInterface $item
      */
-    public function saveDeferred(CacheItemInterface $item)
+    public function saveDeferred($item) : bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -135,9 +132,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $keys
      */
-    public function getItems(array $keys = [])
+    public function getItems($keys = []) : iterable
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -159,12 +156,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         return $f();
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
      * @param string $prefix
      */
-    public function clear($prefix = '')
+    public function clear($prefix = '') : bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -177,11 +171,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         }
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param mixed[] $keys
      */
-    public function deleteItems(array $keys)
+    public function deleteItems($keys) : bool
     {
         $event = $this->start(__FUNCTION__);
         $event->result['keys'] = $keys;
@@ -191,12 +183,7 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
             $event->end = \microtime(\true);
         }
     }
-    /**
-     * {@inheritdoc}
-     *
-     * @return bool
-     */
-    public function commit()
+    public function commit() : bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -205,10 +192,7 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
             $event->end = \microtime(\true);
         }
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function prune()
+    public function prune() : bool
     {
         if (!$this->pool instanceof PruneableInterface) {
             return \false;
@@ -220,9 +204,6 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
             $event->end = \microtime(\true);
         }
     }
-    /**
-     * {@inheritdoc}
-     */
     public function reset()
     {
         if ($this->pool instanceof ResetInterface) {
@@ -231,9 +212,9 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         $this->clearCalls();
     }
     /**
-     * {@inheritdoc}
+     * @param string $key
      */
-    public function delete(string $key) : bool
+    public function delete($key) : bool
     {
         $event = $this->start(__FUNCTION__);
         try {
@@ -250,6 +231,13 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
     {
         $this->calls = [];
     }
+    public function getPool() : AdapterInterface
+    {
+        return $this->pool;
+    }
+    /**
+     * @param string $name
+     */
     protected function start($name)
     {
         $this->calls[] = $event = new TraceableAdapterEvent();
@@ -258,12 +246,33 @@ class TraceableAdapter implements AdapterInterface, CacheInterface, PruneableInt
         return $event;
     }
 }
+/**
+ * @internal
+ */
 class TraceableAdapterEvent
 {
+    /**
+     * @var string
+     */
     public $name;
+    /**
+     * @var float
+     */
     public $start;
+    /**
+     * @var float
+     */
     public $end;
+    /**
+     * @var mixed[]|bool
+     */
     public $result;
+    /**
+     * @var int
+     */
     public $hits = 0;
+    /**
+     * @var int
+     */
     public $misses = 0;
 }

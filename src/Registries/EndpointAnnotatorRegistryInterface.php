@@ -8,7 +8,10 @@ use GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\EndpointAnnotatorInterface
 
 interface EndpointAnnotatorRegistryInterface
 {
-    public function addEndpointAnnotator(EndpointAnnotatorInterface $endpointAnnotator): void;
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\EndpointAnnotatorInterface $endpointAnnotator
+     */
+    public function addEndpointAnnotator($endpointAnnotator): void;
     /**
      * @return EndpointAnnotatorInterface[]
      */

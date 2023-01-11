@@ -1,0 +1,35 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPAPI\API\PersistedQueries\PersistedFragmentManagerInterface:
+        class: \PoPAPI\API\PersistedQueries\PersistedFragmentManager
+
+    PoPAPI\API\PersistedQueries\PersistedQueryManagerInterface:
+        class: \PoPAPI\API\PersistedQueries\PersistedQueryManager
+
+    PoPAPI\API\Schema\SchemaDefinitionServiceInterface:
+        class: \PoPAPI\API\Schema\SchemaDefinitionService
+
+    PoPAPI\API\QueryParsing\GraphQLParserHelperServiceInterface:
+        class: \PoPAPI\API\QueryParsing\GraphQLParserHelperService
+
+    PoPAPI\API\QueryResolution\QueryASTTransformationServiceInterface:
+        class: \PoPAPI\API\QueryResolution\QueryASTTransformationService
+
+    PoPAPI\API\State\:
+        resource: '../src/State/*'
+
+    PoPAPI\API\Hooks\:
+        resource: '../src/Hooks/*'
+
+    PoPAPI\API\ComponentRoutingProcessors\:
+        resource: '../src/ComponentRoutingProcessors/*'
+
+    PoPAPI\API\ComponentProcessors\:
+        resource: '../src/ComponentProcessors/*'
+
+    PoPAPI\API\FeedbackItemProviders\:
+        resource: '../src/FeedbackItemProviders/*'

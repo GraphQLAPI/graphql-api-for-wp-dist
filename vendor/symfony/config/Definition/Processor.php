@@ -23,8 +23,6 @@ class Processor
      * Processes an array of configurations.
      *
      * @param array $configs An array of configuration items to process
-     *
-     * @return array The processed configuration
      */
     public function process(NodeInterface $configTree, array $configs) : array
     {
@@ -39,8 +37,6 @@ class Processor
      * Processes an array of configurations.
      *
      * @param array $configs An array of configuration items to process
-     *
-     * @return array The processed configuration
      */
     public function processConfiguration(ConfigurationInterface $configuration, array $configs) : array
     {
@@ -69,9 +65,7 @@ class Processor
      */
     public static function normalizeConfig(array $config, string $key, string $plural = null) : array
     {
-        if (null === $plural) {
-            $plural = $key . 's';
-        }
+        $plural = $plural ?? $key . 's';
         if (isset($config[$plural])) {
             return $config[$plural];
         }

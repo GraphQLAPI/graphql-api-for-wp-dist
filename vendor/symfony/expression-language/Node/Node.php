@@ -29,10 +29,7 @@ class Node
         $this->nodes = $nodes;
         $this->attributes = $attributes;
     }
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString() : string
     {
         $attributes = [];
         foreach ($this->attributes as $name => $value) {
@@ -51,13 +48,20 @@ class Node
         }
         return \implode("\n", $repr);
     }
-    public function compile(Compiler $compiler)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Compiler $compiler
+     */
+    public function compile($compiler)
     {
         foreach ($this->nodes as $node) {
             $node->compile($compiler);
         }
     }
-    public function evaluate(array $functions, array $values)
+    /**
+     * @param mixed[] $functions
+     * @param mixed[] $values
+     */
+    public function evaluate($functions, $values)
     {
         $results = [];
         foreach ($this->nodes as $node) {
@@ -77,11 +81,17 @@ class Node
         }
         return $dump;
     }
-    protected function dumpString(string $value)
+    /**
+     * @param string $value
+     */
+    protected function dumpString($value)
     {
         return \sprintf('"%s"', \addcslashes($value, "\x00\t\"\\"));
     }
-    protected function isHash(array $value)
+    /**
+     * @param mixed[] $value
+     */
+    protected function isHash($value)
     {
         $expectedKey = 0;
         foreach ($value as $key => $val) {

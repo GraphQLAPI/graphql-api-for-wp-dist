@@ -19,17 +19,34 @@ namespace PrefixedByPoP\Symfony\Component\Config\Builder;
  */
 class ClassBuilder
 {
-    /** @var string */
+    /**
+     * @var string
+     */
     private $namespace;
-    /** @var string */
+    /**
+     * @var string
+     */
     private $name;
     /** @var Property[] */
     private $properties = [];
     /** @var Method[] */
     private $methods = [];
+    /**
+     * @var mixed[]
+     */
     private $require = [];
+    /**
+     * @var mixed[]
+     */
     private $use = [];
+    /**
+     * @var mixed[]
+     */
     private $implements = [];
+    /**
+     * @var bool
+     */
+    private $allowExtraKeys = \false;
     public function __construct(string $namespace, string $name)
     {
         $this->namespace = $namespace;
@@ -59,7 +76,7 @@ class ClassBuilder
             }
             $require .= \sprintf('require_once __DIR__.\\DIRECTORY_SEPARATOR.\'%s\';', \implode('\'.\\DIRECTORY_SEPARATOR.\'', $path)) . "\n";
         }
-        $use = '';
+        $use = $require ? "\n" : '';
         foreach (\array_keys($this->use) as $statement) {
             $use .= \sprintf('use %s;', $statement) . "\n";
         }
@@ -71,20 +88,16 @@ class ClassBuilder
         foreach ($this->methods as $method) {
             $lines = \explode("\n", $method->getContent());
             foreach ($lines as $line) {
-                $body .= '    ' . $line . "\n";
+                $body .= ($line ? '    ' . $line : '') . "\n";
             }
         }
         $content = \strtr('<?php
 
 namespace NAMESPACE;
 
-REQUIRE
-USE
-
+REQUIREUSE
 /**
- * This class is automatically generated to help creating config.
- *
- * @experimental in 5.3
+ * This class is automatically generated to help in creating a config.
  */
 class CLASS IMPLEMENTS
 {
@@ -100,26 +113,43 @@ BODY
     {
         $this->require[] = $class;
     }
-    public function addUse(string $class) : void
+    /**
+     * @param string $class
+     */
+    public function addUse($class) : void
     {
         $this->use[$class] = \true;
     }
-    public function addImplements(string $interface) : void
+    /**
+     * @param string $interface
+     */
+    public function addImplements($interface) : void
     {
         $this->implements[] = '\\' . \ltrim($interface, '\\');
     }
-    public function addMethod(string $name, string $body, array $params = []) : void
+    /**
+     * @param string $name
+     * @param string $body
+     * @param mixed[] $params
+     */
+    public function addMethod($name, $body, $params = []) : void
     {
         $this->methods[] = new Method(\strtr($body, ['NAME' => $this->camelCase($name)] + $params));
     }
-    public function addProperty(string $name, string $classType = null) : Property
+    /**
+     * @param string $name
+     * @param string|null $classType
+     * @param string|null $defaultValue
+     */
+    public function addProperty($name, $classType = null, $defaultValue = null) : Property
     {
-        $property = new Property($name, $this->camelCase($name));
+        $property = new Property($name, '_' !== $name[0] ? $this->camelCase($name) : $name);
         if (null !== $classType) {
             $property->setType($classType);
         }
         $this->properties[] = $property;
-        $property->setContent(\sprintf('private $%s;', $property->getName()));
+        $defaultValue = null !== $defaultValue ? \sprintf(' = %s', $defaultValue) : '';
+        $property->setContent(\sprintf('private $%s%s;', $property->getName(), $defaultValue));
         return $property;
     }
     public function getProperties() : array
@@ -142,5 +172,16 @@ BODY
     public function getFqcn() : string
     {
         return '\\' . $this->namespace . '\\' . $this->name;
+    }
+    /**
+     * @param bool $allowExtraKeys
+     */
+    public function setAllowExtraKeys($allowExtraKeys) : void
+    {
+        $this->allowExtraKeys = $allowExtraKeys;
+    }
+    public function shouldAllowExtraKeys() : bool
+    {
+        return $this->allowExtraKeys;
     }
 }

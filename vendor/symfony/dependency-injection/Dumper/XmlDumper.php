@@ -36,10 +36,9 @@ class XmlDumper extends Dumper
     private $document;
     /**
      * Dumps the service container as an XML string.
-     *
-     * @return string An xml string representing of the service container
+     * @param mixed[] $options
      */
-    public function dump(array $options = [])
+    public function dump($options = []) : string
     {
         $this->document = new \DOMDocument('1.0', 'utf-8');
         $this->document->formatOutput = \true;
@@ -50,7 +49,7 @@ class XmlDumper extends Dumper
         $this->addServices($container);
         $this->document->appendChild($container);
         $xml = $this->document->saveXML();
-        $this->document = null;
+        unset($this->document);
         return $this->container->resolveEnvPlaceholders($xml);
     }
     private function addParameters(\DOMElement $parent)
@@ -87,7 +86,7 @@ class XmlDumper extends Dumper
             $service->setAttribute('id', $id);
         }
         if ($class = $definition->getClass()) {
-            if ('\\' === \substr($class, 0, 1)) {
+            if (\strncmp($class, '\\', \strlen('\\')) === 0) {
                 $class = \substr($class, 1);
             }
             $service->setAttribute('class', $class);
@@ -127,8 +126,13 @@ class XmlDumper extends Dumper
                 } else {
                     $tag->appendChild($this->document->createTextNode($name));
                 }
-                foreach ($attributes as $key => $value) {
-                    $tag->setAttribute($key, $value);
+                // Check if we have recursive attributes
+                if (\array_filter($attributes, \Closure::fromCallable('is_array'))) {
+                    $this->addTagRecursiveAttributes($tag, $attributes);
+                } else {
+                    foreach ($attributes as $key => $value) {
+                        $tag->setAttribute($key, $value ?? '');
+                    }
                 }
                 $service->appendChild($tag);
             }
@@ -229,9 +233,38 @@ class XmlDumper extends Dumper
         }
         $parent->appendChild($services);
     }
+    private function addTagRecursiveAttributes(\DOMElement $parent, array $attributes)
+    {
+        foreach ($attributes as $name => $value) {
+            $attribute = $this->document->createElement('attribute');
+            $attribute->setAttribute('name', $name);
+            if (\is_array($value)) {
+                $this->addTagRecursiveAttributes($attribute, $value);
+            } else {
+                $attribute->appendChild($this->document->createTextNode($value));
+            }
+            $parent->appendChild($attribute);
+        }
+    }
     private function convertParameters(array $parameters, string $type, \DOMElement $parent, string $keyAttribute = 'key')
     {
-        $withKeys = \array_keys($parameters) !== \range(0, \count($parameters) - 1);
+        $arrayIsList = function (array $array) : bool {
+            if (\function_exists('array_is_list')) {
+                return \array_is_list($array);
+            }
+            if ($array === []) {
+                return \true;
+            }
+            $current_key = 0;
+            foreach ($array as $key => $noop) {
+                if ($key !== $current_key) {
+                    return \false;
+                }
+                ++$current_key;
+            }
+            return \true;
+        };
+        $withKeys = !$arrayIsList($parameters);
         foreach ($parameters as $key => $value) {
             $element = $this->document->createElement($type);
             if ($withKeys) {
@@ -252,11 +285,23 @@ class XmlDumper extends Dumper
                         $element->setAttribute('default-priority-method', $tag->getDefaultPriorityMethod());
                     }
                 }
+                if ($excludes = $tag->getExclude()) {
+                    if (1 === \count($excludes)) {
+                        $element->setAttribute('exclude', $excludes[0]);
+                    } else {
+                        foreach ($excludes as $exclude) {
+                            $element->appendChild($this->document->createElement('exclude', $exclude));
+                        }
+                    }
+                }
             } elseif ($value instanceof IteratorArgument) {
                 $element->setAttribute('type', 'iterator');
                 $this->convertParameters($value->getValues(), $type, $element, 'key');
             } elseif ($value instanceof ServiceLocatorArgument) {
                 $element->setAttribute('type', 'service_locator');
+                $this->convertParameters($value->getValues(), $type, $element, 'key');
+            } elseif ($value instanceof ServiceClosureArgument && !$value->getValues()[0] instanceof Reference) {
+                $element->setAttribute('type', 'service_closure');
                 $this->convertParameters($value->getValues(), $type, $element, 'key');
             } elseif ($value instanceof Reference || $value instanceof ServiceClosureArgument) {
                 $element->setAttribute('type', 'service');
@@ -284,7 +329,7 @@ class XmlDumper extends Dumper
                 $element->setAttribute('type', 'binary');
                 $text = $this->document->createTextNode(self::phpToXml(\base64_encode($value)));
                 $element->appendChild($text);
-            } elseif ($value instanceof \PrefixedByPoP\UnitEnum) {
+            } elseif ($value instanceof \UnitEnum) {
                 $element->setAttribute('type', 'constant');
                 $element->appendChild($this->document->createTextNode(self::phpToXml($value)));
             } elseif ($value instanceof AbstractArgument) {
@@ -324,9 +369,8 @@ class XmlDumper extends Dumper
     /**
      * Converts php types to xml types.
      *
-     * @param mixed $value Value to convert
-     *
      * @throws RuntimeException When trying to dump object or resource
+     * @param mixed $value
      */
     public static function phpToXml($value) : string
     {
@@ -339,7 +383,7 @@ class XmlDumper extends Dumper
                 return 'false';
             case $value instanceof Parameter:
                 return '%' . $value . '%';
-            case $value instanceof \PrefixedByPoP\UnitEnum:
+            case $value instanceof \UnitEnum:
                 return \sprintf('%s::%s', \get_class($value), $value->name);
             case \is_object($value) || \is_resource($value):
                 throw new RuntimeException('Unable to dump a service container if a parameter is an object or a resource.');

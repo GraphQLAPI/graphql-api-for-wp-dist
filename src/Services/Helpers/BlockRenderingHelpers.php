@@ -10,8 +10,9 @@ class BlockRenderingHelpers
 {
     /**
      * Get a standardized title for a Custom Post
+     * @param \WP_Post $customPostObject
      */
-    public function getCustomPostTitle(WP_Post $customPostObject): string
+    public function getCustomPostTitle($customPostObject): string
     {
         $title = $customPostObject->post_title ?
             $customPostObject->post_title :

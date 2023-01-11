@@ -3,21 +3,30 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Container\CompilerPasses;
 
+use PoP\Root\App;
 use GraphQLByPoP\GraphQLRequest\PersistedQueries\GraphQLPersistedQueryManagerInterface;
-use GraphQLByPoP\GraphQLServer\Environment;
+use GraphQLByPoP\GraphQLServer\Module;
+use GraphQLByPoP\GraphQLServer\ModuleConfiguration;
 use PoP\Root\Container\CompilerPasses\AbstractCompilerPass;
 use PoP\Root\Container\ContainerBuilderWrapperInterface;
-use PoP\Translation\Facades\SystemTranslationAPIFacade;
+use PoP\Root\Facades\Translation\SystemTranslationAPIFacade;
 class ConfigureGraphQLPersistedQueryCompilerPass extends AbstractCompilerPass
 {
     protected function enabled() : bool
     {
-        return Environment::addGraphQLIntrospectionPersistedQuery();
+        // If any downstream Module is disabled, its ModuleConfiguration will be null
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        if ($moduleConfiguration === null) {
+            return \false;
+        }
+        /** @var ModuleConfiguration $moduleConfiguration */
+        return $moduleConfiguration->addGraphQLIntrospectionPersistedQuery();
     }
     /**
      * GraphQL persisted query for Introspection query
+     * @param \PoP\Root\Container\ContainerBuilderWrapperInterface $containerBuilderWrapper
      */
-    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void
+    protected function doProcess($containerBuilderWrapper) : void
     {
         $introspectionPersistedQuery = <<<EOT
 query IntrospectionQuery {

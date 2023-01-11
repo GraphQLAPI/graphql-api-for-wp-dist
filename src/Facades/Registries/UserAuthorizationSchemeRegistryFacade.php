@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Facades\Registries;
 
-use PoP\Root\Container\ContainerBuilderFactory;
+use PoP\Root\App;
 use GraphQLAPI\GraphQLAPI\Registries\UserAuthorizationSchemeRegistryInterface;
 
 class UserAuthorizationSchemeRegistryFacade
@@ -14,7 +14,7 @@ class UserAuthorizationSchemeRegistryFacade
         /**
          * @var UserAuthorizationSchemeRegistryInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(UserAuthorizationSchemeRegistryInterface::class);
+        $service = App::getContainer()->get(UserAuthorizationSchemeRegistryInterface::class);
         return $service;
     }
 }

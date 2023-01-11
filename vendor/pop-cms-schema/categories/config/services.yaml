@@ -1,0 +1,20 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPCMSSchema\Categories\State\:
+        resource: '../src/State/*'
+
+    PoPCMSSchema\Categories\LooseContracts\:
+        resource: '../src/LooseContracts/*'
+
+    PoPCMSSchema\Categories\ComponentProcessors\:
+        resource: '../src/ComponentProcessors/*'
+
+    PoPCMSSchema\Categories\FilterInputs\:
+        resource: '../src/FilterInputs/*'
+
+    PoPCMSSchema\Categories\Registries\CategoryObjectTypeResolverPickerRegistryInterface:
+        class: \PoPCMSSchema\Categories\Registries\CategoryObjectTypeResolverPickerRegistry

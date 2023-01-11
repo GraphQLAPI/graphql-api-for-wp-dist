@@ -23,11 +23,10 @@ abstract class NumericNodeDefinition extends ScalarNodeDefinition
     /**
      * Ensures that the value is smaller than the given reference.
      *
-     * @param int|float $max
-     *
      * @return $this
      *
      * @throws \InvalidArgumentException when the constraint is inconsistent
+     * @param int|float $max
      */
     public function max($max)
     {
@@ -40,11 +39,10 @@ abstract class NumericNodeDefinition extends ScalarNodeDefinition
     /**
      * Ensures that the value is bigger than the given reference.
      *
-     * @param int|float $min
-     *
      * @return $this
      *
      * @throws \InvalidArgumentException when the constraint is inconsistent
+     * @param int|float $min
      */
     public function min($min)
     {
@@ -55,9 +53,8 @@ abstract class NumericNodeDefinition extends ScalarNodeDefinition
         return $this;
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws InvalidDefinitionException
+     * @return $this
      */
     public function cannotBeEmpty()
     {

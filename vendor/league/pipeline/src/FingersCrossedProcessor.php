@@ -5,7 +5,10 @@ namespace PrefixedByPoP\League\Pipeline;
 
 class FingersCrossedProcessor implements ProcessorInterface
 {
-    public function process($payload, callable ...$stages)
+    /**
+     * @param callable ...$stages
+     */
+    public function process($payload, ...$stages)
     {
         foreach ($stages as $stage) {
             $payload = $stage($payload);

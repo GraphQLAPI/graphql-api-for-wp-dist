@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
+use PoP\Root\App;
+use GraphQLAPI\GraphQLAPI\Module;
+use GraphQLAPI\GraphQLAPI\ModuleConfiguration;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\MainPluginBlockTrait;
 use GraphQLByPoP\GraphQLServer\Configuration\MutationSchemes;
 
 class SchemaConfigMutationSchemeBlock extends AbstractSchemaConfigBlock
@@ -23,7 +24,7 @@ class SchemaConfigMutationSchemeBlock extends AbstractSchemaConfigBlock
 
     public function getBlockPriority(): int
     {
-        return 120;
+        return 10120;
     }
 
     public function getEnablingModule(): ?string
@@ -32,9 +33,10 @@ class SchemaConfigMutationSchemeBlock extends AbstractSchemaConfigBlock
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         // Append "-front" because this style must be used only on the client, not on the admin
         $className = $this->getBlockClassName() . '-front';
@@ -46,10 +48,12 @@ class SchemaConfigMutationSchemeBlock extends AbstractSchemaConfigBlock
             MutationSchemes::NESTED_WITH_REDUNDANT_ROOT_FIELDS => \__('✅ Nested mutations enabled, keeping all mutation fields in the root type', 'graphql-api'),
             MutationSchemes::NESTED_WITHOUT_REDUNDANT_ROOT_FIELDS => \__('✳️ Nested mutations enabled, removing the redundant mutation fields from the root type', 'graphql-api'),
         ];
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
         $blockContent = sprintf(
             $blockContentPlaceholder,
             \__('Mutation Scheme', 'graphql-api'),
-            $mutationSchemeLabels[$attributes[self::ATTRIBUTE_NAME_MUTATION_SCHEME] ?? ''] ?? ComponentConfiguration::getSettingsValueLabel()
+            $mutationSchemeLabels[$attributes[self::ATTRIBUTE_NAME_MUTATION_SCHEME] ?? ''] ?? $moduleConfiguration->getSettingsValueLabel()
         );
 
         $blockContentPlaceholder = <<<EOT
@@ -60,7 +64,7 @@ class SchemaConfigMutationSchemeBlock extends AbstractSchemaConfigBlock
 EOT;
         return sprintf(
             $blockContentPlaceholder,
-            $className . ' ' . $this->getAlignClass(),
+            $className . ' ' . $this->getAlignClassName(),
             $className . '__title',
             \__('Mutation Scheme', 'graphql-api'),
             $blockContent
@@ -68,17 +72,27 @@ EOT;
     }
 
     /**
-     * Register index.css
-     */
-    protected function registerEditorCSS(): bool
-    {
-        return true;
-    }
-    /**
      * Register style-index.css
      */
     protected function registerCommonStyleCSS(): bool
     {
         return true;
+    }
+
+    /**
+     * Add the locale language to the localized data?
+     */
+    protected function addLocalLanguage(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Default language for the script/component's documentation
+     */
+    protected function getDefaultLanguage(): ?string
+    {
+        // English
+        return 'en';
     }
 }

@@ -9,12 +9,19 @@ class NameResolver extends \PoP\LooseContracts\AbstractNameResolver
      * @var string[]
      */
     protected $names = [];
-    public function getName(string $name) : string
+    /**
+     * @param string $name
+     */
+    public function getName($name) : string
     {
         // If there's no entry, then use the original $hookName
         return $this->names[$name] ?? $name;
     }
-    public function implementName(string $abstractName, string $implementationName) : void
+    /**
+     * @param string $abstractName
+     * @param string $implementationName
+     */
+    public function implementName($abstractName, $implementationName) : void
     {
         parent::implementName($abstractName, $implementationName);
         $this->names[$abstractName] = $implementationName;
@@ -22,7 +29,7 @@ class NameResolver extends \PoP\LooseContracts\AbstractNameResolver
     /**
      * @param string[] $names
      */
-    public function implementNames(array $names) : void
+    public function implementNames($names) : void
     {
         parent::implementNames($names);
         $this->names = \array_merge($this->names, $names);

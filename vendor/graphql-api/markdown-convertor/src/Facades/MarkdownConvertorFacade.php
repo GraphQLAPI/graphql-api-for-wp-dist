@@ -3,8 +3,8 @@
 declare (strict_types=1);
 namespace GraphQLAPI\MarkdownConvertor\Facades;
 
+use PoP\Root\App;
 use GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
 class MarkdownConvertorFacade
 {
     public static function getInstance() : MarkdownConvertorInterface
@@ -12,7 +12,7 @@ class MarkdownConvertorFacade
         /**
          * @var MarkdownConvertorInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(MarkdownConvertorInterface::class);
+        $service = App::getContainer()->get(MarkdownConvertorInterface::class);
         return $service;
     }
 }

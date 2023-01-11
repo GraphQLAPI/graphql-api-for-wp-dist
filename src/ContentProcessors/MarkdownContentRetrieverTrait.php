@@ -4,30 +4,33 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ContentProcessors;
 
-use InvalidArgumentException;
-use GraphQLAPI\GraphQLAPI\Facades\ContentProcessors\MarkdownContentParserFacade;
+use GraphQLAPI\GraphQLAPI\Exception\ContentNotExistsException;
 
 trait MarkdownContentRetrieverTrait
 {
+    abstract protected function getMarkdownContentParser(): MarkdownContentParserInterface;
+
     /**
-     * @param array<string, mixed> $options
+     * @param array<string,mixed> $options
+     * @param string $markdownFilename
+     * @param string $relativePathDir
      */
-    public function getMarkdownContent(
-        string $markdownFilename,
-        string $relativePathDir = '',
-        array $options = []
+    protected function getMarkdownContent(
+        $markdownFilename,
+        $relativePathDir = '',
+        $options = []
     ): ?string {
-        $markdownContentParser = MarkdownContentParserFacade::getInstance();
         // Inject the place to look for the documentation
-        $markdownContentParser->setBaseDir($this->getBaseDir());
-        $markdownContentParser->setBaseURL($this->getBaseURL());
+        $this->getMarkdownContentParser()->setBaseDir($this->getBaseDir());
+        $this->getMarkdownContentParser()->setBaseURL($this->getBaseURL());
         try {
-            return $markdownContentParser->getContent(
+            return $this->getMarkdownContentParser()->getContent(
                 $markdownFilename,
+                'md',
                 $relativePathDir,
                 $options
             );
-        } catch (InvalidArgumentException $exception) {
+        } catch (ContentNotExistsException $exception) {
             return null;
         }
     }

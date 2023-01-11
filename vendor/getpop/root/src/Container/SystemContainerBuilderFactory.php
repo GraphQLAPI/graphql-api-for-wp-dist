@@ -5,8 +5,8 @@ namespace PoP\Root\Container;
 
 class SystemContainerBuilderFactory
 {
-    use ContainerBuilderFactoryTrait;
-    public static function getContainerClass() : string
+    use \PoP\Root\Container\ContainerBuilderFactoryTrait;
+    public function getContainerClassName() : string
     {
         return 'SystemServiceContainer';
     }

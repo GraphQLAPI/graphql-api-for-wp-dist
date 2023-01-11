@@ -22,10 +22,25 @@ namespace PrefixedByPoP\Symfony\Component\Config\Resource;
  */
 class ClassExistenceResource implements SelfCheckingResourceInterface
 {
+    /**
+     * @var string
+     */
     private $resource;
+    /**
+     * @var mixed[]|null
+     */
     private $exists;
+    /**
+     * @var int
+     */
     private static $autoloadLevel = 0;
+    /**
+     * @var string|null
+     */
     private static $autoloadedClass;
+    /**
+     * @var mixed[]
+     */
     private static $existsCache = [];
     /**
      * @param string    $resource The fully-qualified class name
@@ -35,29 +50,22 @@ class ClassExistenceResource implements SelfCheckingResourceInterface
     {
         $this->resource = $resource;
         if (null !== $exists) {
-            $this->exists = [(bool) $exists, null];
+            $this->exists = [$exists, null];
         }
     }
-    /**
-     * {@inheritdoc}
-     */
     public function __toString() : string
     {
         return $this->resource;
     }
-    /**
-     * @return string The file path to the resource
-     */
     public function getResource() : string
     {
         return $this->resource;
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws \ReflectionException when a parent class/interface/trait is not found
+     * @param int $timestamp
      */
-    public function isFresh(int $timestamp) : bool
+    public function isFresh($timestamp) : bool
     {
         $loaded = \class_exists($this->resource, \false) || \interface_exists($this->resource, \false) || \trait_exists($this->resource, \false);
         if (null !== ($exists =& self::$existsCache[$this->resource])) {
@@ -93,9 +101,7 @@ class ClassExistenceResource implements SelfCheckingResourceInterface
                 }
             }
         }
-        if (null === $this->exists) {
-            $this->exists = $exists;
-        }
+        $this->exists = $this->exists ?? $exists;
         return $this->exists[0] xor !$exists[0];
     }
     /**
@@ -132,8 +138,10 @@ class ClassExistenceResource implements SelfCheckingResourceInterface
      * @throws \ReflectionException
      *
      * @internal
+     * @param string $class
+     * @param \Exception|null $previous
      */
-    public static function throwOnRequiredClass(string $class, \Exception $previous = null)
+    public static function throwOnRequiredClass($class, $previous = null)
     {
         // If the passed class is the resource being checked, we shouldn't throw.
         if (null === $previous && self::$autoloadedClass === $class) {
@@ -161,7 +169,7 @@ class ClassExistenceResource implements SelfCheckingResourceInterface
         }
         $trace = \debug_backtrace();
         $autoloadFrame = ['function' => 'spl_autoload_call', 'args' => [$class]];
-        if (\PHP_VERSION_ID >= 80000 && isset($trace[1])) {
+        if (isset($trace[1])) {
             $callerFrame = $trace[1];
             $i = 2;
         } elseif (\false !== ($i = \array_search($autoloadFrame, $trace, \true))) {
@@ -191,7 +199,6 @@ class ClassExistenceResource implements SelfCheckingResourceInterface
             foreach ($props as $p => $v) {
                 if (null !== $v) {
                     $r = new \ReflectionProperty(\Exception::class, $p);
-                    $r->setAccessible(\true);
                     $r->setValue($e, $v);
                 }
             }

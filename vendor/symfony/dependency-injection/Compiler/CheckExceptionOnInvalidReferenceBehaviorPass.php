@@ -21,11 +21,14 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class CheckExceptionOnInvalidReferenceBehaviorPass extends AbstractRecursivePass
 {
+    /**
+     * @var mixed[]
+     */
     private $serviceLocatorContextIds = [];
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         $this->serviceLocatorContextIds = [];
         foreach ($container->findTaggedServiceIds('container.service_locator_context') as $id => $tags) {
@@ -38,7 +41,12 @@ class CheckExceptionOnInvalidReferenceBehaviorPass extends AbstractRecursivePass
             $this->serviceLocatorContextIds = [];
         }
     }
-    protected function processValue($value, bool $isRoot = \false)
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
+     */
+    protected function processValue($value, $isRoot = \false)
     {
         if (!$value instanceof Reference) {
             return parent::processValue($value, $isRoot);
@@ -82,7 +90,7 @@ class CheckExceptionOnInvalidReferenceBehaviorPass extends AbstractRecursivePass
                 continue;
             }
             $lev = \levenshtein($id, $knownId);
-            if ($lev <= \strlen($id) / 3 || \false !== \strpos($knownId, $id)) {
+            if ($lev <= \strlen($id) / 3 || \strpos($knownId, $id) !== \false) {
                 $alternatives[] = $knownId;
             }
         }

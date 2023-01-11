@@ -22,17 +22,22 @@ use PrefixedByPoP\Symfony\Contracts\Service\ServiceSubscriberInterface;
  * @author Robin Chalas <robin.chalas@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ServiceLocator implements ServiceProviderInterface
+class ServiceLocator implements ServiceProviderInterface, \Countable
 {
     use ServiceLocatorTrait {
         get as private doGet;
     }
+    /**
+     * @var string|null
+     */
     private $externalId;
+    /**
+     * @var \Symfony\Component\DependencyInjection\Container|null
+     */
     private $container;
     /**
-     * {@inheritdoc}
-     *
      * @return mixed
+     * @param string $id
      */
     public function get($id)
     {
@@ -48,7 +53,6 @@ class ServiceLocator implements ServiceProviderInterface
                 $message = \sprintf('Cannot resolve %s: %s', $what, $message);
             }
             $r = new \ReflectionProperty($e, 'message');
-            $r->setAccessible(\true);
             $r->setValue($e, $message);
             throw $e;
         }
@@ -59,15 +63,20 @@ class ServiceLocator implements ServiceProviderInterface
     }
     /**
      * @internal
-     *
-     * @return static
+     * @return $this
+     * @param string $externalId
+     * @param \Symfony\Component\DependencyInjection\Container $container
      */
-    public function withContext(string $externalId, Container $container)
+    public function withContext($externalId, $container)
     {
         $locator = clone $this;
         $locator->externalId = $externalId;
         $locator->container = $container;
         return $locator;
+    }
+    public function count() : int
+    {
+        return \count($this->getProvidedServices());
     }
     private function createNotFoundException(string $id) : NotFoundExceptionInterface
     {

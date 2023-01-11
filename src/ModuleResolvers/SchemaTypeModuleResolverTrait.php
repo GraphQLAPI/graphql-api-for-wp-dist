@@ -14,13 +14,14 @@ trait SchemaTypeModuleResolverTrait
      */
     public function getPriority(): int
     {
-        return 80;
+        return 90;
     }
 
     /**
      * The type of the module
+     * @param string $module
      */
-    public function getModuleType(string $module): string
+    public function getModuleType($module): string
     {
         return ModuleTypeResolver::SCHEMA_TYPE;
     }

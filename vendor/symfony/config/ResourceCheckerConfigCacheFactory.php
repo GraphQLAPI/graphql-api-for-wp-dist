@@ -18,18 +18,22 @@ namespace PrefixedByPoP\Symfony\Component\Config;
  */
 class ResourceCheckerConfigCacheFactory implements ConfigCacheFactoryInterface
 {
+    /**
+     * @var mixed[]
+     */
     private $resourceCheckers = [];
     /**
-     * @param iterable|ResourceCheckerInterface[] $resourceCheckers
+     * @param iterable<int, ResourceCheckerInterface> $resourceCheckers
      */
     public function __construct(iterable $resourceCheckers = [])
     {
         $this->resourceCheckers = $resourceCheckers;
     }
     /**
-     * {@inheritdoc}
+     * @param string $file
+     * @param callable $callable
      */
-    public function cache(string $file, callable $callable)
+    public function cache($file, $callable) : ConfigCacheInterface
     {
         $cache = new ResourceCheckerConfigCache($file, $this->resourceCheckers);
         if (!$cache->isFresh()) {

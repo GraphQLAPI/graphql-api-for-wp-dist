@@ -11,16 +11,32 @@ class CustomEndpointBlockCategory extends AbstractBlockCategory
     public const CUSTOM_ENDPOINT_BLOCK_CATEGORY = 'graphql-api-endpoint';
 
     /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType|null
+     */
+    private $graphQLCustomEndpointCustomPostType;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType
+     */
+    final public function setGraphQLCustomEndpointCustomPostType($graphQLCustomEndpointCustomPostType): void
+    {
+        $this->graphQLCustomEndpointCustomPostType = $graphQLCustomEndpointCustomPostType;
+    }
+    final protected function getGraphQLCustomEndpointCustomPostType(): GraphQLCustomEndpointCustomPostType
+    {
+        /** @var GraphQLCustomEndpointCustomPostType */
+        return $this->graphQLCustomEndpointCustomPostType = $this->graphQLCustomEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
+    }
+
+    /**
      * Custom Post Type for which to enable the block category
      *
      * @return string[]
      */
     public function getCustomPostTypes(): array
     {
-        /** @var GraphQLCustomEndpointCustomPostType */
-        $customPostTypeService = $this->instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
         return [
-            $customPostTypeService->getCustomPostType(),
+            $this->getGraphQLCustomEndpointCustomPostType()->getCustomPostType(),
         ];
     }
 

@@ -19,8 +19,8 @@ interface DumperInterface
 {
     /**
      * Dumps the service container.
-     *
-     * @return string|array The representation of the service container
+     * @return string|mixed[]
+     * @param mixed[] $options
      */
-    public function dump(array $options = []);
+    public function dump($options = []);
 }

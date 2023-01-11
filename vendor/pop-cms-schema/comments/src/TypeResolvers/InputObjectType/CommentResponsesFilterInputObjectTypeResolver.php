@@ -1,0 +1,24 @@
+<?php
+
+declare (strict_types=1);
+namespace PoPCMSSchema\Comments\TypeResolvers\InputObjectType;
+
+class CommentResponsesFilterInputObjectTypeResolver extends \PoPCMSSchema\Comments\TypeResolvers\InputObjectType\AbstractCommentsFilterInputObjectTypeResolver
+{
+    public function getTypeName() : string
+    {
+        return 'CommentResponsesFilterInput';
+    }
+    public function getTypeDescription() : ?string
+    {
+        return $this->__('Input to filter comment responses', 'comments');
+    }
+    protected function addParentInputFields() : bool
+    {
+        return \false;
+    }
+    protected function addCustomPostInputFields() : bool
+    {
+        return \false;
+    }
+}

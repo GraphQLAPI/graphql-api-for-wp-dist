@@ -6,13 +6,8 @@ namespace GraphQLAPI\GraphQLAPI\Services\Taxonomies;
 
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 
-abstract class AbstractTaxonomy extends AbstractAutomaticallyInstantiatedService
+abstract class AbstractTaxonomy extends AbstractAutomaticallyInstantiatedService implements TaxonomyInterface
 {
-    /**
-     * Taxonomy
-     */
-    abstract public function getTaxonomy(): string;
-
     /**
      * Add the hook to initialize the different taxonomies
      */
@@ -20,7 +15,7 @@ abstract class AbstractTaxonomy extends AbstractAutomaticallyInstantiatedService
     {
         \add_action(
             'init',
-            [$this, 'initTaxonomy']
+            \Closure::fromCallable([$this, 'initTaxonomy'])
         );
     }
 
@@ -31,9 +26,9 @@ abstract class AbstractTaxonomy extends AbstractAutomaticallyInstantiatedService
      * @param string $names_uc Plural name uppercase
      * @param string $name_lc Singulare name lowercase
      * @param string $names_lc Plural name lowercase
-     * @return array<string, string>
+     * @return array<string,string>
      */
-    protected function getTaxonomyLabels(string $name_uc, string $names_uc, string $name_lc, string $names_lc): array
+    protected function getTaxonomyLabels($name_uc, $names_uc, $name_lc, $names_lc): array
     {
         return array(
             'name'                           => $names_uc,
@@ -55,22 +50,9 @@ abstract class AbstractTaxonomy extends AbstractAutomaticallyInstantiatedService
     }
 
     /**
-     * Taxonomy name
-     */
-    abstract public function getTaxonomyName(bool $uppercase = true): string;
-
-    /**
-     * Taxonomy plural name
-     *
-     * @param bool $uppercase Indicate if the name must be uppercase (for starting a sentence) or, otherwise, lowercase
-     */
-    abstract protected function getTaxonomyPluralNames(bool $uppercase = true): string;
-
-
-    /**
      * Initialize the different post types
      */
-    public function initTaxonomy(): void
+    protected function initTaxonomy(): void
     {
         $names_uc = $this->getTaxonomyPluralNames(true);
         $labels = $this->getTaxonomyLabels(
@@ -88,20 +70,28 @@ abstract class AbstractTaxonomy extends AbstractAutomaticallyInstantiatedService
             'show_in_nav_menus' => true,
             'show_tagcloud' => false,
             'show_in_rest' => true,
+            'show_admin_column' => $this->showAdminColumn(),
         );
         /**
-         * From documentation concerning 2nd parameter ($object_type)
-         * > Setting explicitly to null registers the taxonomy but doesn't associate it
-         * > with any objects, so it won't be directly available within the Admin UI.>
-         * > You will need to manually register it using the 'taxonomy' parameter
-         * > (passed through $args)
-         * > when registering a custom post_type
+         * From documentation concerning 2nd parameter ($object_type):
+         *
+         *   > Setting explicitly to null registers the taxonomy but doesn't associate it
+         *   > with any objects, so it won't be directly available within the Admin UI.>
+         *   > You will need to manually register it using the 'taxonomy' parameter
+         *   > (passed through $args)
+         *   > when registering a custom post_type
+         *
          * @see https://codex.wordpress.org/Function_Reference/register_taxonomy#Parameters
          */
         \register_taxonomy(
             $this->getTaxonomy(),
-            [],
+            $this->getCustomPostTypes(),
             $args
         );
+    }
+
+    protected function showAdminColumn(): bool
+    {
+        return $this->isHierarchical();
     }
 }

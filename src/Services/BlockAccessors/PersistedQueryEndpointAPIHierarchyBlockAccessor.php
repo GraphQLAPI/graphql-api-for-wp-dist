@@ -4,34 +4,59 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\BlockAccessors;
 
-use GraphQLAPI\GraphQLAPI\GetterSetterObjects\BlockAttributes\PersistedQueryEndpointAPIHierarchyBlockAttributes;
+use GraphQLAPI\GraphQLAPI\AppObjects\BlockAttributes\PersistedQueryEndpointAPIHierarchyBlockAttributes;
 use GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointAPIHierarchyBlock;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
+use PoP\Root\Services\BasicServiceTrait;
 use WP_Post;
 
 class PersistedQueryEndpointAPIHierarchyBlockAccessor
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers|null
      */
-    protected $blockHelpers;
+    private $blockHelpers;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointAPIHierarchyBlock
+     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointAPIHierarchyBlock|null
      */
-    protected $persistedQueryEndpointAPIHierarchyBlock;
-    public function __construct(BlockHelpers $blockHelpers, PersistedQueryEndpointAPIHierarchyBlock $persistedQueryEndpointAPIHierarchyBlock)
+    private $persistedQueryEndpointAPIHierarchyBlock;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers $blockHelpers
+     */
+    final public function setBlockHelpers($blockHelpers): void
     {
         $this->blockHelpers = $blockHelpers;
-        $this->persistedQueryEndpointAPIHierarchyBlock = $persistedQueryEndpointAPIHierarchyBlock;
+    }
+    final protected function getBlockHelpers(): BlockHelpers
+    {
+        /** @var BlockHelpers */
+        return $this->blockHelpers = $this->blockHelpers ?? $this->instanceManager->getInstance(BlockHelpers::class);
     }
     /**
-     * Extract the Persisted Query Options block attributes from the post
+     * @param \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointAPIHierarchyBlock $persistedQueryEndpointAPIHierarchyBlock
      */
-    public function getAttributes(WP_Post $post): ?PersistedQueryEndpointAPIHierarchyBlockAttributes
+    final public function setPersistedQueryEndpointAPIHierarchyBlock($persistedQueryEndpointAPIHierarchyBlock): void
     {
-        $apiHierarchyBlock = $this->blockHelpers->getSingleBlockOfTypeFromCustomPost(
+        $this->persistedQueryEndpointAPIHierarchyBlock = $persistedQueryEndpointAPIHierarchyBlock;
+    }
+    final protected function getPersistedQueryEndpointAPIHierarchyBlock(): PersistedQueryEndpointAPIHierarchyBlock
+    {
+        /** @var PersistedQueryEndpointAPIHierarchyBlock */
+        return $this->persistedQueryEndpointAPIHierarchyBlock = $this->persistedQueryEndpointAPIHierarchyBlock ?? $this->instanceManager->getInstance(PersistedQueryEndpointAPIHierarchyBlock::class);
+    }
+
+    /**
+     * Extract the Persisted Query Options block attributes from the post
+     * @param \WP_Post $post
+     */
+    public function getAttributes($post): ?PersistedQueryEndpointAPIHierarchyBlockAttributes
+    {
+        $apiHierarchyBlock = $this->getBlockHelpers()->getSingleBlockOfTypeFromCustomPost(
             $post,
-            $this->persistedQueryEndpointAPIHierarchyBlock
+            $this->getPersistedQueryEndpointAPIHierarchyBlock()
         );
         // If there is either 0 or more than 1, return nothing
         if ($apiHierarchyBlock === null) {

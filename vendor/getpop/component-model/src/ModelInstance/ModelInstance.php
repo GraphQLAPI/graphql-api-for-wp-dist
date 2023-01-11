@@ -3,112 +3,113 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\ModelInstance;
 
-use PoP\Hooks\HooksAPIInterface;
-use PoP\Definitions\Facades\DefinitionManagerFacade;
+use PoP\Root\App;
 use PoP\ComponentModel\Info\ApplicationInfoInterface;
-use PoP\Translation\TranslationAPIInterface;
-use PoP\ComponentModel\State\ApplicationState;
+use PoP\Root\Services\BasicServiceTrait;
+use PoP\Definitions\DefinitionManagerInterface;
 class ModelInstance implements \PoP\ComponentModel\ModelInstance\ModelInstanceInterface
 {
-    public const HOOK_COMPONENTS_RESULT = __CLASS__ . ':components:result';
-    public const HOOK_COMPONENTSFROMVARS_POSTORGETCHANGE = __CLASS__ . ':componentsFromVars:postOrGetChange';
-    public const HOOK_COMPONENTSFROMVARS_RESULT = __CLASS__ . ':componentsFromVars:result';
+    use BasicServiceTrait;
+    public const HOOK_ELEMENTS_RESULT = __CLASS__ . ':elements:result';
+    public const HOOK_ELEMENTSFROMVARS_POSTORGETCHANGE = __CLASS__ . ':elementsFromVars:postOrGetChange';
+    public const HOOK_ELEMENTSFROMVARS_RESULT = __CLASS__ . ':elementsFromVars:result';
     /**
-     * @var \PoP\Translation\TranslationAPIInterface
+     * @var \PoP\ComponentModel\Info\ApplicationInfoInterface|null
      */
-    protected $translationAPI;
+    private $applicationInfo;
     /**
-     * @var \PoP\Hooks\HooksAPIInterface
+     * @var \PoP\Definitions\DefinitionManagerInterface|null
      */
-    protected $hooksAPI;
+    private $definitionManager;
     /**
-     * @var \PoP\ComponentModel\Info\ApplicationInfoInterface
+     * @param \PoP\ComponentModel\Info\ApplicationInfoInterface $applicationInfo
      */
-    protected $applicationInfo;
-    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI, ApplicationInfoInterface $applicationInfo)
+    public final function setApplicationInfo($applicationInfo) : void
     {
-        $this->translationAPI = $translationAPI;
-        $this->hooksAPI = $hooksAPI;
         $this->applicationInfo = $applicationInfo;
     }
-    public function getModelInstanceId() : string
+    protected final function getApplicationInfo() : ApplicationInfoInterface
+    {
+        /** @var ApplicationInfoInterface */
+        return $this->applicationInfo = $this->applicationInfo ?? $this->instanceManager->getInstance(ApplicationInfoInterface::class);
+    }
+    /**
+     * @param \PoP\Definitions\DefinitionManagerInterface $definitionManager
+     */
+    public final function setDefinitionManager($definitionManager) : void
+    {
+        $this->definitionManager = $definitionManager;
+    }
+    protected final function getDefinitionManager() : DefinitionManagerInterface
+    {
+        /** @var DefinitionManagerInterface */
+        return $this->definitionManager = $this->definitionManager ?? $this->instanceManager->getInstance(DefinitionManagerInterface::class);
+    }
+    public function getModelInstanceID() : string
     {
         // The string is too long. Use a hashing function to shorten it
-        return \md5(\implode('-', $this->getModelInstanceComponents()));
+        return \md5(\implode('-', $this->getModelInstanceElements()));
     }
     /**
      * @return string[]
      */
-    protected function getModelInstanceComponents() : array
+    protected function getModelInstanceElements() : array
     {
-        $components = array();
-        // Mix the information specific to the module, with that present in $vars
-        $components = (array) $this->hooksAPI->applyFilters(self::HOOK_COMPONENTS_RESULT, \array_merge($components, $this->getModelInstanceComponentsFromVars()));
+        $elements = array();
+        // Mix the information specific to the module, with that present in the application state
+        $elements = (array) App::applyFilters(self::HOOK_ELEMENTS_RESULT, \array_merge($elements, $this->getModelInstanceElementsFromAppState()));
         // Add the ones from package Definitions
-        // Comment Leo 05/04/2017: Also add the module-definition type, for 2 reasons:
+        // Comment Leo 05/04/2017: Also add the component-definition type, for 2 reasons:
         // 1. It allows to create the 2 versions (DEV/PROD) of the configuration files, to compare/debug them side by side
         // 2. It allows to switch from DEV/PROD without having to delete the pop-cache
-        if ($definitionResolvers = DefinitionManagerFacade::getInstance()->getDefinitionResolvers()) {
+        if ($definitionResolvers = $this->getDefinitionManager()->getDefinitionResolvers()) {
             $resolvers = [];
             foreach ($definitionResolvers as $group => $resolverInstance) {
                 $resolvers[] = $group . '-' . \get_class($resolverInstance);
             }
-            $components[] = $this->translationAPI->__('definition resolvers:', 'component-model') . \implode(',', $resolvers);
+            $elements[] = $this->__('definition resolvers:', 'component-model') . \implode(',', $resolvers);
         }
-        return $components;
+        return $elements;
     }
     /**
      * @return string[]
      */
-    protected function getModelInstanceComponentsFromVars() : array
+    protected function getModelInstanceElementsFromAppState() : array
     {
-        $components = array();
-        $vars = ApplicationState::getVars();
+        $elements = array();
         // There will always be a nature. Add it.
-        $nature = $vars['nature'];
-        $route = $vars['route'];
-        $components[] = $this->translationAPI->__('nature:', 'component-model') . $nature;
-        $components[] = $this->translationAPI->__('route:', 'component-model') . $route;
+        $nature = App::getState('nature');
+        $route = App::getState('route');
+        $elements[] = $this->__('nature:', 'component-model') . $nature;
+        $elements[] = $this->__('route:', 'component-model') . $route;
         // Add the version, because otherwise there may be PHP errors happening from stale configuration that is not deleted, and still served, after a new version is deployed
-        $components[] = $this->translationAPI->__('version:', 'component-model') . $vars['version'];
+        $elements[] = $this->__('version:', 'component-model') . $this->getApplicationInfo()->getVersion();
         // Other properties
-        if ($format = $vars['format'] ?? null) {
-            $components[] = $this->translationAPI->__('format:', 'component-model') . $format;
+        if ($actions = App::getState('actions')) {
+            $elements[] = $this->__('actions:', 'component-model') . \implode(';', $actions);
         }
-        if ($target = $vars['target'] ?? null) {
-            $components[] = $this->translationAPI->__('target:', 'component-model') . $target;
-        }
-        if ($actions = $vars['actions'] ?? null) {
-            $components[] = $this->translationAPI->__('actions:', 'component-model') . \implode(';', $actions);
-        }
-        if ($config = $vars['config'] ?? null) {
-            $components[] = $this->translationAPI->__('config:', 'component-model') . $config;
-        }
-        if ($modulefilter = $vars['modulefilter'] ?? null) {
-            $components[] = $this->translationAPI->__('module filter:', 'component-model') . $modulefilter;
+        if ($componentFilter = App::getState('componentFilter')) {
+            $elements[] = $this->__('component filter:', 'component-model') . $componentFilter;
         }
         // Can the configuration change when doing a POST or GET?
-        if ($this->hooksAPI->applyFilters(self::HOOK_COMPONENTSFROMVARS_POSTORGETCHANGE, \false)) {
-            $components[] = $this->translationAPI->__('operation:', 'component-model') . ('POST' == $_SERVER['REQUEST_METHOD'] ? 'post' : 'get');
+        if (App::applyFilters(self::HOOK_ELEMENTSFROMVARS_POSTORGETCHANGE, \false)) {
+            $elements[] = $this->__('operation:', 'component-model') . ('POST' === App::server('REQUEST_METHOD') ? 'post' : 'get');
         }
-        if ($mangled = $vars['mangled'] ?? null) {
+        if ($mangled = App::getState('mangled')) {
             // By default it is mangled. To make it non-mangled, url must have param "mangled=none",
             // so only in these exceptional cases the identifier will add this parameter
-            $components[] = $this->translationAPI->__('mangled:', 'component-model') . $mangled;
+            $elements[] = $this->__('mangled:', 'component-model') . $mangled;
         }
-        if ($vars['only-fieldname-as-outputkey'] ?? null) {
-            $components[] = $this->translationAPI->__('only-fieldname-as-outputkey', 'component-model');
+        if ($versionConstraint = App::getState('version-constraint')) {
+            $elements[] = $this->__('version-constraint:', 'component-model') . $versionConstraint;
         }
-        if ($versionConstraint = $vars['version-constraint'] ?? null) {
-            $components[] = $this->translationAPI->__('version-constraint:', 'component-model') . $versionConstraint;
+        if ($fieldVersionConstraints = App::getState('field-version-constraints')) {
+            $elements[] = $this->__('field-version-constraints:', 'component-model') . \json_encode($fieldVersionConstraints);
         }
-        if ($fieldVersionConstraints = $vars['field-version-constraints'] ?? null) {
-            $components[] = $this->translationAPI->__('field-version-constraints:', 'component-model') . \json_encode($fieldVersionConstraints);
-        }
-        if ($directiveVersionConstraints = $vars['directive-version-constraints'] ?? null) {
-            $components[] = $this->translationAPI->__('directive-version-constraints:', 'component-model') . \json_encode($directiveVersionConstraints);
+        if ($directiveVersionConstraints = App::getState('directive-version-constraints')) {
+            $elements[] = $this->__('directive-version-constraints:', 'component-model') . \json_encode($directiveVersionConstraints);
         }
         // Allow for plug-ins to add their own vars. Eg: URE source parameter
-        return (array) $this->hooksAPI->applyFilters(self::HOOK_COMPONENTSFROMVARS_RESULT, $components);
+        return (array) App::applyFilters(self::HOOK_ELEMENTSFROMVARS_RESULT, $elements);
     }
 }

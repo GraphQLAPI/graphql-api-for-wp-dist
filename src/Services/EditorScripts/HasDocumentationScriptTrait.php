@@ -6,7 +6,6 @@ namespace GraphQLAPI\GraphQLAPI\Services\EditorScripts;
 
 use GraphQLAPI\GraphQLAPI\Constants\DocumentationConstants;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\LocaleHelper;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 
 /**
  * Add translatable documentation to the script.
@@ -17,6 +16,8 @@ use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
  */
 trait HasDocumentationScriptTrait
 {
+    abstract protected function getLocaleHelper(): LocaleHelper;
+
     /**
      * Docs are bundled as chunks by webpack, and loaded lazily
      * The `publicPath` property for `config.output` must be provided
@@ -32,17 +33,14 @@ trait HasDocumentationScriptTrait
     /**
      * Pass localized data to the block
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getDocsLocalizedData(): array
     {
         $data = [];
         // Add the locale language?
         if ($this->addLocalLanguage()) {
-            $instanceManager = InstanceManagerFacade::getInstance();
-            /** @var LocaleHelper */
-            $localeHelper = $instanceManager->getInstance(LocaleHelper::class);
-            $data[DocumentationConstants::LOCALE_LANG] = $localeHelper->getLocaleLanguage();
+            $data[DocumentationConstants::LOCALE_LANG] = $this->getLocaleHelper()->getLocaleLanguage();
         }
         // Add the default language?
         if ($defaultLang = $this->getDefaultLanguage()) {
@@ -85,12 +83,15 @@ trait HasDocumentationScriptTrait
      * Register the documentation (from under folder "docs/"), for the locale and the default language
      *
      * @param string[] $dependencies
+     * @param string $scriptName
+     * @param string $url
+     * @param string $version
      */
     protected function registerDocumentationScripts(
-        string $scriptName,
-        string $url,
-        array $dependencies = [],
-        string $version = ''
+        $scriptName,
+        $url,
+        $dependencies = [],
+        $version = ''
     ): void {
         if ($defaultLang = $this->getDefaultLanguage()) {
             \wp_register_script(
@@ -103,10 +104,7 @@ trait HasDocumentationScriptTrait
             \wp_enqueue_script($scriptName . '-' . $defaultLang);
         }
         if ($this->addLocalLanguage()) {
-            $instanceManager = InstanceManagerFacade::getInstance();
-            /** @var LocaleHelper */
-            $localeHelper = $instanceManager->getInstance(LocaleHelper::class);
-            $localeLang = $localeHelper->getLocaleLanguage();
+            $localeLang = $this->getLocaleHelper()->getLocaleLanguage();
             // Check the current locale has been translated, otherwise if will try to load an unexisting file
             // If the locale lang is the same as the default lang, the file has already been loaded
             if ($localeLang != $defaultLang && in_array($localeLang, $this->getDocLanguages())) {

@@ -4,34 +4,54 @@ declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasTypeSchemaDefinitionReferenceTrait;
-class InputValue extends AbstractSchemaDefinitionReferenceObject
+class InputValue extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject
 {
-    use HasTypeSchemaDefinitionReferenceTrait;
-    public function initializeTypeDependencies() : void
+    use \GraphQLByPoP\GraphQLServer\ObjectModels\HasTypeSchemaDefinitionReferenceTrait;
+    /**
+     * @var \GraphQLByPoP\GraphQLServer\ObjectModels\InputValueExtensions
+     */
+    protected $inputValueExtensions;
+    /**
+     * @param array<string,mixed> $fullSchemaDefinition
+     * @param string[] $schemaDefinitionPath
+     */
+    public function __construct(array &$fullSchemaDefinition, array $schemaDefinitionPath)
     {
-        $this->initType();
+        parent::__construct($fullSchemaDefinition, $schemaDefinitionPath);
+        /** @var string[] */
+        $inputValueExtensionsSchemaDefinitionPath = \array_merge($schemaDefinitionPath, [SchemaDefinition::EXTENSIONS]);
+        $this->inputValueExtensions = new \GraphQLByPoP\GraphQLServer\ObjectModels\InputValueExtensions($fullSchemaDefinition, $inputValueExtensionsSchemaDefinitionPath);
     }
     public function getName() : string
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_NAME];
+        return $this->schemaDefinition[SchemaDefinition::NAME];
     }
     public function getDescription() : ?string
     {
-        return $this->schemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] ?? null;
+        return $this->schemaDefinition[SchemaDefinition::DESCRIPTION] ?? null;
     }
     /**
-     * Undocumented function
+     * The default value must be returned as a JSON encoded string.
+     *
+     * From the GraphQL spec:
+     *
+     *   defaultValue may return a String encoding (using the GraphQL language)
+     *   of the default value used by this input value in the condition a value
+     *   is not provided at runtime. If this input value has no default value,
+     *   returns null.
+     *
+     * @see http://spec.graphql.org/draft/#sec-The-__InputValue-Type
      */
     public function getDefaultValue() : ?string
     {
-        // The default value must be returned as a JSON encoded string
-        // From the GraphQL spec (https://graphql.github.io/graphql-spec/draft/#sel-IAJbTHHAABABM7kV):
-        // "defaultValue may return a String encoding (using the GraphQL language) of the default value used by this input value in the condition a value is not provided at runtime. If this input value has no default value, returns null."
-        if ($defaultValue = $this->schemaDefinition[SchemaDefinition::ARGNAME_DEFAULT_VALUE] ?? null) {
-            return \json_encode($defaultValue);
+        $defaultValue = $this->schemaDefinition[SchemaDefinition::DEFAULT_VALUE] ?? null;
+        if ($defaultValue === null) {
+            return null;
         }
-        return null;
+        return (string) \json_encode($defaultValue);
+    }
+    public function getExtensions() : \GraphQLByPoP\GraphQLServer\ObjectModels\InputValueExtensions
+    {
+        return $this->inputValueExtensions;
     }
 }

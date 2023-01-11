@@ -23,8 +23,17 @@ use PrefixedByPoP\Psr\Container\NotFoundExceptionInterface;
  */
 trait ServiceLocatorTrait
 {
+    /**
+     * @var mixed[]
+     */
     private $factories;
+    /**
+     * @var mixed[]
+     */
     private $loading = [];
+    /**
+     * @var mixed[]
+     */
     private $providedTypes;
     /**
      * @param callable[] $factories
@@ -34,18 +43,15 @@ trait ServiceLocatorTrait
         $this->factories = $factories;
     }
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
+     * @param string $id
      */
-    public function has($id)
+    public function has($id) : bool
     {
         return isset($this->factories[$id]);
     }
     /**
-     * {@inheritdoc}
-     *
      * @return mixed
+     * @param string $id
      */
     public function get($id)
     {
@@ -65,12 +71,9 @@ trait ServiceLocatorTrait
             unset($this->loading[$id]);
         }
     }
-    /**
-     * {@inheritdoc}
-     */
     public function getProvidedServices() : array
     {
-        if (null === $this->providedTypes) {
+        if (!isset($this->providedTypes)) {
             $this->providedTypes = [];
             foreach ($this->factories as $name => $factory) {
                 if (!\is_callable($factory)) {

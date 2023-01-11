@@ -1,0 +1,8 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoP\Engine\Schema\SchemaDefinitionServiceInterface:
+        class: \PoPAPI\API\Schema\SchemaDefinitionService

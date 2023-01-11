@@ -8,7 +8,10 @@ use GraphQLAPI\GraphQLAPI\Services\SchemaConfigurationExecuters\SchemaConfigurat
 
 interface SchemaConfigurationExecuterRegistryInterface
 {
-    public function addSchemaConfigurationExecuter(SchemaConfigurationExecuterInterface $schemaConfigurationExecuter): void;
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\SchemaConfigurationExecuters\SchemaConfigurationExecuterInterface $schemaConfigurationExecuter
+     */
+    public function addSchemaConfigurationExecuter($schemaConfigurationExecuter): void;
     /**
      * @return SchemaConfigurationExecuterInterface[]
      */

@@ -42,7 +42,7 @@ class Cortex
      * @return bool
      * @throws \Exception
      */
-    public static function boot(RequestInterface $request = null)
+    public static function boot($request = null)
     {
         try {
             if (self::$booted) {

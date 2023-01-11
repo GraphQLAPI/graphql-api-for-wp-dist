@@ -68,8 +68,9 @@ final class Router implements RouterInterface
     }
     /**
      * @inheritdoc
+     * @param \Brain\Cortex\Uri\UriInterface $uri
      */
-    public function match(UriInterface $uri, $httpMethod)
+    public function match($uri, $httpMethod)
     {
         if ($this->results instanceof MatchingResult) {
             return $this->results;

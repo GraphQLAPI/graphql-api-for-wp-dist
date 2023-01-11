@@ -11,7 +11,7 @@
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection;
 
 use PrefixedByPoP\Psr\Container\ContainerInterface as PsrContainerInterface;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 /**
@@ -28,61 +28,41 @@ interface ContainerInterface extends PsrContainerInterface
     public const IGNORE_ON_INVALID_REFERENCE = 3;
     public const IGNORE_ON_UNINITIALIZED_REFERENCE = 4;
     /**
-     * Sets a service.
-     * @param object|null $service
+     * @param string $id
      */
-    public function set(string $id, $service);
+    public function set($id, $service);
     /**
-     * Gets a service.
-     *
-     * @param string $id              The service identifier
-     * @param int    $invalidBehavior The behavior when the service does not exist
-     *
-     * @return object|null The associated service
-     *
      * @throws ServiceCircularReferenceException When a circular reference is detected
      * @throws ServiceNotFoundException          When the service is not defined
      *
      * @see Reference
+     * @param string $id
+     * @param int $invalidBehavior
      */
     public function get($id, $invalidBehavior = self::EXCEPTION_ON_INVALID_REFERENCE);
     /**
-     * Returns true if the given service is defined.
-     *
-     * @param string $id The service identifier
-     *
-     * @return bool true if the service is defined, false otherwise
+     * @param string $id
      */
-    public function has($id);
+    public function has($id) : bool;
     /**
      * Check for whether or not a service has been initialized.
-     *
-     * @return bool true if the service has been initialized, false otherwise
+     * @param string $id
      */
-    public function initialized(string $id);
+    public function initialized($id) : bool;
     /**
-     * Gets a parameter.
+     * @return array|bool|string|int|float|\UnitEnum|null
      *
-     * @param string $name The parameter name
-     *
-     * @return array|bool|float|int|string|null The parameter value
-     *
-     * @throws InvalidArgumentException if the parameter is not defined
+     * @throws ParameterNotFoundException if the parameter is not defined
+     * @param string $name
      */
-    public function getParameter(string $name);
+    public function getParameter($name);
     /**
-     * Checks if a parameter exists.
-     *
-     * @param string $name The parameter name
-     *
-     * @return bool The presence of parameter in container
+     * @param string $name
      */
-    public function hasParameter(string $name);
+    public function hasParameter($name) : bool;
     /**
-     * Sets a parameter.
-     *
-     * @param string $name  The parameter name
-     * @param mixed  $value The parameter value
+     * @param mixed[]|bool|string|int|float|\UnitEnum|null $value
+     * @param string $name
      */
-    public function setParameter(string $name, $value);
+    public function setParameter($name, $value);
 }

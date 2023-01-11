@@ -18,25 +18,35 @@ use PrefixedByPoP\Symfony\Contracts\Service\ResetInterface;
  */
 class Compiler implements ResetInterface
 {
-    private $source;
+    /**
+     * @var string
+     */
+    private $source = '';
+    /**
+     * @var mixed[]
+     */
     private $functions;
     public function __construct(array $functions)
     {
         $this->functions = $functions;
     }
-    public function getFunction(string $name)
+    /**
+     * @param string $name
+     */
+    public function getFunction($name)
     {
         return $this->functions[$name];
     }
     /**
      * Gets the current PHP code after compilation.
-     *
-     * @return string The PHP code
      */
-    public function getSource()
+    public function getSource() : string
     {
         return $this->source;
     }
+    /**
+     * @return $this
+     */
     public function reset()
     {
         $this->source = '';
@@ -46,13 +56,17 @@ class Compiler implements ResetInterface
      * Compiles a node.
      *
      * @return $this
+     * @param \Symfony\Component\ExpressionLanguage\Node\Node $node
      */
-    public function compile(Node\Node $node)
+    public function compile($node)
     {
         $node->compile($this);
         return $this;
     }
-    public function subcompile(Node\Node $node)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Node\Node $node
+     */
+    public function subcompile($node)
     {
         $current = $this->source;
         $this->source = '';
@@ -65,8 +79,9 @@ class Compiler implements ResetInterface
      * Adds a raw string to the compiled code.
      *
      * @return $this
+     * @param string $string
      */
-    public function raw(string $string)
+    public function raw($string)
     {
         $this->source .= $string;
         return $this;
@@ -75,8 +90,9 @@ class Compiler implements ResetInterface
      * Adds a quoted string to the compiled code.
      *
      * @return $this
+     * @param string $value
      */
-    public function string(string $value)
+    public function string($value)
     {
         $this->source .= \sprintf('"%s"', \addcslashes($value, "\x00\t\"\$\\"));
         return $this;
@@ -84,9 +100,8 @@ class Compiler implements ResetInterface
     /**
      * Returns a PHP representation of a given value.
      *
-     * @param mixed $value The value to convert
-     *
      * @return $this
+     * @param mixed $value
      */
     public function repr($value)
     {

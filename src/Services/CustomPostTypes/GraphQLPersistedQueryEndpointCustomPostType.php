@@ -4,50 +4,87 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\CustomPostTypes;
 
-use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
+use GraphQLAPI\GraphQLAPI\Module;
+use GraphQLAPI\GraphQLAPI\ModuleConfiguration;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\Registries\BlockRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\EndpointAnnotatorRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\EndpointExecuterRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointAnnotatorRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointBlockRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointExecuterRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
+use GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface;
 use GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointOptionsBlock;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\AbstractGraphQLEndpointCustomPostType;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
-use GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLQueryTaxonomy;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\Hooks\HooksAPIInterface;
+use GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLEndpointCategoryTaxonomy;
+use GraphQLAPI\GraphQLAPI\Services\Taxonomies\TaxonomyInterface;
+use PoP\Root\App;
 
 class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpointCustomPostType
 {
     use WithBlockRegistryCustomPostTypeTrait;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointBlockRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointBlockRegistryInterface|null
      */
-    protected $persistedQueryEndpointBlockRegistry;
+    private $persistedQueryEndpointBlockRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointExecuterRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointAnnotatorRegistryInterface|null
      */
-    protected $persistedQueryEndpointExecuterRegistryInterface;
+    private $persistedQueryEndpointAnnotatorRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointAnnotatorRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointOptionsBlock|null
      */
-    protected $persistedQueryEndpointAnnotatorRegistryInterface;
+    private $persistedQueryEndpointOptionsBlock;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointOptionsBlock
+     * @var \GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLEndpointCategoryTaxonomy|null
      */
-    protected $persistedQueryEndpointOptionsBlock;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, UserAuthorizationInterface $userAuthorization, HooksAPIInterface $hooksAPI, BlockHelpers $blockHelpers, PersistedQueryEndpointBlockRegistryInterface $persistedQueryEndpointBlockRegistry, PersistedQueryEndpointExecuterRegistryInterface $persistedQueryEndpointExecuterRegistryInterface, PersistedQueryEndpointAnnotatorRegistryInterface $persistedQueryEndpointAnnotatorRegistryInterface, PersistedQueryEndpointOptionsBlock $persistedQueryEndpointOptionsBlock)
+    private $graphQLEndpointCategoryTaxonomy;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointBlockRegistryInterface $persistedQueryEndpointBlockRegistry
+     */
+    final public function setPersistedQueryEndpointBlockRegistry($persistedQueryEndpointBlockRegistry): void
     {
         $this->persistedQueryEndpointBlockRegistry = $persistedQueryEndpointBlockRegistry;
-        $this->persistedQueryEndpointExecuterRegistryInterface = $persistedQueryEndpointExecuterRegistryInterface;
-        $this->persistedQueryEndpointAnnotatorRegistryInterface = $persistedQueryEndpointAnnotatorRegistryInterface;
+    }
+    final protected function getPersistedQueryEndpointBlockRegistry(): PersistedQueryEndpointBlockRegistryInterface
+    {
+        /** @var PersistedQueryEndpointBlockRegistryInterface */
+        return $this->persistedQueryEndpointBlockRegistry = $this->persistedQueryEndpointBlockRegistry ?? $this->instanceManager->getInstance(PersistedQueryEndpointBlockRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\PersistedQueryEndpointAnnotatorRegistryInterface $persistedQueryEndpointAnnotatorRegistry
+     */
+    final public function setPersistedQueryEndpointAnnotatorRegistry($persistedQueryEndpointAnnotatorRegistry): void
+    {
+        $this->persistedQueryEndpointAnnotatorRegistry = $persistedQueryEndpointAnnotatorRegistry;
+    }
+    final protected function getPersistedQueryEndpointAnnotatorRegistry(): PersistedQueryEndpointAnnotatorRegistryInterface
+    {
+        /** @var PersistedQueryEndpointAnnotatorRegistryInterface */
+        return $this->persistedQueryEndpointAnnotatorRegistry = $this->persistedQueryEndpointAnnotatorRegistry ?? $this->instanceManager->getInstance(PersistedQueryEndpointAnnotatorRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointOptionsBlock $persistedQueryEndpointOptionsBlock
+     */
+    final public function setPersistedQueryEndpointOptionsBlock($persistedQueryEndpointOptionsBlock): void
+    {
         $this->persistedQueryEndpointOptionsBlock = $persistedQueryEndpointOptionsBlock;
-        parent::__construct($instanceManager, $moduleRegistry, $userAuthorization, $hooksAPI, $blockHelpers);
+    }
+    final protected function getPersistedQueryEndpointOptionsBlock(): PersistedQueryEndpointOptionsBlock
+    {
+        /** @var PersistedQueryEndpointOptionsBlock */
+        return $this->persistedQueryEndpointOptionsBlock = $this->persistedQueryEndpointOptionsBlock ?? $this->instanceManager->getInstance(PersistedQueryEndpointOptionsBlock::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLEndpointCategoryTaxonomy $graphQLEndpointCategoryTaxonomy
+     */
+    final public function setGraphQLEndpointCategoryTaxonomy($graphQLEndpointCategoryTaxonomy): void
+    {
+        $this->graphQLEndpointCategoryTaxonomy = $graphQLEndpointCategoryTaxonomy;
+    }
+    final protected function getGraphQLEndpointCategoryTaxonomy(): GraphQLEndpointCategoryTaxonomy
+    {
+        /** @var GraphQLEndpointCategoryTaxonomy */
+        return $this->graphQLEndpointCategoryTaxonomy = $this->graphQLEndpointCategoryTaxonomy ?? $this->instanceManager->getInstance(GraphQLEndpointCategoryTaxonomy::class);
     }
 
     /**
@@ -66,14 +103,9 @@ class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpoin
         return EndpointFunctionalityModuleResolver::PERSISTED_QUERIES;
     }
 
-    protected function getEndpointExecuterRegistry(): EndpointExecuterRegistryInterface
-    {
-        return $this->persistedQueryEndpointExecuterRegistryInterface;
-    }
-
     protected function getEndpointAnnotatorRegistry(): EndpointAnnotatorRegistryInterface
     {
-        return $this->persistedQueryEndpointAnnotatorRegistryInterface;
+        return $this->getPersistedQueryEndpointAnnotatorRegistry();
     }
 
     /**
@@ -89,13 +121,15 @@ class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpoin
      */
     protected function getSlugBase(): ?string
     {
-        return ComponentConfiguration::getPersistedQuerySlugBase();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return $moduleConfiguration->getPersistedQuerySlugBase();
     }
 
     /**
      * Custom post type name
      */
-    public function getCustomPostTypeName(): string
+    protected function getCustomPostTypeName(): string
     {
         return \__('GraphQL persisted query endpoint', 'graphql-api');
     }
@@ -103,9 +137,9 @@ class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpoin
     /**
      * Custom Post Type plural name
      *
-     * @param bool $uppercase Indicate if the name must be uppercase (for starting a sentence) or, otherwise, lowercase
+     * @param bool $titleCase Indicate if the name must be title case (for starting a sentence) or, otherwise, lowercase
      */
-    protected function getCustomPostTypePluralNames(bool $uppercase): string
+    protected function getCustomPostTypePluralNames($titleCase): string
     {
         return \__('GraphQL persisted queries', 'graphql-api');
     }
@@ -124,9 +158,9 @@ class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpoin
      * @param string $name_uc Singular name uppercase
      * @param string $names_uc Plural name uppercase
      * @param string $names_lc Plural name lowercase
-     * @return array<string, string>
+     * @return array<string,string>
      */
-    protected function getCustomPostTypeLabels(string $name_uc, string $names_uc, string $names_lc): array
+    protected function getCustomPostTypeLabels($name_uc, $names_uc, $names_lc): array
     {
         /**
          * Because the name is too long, shorten it for the admin menu only
@@ -150,12 +184,12 @@ class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpoin
     /**
      * Taxonomies
      *
-     * @return string[]
+     * @return TaxonomyInterface[]
      */
     protected function getTaxonomies(): array
     {
         return [
-            GraphQLQueryTaxonomy::TAXONOMY_CATEGORY,
+            $this->getGraphQLEndpointCategoryTaxonomy(),
         ];
     }
 
@@ -177,7 +211,7 @@ class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpoin
 
     protected function getBlockRegistry(): BlockRegistryInterface
     {
-        return $this->persistedQueryEndpointBlockRegistry;
+        return $this->getPersistedQueryEndpointBlockRegistry();
     }
 
     /**
@@ -188,8 +222,8 @@ class GraphQLPersistedQueryEndpointCustomPostType extends AbstractGraphQLEndpoin
         return true;
     }
 
-    public function getEndpointOptionsBlock(): AbstractBlock
+    public function getEndpointOptionsBlock(): BlockInterface
     {
-        return $this->persistedQueryEndpointOptionsBlock;
+        return $this->getPersistedQueryEndpointOptionsBlock();
     }
 }

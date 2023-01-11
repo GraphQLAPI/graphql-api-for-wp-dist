@@ -20,8 +20,9 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumen
 class IniFileLoader extends FileLoader
 {
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @return mixed
+     * @param string|null $type
      */
     public function load($resource, $type = null)
     {
@@ -36,7 +37,11 @@ class IniFileLoader extends FileLoader
         $result = \parse_ini_file($path, \true, \INI_SCANNER_RAW);
         if (isset($result['parameters']) && \is_array($result['parameters'])) {
             foreach ($result['parameters'] as $key => $value) {
-                $this->container->setParameter($key, $this->phpize($value));
+                if (\is_array($value)) {
+                    $this->container->setParameter($key, \array_map(\Closure::fromCallable([$this, 'phpize']), $value));
+                } else {
+                    $this->container->setParameter($key, $this->phpize($value));
+                }
             }
         }
         if ($this->env && \is_array($result['parameters@' . $this->env] ?? null)) {
@@ -44,12 +49,13 @@ class IniFileLoader extends FileLoader
                 $this->container->setParameter($key, $this->phpize($value));
             }
         }
+        return null;
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @param string|null $type
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, $type = null) : bool
     {
         if (!\is_string($resource)) {
             return \false;
@@ -63,7 +69,6 @@ class IniFileLoader extends FileLoader
      * Note that the following features are not supported:
      *  * strings with escaped quotes are not supported "foo\"bar";
      *  * string concatenation ("foo" "bar").
-     *
      * @return mixed
      */
     private function phpize(string $value)
@@ -76,12 +81,14 @@ class IniFileLoader extends FileLoader
         switch (\true) {
             case \defined($value):
                 return \constant($value);
-            case 'yes' === $lowercaseValue || 'on' === $lowercaseValue:
+            case 'yes' === $lowercaseValue:
+            case 'on' === $lowercaseValue:
                 return \true;
-            case 'no' === $lowercaseValue || 'off' === $lowercaseValue || 'none' === $lowercaseValue:
+            case 'no' === $lowercaseValue:
+            case 'off' === $lowercaseValue:
+            case 'none' === $lowercaseValue:
                 return \false;
             case isset($value[1]) && ("'" === $value[0] && "'" === $value[\strlen($value) - 1] || '"' === $value[0] && '"' === $value[\strlen($value) - 1]):
-                // quoted string
                 return \substr($value, 1, -1);
             default:
                 return XmlUtils::phpize($value);

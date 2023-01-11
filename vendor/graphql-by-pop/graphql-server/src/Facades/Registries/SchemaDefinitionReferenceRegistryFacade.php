@@ -3,8 +3,8 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Facades\Registries;
 
+use PoP\Root\App;
 use GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
 class SchemaDefinitionReferenceRegistryFacade
 {
     public static function getInstance() : SchemaDefinitionReferenceRegistryInterface
@@ -12,7 +12,7 @@ class SchemaDefinitionReferenceRegistryFacade
         /**
          * @var SchemaDefinitionReferenceRegistryInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(SchemaDefinitionReferenceRegistryInterface::class);
+        $service = App::getContainer()->get(SchemaDefinitionReferenceRegistryInterface::class);
         return $service;
     }
 }

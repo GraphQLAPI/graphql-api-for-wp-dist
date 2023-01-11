@@ -3,12 +3,19 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DataStructure;
 
+use PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface;
 interface DataStructureManagerInterface
 {
-    public function addDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void;
-    public function setDefaultDataStructureFormatter(\PoP\ComponentModel\DataStructure\DataStructureFormatterInterface $formatter) : void;
     /**
-     * @param string $name
+     * @param \PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface $formatter
      */
-    public function getDataStructureFormatter($name = null) : \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface;
+    public function addDataStructureFormatter($formatter) : void;
+    /**
+     * @param \PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface $formatter
+     */
+    public function setDefaultDataStructureFormatter($formatter) : void;
+    /**
+     * @param string|null $name
+     */
+    public function getDataStructureFormatter($name = null) : DataStructureFormatterInterface;
 }

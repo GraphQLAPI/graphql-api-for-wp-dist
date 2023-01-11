@@ -15,7 +15,9 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\IteratorArgumen
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\LogicException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
+use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression;
 /**
  * Run this pass before passes that need to know more about the relation of
  * your services.
@@ -28,14 +30,41 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class AnalyzeServiceReferencesPass extends AbstractRecursivePass
 {
+    /**
+     * @var \Symfony\Component\DependencyInjection\Compiler\ServiceReferenceGraph
+     */
     private $graph;
+    /**
+     * @var \Symfony\Component\DependencyInjection\Definition|null
+     */
     private $currentDefinition;
+    /**
+     * @var bool
+     */
     private $onlyConstructorArguments;
+    /**
+     * @var bool
+     */
     private $hasProxyDumper;
+    /**
+     * @var bool
+     */
     private $lazy;
+    /**
+     * @var bool
+     */
     private $byConstructor;
+    /**
+     * @var bool
+     */
     private $byFactory;
+    /**
+     * @var mixed[]
+     */
     private $definitions;
+    /**
+     * @var mixed[]
+     */
     private $aliases;
     /**
      * @param bool $onlyConstructorArguments Sets this Service Reference pass to ignore method calls
@@ -48,8 +77,9 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass
     }
     /**
      * Processes a ContainerBuilder object to populate the service reference graph.
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         $this->container = $container;
         $this->graph = $container->getCompiler()->getServiceReferenceGraph();
@@ -69,7 +99,12 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass
             $this->aliases = $this->definitions = [];
         }
     }
-    protected function processValue($value, bool $isRoot = \false)
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
+     */
+    protected function processValue($value, $isRoot = \false)
     {
         $lazy = $this->lazy;
         $inExpression = $this->inExpression();
@@ -82,9 +117,9 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass
         if ($value instanceof Reference) {
             $targetId = $this->getDefinitionId((string) $value);
             $targetDefinition = null !== $targetId ? $this->container->getDefinition($targetId) : null;
-            $this->graph->connect($this->currentId, $this->currentDefinition, $targetId, $targetDefinition, $value, $this->lazy || $this->hasProxyDumper && $targetDefinition && $targetDefinition->isLazy(), ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE === $value->getInvalidBehavior(), $this->byConstructor);
+            $this->graph->connect($this->currentId, $this->currentDefinition, $targetId, $targetDefinition, $value, $this->lazy || $this->hasProxyDumper && (($targetDefinition2 = $targetDefinition) ? $targetDefinition2->isLazy() : null), ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE === $value->getInvalidBehavior(), $this->byConstructor);
             if ($inExpression) {
-                $this->graph->connect('.internal.reference_in_expression', null, $targetId, $targetDefinition, $value, $this->lazy || $targetDefinition && $targetDefinition->isLazy(), \true);
+                $this->graph->connect('.internal.reference_in_expression', null, $targetId, $targetDefinition, $value, $this->lazy || (($targetDefinition2 = $targetDefinition) ? $targetDefinition2->isLazy() : null), \true);
             }
             return $value;
         }
@@ -104,7 +139,13 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass
         $this->byConstructor = $isRoot || $byConstructor;
         $byFactory = $this->byFactory;
         $this->byFactory = \true;
-        $this->processValue($value->getFactory());
+        if (\is_string($factory = $value->getFactory()) && \strncmp($factory, '@=', \strlen('@=')) === 0) {
+            if (!\class_exists(Expression::class)) {
+                throw new LogicException('Expressions cannot be used in service factories without the ExpressionLanguage component. Try running "composer require symfony/expression-language".');
+            }
+            $factory = new Expression(\substr($factory, 2));
+        }
+        $this->processValue($factory);
         $this->byFactory = $byFactory;
         $this->processValue($value->getArguments());
         $properties = $value->getProperties();

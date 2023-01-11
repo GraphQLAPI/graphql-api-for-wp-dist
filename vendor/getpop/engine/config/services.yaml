@@ -4,54 +4,33 @@ services:
         autowire: true
         autoconfigure: true
 
-    persistent_cache:
+    PoP\ComponentModel\Cache\PersistentCacheInterface:
         class: \PoP\Engine\Cache\Cache
         arguments:
             $cacheItemPool: '@persistent_cache_item_pool'
 
-    memory_cache:
+    PoP\ComponentModel\Cache\TransientCacheInterface:
         class: \PoP\Engine\Cache\Cache
         arguments:
-            $cacheItemPool: '@memory_cache_item_pool'
+            $cacheItemPool: '@transient_cache_item_pool'
 
     PoP\Engine\ObjectModels\Root:
         class: \PoP\Engine\ObjectModels\Root
 
+    PoP\Engine\ObjectModels\SuperRoot:
+        class: \PoP\Engine\ObjectModels\SuperRoot
+
     PoP\Engine\Hooks\:
         resource: '../src/Hooks/*'
 
-    PoP\Engine\LooseContracts\:
-        resource: '../src/LooseContracts/*'
-
-    PoP\Engine\FormInputs\:
-        resource: '../src/FormInputs/*'
-
-    PoP\Engine\CheckpointProcessors\:
-        resource: '../src/CheckpointProcessors/*'
-
-    PoP\Engine\RouteModuleProcessors\:
-        resource: '../src/RouteModuleProcessors/*'
-
-    PoP\Engine\ModuleProcessors\:
-        resource: '../src/ModuleProcessors/*'
-
-    PoP\Engine\Enums\:
-        resource: '../src/Enums/*'
+    PoP\Engine\Checkpoints\:
+        resource: '../src/Checkpoints/*'
 
     PoP\Engine\TypeResolvers\:
         resource: '../src/TypeResolvers/*'
 
-    PoP\Engine\ErrorHandling\ErrorHelperInterface:
-        class: \PoP\Engine\ErrorHandling\ErrorHelper
-
     PoP\Engine\Schema\SchemaDefinitionServiceInterface:
         class: \PoP\Engine\Schema\SchemaDefinitionService
 
-    PoP\Engine\Formatters\DateFormatterInterface:
-        class: \PoP\Engine\Formatters\DateFormatter
-
-    PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface:
-        class: \PoP\Engine\Schema\SchemaDefinitionService
-
-    PoP\ComponentModel\EntryModule\EntryModuleManagerInterface:
-        class: \PoP\Engine\EntryModule\EntryModuleManager
+    PoP\Engine\FeedbackItemProviders\:
+        resource: '../src/FeedbackItemProviders/*'

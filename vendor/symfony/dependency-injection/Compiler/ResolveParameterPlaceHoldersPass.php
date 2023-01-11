@@ -13,6 +13,7 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 /**
  * Resolves all parameter placeholders "%somevalue%" to their real values.
  *
@@ -20,20 +21,28 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\ParameterNotFo
  */
 class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
 {
+    /**
+     * @var \Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface
+     */
     private $bag;
-    private $resolveArrays;
-    private $throwOnResolveException;
-    public function __construct($resolveArrays = \true, $throwOnResolveException = \true)
+    /**
+     * @var bool
+     */
+    private $resolveArrays = \true;
+    /**
+     * @var bool
+     */
+    private $throwOnResolveException = \true;
+    public function __construct(bool $resolveArrays = \true, bool $throwOnResolveException = \true)
     {
         $this->resolveArrays = $resolveArrays;
         $this->throwOnResolveException = $throwOnResolveException;
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws ParameterNotFoundException
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         $this->bag = $container->getParameterBag();
         try {
@@ -49,9 +58,14 @@ class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
             throw $e;
         }
         $this->bag->resolve();
-        $this->bag = null;
+        unset($this->bag);
     }
-    protected function processValue($value, bool $isRoot = \false)
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
+     */
+    protected function processValue($value, $isRoot = \false)
     {
         if (\is_string($value)) {
             try {
@@ -73,6 +87,11 @@ class ResolveParameterPlaceHoldersPass extends AbstractRecursivePass
             }
             if (isset($changes['file'])) {
                 $value->setFile($this->bag->resolveValue($value->getFile()));
+            }
+            $tags = $value->getTags();
+            if (isset($tags['proxy'])) {
+                $tags['proxy'] = $this->bag->resolveValue($tags['proxy']);
+                $value->setTags($tags);
             }
         }
         $value = parent::processValue($value, $isRoot);

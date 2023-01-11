@@ -5,38 +5,71 @@ declare(strict_types=1);
 namespace PoP\EngineWP\Hooks;
 
 use PoP\ComponentModel\HelperServices\ApplicationStateHelperServiceInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\EngineWP\Templates\TemplateHelpers;
-use PoP\Hooks\AbstractHookSet;
-use PoP\Hooks\HooksAPIInterface;
-use PoP\Translation\TranslationAPIInterface;
+use PoP\EngineWP\HelperServices\TemplateHelpersInterface;
+use PoP\Root\App;
+use PoP\Root\Hooks\AbstractHookSet;
 
 class TemplateHookSet extends AbstractHookSet
 {
     /**
-     * @var \PoP\ComponentModel\HelperServices\ApplicationStateHelperServiceInterface
+     * @var \PoP\ComponentModel\HelperServices\ApplicationStateHelperServiceInterface|null
      */
-    protected $applicationStateHelperService;
-    public function __construct(HooksAPIInterface $hooksAPI, TranslationAPIInterface $translationAPI, InstanceManagerInterface $instanceManager, ApplicationStateHelperServiceInterface $applicationStateHelperService)
+    private $applicationStateHelperService;
+    /**
+     * @var \PoP\EngineWP\HelperServices\TemplateHelpersInterface|null
+     */
+    private $templateHelpers;
+
+    /**
+     * @param \PoP\ComponentModel\HelperServices\ApplicationStateHelperServiceInterface $applicationStateHelperService
+     */
+    final public function setApplicationStateHelperService($applicationStateHelperService): void
     {
         $this->applicationStateHelperService = $applicationStateHelperService;
-        parent::__construct($hooksAPI, $translationAPI, $instanceManager);
     }
+    final protected function getApplicationStateHelperService(): ApplicationStateHelperServiceInterface
+    {
+        /** @var ApplicationStateHelperServiceInterface */
+        return $this->applicationStateHelperService = $this->applicationStateHelperService ?? $this->instanceManager->getInstance(ApplicationStateHelperServiceInterface::class);
+    }
+    /**
+     * @param \PoP\EngineWP\HelperServices\TemplateHelpersInterface $templateHelpers
+     */
+    final public function setTemplateHelpers($templateHelpers): void
+    {
+        $this->templateHelpers = $templateHelpers;
+    }
+    final protected function getTemplateHelpers(): TemplateHelpersInterface
+    {
+        /** @var TemplateHelpersInterface */
+        return $this->templateHelpers = $this->templateHelpers ?? $this->instanceManager->getInstance(TemplateHelpersInterface::class);
+    }
+
     protected function init(): void
     {
-        $this->hooksAPI->addFilter(
+        App::addFilter(
             'template_include',
-            [$this, 'setTemplate'],
-            // Execute last
-            PHP_INT_MAX
+            \Closure::fromCallable([$this, 'getTemplate']),
+            PHP_INT_MAX // Execute last
         );
     }
-    public function setTemplate(string $template): string
+
+    /**
+     * @param string $template
+     */
+    public function getTemplate($template): string
     {
-        // If doing JSON, for sure return json.php which only prints the encoded JSON
-        if ($this->applicationStateHelperService->doingJSON()) {
-            return TemplateHelpers::getTemplateFile();
+        if ($this->useTemplate()) {
+            return $this->getTemplateHelpers()->getGenerateDataAndPrepareAndSendResponseTemplateFile();
         }
         return $template;
+    }
+
+    /**
+     * If doing JSON, return the template which prints the encoded JSON
+     */
+    protected function useTemplate(): bool
+    {
+        return $this->getApplicationStateHelperService()->doingJSON();
     }
 }

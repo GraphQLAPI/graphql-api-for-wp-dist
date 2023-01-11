@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
 use GraphQLAPI\GraphQLAPI\Constants\ModuleSettingOptions;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
+use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface;
 use GraphQLAPI\GraphQLAPI\ModuleSettings\Properties;
 use GraphQLAPI\GraphQLAPI\Plugin;
-use GraphQLByPoP\GraphQLEndpointForWP\ComponentConfiguration as GraphQLEndpointForWPComponentConfiguration;
+use GraphQLAPI\GraphQLAPI\PluginEnvironment;
+use GraphQLByPoP\GraphQLEndpointForWP\Module as GraphQLEndpointForWPModule;
+use GraphQLByPoP\GraphQLEndpointForWP\ModuleConfiguration as GraphQLEndpointForWPModuleConfiguration;
+use PoP\Root\App;
+use PoP\Root\Environment as RootEnvironment;
 
 class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleResolver
 {
@@ -18,7 +22,24 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
     public const SINGLE_ENDPOINT = Plugin::NAMESPACE . '\single-endpoint';
     public const PERSISTED_QUERIES = Plugin::NAMESPACE . '\persisted-queries';
     public const CUSTOM_ENDPOINTS = Plugin::NAMESPACE . '\custom-endpoints';
-    public const API_HIERARCHY = Plugin::NAMESPACE . '\api-hierarchy';
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface|null
+     */
+    private $markdownContentParser;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface $markdownContentParser
+     */
+    final public function setMarkdownContentParser($markdownContentParser): void
+    {
+        $this->markdownContentParser = $markdownContentParser;
+    }
+    final protected function getMarkdownContentParser(): MarkdownContentParserInterface
+    {
+        /** @var MarkdownContentParserInterface */
+        return $this->markdownContentParser = $this->markdownContentParser ?? $this->instanceManager->getInstance(MarkdownContentParserInterface::class);
+    }
 
     /**
      * @return string[]
@@ -29,14 +50,14 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
             self::SINGLE_ENDPOINT,
             self::CUSTOM_ENDPOINTS,
             self::PERSISTED_QUERIES,
-            self::API_HIERARCHY,
         ];
     }
 
     /**
-     * @return array<array> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @return array<string[]> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @param string $module
      */
-    public function getDependedModuleLists(string $module): array
+    public function getDependedModuleLists($module): array
     {
         switch ($module) {
             case self::SINGLE_ENDPOINT:
@@ -48,51 +69,65 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
                         SchemaConfigurationFunctionalityModuleResolver::SCHEMA_CONFIGURATION,
                     ],
                 ];
-            case self::API_HIERARCHY:
-                return [
-                    [
-                        self::PERSISTED_QUERIES,
-                        self::CUSTOM_ENDPOINTS,
-                    ],
-                ];
         }
         return parent::getDependedModuleLists($module);
     }
 
-    public function getName(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getName($module): string
     {
-        $names = [
-            self::SINGLE_ENDPOINT => \__('Single Endpoint', 'graphql-api'),
-            self::PERSISTED_QUERIES => \__('Persisted Queries', 'graphql-api'),
-            self::CUSTOM_ENDPOINTS => \__('Custom Endpoints', 'graphql-api'),
-            self::API_HIERARCHY => \__('API Hierarchy', 'graphql-api'),
-        ];
-        return $names[$module] ?? $module;
+        switch ($module) {
+            case self::SINGLE_ENDPOINT:
+                return \__('Single Endpoint', 'graphql-api');
+            case self::PERSISTED_QUERIES:
+                return \__('Persisted Queries', 'graphql-api');
+            case self::CUSTOM_ENDPOINTS:
+                return \__('Custom Endpoints', 'graphql-api');
+            default:
+                return $module;
+        }
     }
 
-    public function getDescription(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getDescription($module): string
     {
+        /** @var GraphQLEndpointForWPModuleConfiguration */
+        $moduleConfiguration = App::getModule(GraphQLEndpointForWPModule::class)->getConfiguration();
         switch ($module) {
             case self::SINGLE_ENDPOINT:
                 return \sprintf(
                     \__('Expose a single GraphQL endpoint under <code>%s</code>, with unrestricted access', 'graphql-api'),
-                    GraphQLEndpointForWPComponentConfiguration::getGraphQLAPIEndpoint()
+                    $moduleConfiguration->getGraphQLAPIEndpoint()
                 );
             case self::PERSISTED_QUERIES:
                 return \__('Expose predefined responses through a custom URL, akin to using GraphQL queries to publish REST endpoints', 'graphql-api');
             case self::CUSTOM_ENDPOINTS:
                 return \__('Expose different subsets of the schema for different targets, such as users (clients, employees, etc), applications (website, mobile app, etc), context (weekday, weekend, etc), and others', 'graphql-api');
-            case self::API_HIERARCHY:
-                return \__('Create a hierarchy of API endpoints extending from other endpoints, and inheriting their properties', 'graphql-api');
         }
         return parent::getDescription($module);
     }
 
-    public function isEnabledByDefault(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function isEnabledByDefault($module): bool
     {
         switch ($module) {
             case self::SINGLE_ENDPOINT:
-                return false;
+                /**
+                 * Enable for DEV so that running integration
+                 * tests against the single endpoint works
+                 * without the need to manually enable the module.
+                 *
+                 * Single endpoint is naturally disabled for PROD,
+                 * unless the "unsafe defaults" are set.
+                 */
+                return RootEnvironment::isApplicationEnvironmentDev()
+                    || PluginEnvironment::areUnsafeDefaultsEnabled();
         }
         return parent::isEnabledByDefault($module);
     }
@@ -100,8 +135,10 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
     /**
      * Default value for an option set by the module
      * @return mixed
+     * @param string $module
+     * @param string $option
      */
-    public function getSettingsDefaultValue(string $module, string $option)
+    public function getSettingsDefaultValue($module, $option)
     {
         $defaultValues = [
             self::SINGLE_ENDPOINT => [
@@ -120,13 +157,14 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
     /**
      * Array with the inputs to show as settings for the module
      *
-    * @return array<array> List of settings for the module, each entry is an array with property => value
+     * @return array<array<string,mixed>> List of settings for the module, each entry is an array with property => value
+     * @param string $module
      */
-    public function getSettings(string $module): array
+    public function getSettings($module): array
     {
         $moduleSettings = parent::getSettings($module);
         // Do the if one by one, so that the SELECT do not get evaluated unless needed
-        if ($module == self::SINGLE_ENDPOINT) {
+        if ($module === self::SINGLE_ENDPOINT) {
             $option = ModuleSettingOptions::PATH;
             $moduleSettings[] = [
                 Properties::INPUT => $option,
@@ -138,7 +176,7 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
                 Properties::DESCRIPTION => \__('URL path to expose the single GraphQL endpoint', 'graphql-api'),
                 Properties::TYPE => Properties::TYPE_STRING,
             ];
-        } elseif ($module == self::CUSTOM_ENDPOINTS) {
+        } elseif ($module === self::CUSTOM_ENDPOINTS) {
             $option = ModuleSettingOptions::PATH;
             $moduleSettings[] = [
                 Properties::INPUT => $option,
@@ -150,7 +188,7 @@ class EndpointFunctionalityModuleResolver extends AbstractFunctionalityModuleRes
                 Properties::DESCRIPTION => \__('URL base path to expose the Custom Endpoint', 'graphql-api'),
                 Properties::TYPE => Properties::TYPE_STRING,
             ];
-        } elseif ($module == self::PERSISTED_QUERIES) {
+        } elseif ($module === self::PERSISTED_QUERIES) {
             $option = ModuleSettingOptions::PATH;
             $moduleSettings[] = [
                 Properties::INPUT => $option,

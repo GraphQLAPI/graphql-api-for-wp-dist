@@ -29,18 +29,21 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     protected $ignoreExtraKeys = \false;
     protected $removeExtraKeys = \true;
     protected $normalizeKeys = \true;
+    /**
+     * @param bool $normalizeKeys
+     */
     public function setNormalizeKeys($normalizeKeys)
     {
-        $this->normalizeKeys = (bool) $normalizeKeys;
+        $this->normalizeKeys = $normalizeKeys;
     }
     /**
-     * {@inheritdoc}
-     *
      * Namely, you mostly have foo_bar in YAML while you have foo-bar in XML.
      * After running this method, all keys are normalized to foo_bar.
      *
      * If you have a mixed key like foo-bar_moo, it will not be altered.
      * The key will also not be altered if the target key already exists.
+     * @param mixed $value
+     * @return mixed
      */
     protected function preNormalize($value)
     {
@@ -49,7 +52,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
         }
         $normalized = [];
         foreach ($value as $k => $v) {
-            if (\false !== \strpos($k, '-') && \false === \strpos($k, '_') && !\array_key_exists($normalizedKey = \str_replace('-', '_', $k), $value)) {
+            if (\strpos($k, '-') !== \false && \strpos($k, '_') === \false && !\array_key_exists($normalizedKey = \str_replace('-', '_', $k), $value)) {
                 $normalized[$normalizedKey] = $v;
             } else {
                 $normalized[$k] = $v;
@@ -62,7 +65,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @return array<string, NodeInterface>
      */
-    public function getChildren()
+    public function getChildren() : array
     {
         return $this->children;
     }
@@ -71,7 +74,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @param array $remappings An array of the form [[string, string]]
      */
-    public function setXmlRemappings(array $remappings)
+    public function setXmlRemappings($remappings)
     {
         $this->xmlRemappings = $remappings;
     }
@@ -80,36 +83,40 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @return array an array of the form [[string, string]]
      */
-    public function getXmlRemappings()
+    public function getXmlRemappings() : array
     {
         return $this->xmlRemappings;
     }
     /**
      * Sets whether to add default values for this array if it has not been
      * defined in any of the configuration files.
+     * @param bool $boolean
      */
-    public function setAddIfNotSet(bool $boolean)
+    public function setAddIfNotSet($boolean)
     {
         $this->addIfNotSet = $boolean;
     }
     /**
      * Sets whether false is allowed as value indicating that the array should be unset.
+     * @param bool $allow
      */
-    public function setAllowFalse(bool $allow)
+    public function setAllowFalse($allow)
     {
         $this->allowFalse = $allow;
     }
     /**
      * Sets whether new keys can be defined in subsequent configurations.
+     * @param bool $allow
      */
-    public function setAllowNewKeys(bool $allow)
+    public function setAllowNewKeys($allow)
     {
         $this->allowNewKeys = $allow;
     }
     /**
      * Sets if deep merging should occur.
+     * @param bool $boolean
      */
-    public function setPerformDeepMerging(bool $boolean)
+    public function setPerformDeepMerging($boolean)
     {
         $this->performDeepMerging = $boolean;
     }
@@ -119,27 +126,31 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      * @param bool $boolean To allow extra keys
      * @param bool $remove  To remove extra keys
      */
-    public function setIgnoreExtraKeys(bool $boolean, bool $remove = \true)
+    public function setIgnoreExtraKeys($boolean, $remove = \true)
     {
         $this->ignoreExtraKeys = $boolean;
         $this->removeExtraKeys = $this->ignoreExtraKeys && $remove;
     }
     /**
-     * {@inheritdoc}
+     * Returns true when extra keys should be ignored without an exception.
      */
-    public function setName(string $name)
+    public function shouldIgnoreExtraKeys() : bool
+    {
+        return $this->ignoreExtraKeys;
+    }
+    /**
+     * @param string $name
+     */
+    public function setName($name)
     {
         $this->name = $name;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function hasDefaultValue()
+    public function hasDefaultValue() : bool
     {
         return $this->addIfNotSet;
     }
     /**
-     * {@inheritdoc}
+     * @return mixed
      */
     public function getDefaultValue()
     {
@@ -159,11 +170,12 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
      *
      * @throws \InvalidArgumentException when the child node has no name
      * @throws \InvalidArgumentException when the child node's name is not unique
+     * @param \Symfony\Component\Config\Definition\NodeInterface $node
      */
-    public function addChild(NodeInterface $node)
+    public function addChild($node)
     {
         $name = $node->getName();
-        if (!\strlen($name)) {
+        if ('' === $name) {
             throw new \InvalidArgumentException('Child nodes must be named.');
         }
         if (isset($this->children[$name])) {
@@ -172,10 +184,10 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
         $this->children[$name] = $node;
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws UnsetKeyException
      * @throws InvalidConfigurationException if the node doesn't have enough children
+     * @param mixed $value
+     * @return mixed
      */
     protected function finalizeValue($value)
     {
@@ -206,14 +218,14 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
             }
             try {
                 $value[$name] = $child->finalize($value[$name]);
-            } catch (UnsetKeyException $e) {
+            } catch (UnsetKeyException $exception) {
                 unset($value[$name]);
             }
         }
         return $value;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
      */
     protected function validateType($value)
     {
@@ -227,9 +239,9 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
         }
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws InvalidConfigurationException
+     * @param mixed $value
+     * @return mixed
      */
     protected function normalizeValue($value)
     {
@@ -242,7 +254,7 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
             if (isset($this->children[$name])) {
                 try {
                     $normalized[$name] = $this->children[$name]->normalize($val);
-                } catch (UnsetKeyException $e) {
+                } catch (UnsetKeyException $exception) {
                 }
                 unset($value[$name]);
             } elseif (!$this->removeExtraKeys) {
@@ -279,10 +291,9 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
     }
     /**
      * Remaps multiple singular values to a single plural value.
-     *
-     * @return array The remapped values
+     * @param mixed[] $value
      */
-    protected function remapXml(array $value)
+    protected function remapXml($value) : array
     {
         foreach ($this->xmlRemappings as [$singular, $plural]) {
             if (!isset($value[$singular])) {
@@ -294,10 +305,11 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
         return $value;
     }
     /**
-     * {@inheritdoc}
-     *
      * @throws InvalidConfigurationException
      * @throws \RuntimeException
+     * @param mixed $leftSide
+     * @param mixed $rightSide
+     * @return mixed
      */
     protected function mergeValues($leftSide, $rightSide)
     {
@@ -331,9 +343,6 @@ class ArrayNode extends BaseNode implements PrototypeNodeInterface
         }
         return $leftSide;
     }
-    /**
-     * {@inheritdoc}
-     */
     protected function allowPlaceholders() : bool
     {
         return \false;

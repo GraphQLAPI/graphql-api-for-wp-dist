@@ -11,11 +11,11 @@
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Attribute;
 
 /**
- * An attribute to tell under which environement this class should be registered as a service.
+ * An attribute to tell under which environment this class should be registered as a service.
  *
  * @author Nicolas Grekas <p@tchwork.com>
- * @annotation
  */
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::TARGET_FUNCTION | \Attribute::IS_REPEATABLE)]
 class When
 {
     /**

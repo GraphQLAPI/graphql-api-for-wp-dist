@@ -1,0 +1,26 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoP\Root\Instances\InstanceManagerInterface:
+        class: \PoP\Root\Instances\InstanceManager
+
+    PoP\Root\Registries\AppStateProviderRegistryInterface:
+        class: \PoP\Root\Registries\AppStateProviderRegistry
+
+    PoP\Root\Registries\FeedbackItemRegistryInterface:
+        class: \PoP\Root\Registries\FeedbackItemRegistry
+
+    PoP\Root\Routing\RoutingManagerInterface:
+        class: \PoP\Root\Routing\BasicRoutingManager
+
+    PoP\Root\Routing\RoutingHelperServiceInterface:
+        class: \PoP\Root\Routing\RoutingHelperService
+
+    PoP\Root\State\:
+        resource: '../src/State/*'
+
+    PoP\Root\FeedbackItemProviders\:
+        resource: '../src/FeedbackItemProviders/*'

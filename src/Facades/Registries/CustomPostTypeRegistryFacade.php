@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Facades\Registries;
 
-use PoP\Root\Container\ContainerBuilderFactory;
+use PoP\Root\App;
 use GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface;
 
 class CustomPostTypeRegistryFacade
@@ -14,7 +14,7 @@ class CustomPostTypeRegistryFacade
         /**
          * @var CustomPostTypeRegistryInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(CustomPostTypeRegistryInterface::class);
+        $service = App::getContainer()->get(CustomPostTypeRegistryInterface::class);
         return $service;
     }
 }

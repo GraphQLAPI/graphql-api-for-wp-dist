@@ -9,5 +9,5 @@ namespace GraphQLAPI\GraphQLAPI;
  */
 class PluginConstants
 {
-    public const GITHUB_REPO_DOCS_PATH_URL = 'https://raw.githubusercontent.com/GraphQLAPI/graphql-api-for-wp/master/docs/en/';
+    public const GITHUB_REPO_DOCS_PATH_URL = 'https://raw.githubusercontent.com/GraphQLAPI/graphql-api-for-wp/master/docs/modules/';
 }

@@ -8,7 +8,10 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 interface ContainerBuilderWrapperInterface
 {
     public function getContainerBuilder() : ContainerBuilder;
-    public function getDefinition(string $id) : Definition;
+    /**
+     * @param string $id
+     */
+    public function getDefinition($id) : Definition;
     /**
      * @return Definition[] An array of Definition instances
      */

@@ -10,6 +10,12 @@ interface ModuleTypeResolverInterface
      * @return string[]
      */
     public function getModuleTypesToResolve(): array;
-    public function getSlug(string $moduleType): string;
-    public function getName(string $moduleType): string;
+    /**
+     * @param string $moduleType
+     */
+    public function getSlug($moduleType): string;
+    /**
+     * @param string $moduleType
+     */
+    public function getName($moduleType): string;
 }

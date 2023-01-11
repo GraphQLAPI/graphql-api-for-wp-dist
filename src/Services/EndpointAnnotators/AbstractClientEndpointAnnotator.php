@@ -5,37 +5,55 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators;
 
 use GraphQLAPI\GraphQLAPI\Constants\BlockAttributeNames;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
+use GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLEndpointCustomPostTypeInterface;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use WP_Post;
 
 abstract class AbstractClientEndpointAnnotator extends AbstractEndpointAnnotator implements ClientEndpointAnnotatorInterface
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers|null
      */
-    protected $blockHelpers;
+    private $blockHelpers;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType|null
      */
-    protected $graphQLCustomEndpointCustomPostType;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, BlockHelpers $blockHelpers, GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType)
+    private $graphQLCustomEndpointCustomPostType;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers $blockHelpers
+     */
+    final public function setBlockHelpers($blockHelpers): void
     {
         $this->blockHelpers = $blockHelpers;
-        $this->graphQLCustomEndpointCustomPostType = $graphQLCustomEndpointCustomPostType;
-        parent::__construct($instanceManager, $moduleRegistry);
     }
+    final protected function getBlockHelpers(): BlockHelpers
+    {
+        /** @var BlockHelpers */
+        return $this->blockHelpers = $this->blockHelpers ?? $this->instanceManager->getInstance(BlockHelpers::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType
+     */
+    final public function setGraphQLCustomEndpointCustomPostType($graphQLCustomEndpointCustomPostType): void
+    {
+        $this->graphQLCustomEndpointCustomPostType = $graphQLCustomEndpointCustomPostType;
+    }
+    final protected function getGraphQLCustomEndpointCustomPostType(): GraphQLCustomEndpointCustomPostType
+    {
+        /** @var GraphQLCustomEndpointCustomPostType */
+        return $this->graphQLCustomEndpointCustomPostType = $this->graphQLCustomEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
+    }
+
     protected function getCustomPostType(): GraphQLEndpointCustomPostTypeInterface
     {
-        return $this->graphQLCustomEndpointCustomPostType;
+        return $this->getGraphQLCustomEndpointCustomPostType();
     }
 
     /**
-     * Read the options block and check the value of attribute "isGraphiQLEnabled"
+     * Read the options block and check the value of attribute "isEnabled"
      * @param \WP_Post|int $postOrID
      */
     public function isClientEnabled($postOrID): bool
@@ -47,7 +65,7 @@ abstract class AbstractClientEndpointAnnotator extends AbstractEndpointAnnotator
 
         // If there was no options block, something went wrong in the post content
         $default = true;
-        $optionsBlockDataItem = $this->blockHelpers->getSingleBlockOfTypeFromCustomPost(
+        $optionsBlockDataItem = $this->getBlockHelpers()->getSingleBlockOfTypeFromCustomPost(
             $postOrID,
             $this->getBlock()
         );
@@ -60,7 +78,7 @@ abstract class AbstractClientEndpointAnnotator extends AbstractEndpointAnnotator
         return $optionsBlockDataItem['attrs'][$attribute] ?? $default;
     }
 
-    abstract protected function getBlock(): AbstractBlock;
+    abstract protected function getBlock(): BlockInterface;
 
     protected function getIsEnabledAttributeName(): string
     {

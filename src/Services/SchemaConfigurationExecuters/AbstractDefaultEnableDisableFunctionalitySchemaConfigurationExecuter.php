@@ -6,7 +6,7 @@ namespace GraphQLAPI\GraphQLAPI\Services\SchemaConfigurationExecuters;
 
 use GraphQLAPI\GraphQLAPI\Constants\BlockAttributeNames;
 use GraphQLAPI\GraphQLAPI\Constants\BlockAttributeValues;
-use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers;
+use PoP\Root\Module\ModuleConfigurationHelpers;
 
 abstract class AbstractDefaultEnableDisableFunctionalitySchemaConfigurationExecuter extends AbstractSchemaConfigurationExecuter implements PersistedQueryEndpointSchemaConfigurationExecuterServiceTagInterface, EndpointSchemaConfigurationExecuterServiceTagInterface
 {
@@ -15,11 +15,14 @@ abstract class AbstractDefaultEnableDisableFunctionalitySchemaConfigurationExecu
         return BlockAttributeNames::ENABLED_CONST;
     }
 
-    abstract public function getHookComponentConfigurationClass(): string;
+    abstract public function getHookModuleClass(): string;
 
     abstract public function getHookEnvironmentClass(): string;
 
-    public function executeSchemaConfiguration(int $schemaConfigurationID): void
+    /**
+     * @param int $schemaConfigurationID
+     */
+    public function executeSchemaConfiguration($schemaConfigurationID): void
     {
         $schemaConfigBlockDataItem = $this->getSchemaConfigBlockDataItem($schemaConfigurationID);
         if ($schemaConfigBlockDataItem !== null) {
@@ -39,11 +42,11 @@ abstract class AbstractDefaultEnableDisableFunctionalitySchemaConfigurationExecu
                 return;
             }
             // Define the settings value through a hook. Execute last so it overrides the default settings
-            $hookName = ComponentConfigurationHelpers::getHookName($this->getHookComponentConfigurationClass(), $this->getHookEnvironmentClass());
+            $hookName = ModuleConfigurationHelpers::getHookName($this->getHookModuleClass(), $this->getHookEnvironmentClass());
             \add_filter(
                 $hookName,
                 function () use ($enableFunctionality) {
-                    return $enableFunctionality == BlockAttributeValues::ENABLED;
+                    return $enableFunctionality === BlockAttributeValues::ENABLED;
                 },
                 PHP_INT_MAX
             );

@@ -18,18 +18,24 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ReverseContainer;
  */
 final class EarlyExpirationMessage
 {
-    private $item;
-    private $pool;
-    private $callback;
     /**
-     * @return $this|null
+     * @var \Symfony\Component\Cache\CacheItem
      */
-    public static function create(ReverseContainer $reverseContainer, callable $callback, CacheItem $item, AdapterInterface $pool)
+    private $item;
+    /**
+     * @var string
+     */
+    private $pool;
+    /**
+     * @var string|mixed[]
+     */
+    private $callback;
+    public static function create(ReverseContainer $reverseContainer, callable $callback, CacheItem $item, AdapterInterface $pool) : ?self
     {
         try {
             $item = clone $item;
             $item->set(null);
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             return null;
         }
         $pool = $reverseContainer->getId($pool);
@@ -58,6 +64,9 @@ final class EarlyExpirationMessage
     {
         return $this->pool;
     }
+    /**
+     * @return string|string[]
+     */
     public function getCallback()
     {
         return $this->callback;
@@ -76,6 +85,9 @@ final class EarlyExpirationMessage
         }
         return $callback;
     }
+    /**
+     * @param string|mixed[] $callback
+     */
     private function __construct(CacheItem $item, string $pool, $callback)
     {
         $this->item = $item;

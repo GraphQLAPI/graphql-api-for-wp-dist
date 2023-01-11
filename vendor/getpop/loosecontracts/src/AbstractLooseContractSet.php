@@ -4,28 +4,29 @@ declare (strict_types=1);
 namespace PoP\LooseContracts;
 
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
+use PoP\Root\Services\WithInstanceManagerServiceTrait;
 abstract class AbstractLooseContractSet extends AbstractAutomaticallyInstantiatedService
 {
+    use WithInstanceManagerServiceTrait;
     /**
-     * @var \PoP\LooseContracts\LooseContractManagerInterface
+     * @var \PoP\LooseContracts\LooseContractManagerInterface|null
      */
-    protected $looseContractManager;
-    public function __construct(\PoP\LooseContracts\LooseContractManagerInterface $looseContractManager)
+    private $looseContractManager;
+    /**
+     * @param \PoP\LooseContracts\LooseContractManagerInterface $looseContractManager
+     */
+    public final function setLooseContractManager($looseContractManager) : void
     {
         $this->looseContractManager = $looseContractManager;
     }
-    public final function initialize() : void
+    protected final function getLooseContractManager() : \PoP\LooseContracts\LooseContractManagerInterface
     {
-        // Require the configured hooks and names
-        $this->looseContractManager->requireHooks($this->getRequiredHooks());
-        $this->looseContractManager->requireNames($this->getRequiredNames());
+        /** @var LooseContractManagerInterface */
+        return $this->looseContractManager = $this->looseContractManager ?? $this->instanceManager->getInstance(\PoP\LooseContracts\LooseContractManagerInterface::class);
     }
-    /**
-     * @return string[]
-     */
-    public function getRequiredHooks() : array
+    public function initialize() : void
     {
-        return [];
+        $this->getLooseContractManager()->requireNames($this->getRequiredNames());
     }
     /**
      * @return string[]

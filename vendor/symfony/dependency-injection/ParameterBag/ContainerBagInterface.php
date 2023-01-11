@@ -21,31 +21,29 @@ interface ContainerBagInterface extends ContainerInterface
 {
     /**
      * Gets the service container parameters.
-     *
-     * @return array An array of parameters
      */
-    public function all();
+    public function all() : array;
     /**
      * Replaces parameter placeholders (%name%) by their values.
      *
-     * @param mixed $value A value
+     * @template TValue of array<array|scalar>|scalar
+     *
+     * @param mixed $value
+     *
+     * @psalm-return (TValue is scalar ? array|scalar : array<array|scalar>)
      *
      * @throws ParameterNotFoundException if a placeholder references a parameter that does not exist
      */
     public function resolveValue($value);
     /**
      * Escape parameter placeholders %.
-     *
      * @param mixed $value
-     *
      * @return mixed
      */
     public function escapeValue($value);
     /**
      * Unescape parameter placeholders %.
-     *
      * @param mixed $value
-     *
      * @return mixed
      */
     public function unescapeValue($value);

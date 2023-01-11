@@ -13,8 +13,6 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\LazyProxy\Instanti
 use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 /**
- * {@inheritdoc}
- *
  * Noop proxy instantiator - produces the real service instead of a proxy instance.
  *
  * @author Marco Pivetta <ocramius@gmail.com>
@@ -22,9 +20,13 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 class RealServiceInstantiator implements InstantiatorInterface
 {
     /**
-     * {@inheritdoc}
+     * @return object
+     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+     * @param \Symfony\Component\DependencyInjection\Definition $definition
+     * @param string $id
+     * @param callable $realInstantiator
      */
-    public function instantiateProxy(ContainerInterface $container, Definition $definition, string $id, callable $realInstantiator)
+    public function instantiateProxy($container, $definition, $id, $realInstantiator)
     {
         return $realInstantiator();
     }

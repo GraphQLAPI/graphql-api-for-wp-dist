@@ -10,9 +10,7 @@
  */
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Attribute;
 
-/**
- * @annotation
- */
+#[\Attribute(\Attribute::TARGET_PARAMETER)]
 class TaggedLocator
 {
     /**
@@ -23,9 +21,27 @@ class TaggedLocator
      * @var string|null
      */
     public $indexAttribute;
-    public function __construct(string $tag, ?string $indexAttribute = null)
+    /**
+     * @var string|null
+     */
+    public $defaultIndexMethod;
+    /**
+     * @var string|null
+     */
+    public $defaultPriorityMethod;
+    /**
+     * @var string|mixed[]
+     */
+    public $exclude = [];
+    /**
+     * @param string|mixed[] $exclude
+     */
+    public function __construct(string $tag, ?string $indexAttribute = null, ?string $defaultIndexMethod = null, ?string $defaultPriorityMethod = null, $exclude = [])
     {
         $this->tag = $tag;
         $this->indexAttribute = $indexAttribute;
+        $this->defaultIndexMethod = $defaultIndexMethod;
+        $this->defaultPriorityMethod = $defaultPriorityMethod;
+        $this->exclude = $exclude;
     }
 }

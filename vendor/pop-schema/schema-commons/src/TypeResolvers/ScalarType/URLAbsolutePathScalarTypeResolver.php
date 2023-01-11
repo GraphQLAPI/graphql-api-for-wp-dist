@@ -1,0 +1,49 @@
+<?php
+
+declare (strict_types=1);
+namespace PoPSchema\SchemaCommons\TypeResolvers\ScalarType;
+
+use PoP\ComponentModel\Feedback\ObjectTypeFieldResolutionFeedbackStore;
+use PoP\ComponentModel\TypeResolvers\ScalarType\AbstractScalarTypeResolver;
+use PoP\GraphQLParser\Spec\Parser\Ast\AstInterface;
+use stdClass;
+/**
+ * GraphQL Custom Scalar
+ *
+ * @see https://spec.graphql.org/draft/#sec-Scalars.Custom-Scalars
+ */
+class URLAbsolutePathScalarTypeResolver extends AbstractScalarTypeResolver
+{
+    public function getTypeName() : string
+    {
+        return 'URLAbsolutePath';
+    }
+    public function getTypeDescription() : ?string
+    {
+        return $this->__('URL Absolute Path scalar, such as "/my-fabulous-page" in URL "https://mysite.com/my-fabulous-page". The absolute path starts with "/", followed by the URL relative path', 'component-model');
+    }
+    public function getSpecifiedByURL() : ?string
+    {
+        return 'https://url.spec.whatwg.org/#path-absolute-url-string';
+    }
+    /**
+     * @param string|int|float|bool|\stdClass $inputValue
+     * @return string|int|float|bool|object|null
+     * @param \PoP\GraphQLParser\Spec\Parser\Ast\AstInterface $astNode
+     * @param \PoP\ComponentModel\Feedback\ObjectTypeFieldResolutionFeedbackStore $objectTypeFieldResolutionFeedbackStore
+     */
+    public function coerceValue($inputValue, $astNode, $objectTypeFieldResolutionFeedbackStore)
+    {
+        $errorCount = $objectTypeFieldResolutionFeedbackStore->getErrorCount();
+        $this->validateIsString($inputValue, $astNode, $objectTypeFieldResolutionFeedbackStore);
+        if ($objectTypeFieldResolutionFeedbackStore->getErrorCount() > $errorCount) {
+            return null;
+        }
+        /** @var string $inputValue */
+        $this->validateFilterVar('http://www.example.com' . $inputValue, $astNode, $objectTypeFieldResolutionFeedbackStore, \FILTER_VALIDATE_URL);
+        if ($objectTypeFieldResolutionFeedbackStore->getErrors() !== []) {
+            return null;
+        }
+        return $inputValue;
+    }
+}

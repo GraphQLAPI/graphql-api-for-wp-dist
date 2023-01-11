@@ -11,16 +11,32 @@ class PersistedQueryEndpointBlockCategory extends AbstractBlockCategory
     public const PERSISTED_QUERY_ENDPOINT_BLOCK_CATEGORY = 'graphql-api-persisted-query';
 
     /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType|null
+     */
+    private $graphQLPersistedQueryEndpointCustomPostType;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType $graphQLPersistedQueryEndpointCustomPostType
+     */
+    final public function setGraphQLPersistedQueryEndpointCustomPostType($graphQLPersistedQueryEndpointCustomPostType): void
+    {
+        $this->graphQLPersistedQueryEndpointCustomPostType = $graphQLPersistedQueryEndpointCustomPostType;
+    }
+    final protected function getGraphQLPersistedQueryEndpointCustomPostType(): GraphQLPersistedQueryEndpointCustomPostType
+    {
+        /** @var GraphQLPersistedQueryEndpointCustomPostType */
+        return $this->graphQLPersistedQueryEndpointCustomPostType = $this->graphQLPersistedQueryEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLPersistedQueryEndpointCustomPostType::class);
+    }
+
+    /**
      * Custom Post Type for which to enable the block category
      *
      * @return string[]
      */
     public function getCustomPostTypes(): array
     {
-        /** @var GraphQLPersistedQueryEndpointCustomPostType */
-        $customPostTypeService = $this->instanceManager->getInstance(GraphQLPersistedQueryEndpointCustomPostType::class);
         return [
-            $customPostTypeService->getCustomPostType(),
+            $this->getGraphQLPersistedQueryEndpointCustomPostType()->getCustomPostType(),
         ];
     }
 

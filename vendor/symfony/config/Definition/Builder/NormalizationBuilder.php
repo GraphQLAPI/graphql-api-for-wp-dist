@@ -19,6 +19,7 @@ class NormalizationBuilder
 {
     protected $node;
     public $before = [];
+    public $declaredTypes = [];
     public $remappings = [];
     public function __construct(NodeDefinition $node)
     {
@@ -32,7 +33,7 @@ class NormalizationBuilder
      *
      * @return $this
      */
-    public function remap(string $key, string $plural = null)
+    public function remap($key, $plural = null)
     {
         $this->remappings[] = [$key, null === $plural ? $key . 's' : $plural];
         return $this;
@@ -41,8 +42,9 @@ class NormalizationBuilder
      * Registers a closure to run before the normalization or an expression builder to build it if null is provided.
      *
      * @return ExprBuilder|$this
+     * @param \Closure|null $closure
      */
-    public function before(\Closure $closure = null)
+    public function before($closure = null)
     {
         if (null !== $closure) {
             $this->before[] = $closure;

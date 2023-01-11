@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
-use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
+use PoP\Root\App;
+use GraphQLAPI\GraphQLAPI\Module;
+use GraphQLAPI\GraphQLAPI\ModuleConfiguration;
+use PoP\ComponentModel\Registries\TypeRegistryInterface;
 
 /**
  * Base Control block
@@ -14,42 +16,97 @@ abstract class AbstractControlBlock extends AbstractBlock
 {
     use WithTypeFieldControlBlockTrait;
 
+    public const ATTRIBUTE_NAME_OPERATIONS = 'operations';
     public const ATTRIBUTE_NAME_TYPE_FIELDS = 'typeFields';
+    public const ATTRIBUTE_NAME_GLOBAL_FIELDS = 'globalFields';
     public const ATTRIBUTE_NAME_DIRECTIVES = 'directives';
+
+    /**
+     * @var \PoP\ComponentModel\Registries\TypeRegistryInterface|null
+     */
+    private $typeRegistry;
+
+    /**
+     * @param \PoP\ComponentModel\Registries\TypeRegistryInterface $typeRegistry
+     */
+    final public function setTypeRegistry($typeRegistry): void
+    {
+        $this->typeRegistry = $typeRegistry;
+    }
+    final protected function getTypeRegistry(): TypeRegistryInterface
+    {
+        /** @var TypeRegistryInterface */
+        return $this->typeRegistry = $this->typeRegistry ?? $this->instanceManager->getInstance(TypeRegistryInterface::class);
+    }
 
     protected function isDynamicBlock(): bool
     {
         return true;
     }
 
-    protected function disableFields(): bool
+    protected function enableOperations(): bool
     {
         return false;
     }
 
-    protected function disableDirectives(): bool
+    protected function enableTypeFields(): bool
     {
         return false;
+    }
+
+    protected function enableGlobalFields(): bool
+    {
+        return false;
+    }
+
+    protected function enableDirectives(): bool
+    {
+        return false;
+    }
+
+    protected function registerCommonStyleCSS(): bool
+    {
+        return true;
+    }
+
+    protected function registerEditorCSS(): bool
+    {
+        return true;
     }
 
     /**
      * Block align class
      */
-    public function getAlignClass(): string
+    public function getAlignClassName(): string
     {
         return 'alignwide';
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         // Append "-front" because this style must be used only on the client, not on the admin
         $className = $this->getBlockClassName() . '-front';
-        $fieldTypeContent = $directiveContent = '';
-        if (!$this->disableFields()) {
-            $fieldTypeContent = ComponentConfiguration::getEmptyLabel();
+        $operationContent = $fieldTypeContent = $globalFieldContent = $directiveContent = '';
+        $ulPlaceholder = '<ul><li><code>%s</code></li></ul>';
+        $liPlaceholder = '</code></li><li><code>';
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        if ($this->enableOperations()) {
+            $operationContent = $moduleConfiguration->getEmptyLabel();
+            $operations = $attributes[self::ATTRIBUTE_NAME_OPERATIONS] ?? [];
+            if ($operations) {
+                $operationContent = sprintf(
+                    $ulPlaceholder,
+                    implode($liPlaceholder, $operations)
+                );
+            }
+        }
+        if ($this->enableTypeFields()) {
+            $fieldTypeContent = $moduleConfiguration->getEmptyLabel();
             $typeFields = $attributes[self::ATTRIBUTE_NAME_TYPE_FIELDS] ?? [];
             if ($typeFields) {
                 $typeFieldsForPrint = $this->getTypeFieldsForPrint($typeFields);
@@ -57,20 +114,16 @@ abstract class AbstractControlBlock extends AbstractBlock
                  * If $groupFieldsUnderTypeForPrint is true, combine all types under their shared typeName
                  * If $groupFieldsUnderTypeForPrint is false, replace namespacedTypeName for typeName and "." for "/"
                  * */
-                $groupFieldsUnderTypeForPrint = ComponentConfiguration::groupFieldsUnderTypeForPrint();
+                $groupFieldsUnderTypeForPrint = $moduleConfiguration->groupFieldsUnderTypeForPrint();
                 if ($groupFieldsUnderTypeForPrint) {
-                    /**
-                     * Cast object so PHPStan doesn't throw error
-                     * @var array<string,array>
-                     */
-                    $typeFieldsForPrint = $typeFieldsForPrint;
+                    /** @var array<string,string[]> $typeFieldsForPrint */
                     $fieldTypeContent = '';
                     foreach ($typeFieldsForPrint as $typeName => $fields) {
                         $fieldTypeContent .= sprintf(
-                            '<strong>%s</strong><ul><li><code>%s</code></li></ul>',
+                            '<strong>%s</strong>' . $ulPlaceholder,
                             $typeName,
                             implode(
-                                '</code></li><li><code>',
+                                $liPlaceholder,
                                 $fields
                             )
                         );
@@ -91,38 +144,39 @@ abstract class AbstractControlBlock extends AbstractBlock
                 }
             }
         }
-        if (!$this->disableDirectives()) {
-            $directiveContent = ComponentConfiguration::getEmptyLabel();
+        if ($this->enableGlobalFields()) {
+            $globalFieldContent = $moduleConfiguration->getEmptyLabel();
+            $globalFields = $attributes[self::ATTRIBUTE_NAME_GLOBAL_FIELDS] ?? [];
+            if ($globalFields) {
+                $globalFieldContent = sprintf(
+                    $ulPlaceholder,
+                    implode($liPlaceholder, $globalFields)
+                );
+            }
+        }
+        if ($this->enableDirectives()) {
+            $directiveContent = $moduleConfiguration->getEmptyLabel();
             $directives = $attributes[self::ATTRIBUTE_NAME_DIRECTIVES] ?? [];
             if ($directives) {
-                // // Notice we are adding the "@" symbol for GraphQL directives
                 $directiveContent = sprintf(
-                    // '<ul><li><code>@%s</code></li></ul>',
-                    // implode('</code></li><li><code>@', $directives)
-                    '<ul><li><code>%s</code></li></ul>',
-                    implode('</code></li><li><code>', $directives)
+                    $ulPlaceholder,
+                    implode($liPlaceholder, $directives)
                 );
             }
         }
         $blockDataContent = '';
-        if (!$this->disableFields() && !$this->disableDirectives()) {
-            $blockDataPlaceholder = <<<EOT
-                <h4>%s</h4>
-                %s
-                <h4>%s</h4>
-                %s
-EOT;
-            $blockDataContent = sprintf(
-                $blockDataPlaceholder,
-                __('Fields', 'graphql-api'),
-                $fieldTypeContent,
-                __('Directives', 'graphql-api'),
-                $directiveContent
-            );
-        } elseif (!$this->disableFields()) {
-            $blockDataContent = $fieldTypeContent;
-        } elseif (!$this->disableDirectives()) {
-            $blockDataContent = $directiveContent;
+        $blockDataPlaceholder = '<h4>%s</h4>%s';
+        if ($this->enableOperations()) {
+            $blockDataContent .= sprintf($blockDataPlaceholder, __('Operations', 'graphql-api'), $operationContent);
+        }
+        if ($this->enableTypeFields()) {
+            $blockDataContent .= sprintf($blockDataPlaceholder, __('Fields', 'graphql-api'), $fieldTypeContent);
+        }
+        if ($this->enableGlobalFields()) {
+            $blockDataContent .= sprintf($blockDataPlaceholder, __('Global Fields', 'graphql-api'), $globalFieldContent);
+        }
+        if ($this->enableDirectives()) {
+            $blockDataContent .= sprintf($blockDataPlaceholder, __('Directives', 'graphql-api'), $directiveContent);
         }
 
         $blockContentPlaceholder = <<<EOT
@@ -139,7 +193,7 @@ EOT;
 EOT;
         return sprintf(
             $blockContentPlaceholder,
-            $className . ' ' . $this->getAlignClass(),
+            $className . ' ' . $this->getAlignClassName(),
             $className . '__data',
             $className . '__title',
             $this->getBlockDataTitle(),
@@ -153,14 +207,15 @@ EOT;
 
     protected function getBlockDataTitle(): string
     {
-        return \__('Select fields and directives:', 'graphql-api');
+        return \__('Select schema elements', 'graphql-api');
     }
     protected function getBlockContentTitle(): string
     {
         return \__('Configuration:', 'graphql-api');
     }
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    abstract protected function getBlockContent(array $attributes, string $content): string;
+    abstract protected function getBlockContent($attributes, $content): string;
 }

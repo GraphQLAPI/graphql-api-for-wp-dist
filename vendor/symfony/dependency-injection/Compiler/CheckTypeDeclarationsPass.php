@@ -41,8 +41,17 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
 {
     private const SCALAR_TYPES = ['int' => \true, 'float' => \true, 'bool' => \true, 'string' => \true];
     private const BUILTIN_TYPES = ['array' => \true, 'bool' => \true, 'callable' => \true, 'float' => \true, 'int' => \true, 'iterable' => \true, 'object' => \true, 'string' => \true];
+    /**
+     * @var bool
+     */
     private $autoload;
+    /**
+     * @var mixed[]
+     */
     private $skippedIds;
+    /**
+     * @var \Symfony\Component\DependencyInjection\ExpressionLanguage
+     */
     private $expressionLanguage;
     /**
      * @param bool  $autoload   Whether services who's class in not loaded should be checked or not.
@@ -55,9 +64,11 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
         $this->skippedIds = $skippedIds;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if (isset($this->skippedIds[$this->currentId])) {
             return $value;
@@ -119,6 +130,7 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
     }
     /**
      * @throws InvalidParameterTypeException When a parameter is not compatible with the declared type
+     * @param mixed $value
      */
     private function checkType(Definition $checkedDefinition, $value, \ReflectionParameter $parameter, ?string $envPlaceholderUniquePrefix, \ReflectionType $reflectionType = null) : void
     {
@@ -132,6 +144,12 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
                 }
             }
             throw new InvalidParameterTypeException($this->currentId, $e->getCode(), $parameter);
+        }
+        if ($reflectionType instanceof \ReflectionIntersectionType) {
+            foreach ($reflectionType->getTypes() as $t) {
+                $this->checkType($checkedDefinition, $value, $parameter, $envPlaceholderUniquePrefix, $t);
+            }
+            return;
         }
         if (!$reflectionType instanceof \ReflectionNamedType) {
             return;
@@ -154,6 +172,9 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
         }
         $class = null;
         if ($value instanceof Definition) {
+            if ($value->getFactory()) {
+                return;
+            }
             $class = $value->getClass();
             if ($class && isset(self::BUILTIN_TYPES[\strtolower($class)])) {
                 $class = \strtolower($class);
@@ -165,7 +186,7 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
         } elseif ($value instanceof Expression) {
             try {
                 $value = $this->getExpressionLanguage()->evaluate($value, ['container' => $this->container]);
-            } catch (\Exception $e) {
+            } catch (\Exception $exception) {
                 // If a service from the expression cannot be fetched from the container, we skip the validation.
                 return;
             }
@@ -173,13 +194,13 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
             if ('%' === ($value[0] ?? '') && \preg_match('/^%([^%]+)%$/', $value, $match)) {
                 $value = $this->container->getParameter(\substr($value, 1, -1));
             }
-            if ($envPlaceholderUniquePrefix && \is_string($value) && \false !== \strpos($value, 'env_')) {
+            if ($envPlaceholderUniquePrefix && \is_string($value) && \strpos($value, 'env_') !== \false) {
                 // If the value is an env placeholder that is either mixed with a string or with another env placeholder, then its resolved value will always be a string, so we don't need to resolve it.
                 // We don't need to change the value because it is already a string.
                 if ('' === \preg_replace('/' . $envPlaceholderUniquePrefix . '_\\w+_[a-f0-9]{32}/U', '', $value, -1, $c) && 1 === $c) {
                     try {
                         $value = $this->container->resolveEnvPlaceholders($value, \true);
-                    } catch (\Exception $e) {
+                    } catch (\Exception $exception) {
                         // If an env placeholder cannot be resolved, we skip the validation.
                         return;
                     }
@@ -244,9 +265,6 @@ final class CheckTypeDeclarationsPass extends AbstractRecursivePass
     }
     private function getExpressionLanguage() : ExpressionLanguage
     {
-        if (null === $this->expressionLanguage) {
-            $this->expressionLanguage = new ExpressionLanguage(null, $this->container->getExpressionLanguageProviders());
-        }
-        return $this->expressionLanguage;
+        return $this->expressionLanguage = $this->expressionLanguage ?? new ExpressionLanguage(null, $this->container->getExpressionLanguageProviders());
     }
 }

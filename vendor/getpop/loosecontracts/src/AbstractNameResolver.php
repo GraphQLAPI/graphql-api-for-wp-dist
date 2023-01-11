@@ -3,25 +3,39 @@
 declare (strict_types=1);
 namespace PoP\LooseContracts;
 
+use PoP\Root\Services\WithInstanceManagerServiceTrait;
 abstract class AbstractNameResolver implements \PoP\LooseContracts\NameResolverInterface
 {
+    use WithInstanceManagerServiceTrait;
     /**
-     * @var \PoP\LooseContracts\LooseContractManagerInterface
+     * @var \PoP\LooseContracts\LooseContractManagerInterface|null
      */
-    protected $looseContractManager;
-    public function __construct(\PoP\LooseContracts\LooseContractManagerInterface $looseContractManager)
+    private $looseContractManager;
+    /**
+     * @param \PoP\LooseContracts\LooseContractManagerInterface $looseContractManager
+     */
+    public final function setLooseContractManager($looseContractManager) : void
     {
         $this->looseContractManager = $looseContractManager;
     }
-    public function implementName(string $abstractName, string $implementationName) : void
+    protected final function getLooseContractManager() : \PoP\LooseContracts\LooseContractManagerInterface
     {
-        $this->looseContractManager->implementNames([$abstractName]);
+        /** @var LooseContractManagerInterface */
+        return $this->looseContractManager = $this->looseContractManager ?? $this->instanceManager->getInstance(\PoP\LooseContracts\LooseContractManagerInterface::class);
+    }
+    /**
+     * @param string $abstractName
+     * @param string $implementationName
+     */
+    public function implementName($abstractName, $implementationName) : void
+    {
+        $this->getLooseContractManager()->implementNames([$abstractName]);
     }
     /**
      * @param string[] $names
      */
-    public function implementNames(array $names) : void
+    public function implementNames($names) : void
     {
-        $this->looseContractManager->implementNames(\array_keys($names));
+        $this->getLooseContractManager()->implementNames(\array_keys($names));
     }
 }

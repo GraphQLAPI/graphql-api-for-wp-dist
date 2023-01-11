@@ -17,15 +17,15 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection;
  */
 class Parameter
 {
+    /**
+     * @var string
+     */
     private $id;
     public function __construct(string $id)
     {
         $this->id = $id;
     }
-    /**
-     * @return string The parameter key
-     */
-    public function __toString()
+    public function __toString() : string
     {
         return $this->id;
     }

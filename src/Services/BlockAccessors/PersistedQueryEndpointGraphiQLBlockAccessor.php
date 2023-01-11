@@ -4,34 +4,59 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\BlockAccessors;
 
-use GraphQLAPI\GraphQLAPI\GetterSetterObjects\BlockAttributes\PersistedQueryEndpointGraphiQLBlockAttributes;
+use GraphQLAPI\GraphQLAPI\AppObjects\BlockAttributes\PersistedQueryEndpointGraphiQLBlockAttributes;
 use GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointGraphiQLBlock;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
+use PoP\Root\Services\BasicServiceTrait;
 use WP_Post;
 
 class PersistedQueryEndpointGraphiQLBlockAccessor
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers|null
      */
-    protected $blockHelpers;
+    private $blockHelpers;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointGraphiQLBlock
+     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointGraphiQLBlock|null
      */
-    protected $persistedQueryEndpointGraphiQLBlock;
-    public function __construct(BlockHelpers $blockHelpers, PersistedQueryEndpointGraphiQLBlock $persistedQueryEndpointGraphiQLBlock)
+    private $persistedQueryEndpointGraphiQLBlock;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers $blockHelpers
+     */
+    final public function setBlockHelpers($blockHelpers): void
     {
         $this->blockHelpers = $blockHelpers;
-        $this->persistedQueryEndpointGraphiQLBlock = $persistedQueryEndpointGraphiQLBlock;
+    }
+    final protected function getBlockHelpers(): BlockHelpers
+    {
+        /** @var BlockHelpers */
+        return $this->blockHelpers = $this->blockHelpers ?? $this->instanceManager->getInstance(BlockHelpers::class);
     }
     /**
-     * Extract the Persisted Query Options block attributes from the post
+     * @param \GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointGraphiQLBlock $persistedQueryEndpointGraphiQLBlock
      */
-    public function getAttributes(WP_Post $post): ?PersistedQueryEndpointGraphiQLBlockAttributes
+    final public function setPersistedQueryEndpointGraphiQLBlock($persistedQueryEndpointGraphiQLBlock): void
     {
-        $graphiQLBlock = $this->blockHelpers->getSingleBlockOfTypeFromCustomPost(
+        $this->persistedQueryEndpointGraphiQLBlock = $persistedQueryEndpointGraphiQLBlock;
+    }
+    final protected function getPersistedQueryEndpointGraphiQLBlock(): PersistedQueryEndpointGraphiQLBlock
+    {
+        /** @var PersistedQueryEndpointGraphiQLBlock */
+        return $this->persistedQueryEndpointGraphiQLBlock = $this->persistedQueryEndpointGraphiQLBlock ?? $this->instanceManager->getInstance(PersistedQueryEndpointGraphiQLBlock::class);
+    }
+
+    /**
+     * Extract the Persisted Query Options block attributes from the post
+     * @param \WP_Post $post
+     */
+    public function getAttributes($post): ?PersistedQueryEndpointGraphiQLBlockAttributes
+    {
+        $graphiQLBlock = $this->getBlockHelpers()->getSingleBlockOfTypeFromCustomPost(
             $post,
-            $this->persistedQueryEndpointGraphiQLBlock
+            $this->getPersistedQueryEndpointGraphiQLBlock()
         );
         // If there is either 0 or more than 1, return nothing
         if ($graphiQLBlock === null) {

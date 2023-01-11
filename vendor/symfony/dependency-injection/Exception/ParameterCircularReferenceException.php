@@ -17,6 +17,9 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
  */
 class ParameterCircularReferenceException extends RuntimeException
 {
+    /**
+     * @var mixed[]
+     */
     private $parameters;
     public function __construct(array $parameters, \Throwable $previous = null)
     {

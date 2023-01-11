@@ -1,0 +1,10 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+
+    PoPWPSchema\CommentMeta\SchemaHooks\:
+        resource: '../src/SchemaHooks/*'
+
+    PoPWPSchema\CommentMeta\TypeResolvers\:
+        resource: '../src/TypeResolvers/*'

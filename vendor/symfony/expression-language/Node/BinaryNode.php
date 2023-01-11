@@ -11,6 +11,7 @@
 namespace PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node;
 
 use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
+use PrefixedByPoP\Symfony\Component\ExpressionLanguage\SyntaxError;
 /**
  * @author Fabien Potencier <fabien@symfony.com>
  *
@@ -19,16 +20,22 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
 class BinaryNode extends Node
 {
     private const OPERATORS = ['~' => '.', 'and' => '&&', 'or' => '||'];
-    private const FUNCTIONS = ['**' => 'pow', '..' => 'range', 'in' => 'in_array', 'not in' => '!in_array'];
+    private const FUNCTIONS = ['**' => 'pow', '..' => 'range', 'in' => 'in_array', 'not in' => '!in_array', 'contains' => 'str_contains', 'starts with' => 'str_starts_with', 'ends with' => 'str_ends_with'];
     public function __construct(string $operator, Node $left, Node $right)
     {
         parent::__construct(['left' => $left, 'right' => $right], ['operator' => $operator]);
     }
-    public function compile(Compiler $compiler)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Compiler $compiler
+     */
+    public function compile($compiler)
     {
         $operator = $this->attributes['operator'];
         if ('matches' == $operator) {
-            $compiler->raw('preg_match(')->compile($this->nodes['right'])->raw(', ')->compile($this->nodes['left'])->raw(')');
+            if ($this->nodes['right'] instanceof ConstantNode) {
+                $this->evaluateMatches($this->nodes['right']->evaluate([], []), '');
+            }
+            $compiler->raw('(static function ($regexp, $str) { set_error_handler(function ($t, $m) use ($regexp, $str) { throw new \\Symfony\\Component\\ExpressionLanguage\\SyntaxError(sprintf(\'Regexp "%s" passed to "matches" is not valid\', $regexp).substr($m, 12)); }); try { return preg_match($regexp, (string) $str); } finally { restore_error_handler(); } })(')->compile($this->nodes['right'])->raw(', ')->compile($this->nodes['left'])->raw(')');
             return;
         }
         if (isset(self::FUNCTIONS[$operator])) {
@@ -40,7 +47,11 @@ class BinaryNode extends Node
         }
         $compiler->raw('(')->compile($this->nodes['left'])->raw(' ')->raw($operator)->raw(' ')->compile($this->nodes['right'])->raw(')');
     }
-    public function evaluate(array $functions, array $values)
+    /**
+     * @param mixed[] $functions
+     * @param mixed[] $values
+     */
+    public function evaluate($functions, $values)
     {
         $operator = $this->attributes['operator'];
         $left = $this->nodes['left']->evaluate($functions, $values);
@@ -107,11 +118,22 @@ class BinaryNode extends Node
                 }
                 return $left % $right;
             case 'matches':
-                return \preg_match($right, $left);
+                return $this->evaluateMatches($right, $left);
         }
     }
     public function toArray()
     {
         return ['(', $this->nodes['left'], ' ' . $this->attributes['operator'] . ' ', $this->nodes['right'], ')'];
+    }
+    private function evaluateMatches(string $regexp, ?string $str) : int
+    {
+        \set_error_handler(function ($t, $m) use($regexp) {
+            throw new SyntaxError(\sprintf('Regexp "%s" passed to "matches" is not valid', $regexp) . \substr($m, 12));
+        });
+        try {
+            return \preg_match($regexp, (string) $str);
+        } finally {
+            \restore_error_handler();
+        }
     }
 }

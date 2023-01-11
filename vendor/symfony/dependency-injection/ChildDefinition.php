@@ -19,6 +19,9 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\OutOfBoundsExc
  */
 class ChildDefinition extends Definition
 {
+    /**
+     * @var string
+     */
     private $parent;
     /**
      * @param string $parent The id of Definition instance to decorate
@@ -29,19 +32,16 @@ class ChildDefinition extends Definition
     }
     /**
      * Returns the Definition to inherit from.
-     *
-     * @return string
      */
-    public function getParent()
+    public function getParent() : string
     {
         return $this->parent;
     }
     /**
      * Sets the Definition to inherit from.
      *
-     * @param string $parent
-     *
      * @return $this
+     * @param string $parent
      */
     public function setParent($parent)
     {
@@ -54,11 +54,9 @@ class ChildDefinition extends Definition
      * If replaceArgument() has been used to replace an argument, this method
      * will return the replacement value.
      *
-     * @param int|string $index
-     *
-     * @return mixed The argument value
-     *
      * @throws OutOfBoundsException When the argument does not exist
+     * @param int|string $index
+     * @return mixed
      */
     public function getArgument($index)
     {
@@ -75,18 +73,17 @@ class ChildDefinition extends Definition
      * certain conventions when you want to overwrite the arguments of the
      * parent definition, otherwise your arguments will only be appended.
      *
-     * @param int|string $index
-     * @param mixed      $value
-     *
      * @return $this
      *
      * @throws InvalidArgumentException when $index isn't an integer
+     * @param int|string $index
+     * @param mixed $value
      */
     public function replaceArgument($index, $value)
     {
         if (\is_int($index)) {
             $this->arguments['index_' . $index] = $value;
-        } elseif (0 === \strpos($index, '$')) {
+        } elseif (\strncmp($index, '$', \strlen('$')) === 0) {
             $this->arguments[$index] = $value;
         } else {
             throw new InvalidArgumentException('The argument must be an existing index or the name of a constructor\'s parameter.');

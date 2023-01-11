@@ -26,12 +26,22 @@ use PrefixedByPoP\Symfony\Component\Yaml\Inline;
  */
 class YamlReferenceDumper
 {
+    /**
+     * @var string|null
+     */
     private $reference;
-    public function dump(ConfigurationInterface $configuration)
+    /**
+     * @param \Symfony\Component\Config\Definition\ConfigurationInterface $configuration
+     */
+    public function dump($configuration)
     {
         return $this->dumpNode($configuration->getConfigTreeBuilder()->buildTree());
     }
-    public function dumpAtPath(ConfigurationInterface $configuration, string $path)
+    /**
+     * @param \Symfony\Component\Config\Definition\ConfigurationInterface $configuration
+     * @param string $path
+     */
+    public function dumpAtPath($configuration, $path)
     {
         $rootNode = $node = $configuration->getConfigTreeBuilder()->buildTree();
         foreach (\explode('.', $path) as $step) {
@@ -50,7 +60,10 @@ class YamlReferenceDumper
         }
         return $this->dumpNode($node);
     }
-    public function dumpNode(NodeInterface $node)
+    /**
+     * @param \Symfony\Component\Config\Definition\NodeInterface $node
+     */
+    public function dumpNode($node)
     {
         $this->reference = '';
         $this->writeNode($node);
@@ -137,7 +150,7 @@ class YamlReferenceDumper
             $this->writeLine('');
             $message = \count($example) > 1 ? 'Examples' : 'Example';
             $this->writeLine('# ' . $message . ':', $depth * 4 + 4);
-            $this->writeArray(\array_map([Inline::class, 'dump'], $example), $depth + 1);
+            $this->writeArray(\array_map(\Closure::fromCallable([Inline::class, 'dump']), $example), $depth + 1);
         }
         if ($children) {
             foreach ($children as $childNode) {
@@ -156,7 +169,23 @@ class YamlReferenceDumper
     }
     private function writeArray(array $array, int $depth)
     {
-        $isIndexed = \array_values($array) === $array;
+        $arrayIsList = function (array $array) : bool {
+            if (\function_exists('array_is_list')) {
+                return \array_is_list($array);
+            }
+            if ($array === []) {
+                return \true;
+            }
+            $current_key = 0;
+            foreach ($array as $key => $noop) {
+                if ($key !== $current_key) {
+                    return \false;
+                }
+                ++$current_key;
+            }
+            return \true;
+        };
+        $isIndexed = $arrayIsList($array);
         foreach ($array as $key => $value) {
             if (\is_array($value)) {
                 $val = '';

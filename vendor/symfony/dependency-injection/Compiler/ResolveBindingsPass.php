@@ -18,28 +18,37 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerBuilder;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\RuntimeException;
-use PrefixedByPoP\Symfony\Component\DependencyInjection\LazyProxy\ProxyHelper;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference;
+use PrefixedByPoP\Symfony\Component\VarExporter\ProxyHelper;
 /**
  * @author Guilhem Niot <guilhem.niot@gmail.com>
  */
 class ResolveBindingsPass extends AbstractRecursivePass
 {
+    /**
+     * @var mixed[]
+     */
     private $usedBindings = [];
+    /**
+     * @var mixed[]
+     */
     private $unusedBindings = [];
+    /**
+     * @var mixed[]
+     */
     private $errorMessages = [];
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         $this->usedBindings = $container->getRemovedBindingIds();
         try {
             parent::process($container);
             foreach ($this->unusedBindings as [$key, $serviceId, $bindingType, $file]) {
                 $argumentType = $argumentName = $message = null;
-                if (\false !== \strpos($key, ' ')) {
+                if (\strpos($key, ' ') !== \false) {
                     [$argumentType, $argumentName] = \explode(' ', $key, 2);
                 } elseif ('$' === $key[0]) {
                     $argumentName = $key;
@@ -78,9 +87,11 @@ class ResolveBindingsPass extends AbstractRecursivePass
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if ($value instanceof TypedReference && $value->getType() === (string) $value) {
             // Already checked
@@ -106,10 +117,14 @@ class ResolveBindingsPass extends AbstractRecursivePass
             } elseif (!isset($this->usedBindings[$bindingId])) {
                 $this->unusedBindings[$bindingId] = [$key, $this->currentId, $bindingType, $file];
             }
-            if (\preg_match('/^(?:(?:array|bool|float|int|string|([^ $]++)) )\\$/', $key, $m)) {
+            if (\preg_match('/^(?:(?:array|bool|float|int|string|iterable|([^ $]++)) )\\$/', $key, $m)) {
                 $bindingNames[\substr($key, \strlen($m[0]))] = $binding;
             }
             if (!isset($m[1])) {
+                continue;
+            }
+            if (\is_subclass_of($m[1], \UnitEnum::class)) {
+                $bindingNames[\substr($key, \strlen($m[0]))] = $binding;
                 continue;
             }
             if (null !== $bindingValue && !$bindingValue instanceof Reference && !$bindingValue instanceof Definition && !$bindingValue instanceof TaggedIteratorArgument && !$bindingValue instanceof ServiceLocatorArgument) {
@@ -147,9 +162,9 @@ class ResolveBindingsPass extends AbstractRecursivePass
                 if (\array_key_exists($key, $arguments) && '' !== $arguments[$key]) {
                     continue;
                 }
-                $typeHint = ProxyHelper::getTypeHint($reflectionMethod, $parameter);
+                $typeHint = \ltrim(ProxyHelper::exportType($parameter) ?? '', '?');
                 $name = Target::parseName($parameter);
-                if ($typeHint && \array_key_exists($k = \ltrim($typeHint, '\\') . ' $' . $name, $bindings)) {
+                if ($typeHint && \array_key_exists($k = \preg_replace('/(^|[(|&])\\\\/', '\\1', $typeHint) . ' $' . $name, $bindings)) {
                     $arguments[$key] = $this->getBindingValue($bindings[$k]);
                     continue;
                 }

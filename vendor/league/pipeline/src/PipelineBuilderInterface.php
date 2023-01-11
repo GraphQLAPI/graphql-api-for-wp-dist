@@ -9,11 +9,12 @@ interface PipelineBuilderInterface
      * Add an stage.
      *
      * @return self
+     * @param callable $stage
      */
-    public function add(callable $stage) : PipelineBuilderInterface;
+    public function add($stage) : PipelineBuilderInterface;
     /**
      * Build a new Pipeline object.
-     * @param \League\Pipeline\ProcessorInterface $processor
+     * @param \League\Pipeline\ProcessorInterface|null $processor
      */
     public function build($processor = null) : PipelineInterface;
 }

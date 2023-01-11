@@ -3,11 +3,15 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Misc;
 
-use PoP\ComponentModel\ErrorHandling\Error;
 class GeneralUtils
 {
-    // Taken from http://stackoverflow.com/questions/4356289/php-random-string-generator
-    public static function generateRandomString($length = 6, $addtime = \true, $characters = 'abcdefghijklmnopqrstuvwxyz')
+    /**
+     * @see Taken from http://stackoverflow.com/questions/4356289/php-random-string-generator
+     * @param int $length
+     * @param bool $addtime
+     * @param string $characters
+     */
+    public static function generateRandomString($length = 6, $addtime = \true, $characters = 'abcdefghijklmnopqrstuvwxyz') : string
     {
         $randomString = '';
         for ($i = 0; $i < $length; $i++) {
@@ -19,87 +23,148 @@ class GeneralUtils
         return $randomString;
     }
     /**
-     * Check if the thing is of type Error
-     * @param mixed $thing
-     */
-    public static function isError($thing) : bool
-    {
-        return $thing !== null && $thing instanceof Error;
-    }
-    // Taken from https://gist.github.com/SeanCannon/6585889
-    /**
+     * @return mixed[]
+     *
+     * @see https://gist.github.com/SeanCannon/6585889
      * @param mixed $items
+     * @param bool $deep
      */
-    public static function arrayFlatten($items, $deep = \false)
+    public static function arrayFlatten($items, $deep = \false) : array
     {
         if (!\is_array($items)) {
             return [$items];
         }
-        return \array_reduce($items, function ($carry, $item) use($deep) {
+        return \array_reduce($items, function ($carry, $item) use($deep) : array {
             return \array_merge($carry, $deep ? self::arrayFlatten($item) : (\is_array($item) ? $item : [$item]));
         }, []);
     }
     /**
      * Add paramters "key" => "value" to the URL
-     * Implementation based on that from https://stackoverflow.com/a/5809881
+     *
+     * @param array<string,string> $keyValues
+     * @see https://stackoverflow.com/a/5809881
+     * @param string $urlOrURLPath
      */
-    public static function addQueryArgs(array $keyValues, string $url) : string
+    public static function addQueryArgs($keyValues, $urlOrURLPath) : string
     {
         if (!$keyValues) {
-            return $url;
+            return $urlOrURLPath;
         }
-        $url_parts = \parse_url($url);
+        $url_parts = \parse_url($urlOrURLPath);
+        if (!\is_array($url_parts)) {
+            return $urlOrURLPath;
+        }
+        $params = [];
         if (isset($url_parts['query'])) {
             \parse_str($url_parts['query'], $params);
-        } else {
-            $params = array();
         }
         $params = \array_merge($params, $keyValues);
         // Note that this will url_encode all values
-        $url_parts['query'] = \http_build_query($params);
+        $query = \http_build_query($params);
         // Check if schema/host are present, becase the URL can also be a relative path: /some-path/
+        $scheme = isset($url_parts['scheme']) ? $url_parts['scheme'] . '://' : '';
+        $host = $url_parts['host'] ?? '';
         $port = isset($url_parts['port']) && $url_parts['port'] ? $url_parts['port'] == "80" ? "" : ":" . $url_parts['port'] : '';
-        $scheme = $url_parts['scheme'] ? $url_parts['scheme'] . '://' : '';
-        return $scheme . $url_parts['host'] . $port . $url_parts['path'] . '?' . $url_parts['query'];
+        $path = $url_parts['path'] ?? '';
+        return $scheme . $host . $port . $path . ($query ? '?' . $query : '');
     }
     /**
      * Add paramters "key" => "value" to the URL
-     * Implementation based on that from https://stackoverflow.com/a/5809881
+     *
+     * @param string[] $keys
+     * @see https://stackoverflow.com/a/5809881
+     * @param string $urlOrURLPath
      */
-    public static function removeQueryArgs(array $keys, string $url) : string
+    public static function removeQueryArgs($keys, $urlOrURLPath) : string
     {
         if (!$keys) {
-            return $url;
+            return $urlOrURLPath;
         }
-        $url_parts = \parse_url($url);
+        $url_parts = \parse_url($urlOrURLPath);
+        if (!\is_array($url_parts)) {
+            return $urlOrURLPath;
+        }
+        /** @var array<string,mixed> */
+        $params = [];
         if (isset($url_parts['query'])) {
             \parse_str($url_parts['query'], $params);
-        } else {
-            $params = array();
         }
         // Remove the indicated keys
-        $params = \array_filter($params, function ($param) use($keys) {
+        $params = \array_filter($params, function (string $param) use($keys) : bool {
             return \in_array($param, $keys);
         }, \ARRAY_FILTER_USE_KEY);
-        $scheme = $url_parts['scheme'];
         // Note that this will url_encode all values
-        $url_parts['query'] = \http_build_query($params);
-        $port = $url_parts['port'] ?? '';
-        $port = !$port || $port == '80' || $scheme == 'https' && $port == '443' ? '' : ':' . $port;
-        $query = $url_parts['query'] ?? '';
-        return $scheme . '://' . $url_parts['host'] . $port . $url_parts['path'] . ($query ? '?' . $query : '');
+        $query = \http_build_query($params);
+        // Check if schema/host are present, becase the URL can also be a relative path: /some-path/
+        $scheme = isset($url_parts['scheme']) ? $url_parts['scheme'] . '://' : '';
+        $host = $url_parts['host'] ?? '';
+        $port = isset($url_parts['port']) && $url_parts['port'] ? $url_parts['port'] == "80" ? "" : ":" . $url_parts['port'] : '';
+        $path = $url_parts['path'] ?? '';
+        return $scheme . $host . $port . $path . ($query ? '?' . $query : '');
     }
-    public static function maybeAddTrailingSlash(string $text) : string
+    /**
+     * @param string $text
+     */
+    public static function maybeAddTrailingSlash($text) : string
     {
         return \rtrim($text, '/\\') . '/';
     }
-    public static function getDomain(string $url) : string
+    /**
+     * @param string $url
+     */
+    public static function getDomain($url) : string
     {
-        $parse = \parse_url($url);
-        return $parse['scheme'] . '://' . $parse['host'];
+        $url_parts = \parse_url($url);
+        if (!\is_array($url_parts)) {
+            return $url;
+        }
+        $scheme = isset($url_parts['scheme']) ? $url_parts['scheme'] . '://' : '';
+        $host = $url_parts['host'] ?? '';
+        return $scheme . $host;
     }
-    public static function removeDomain(string $url) : string
+    /**
+     * @param string $url
+     */
+    public static function removeDomain($url) : string
     {
         return \substr($url, \strlen(self::getDomain($url)));
+    }
+    /**
+     * @param string $url
+     */
+    public static function getPath($url) : string
+    {
+        $url_parts = \parse_url($url);
+        if (!\is_array($url_parts)) {
+            return $url;
+        }
+        $path = $url_parts['path'] ?? '';
+        return $path;
+    }
+    /**
+     * @param iterable<mixed> $iterable
+     * @return mixed[]
+     */
+    public static function iterableToArray($iterable) : array
+    {
+        if (\is_array($iterable)) {
+            return $iterable;
+        }
+        $array = [];
+        \array_push($array, ...$iterable);
+        return $array;
+    }
+    /**
+     * @return array<string,mixed>
+     * @param string $url
+     */
+    public static function getURLQueryParams($url) : array
+    {
+        $queryParams = [];
+        if ($queryString = \parse_url($url, \PHP_URL_QUERY)) {
+            \parse_str($queryString, $queryParams);
+        }
+        /** @var array<string,mixed> */
+        return $queryParams;
     }
 }

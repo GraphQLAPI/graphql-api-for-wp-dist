@@ -6,41 +6,56 @@ namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
 use GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\MenuPageHelper;
-use GraphQLAPI\GraphQLAPI\Services\MenuPages\MenuPageInterface;
-use GraphQLAPI\GraphQLAPI\Services\Menus\AbstractMenu;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Root\Services\BasicServiceTrait;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 
-/**
- * Menu page
- */
 abstract class AbstractMenuPage extends AbstractAutomaticallyInstantiatedService implements MenuPageInterface
 {
+    use BasicServiceTrait;
+
     /**
      * @var string|null
      */
     protected $hookName;
-    /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
-     */
-    protected $instanceManager;
-    /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\MenuPageHelper
-     */
-    protected $menuPageHelper;
-    /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers
-     */
-    protected $endpointHelpers;
 
-    public function __construct(InstanceManagerInterface $instanceManager, MenuPageHelper $menuPageHelper, EndpointHelpers $endpointHelpers)
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\MenuPageHelper|null
+     */
+    private $menuPageHelper;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers|null
+     */
+    private $endpointHelpers;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\MenuPageHelper $menuPageHelper
+     */
+    final public function setMenuPageHelper($menuPageHelper): void
     {
-        $this->instanceManager = $instanceManager;
         $this->menuPageHelper = $menuPageHelper;
+    }
+    final protected function getMenuPageHelper(): MenuPageHelper
+    {
+        /** @var MenuPageHelper */
+        return $this->menuPageHelper = $this->menuPageHelper ?? $this->instanceManager->getInstance(MenuPageHelper::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers $endpointHelpers
+     */
+    final public function setEndpointHelpers($endpointHelpers): void
+    {
         $this->endpointHelpers = $endpointHelpers;
     }
+    final protected function getEndpointHelpers(): EndpointHelpers
+    {
+        /** @var EndpointHelpers */
+        return $this->endpointHelpers = $this->endpointHelpers ?? $this->instanceManager->getInstance(EndpointHelpers::class);
+    }
 
-    public function setHookName(string $hookName): void
+    /**
+     * @param string $hookName
+     */
+    public function setHookName($hookName): void
     {
         $this->hookName = $hookName;
     }
@@ -50,15 +65,6 @@ abstract class AbstractMenuPage extends AbstractAutomaticallyInstantiatedService
         return $this->hookName;
     }
 
-    abstract public function getMenuClass(): string;
-
-    protected function getMenu(): AbstractMenu
-    {
-        $menuClass = $this->getMenuClass();
-        /** @var AbstractMenu */
-        return $this->instanceManager->getInstance($menuClass);
-    }
-
     /**
      * Initialize menu page. Function to override
      */
@@ -66,7 +72,7 @@ abstract class AbstractMenuPage extends AbstractAutomaticallyInstantiatedService
     {
         \add_action(
             'admin_enqueue_scripts',
-            [$this, 'maybeEnqueueAssets']
+            \Closure::fromCallable([$this, 'maybeEnqueueAssets'])
         );
     }
 
@@ -85,8 +91,6 @@ abstract class AbstractMenuPage extends AbstractAutomaticallyInstantiatedService
     {
         return $this->getMenu()->getName();
     }
-
-    abstract public function getMenuPageSlug(): string;
 
     protected function isCurrentScreen(): bool
     {

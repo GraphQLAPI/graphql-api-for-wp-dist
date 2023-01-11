@@ -40,7 +40,7 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
         if (null !== $this->maxIdLength && \strlen($namespace) > $this->maxIdLength - 24) {
             throw new InvalidArgumentException(\sprintf('Namespace must be %d chars max, %d given ("%s").', $this->maxIdLength - 24, \strlen($namespace), $namespace));
         }
-        self::$createCacheItem ?? (self::$createCacheItem = \Closure::bind(static function ($key, $value, $isHit) {
+        self::$createCacheItem = self::$createCacheItem ?? \Closure::bind(static function ($key, $value, $isHit) {
             $item = new CacheItem();
             $item->key = $key;
             $item->isTaggable = \true;
@@ -51,7 +51,7 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
             $item->isHit = $isHit;
             // Extract value, tags and meta data from the cache value
             $item->value = $value['value'];
-            $item->metadata[CacheItem::METADATA_TAGS] = $value['tags'] ?? [];
+            $item->metadata[CacheItem::METADATA_TAGS] = isset($value['tags']) ? \array_combine($value['tags'], $value['tags']) : [];
             if (isset($value['meta'])) {
                 // For compactness these values are packed, & expiry is offset to reduce size
                 $v = \unpack('Ve/Nc', $value['meta']);
@@ -59,8 +59,8 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
                 $item->metadata[CacheItem::METADATA_CTIME] = $v['c'];
             }
             return $item;
-        }, null, CacheItem::class));
-        self::$mergeByLifetime ?? (self::$mergeByLifetime = \Closure::bind(static function ($deferred, &$expiredIds, $getId, $tagPrefix, $defaultLifetime) {
+        }, null, CacheItem::class);
+        self::$mergeByLifetime = self::$mergeByLifetime ?? \Closure::bind(static function ($deferred, &$expiredIds, $getId, $tagPrefix, $defaultLifetime) {
             $byLifetime = [];
             $now = \microtime(\true);
             $expiredIds = [];
@@ -68,7 +68,7 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
                 $key = (string) $key;
                 if (null === $item->expiry) {
                     $ttl = 0 < $defaultLifetime ? $defaultLifetime : 0;
-                } elseif (0 === $item->expiry) {
+                } elseif (!$item->expiry) {
                     $ttl = 0;
                 } elseif (0 >= ($ttl = (int) (0.1 + $item->expiry - $now))) {
                     $expiredIds[] = $getId($key);
@@ -83,22 +83,23 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
                 }
                 if ($metadata) {
                     // For compactness, expiry and creation duration are packed, using magic numbers as separators
-                    $value['meta'] = \pack('VN', (int) (0.1 + $metadata[self::METADATA_EXPIRY] - self::METADATA_EXPIRY_OFFSET), $metadata[self::METADATA_CTIME]);
+                    $value['meta'] = \pack('VN', (int) (0.1 + $metadata[CacheItem::METADATA_EXPIRY] - CacheItem::METADATA_EXPIRY_OFFSET), $metadata[CacheItem::METADATA_CTIME]);
                 }
                 // Extract tag changes, these should be removed from values in doSave()
                 $value['tag-operations'] = ['add' => [], 'remove' => []];
                 $oldTags = $item->metadata[CacheItem::METADATA_TAGS] ?? [];
-                foreach (\array_diff($value['tags'], $oldTags) as $addedTag) {
+                foreach (\array_diff_key($value['tags'], $oldTags) as $addedTag) {
                     $value['tag-operations']['add'][] = $getId($tagPrefix . $addedTag);
                 }
-                foreach (\array_diff($oldTags, $value['tags']) as $removedTag) {
+                foreach (\array_diff_key($oldTags, $value['tags']) as $removedTag) {
                     $value['tag-operations']['remove'][] = $getId($tagPrefix . $removedTag);
                 }
+                $value['tags'] = \array_keys($value['tags']);
                 $byLifetime[$ttl][$getId($key)] = $value;
                 $item->metadata = $item->newMetadata;
             }
             return $byLifetime;
-        }, null, CacheItem::class));
+        }, null, CacheItem::class);
     }
     /**
      * Persists several cache items immediately.
@@ -110,42 +111,36 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
      *
      * @return array The identifiers that failed to be cached or a boolean stating if caching succeeded or not
      */
-    protected abstract function doSave(array $values, int $lifetime, array $addTagData = [], array $removeTagData = []) : array;
+    protected abstract function doSave($values, $lifetime, $addTagData = [], $removeTagData = []) : array;
     /**
      * Removes multiple items from the pool and their corresponding tags.
      *
      * @param array $ids An array of identifiers that should be removed from the pool
-     *
-     * @return bool True if the items were successfully removed, false otherwise
      */
-    protected abstract function doDelete(array $ids);
+    protected abstract function doDelete($ids) : bool;
     /**
      * Removes relations between tags and deleted items.
      *
      * @param array $tagData Array of tag => key identifiers that should be removed from the pool
      */
-    protected abstract function doDeleteTagRelations(array $tagData) : bool;
+    protected abstract function doDeleteTagRelations($tagData) : bool;
     /**
      * Invalidates cached items using tags.
      *
      * @param string[] $tagIds An array of tags to invalidate, key is tag and value is tag id
-     *
-     * @return bool True on success
      */
-    protected abstract function doInvalidate(array $tagIds) : bool;
+    protected abstract function doInvalidate($tagIds) : bool;
     /**
      * Delete items and yields the tags they were bound to.
+     * @param mixed[] $ids
      */
-    protected function doDeleteYieldTags(array $ids) : iterable
+    protected function doDeleteYieldTags($ids) : iterable
     {
         foreach ($this->doFetch($ids) as $id => $value) {
             (yield $id => \is_array($value) && \is_array($value['tags'] ?? null) ? $value['tags'] : []);
         }
         $this->doDelete($ids);
     }
-    /**
-     * {@inheritdoc}
-     */
     public function commit() : bool
     {
         $ok = \true;
@@ -153,7 +148,12 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
         $retry = $this->deferred = [];
         if ($expiredIds) {
             // Tags are not cleaned up in this case, however that is done on invalidateTags().
-            $this->doDelete($expiredIds);
+            try {
+                $this->doDelete($expiredIds);
+            } catch (\Exception $e) {
+                $ok = \false;
+                CacheItem::log($this->logger, 'Failed to delete expired items: ' . $e->getMessage(), ['exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
+            }
         }
         foreach ($byLifetime as $lifetime => $values) {
             try {
@@ -199,9 +199,9 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
         return $ok;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $keys
      */
-    public function deleteItems(array $keys) : bool
+    public function deleteItems($keys) : bool
     {
         if (!$keys) {
             return \true;
@@ -219,14 +219,14 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
                     $tagData[$this->getId(self::TAGS_PREFIX . $tag)][] = $id;
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             $ok = \false;
         }
         try {
             if ((!$tagData || $this->doDeleteTagRelations($tagData)) && $ok) {
                 return \true;
             }
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
         }
         // When bulk-delete failed, retry each item individually
         foreach ($ids as $key => $id) {
@@ -244,19 +244,23 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
         return $ok;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $tags
      */
-    public function invalidateTags(array $tags)
+    public function invalidateTags($tags) : bool
     {
-        if (empty($tags)) {
+        if (!$tags) {
             return \false;
         }
         $tagIds = [];
         foreach (\array_unique($tags) as $tag) {
             $tagIds[] = $this->getId(self::TAGS_PREFIX . $tag);
         }
-        if ($this->doInvalidate($tagIds)) {
-            return \true;
+        try {
+            if ($this->doInvalidate($tagIds)) {
+                return \true;
+            }
+        } catch (\Exception $e) {
+            CacheItem::log($this->logger, 'Failed to invalidate tags: ' . $e->getMessage(), ['exception' => $e, 'cache-adapter' => \get_debug_type($this)]);
         }
         return \false;
     }

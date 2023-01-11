@@ -24,27 +24,23 @@ abstract class Loader implements LoaderInterface
     {
         $this->env = $env;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function getResolver()
+    public function getResolver() : LoaderResolverInterface
     {
         return $this->resolver;
     }
     /**
-     * {@inheritdoc}
+     * @param \Symfony\Component\Config\Loader\LoaderResolverInterface $resolver
      */
-    public function setResolver(LoaderResolverInterface $resolver)
+    public function setResolver($resolver)
     {
         $this->resolver = $resolver;
     }
     /**
      * Imports a resource.
      *
-     * @param mixed       $resource A resource
-     * @param string $type The resource type or null if unknown
-     *
      * @return mixed
+     * @param mixed $resource
+     * @param string|null $type
      */
     public function import($resource, $type = null)
     {
@@ -53,14 +49,11 @@ abstract class Loader implements LoaderInterface
     /**
      * Finds a loader able to load an imported resource.
      *
-     * @param mixed       $resource A resource
-     * @param string|null $type     The resource type or null if unknown
-     *
-     * @return $this|LoaderInterface
-     *
      * @throws LoaderLoadException If no loader is found
+     * @param mixed $resource
+     * @param string|null $type
      */
-    public function resolve($resource, string $type = null)
+    public function resolve($resource, $type = null) : LoaderInterface
     {
         if ($this->supports($resource, $type)) {
             return $this;

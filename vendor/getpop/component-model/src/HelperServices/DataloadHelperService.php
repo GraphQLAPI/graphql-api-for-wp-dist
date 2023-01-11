@@ -3,67 +3,55 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\HelperServices;
 
-use PoP\ComponentModel\ModuleProcessors\ModuleProcessorManagerInterface;
-use PoP\ComponentModel\Schema\FieldQueryInterpreterInterface;
-use PoP\ComponentModel\Misc\GeneralUtils;
-use PoP\ComponentModel\Schema\FeedbackMessageStoreInterface;
-use PoP\ComponentModel\TypeResolvers\TypeResolverInterface;
-use PoP\Translation\TranslationAPIInterface;
+use PoP\ComponentModel\ComponentProcessors\ComponentProcessorManagerInterface;
+use PoP\ComponentModel\TypeResolvers\ObjectType\ObjectTypeResolverInterface;
+use PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface;
+use PoP\ComponentModel\TypeResolvers\UnionType\UnionTypeResolverInterface;
+use PoP\GraphQLParser\Spec\Parser\Ast\FieldInterface;
+use PoP\Root\Services\BasicServiceTrait;
 class DataloadHelperService implements \PoP\ComponentModel\HelperServices\DataloadHelperServiceInterface
 {
+    use BasicServiceTrait;
     /**
-     * @var \PoP\ComponentModel\Schema\FeedbackMessageStoreInterface
+     * @var \PoP\ComponentModel\ComponentProcessors\ComponentProcessorManagerInterface|null
      */
-    protected $feedbackMessageStore;
+    private $componentProcessorManager;
     /**
-     * @var \PoP\ComponentModel\Schema\FieldQueryInterpreterInterface
+     * @param \PoP\ComponentModel\ComponentProcessors\ComponentProcessorManagerInterface $componentProcessorManager
      */
-    protected $fieldQueryInterpreter;
-    /**
-     * @var \PoP\Translation\TranslationAPIInterface
-     */
-    protected $translationAPI;
-    /**
-     * @var \PoP\ComponentModel\ModuleProcessors\ModuleProcessorManagerInterface
-     */
-    protected $moduleProcessorManager;
-    public function __construct(FeedbackMessageStoreInterface $feedbackMessageStore, FieldQueryInterpreterInterface $fieldQueryInterpreter, TranslationAPIInterface $translationAPI, ModuleProcessorManagerInterface $moduleProcessorManager)
+    public final function setComponentProcessorManager($componentProcessorManager) : void
     {
-        $this->feedbackMessageStore = $feedbackMessageStore;
-        $this->fieldQueryInterpreter = $fieldQueryInterpreter;
-        $this->translationAPI = $translationAPI;
-        $this->moduleProcessorManager = $moduleProcessorManager;
+        $this->componentProcessorManager = $componentProcessorManager;
     }
-    public function getTypeResolverClassFromSubcomponentDataField(TypeResolverInterface $typeResolver, string $subcomponent_data_field) : ?string
+    protected final function getComponentProcessorManager() : ComponentProcessorManagerInterface
     {
-        $subcomponent_typeResolver_class = $typeResolver->resolveFieldTypeResolverClass($subcomponent_data_field);
-        // if (!$subcomponent_typeResolver_class && \PoP\ComponentModel\Environment::failIfSubcomponentTypeDataLoaderUndefined()) {
-        //     throw new \Exception(sprintf('There is no default typeResolver set for field  "%s" from typeResolver "%s" and typeResolver "%s" (%s)', $subcomponent_data_field, $typeResolver_class, $typeResolverClass, RequestUtils::getRequestedFullURL()));
-        // }
-        // If this field doesn't have a typeResolver, show a schema error
-        // But if there are no FieldResolvers, then skip adding an error here, since that error will have been added already
-        // Otherwise, there will appear 2 error messages:
-        // 1. No FieldResolver
-        // 2. No FieldDefaultTypeDataLoader
-        if (!$subcomponent_typeResolver_class && $typeResolver->hasFieldResolversForField($subcomponent_data_field)) {
-            // If there is an alias, store the results under this. Otherwise, on the fieldName+fieldArgs
-            $subcomponent_data_field_outputkey = $this->fieldQueryInterpreter->getFieldOutputKey($subcomponent_data_field);
-            $this->feedbackMessageStore->addSchemaError($typeResolver->getTypeOutputName(), $subcomponent_data_field_outputkey, \sprintf($this->translationAPI->__('No “typeResolver” has been set for field \'%s\' to load relational data', 'pop-component-model'), $subcomponent_data_field_outputkey));
-        }
-        return $subcomponent_typeResolver_class;
+        /** @var ComponentProcessorManagerInterface */
+        return $this->componentProcessorManager = $this->componentProcessorManager ?? $this->instanceManager->getInstance(ComponentProcessorManagerInterface::class);
     }
     /**
-     * @param array<array<string, mixed>> $moduleValues
+     * Accept RelationalTypeResolverInterface as param, instead of the more natural
+     * ObjectTypeResolverInterface, to make it easy within the application to check
+     * for this result without checking in advance what's the typeResolver.
+     * @param \PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface $relationalTypeResolver
+     * @param \PoP\GraphQLParser\Spec\Parser\Ast\FieldInterface $field
      */
-    public function addFilterParams(string $url, array $moduleValues = []) : string
+    public function getTypeResolverFromSubcomponentField($relationalTypeResolver, $field) : ?RelationalTypeResolverInterface
     {
-        $args = [];
-        foreach ($moduleValues as $moduleValue) {
-            $module = $moduleValue['module'];
-            $value = $moduleValue['value'];
-            $moduleprocessor = $this->moduleProcessorManager->getProcessor($module);
-            $args[$moduleprocessor->getName($module)] = $value;
+        /**
+         * Because the UnionTypeResolver doesn't know yet which TypeResolver will be used
+         * (that depends on each object), it can't resolve this functionality
+         */
+        if ($relationalTypeResolver instanceof UnionTypeResolverInterface) {
+            return null;
         }
-        return GeneralUtils::addQueryArgs($args, $url);
+        // By now, the typeResolver must be ObjectType
+        /** @var ObjectTypeResolverInterface */
+        $objectTypeResolver = $relationalTypeResolver;
+        // Check if this field doesn't have a typeResolver
+        $subcomponentFieldNodeTypeResolver = $objectTypeResolver->getFieldTypeResolver($field);
+        if ($subcomponentFieldNodeTypeResolver === null || !$subcomponentFieldNodeTypeResolver instanceof RelationalTypeResolverInterface) {
+            return null;
+        }
+        return $subcomponentFieldNodeTypeResolver;
     }
 }

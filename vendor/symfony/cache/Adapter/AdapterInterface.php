@@ -22,22 +22,16 @@ use PrefixedByPoP\Symfony\Component\Cache\CacheItem;
 interface AdapterInterface extends CacheItemPoolInterface
 {
     /**
-     * {@inheritdoc}
-     *
-     * @return CacheItem
+     * @param mixed $key
      */
-    public function getItem($key);
+    public function getItem($key) : \PrefixedByPoP\Psr\Cache\CacheItemInterface;
     /**
-     * {@inheritdoc}
-     *
-     * @return \Traversable|CacheItem[]
+     * @return iterable<string, CacheItem>
+     * @param mixed[] $keys
      */
-    public function getItems(array $keys = []);
+    public function getItems($keys = []) : iterable;
     /**
-     * {@inheritdoc}
-     *
-     * @return bool
      * @param string $prefix
      */
-    public function clear($prefix = '');
+    public function clear($prefix = '') : bool;
 }

@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\PluginSkeleton;
 
 use GraphQLAPI\GraphQLAPI\Facades\Registries\CustomPostTypeRegistryFacade;
+use GraphQLAPI\GraphQLAPI\PluginSkeleton\PluginInfoInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\CustomPostTypeInterface;
-use PoP\Engine\AppLoader;
+use PoP\Root\App;
+use PoP\Root\Helpers\ClassHelpers;
+use PoP\Root\Module\ModuleInterface;
 
-abstract class AbstractPlugin
+abstract class AbstractPlugin implements PluginInterface
 {
     /**
-     * @var array<string, mixed>|null
+     * @var \GraphQLAPI\GraphQLAPI\PluginSkeleton\PluginInfoInterface|null
      */
-    private $config;
+    protected $pluginInfo;
 
     /**
      * @var string
@@ -31,17 +34,20 @@ abstract class AbstractPlugin
      * @var string
      */
     protected $pluginVersion;
-    public function __construct(
-        string $pluginFile,
-        /** The main plugin file */
-        string $pluginVersion,
-        ?string $pluginName = null
-    )
+    /**
+     * @var string|null
+     */
+    protected $commitHash;
+    public function __construct(string $pluginFile, string $pluginVersion, ?string $pluginName = null, ?string $commitHash = null)
     {
         $this->pluginFile = $pluginFile;
+        /** The main plugin file */
         $this->pluginVersion = $pluginVersion;
+        $this->commitHash = $commitHash;
         $this->pluginBaseName = \plugin_basename($pluginFile);
         $this->pluginName = $pluginName ?? $this->pluginBaseName;
+        // Have the Plugin set its own info on the corresponding PluginInfo
+        $this->initializeInfo();
     }
 
     /**
@@ -77,83 +83,133 @@ abstract class AbstractPlugin
     }
 
     /**
-     * Get the plugin's immutable configuration values
-     *
-     * @return array<string, mixed>
+     * Commit hash when merging PR in repo, injected during the CI run
+     * when generating the .zip plugin.
      */
-    final public function getFullConfiguration(): array
+    public function getCommitHash(): ?string
     {
-        if ($this->config === null) {
-            $this->config = array_merge(
-                // These configuration values are mandatory
-                [
-                    'version' => $this->pluginVersion,
-                    'file' => $this->pluginFile,
-                    'baseName' => $this->pluginBaseName,
-                    'name' => $this->pluginName,
-                ],
-                // These are custom configuration values
-                $this->doGetFullConfiguration()
-            );
+        return $this->commitHash;
+    }
+
+    /**
+     * Plugin version + "#{commit hash}" (if it exists)
+     */
+    public function getPluginVersionWithCommitHash(): string
+    {
+        return $this->pluginVersion . ($this->commitHash ? '#' . $this->commitHash : $this->commitHash);
+    }
+
+    /**
+     * Plugin dir
+     */
+    public function getPluginDir(): string
+    {
+        return \dirname($this->pluginFile);
+    }
+
+    /**
+     * Plugin URL
+     */
+    public function getPluginURL(): string
+    {
+        return \plugin_dir_url($this->pluginFile);
+    }
+
+    /**
+     * PluginInfo class for the Plugin
+     */
+    public function getInfo(): ?PluginInfoInterface
+    {
+        return $this->pluginInfo;
+    }
+
+    protected function initializeInfo(): void
+    {
+        $pluginInfoClass = $this->getPluginInfoClass();
+        if ($pluginInfoClass === null) {
+            return;
         }
-        return $this->config;
+        $this->pluginInfo = new $pluginInfoClass($this);
     }
 
     /**
-     * Get a plugin's immutable configuration value
-     * @return mixed
-     */
-    final public function getConfig(string $key)
-    {
-        $config = $this->getFullConfiguration();
-        return $config[$key];
-    }
-
-    /**
-     * Get the plugin's immutable configuration values
+     * PluginInfo class for the Plugin
      *
-     * @return array<string, mixed>
+     * @return class-string<PluginInfoInterface>|null
      */
-    protected function doGetFullConfiguration(): array
+    protected function getPluginInfoClass(): ?string
     {
-        return [
-            'dir' => dirname($this->pluginFile),
-            'url' => plugin_dir_url($this->pluginFile),
-        ];
+        $classNamespace = ClassHelpers::getClassPSR4Namespace(\get_called_class());
+        $pluginInfoClass = $classNamespace . '\\' . $this->getPluginInfoClassName();
+        if (!class_exists($pluginInfoClass)) {
+            return null;
+        }
+        /** @var class-string<PluginInfoInterface> */
+        return $pluginInfoClass;
     }
+
+    /**
+     * PluginInfo class name for the Plugin
+     */
+    abstract protected function getPluginInfoClassName(): ?string;
 
     /**
      * Plugin's initialization
      */
     public function initialize(): void
     {
-        $this->initializeComponentClasses();
+        $this->initializeModuleClasses();
     }
 
     /**
-     * Initialize Plugin's components
+     * Initialize Plugin's modules
      */
-    protected function initializeComponentClasses(): void
+    protected function initializeModuleClasses(): void
     {
-        // Set the plugin folder on all the Extension Components
-        $componentClasses = $this->getComponentClassesToInitialize();
-        $pluginFolder = dirname($this->pluginFile);
-        foreach ($componentClasses as $componentClass) {
-            if (is_a($componentClass, AbstractPluginComponent::class, true)) {
-                $componentClass::setPluginFolder($pluginFolder);
-            }
-        }
-
         // Initialize the containers
-        AppLoader::addComponentClassesToInitialize($componentClasses);
+        $moduleClasses = $this->getModuleClassesToInitialize();
+        App::getAppLoader()->addModuleClassesToInitialize($moduleClasses);
     }
 
     /**
-     * Add Component classes to be initialized
-     *
-     * @return string[] List of `Component` class to initialize
+     * After initialized, and before booting,
+     * allow the modules to inject their own configuration
      */
-    public function getComponentClassesToInitialize(): array
+    public function configureComponents(): void
+    {
+        // Set the plugin folder on the plugin's Module
+        $pluginFolder = dirname($this->pluginFile);
+        $this->getPluginModule()->setPluginFolder($pluginFolder);
+    }
+
+    /**
+     * Plugin's Module
+     */
+    protected function getPluginModule(): PluginModuleInterface
+    {
+        /** @var PluginModuleInterface */
+        return App::getModule($this->getModuleClass());
+    }
+
+    /**
+     * Package's Module class, of type PluginModuleInterface.
+     * By standard, it is "NamespaceOwner\Project\Module::class"
+     *
+     * @phpstan-return class-string<ModuleInterface>
+     */
+    protected function getModuleClass(): string
+    {
+        $classNamespace = ClassHelpers::getClassPSR4Namespace(\get_called_class());
+        /** @var class-string<ModuleInterface> */
+        return $classNamespace . '\\Module';
+    }
+
+    /**
+     * Add Module classes to be initialized
+     *
+     * @return array<class-string<ModuleInterface>> List of `Module` class to initialize
+     */
+    public function getModuleClassesToInitialize(): array
     {
         return [];
     }
@@ -165,24 +221,23 @@ abstract class AbstractPlugin
     {
         // Configure the plugin. This defines hooks to set environment variables,
         // so must be executed before those hooks are triggered for first time
-        // (in ComponentConfiguration classes)
-        $this->callPluginConfiguration();
+        // (in ModuleConfiguration classes)
+        $this->callPluginInitializationConfiguration();
 
         // Only after initializing the System Container,
-        // we can obtain the configuration
-        // (which may depend on hooks)
-        AppLoader::addComponentClassConfiguration(
-            $this->getComponentClassConfiguration()
+        // we can obtain the configuration (which may depend on hooks)
+        App::getAppLoader()->addModuleClassConfiguration(
+            $this->getModuleClassConfiguration()
         );
-        AppLoader::addSchemaComponentClassesToSkip(
-            $this->getSchemaComponentClassesToSkip()
+        App::getAppLoader()->addSchemaModuleClassesToSkip(
+            $this->getSchemaModuleClassesToSkip()
         );
     }
 
     /**
      * Configure the plugin.
      */
-    abstract protected function callPluginConfiguration(): void;
+    abstract protected function callPluginInitializationConfiguration(): void;
 
     /**
      * Plugin's booting
@@ -193,24 +248,21 @@ abstract class AbstractPlugin
     }
 
     /**
-     * Add configuration for the Component classes
+     * Add configuration for the Module classes
      *
-     * @return array<string, mixed> [key]: Component class, [value]: Configuration
+     * @return array<class-string<ModuleInterface>,mixed> [key]: Module class, [value]: Configuration
      */
-    public function getComponentClassConfiguration(): array
+    public function getModuleClassConfiguration(): array
     {
         return [];
     }
 
     /**
-     * Add schema Component classes to skip initializing
+     * Add schema Module classes to skip initializing
      *
-     * @return string[] List of `Component` class which must not initialize their Schema services
+     * @return array<class-string<ModuleInterface>> List of `Module` class which must not initialize their Schema services
      */
-    public function getSchemaComponentClassesToSkip(): array
-    {
-        return [];
-    }
+    abstract protected function getSchemaModuleClassesToSkip(): array;
 
     /**
      * Remove the CPTs from the DB
@@ -252,7 +304,7 @@ abstract class AbstractPlugin
      */
     public function getPluginNamespace(): string
     {
-        return PluginHelpers::getClassPSR4Namespace(get_called_class());
+        return ClassHelpers::getClassPSR4Namespace(get_called_class());
     }
 
     /**
@@ -261,7 +313,7 @@ abstract class AbstractPlugin
     public function setup(): void
     {
         // Functions to execute when activating/deactivating the plugin
-        \register_deactivation_hook($this->getPluginFile(), [$this, 'deactivate']);
+        \register_deactivation_hook($this->getPluginFile(), \Closure::fromCallable([$this, 'deactivate']));
         /**
          * PoP depends on hook "init" to set-up the endpoint rewrite,
          * as in function `addRewriteEndpoints` in `AbstractEndpointHandler`
@@ -274,7 +326,7 @@ abstract class AbstractPlugin
          *
          * @see https://developer.wordpress.org/reference/functions/register_activation_hook/#process-flow
          */
-        \register_activation_hook($this->getPluginFile(), [$this, 'activate']);
+        \register_activation_hook($this->getPluginFile(), \Closure::fromCallable([$this, 'activate']));
     }
 
     /**
@@ -301,7 +353,7 @@ abstract class AbstractPlugin
          * since AbstractMainPlugin already invalidates it
          * for ANY deactivated plugin.
          */
-        // $this->invalidateCache();
+        // $this->purgeContainer();
     }
 
     /**
@@ -317,14 +369,15 @@ abstract class AbstractPlugin
     /**
      * Execute logic after the plugin/extension has just been activated
      */
-    protected function pluginJustActivated(): void
+    public function pluginJustActivated(): void
     {
     }
 
     /**
      * Execute logic after the plugin/extension has just been updated
+     * @param string $storedVersion
      */
-    protected function pluginJustUpdated(string $storedVersion): void
+    public function pluginJustUpdated($storedVersion): void
     {
     }
 }

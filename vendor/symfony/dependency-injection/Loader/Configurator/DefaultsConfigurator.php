@@ -17,11 +17,14 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumen
  */
 class DefaultsConfigurator extends AbstractServiceConfigurator
 {
-    public const FACTORY = 'defaults';
     use Traits\AutoconfigureTrait;
     use Traits\AutowireTrait;
     use Traits\BindTrait;
     use Traits\PublicTrait;
+    public const FACTORY = 'defaults';
+    /**
+     * @var string|null
+     */
     private $path;
     public function __construct(ServicesConfigurator $parent, Definition $definition, string $path = null)
     {
@@ -34,25 +37,34 @@ class DefaultsConfigurator extends AbstractServiceConfigurator
      * @return $this
      *
      * @throws InvalidArgumentException when an invalid tag name or attribute is provided
+     * @param string $name
+     * @param mixed[] $attributes
      */
-    public final function tag(string $name, array $attributes = [])
+    public final function tag($name, $attributes = [])
     {
         if ('' === $name) {
             throw new InvalidArgumentException('The tag name in "_defaults" must be a non-empty string.');
         }
-        foreach ($attributes as $attribute => $value) {
-            if (null !== $value && !\is_scalar($value)) {
-                throw new InvalidArgumentException(\sprintf('Tag "%s", attribute "%s" in "_defaults" must be of a scalar-type.', $name, $attribute));
-            }
-        }
+        $this->validateAttributes($name, $attributes);
         $this->definition->addTag($name, $attributes);
         return $this;
     }
     /**
      * Defines an instanceof-conditional to be applied to following service definitions.
+     * @param string $fqcn
      */
-    public final function instanceof(string $fqcn) : InstanceofConfigurator
+    public final function instanceof($fqcn) : InstanceofConfigurator
     {
         return $this->parent->instanceof($fqcn);
+    }
+    private function validateAttributes(string $tagName, array $attributes, string $prefix = '') : void
+    {
+        foreach ($attributes as $attribute => $value) {
+            if (\is_array($value)) {
+                $this->validateAttributes($tagName, $value, $attribute . '.');
+            } elseif (!\is_scalar($value ?? '')) {
+                throw new InvalidArgumentException(\sprintf('Tag "%s", attribute "%s" in "_defaults" must be of a scalar-type or an array of scalar-type.', $tagName, $prefix . $attribute));
+            }
+        }
     }
 }

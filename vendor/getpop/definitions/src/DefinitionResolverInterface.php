@@ -5,15 +5,19 @@ namespace PoP\Definitions;
 
 interface DefinitionResolverInterface
 {
-    public function getDefinition(string $name, string $group) : string;
     /**
-     * @return array<string, mixed>
+     * @param string $name
+     * @param string $group
+     */
+    public function getDefinition($name, $group) : string;
+    /**
+     * @return array<string,mixed>
      */
     public function getDataToPersist() : array;
     /**
      * Allow Persistent Definitions to set a different value
      *
-     * @param array<string, mixed> $persisted_data
+     * @param array<string,mixed> $persisted_data
      */
-    public function setPersistedData(array $persisted_data) : void;
+    public function setPersistedData($persisted_data) : void;
 }

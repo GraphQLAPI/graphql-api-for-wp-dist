@@ -4,28 +4,49 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Registries;
 
-use InvalidArgumentException;
+use GraphQLAPI\GraphQLAPI\Exception\ModuleNotExistsException;
 use GraphQLAPI\GraphQLAPI\Facades\UserSettingsManagerFacade;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverInterface;
+use GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface;
 
 class ModuleRegistry implements ModuleRegistryInterface
 {
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface|null
+     */
+    private $userSettingsManager;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Settings\UserSettingsManagerInterface $userSettingsManager
+     */
+    public function setUserSettingsManager($userSettingsManager): void
+    {
+        $this->userSettingsManager = $userSettingsManager;
+    }
+    protected function getUserSettingsManager(): UserSettingsManagerInterface
+    {
+        return $this->userSettingsManager = $this->userSettingsManager ?? UserSettingsManagerFacade::getInstance();
+    }
+
     /**
      * @var ModuleResolverInterface[]
      */
     protected $moduleResolvers = [];
 
     /**
-     * @var array<string, ModuleResolverInterface>
+     * @var array<string,ModuleResolverInterface>
      */
     protected $modulesResolversByModuleAndPriority = [];
 
     /**
-     * @var array<string, ModuleResolverInterface>
+     * @var array<string,ModuleResolverInterface>
      */
     protected $moduleResolversByModule = [];
 
-    public function addModuleResolver(ModuleResolverInterface $moduleResolver): void
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverInterface $moduleResolver
+     */
+    public function addModuleResolver($moduleResolver): void
     {
         $this->moduleResolvers[] = $moduleResolver;
         foreach ($moduleResolver->getModulesToResolve() as $module) {
@@ -34,7 +55,7 @@ class ModuleRegistry implements ModuleRegistryInterface
     }
     /**
      * Order the moduleResolvers by priority
-     * @return array<string, ModuleResolverInterface>
+     * @return array<string,ModuleResolverInterface>
      */
     protected function getModuleResolversByModuleAndPriority(): array
     {
@@ -54,17 +75,18 @@ class ModuleRegistry implements ModuleRegistryInterface
 
     /**
      * @return string[]
+     * @param bool $onlyEnabled
+     * @param bool $onlyHasSettings
+     * @param bool $onlyVisible
+     * @param bool $onlyWithVisibleSettings
      */
-    public function getAllModules(
-        bool $onlyEnabled = false,
-        bool $onlyHasSettings = false,
-        bool $onlyVisible = true
-    ): array {
+    public function getAllModules($onlyEnabled = false, $onlyHasSettings = false, $onlyVisible = true, $onlyWithVisibleSettings = false): array
+    {
         $modules = array_keys($this->getModuleResolversByModuleAndPriority());
         if ($onlyEnabled) {
             $modules = array_filter(
                 $modules,
-                function ($module) {
+                function (string $module) {
                     return $this->isModuleEnabled($module);
                 }
             );
@@ -72,7 +94,7 @@ class ModuleRegistry implements ModuleRegistryInterface
         if ($onlyHasSettings) {
             $modules = array_filter(
                 $modules,
-                function ($module) {
+                function (string $module) {
                     return $this->getModuleResolver($module)->hasSettings($module);
                 }
             );
@@ -80,27 +102,39 @@ class ModuleRegistry implements ModuleRegistryInterface
         if ($onlyVisible) {
             $modules = array_filter(
                 $modules,
-                function ($module) {
+                function (string $module) {
                     return !$this->getModuleResolver($module)->isHidden($module);
                 }
             );
         }
-        return $modules;
+        if ($onlyWithVisibleSettings) {
+            $modules = array_filter(
+                $modules,
+                function (string $module) {
+                    return !$this->getModuleResolver($module)->areSettingsHidden($module);
+                }
+            );
+        }
+        return array_values($modules);
     }
     /**
-     * @throws InvalidArgumentException If module does not exist
+     * @throws ModuleNotExistsException If module does not exist
+     * @param string $module
      */
-    public function getModuleResolver(string $module): ModuleResolverInterface
+    public function getModuleResolver($module): ModuleResolverInterface
     {
         if (!isset($this->moduleResolversByModule[$module])) {
-            throw new InvalidArgumentException(sprintf(
+            throw new ModuleNotExistsException(sprintf(
                 \__('Module \'%s\' does not exist', 'graphql-api'),
                 $module
             ));
         }
         return $this->moduleResolversByModule[$module];
     }
-    public function isModuleEnabled(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function isModuleEnabled($module): bool
     {
         $moduleResolver = $this->getModuleResolver($module);
         // Check that all requirements are satisfied
@@ -117,9 +151,8 @@ class ModuleRegistry implements ModuleRegistryInterface
         }
         $moduleID = $moduleResolver->getID($module);
         // Check if the value has been saved on the DB
-        $userSettingsManager = UserSettingsManagerFacade::getInstance();
-        if ($userSettingsManager->hasSetModuleEnabled($moduleID)) {
-            return $userSettingsManager->isModuleEnabled($moduleID);
+        if ($this->getUserSettingsManager()->hasSetModuleEnabled($moduleID)) {
+            return $this->getUserSettingsManager()->isModuleEnabled($moduleID);
         }
         // Get the default value from the resolver
         return $moduleResolver->isEnabledByDefault($module);
@@ -127,8 +160,9 @@ class ModuleRegistry implements ModuleRegistryInterface
 
     /**
      * Indicate if a module's depended-upon modules are all enabled
+     * @param string $module
      */
-    protected function areDependedModulesEnabled(string $module): bool
+    protected function areDependedModulesEnabled($module): bool
     {
         $moduleResolver = $this->getModuleResolver($module);
         // Check that all depended-upon modules are enabled
@@ -148,7 +182,7 @@ class ModuleRegistry implements ModuleRegistryInterface
                 continue;
             }
             $dependedModuleListEnabled = array_map(
-                function ($dependedModule) {
+                function (string $dependedModule): bool {
                     // Check if it has the "inverse" token at the beginning,
                     // then it depends on the module being disabled, not enabled
                     if (substr($dependedModule, 0, strlen(ModuleRegistryTokens::INVERSE_DEPENDENCY)) == ModuleRegistryTokens::INVERSE_DEPENDENCY) {
@@ -171,8 +205,9 @@ class ModuleRegistry implements ModuleRegistryInterface
      * If a module was disabled by the user, then the user can enable it.
      * If it is disabled because its requirements are not satisfied,
      * or its dependencies themselves disabled, then it cannot be enabled by the user.
+     * @param string $module
      */
-    public function canModuleBeEnabled(string $module): bool
+    public function canModuleBeEnabled($module): bool
     {
         $moduleResolver = $this->getModuleResolver($module);
         // Check that all requirements are satisfied
@@ -188,8 +223,9 @@ class ModuleRegistry implements ModuleRegistryInterface
 
     /**
      * Used to indicate that the dependency on the module is on its being disabled, not enabled
+     * @param string $dependedModule
      */
-    public function getInverseDependency(string $dependedModule): string
+    public function getInverseDependency($dependedModule): string
     {
         // Check if it already has the "inverse" token at the beginning,
         // then take it back to normal
@@ -202,8 +238,9 @@ class ModuleRegistry implements ModuleRegistryInterface
     }
     /**
      * Indicate if the dependency is on its being disabled, not enabled
+     * @param string $dependedModule
      */
-    public function isInverseDependency(string $dependedModule): bool
+    public function isInverseDependency($dependedModule): bool
     {
         return substr($dependedModule, 0, strlen(ModuleRegistryTokens::INVERSE_DEPENDENCY)) == ModuleRegistryTokens::INVERSE_DEPENDENCY;
     }

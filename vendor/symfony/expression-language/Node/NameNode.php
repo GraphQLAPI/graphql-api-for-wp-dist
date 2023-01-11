@@ -22,11 +22,18 @@ class NameNode extends Node
     {
         parent::__construct([], ['name' => $name]);
     }
-    public function compile(Compiler $compiler)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Compiler $compiler
+     */
+    public function compile($compiler)
     {
         $compiler->raw('$' . $this->attributes['name']);
     }
-    public function evaluate(array $functions, array $values)
+    /**
+     * @param mixed[] $functions
+     * @param mixed[] $values
+     */
+    public function evaluate($functions, $values)
     {
         return $values[$this->attributes['name']];
     }

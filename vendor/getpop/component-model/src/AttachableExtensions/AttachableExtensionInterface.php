@@ -8,6 +8,8 @@ interface AttachableExtensionInterface extends ServiceInterface
 {
     /**
      * It is represented through a static class, because the extensions work at class level, not object level
+     *
+     * @return string[]
      */
     public function getClassesToAttachTo() : array;
     /**
@@ -17,6 +19,7 @@ interface AttachableExtensionInterface extends ServiceInterface
     /**
      * There are 2 ways of setting a priority: either by configuration through parameter, or explicity defined in the class itself
      * The priority in the class has priority (pun intended ;))
+     * @param string $group
      */
-    public function attach(string $group) : void;
+    public function attach($group) : void;
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\EditorScripts;
 
 use GraphQLAPI\GraphQLAPI\Services\Helpers\EditorHelpers;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\LocaleHelper;
 use GraphQLAPI\GraphQLAPI\Services\Scripts\AbstractScript;
 
 /**
@@ -19,9 +20,43 @@ abstract class AbstractEditorScript extends AbstractScript
     use HasDocumentationScriptTrait;
 
     /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EditorHelpers|null
+     */
+    private $editorHelpers;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\LocaleHelper|null
+     */
+    private $localeHelper;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\EditorHelpers $editorHelpers
+     */
+    final public function setEditorHelpers($editorHelpers): void
+    {
+        $this->editorHelpers = $editorHelpers;
+    }
+    final protected function getEditorHelpers(): EditorHelpers
+    {
+        /** @var EditorHelpers */
+        return $this->editorHelpers = $this->editorHelpers ?? $this->instanceManager->getInstance(EditorHelpers::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\LocaleHelper $localeHelper
+     */
+    final public function setLocaleHelper($localeHelper): void
+    {
+        $this->localeHelper = $localeHelper;
+    }
+    final protected function getLocaleHelper(): LocaleHelper
+    {
+        /** @var LocaleHelper */
+        return $this->localeHelper = $this->localeHelper ?? $this->instanceManager->getInstance(LocaleHelper::class);
+    }
+
+    /**
      * Pass localized data to the block
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getLocalizedData(): array
     {
@@ -82,9 +117,7 @@ abstract class AbstractEditorScript extends AbstractScript
          */
         if (\is_admin()) {
             if ($postTypes = $this->getAllowedPostTypes()) {
-                /** @var EditorHelpers */
-                $editorHelpers = $this->instanceManager->getInstance(EditorHelpers::class);
-                if (!in_array($editorHelpers->getEditingPostType(), $postTypes)) {
+                if (!in_array($this->getEditorHelpers()->getEditingPostType(), $postTypes)) {
                     return;
                 }
             }

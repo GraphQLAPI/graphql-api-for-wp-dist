@@ -19,8 +19,9 @@ trait VersioningFunctionalityModuleResolverTrait
 
     /**
      * Enable to customize a specific UI for the module
+     * @param string $module
      */
-    public function getModuleType(string $module): string
+    public function getModuleType($module): string
     {
         return ModuleTypeResolver::VERSIONING;
     }

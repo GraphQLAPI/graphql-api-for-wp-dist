@@ -8,6 +8,7 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 final class ContainerBuilderWrapper implements \PoP\Root\Container\ContainerBuilderWrapperInterface
 {
     /**
+     * @readonly
      * @var \Symfony\Component\DependencyInjection\ContainerBuilder
      */
     private $containerBuilder;
@@ -19,7 +20,10 @@ final class ContainerBuilderWrapper implements \PoP\Root\Container\ContainerBuil
     {
         return $this->containerBuilder;
     }
-    public final function getDefinition(string $id) : Definition
+    /**
+     * @param string $id
+     */
+    public final function getDefinition($id) : Definition
     {
         return $this->containerBuilder->getDefinition($id);
     }

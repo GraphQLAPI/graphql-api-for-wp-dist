@@ -4,38 +4,42 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Hooks;
 
-use GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\ConditionalOnContext\Editor\SchemaServices\FieldResolvers\AbstractListOfCPTEntitiesRootFieldResolver;
+use PoP\Root\App;
+use GraphQLAPI\GraphQLAPI\Constants\QueryOptions;
 use GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\CustomPostTypeInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\Hooks\AbstractHookSet;
-use PoP\Hooks\HooksAPIInterface;
-use PoP\Translation\TranslationAPIInterface;
-use PoPSchema\SchemaCommons\DataLoading\ReturnTypes;
+use PoP\Root\Hooks\AbstractHookSet;
+use PoPCMSSchema\CustomPostsWP\TypeAPIs\CustomPostTypeAPI;
+use PoPSchema\SchemaCommons\Constants\QueryOptions as SchemaCommonsQueryOptions;
+use PoPCMSSchema\SchemaCommons\DataLoading\ReturnTypes;
 
 class QueryHookSet extends AbstractHookSet
 {
     public const NON_EXISTING_ID = "non-existing";
-    /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface
-     */
-    protected $customPostTypeRegistry;
 
-    public function __construct(
-        HooksAPIInterface $hooksAPI,
-        TranslationAPIInterface $translationAPI,
-        InstanceManagerInterface $instanceManager,
-        CustomPostTypeRegistryInterface $customPostTypeRegistry
-    ) {
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface|null
+     */
+    private $customPostTypeRegistry;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface $customPostTypeRegistry
+     */
+    final public function setCustomPostTypeRegistry($customPostTypeRegistry): void
+    {
         $this->customPostTypeRegistry = $customPostTypeRegistry;
-        parent::__construct($hooksAPI, $translationAPI, $instanceManager);
+    }
+    final protected function getCustomPostTypeRegistry(): CustomPostTypeRegistryInterface
+    {
+        /** @var CustomPostTypeRegistryInterface */
+        return $this->customPostTypeRegistry = $this->customPostTypeRegistry ?? $this->instanceManager->getInstance(CustomPostTypeRegistryInterface::class);
     }
 
     protected function init(): void
     {
-        $this->hooksAPI->addAction(
-            'CMSAPI:customposts:query',
-            [$this, 'convertCustomPostsQuery'],
+        App::addFilter(
+            CustomPostTypeAPI::HOOK_QUERY,
+            \Closure::fromCallable([$this, 'convertCustomPostsQuery']),
             10,
             2
         );
@@ -44,34 +48,34 @@ class QueryHookSet extends AbstractHookSet
     /**
      * Remove querying private CPTs
      *
-     * @param array<string, mixed> $query
-     * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @param array<string,mixed> $query
+     * @param array<string,mixed> $options
+     * @return array<string,mixed>
      */
-    public function convertCustomPostsQuery(array $query, array $options): array
+    public function convertCustomPostsQuery($query, $options): array
     {
         // Hooks must be active only when resolving the query into IDs,
         // and not when resolving IDs into object, since there we don't have `$options`
         if (
             isset($query['post_type'])
-            && (!isset($options[AbstractListOfCPTEntitiesRootFieldResolver::QUERY_OPTION_ALLOW_QUERYING_PRIVATE_CPTS]) || !$options[AbstractListOfCPTEntitiesRootFieldResolver::QUERY_OPTION_ALLOW_QUERYING_PRIVATE_CPTS])
-            && isset($options['return-type']) && $options['return-type'] == ReturnTypes::IDS
+            && (!isset($options[QueryOptions::ALLOW_QUERYING_PRIVATE_CPTS]) || !$options[QueryOptions::ALLOW_QUERYING_PRIVATE_CPTS])
+            && isset($options[SchemaCommonsQueryOptions::RETURN_TYPE]) && $options[SchemaCommonsQueryOptions::RETURN_TYPE] == ReturnTypes::IDS
         ) {
             /**
              * All CPTs from the GraphQL API plugin and its extensions
              * must not be queried from outside, since they are used for
              * configuration purposes only, which is private data.
              */
-            $customPostTypeServices = $this->customPostTypeRegistry->getCustomPostTypes();
-            $query['post_type'] = array_diff(
-                $query['post_type'],
+            $customPostTypeServices = $this->getCustomPostTypeRegistry()->getCustomPostTypes();
+            $query['post_type'] = array_values(array_diff(
+                is_array($query['post_type']) ? $query['post_type'] : [$query['post_type']],
                 array_map(
                     function (CustomPostTypeInterface $customPostTypeService) {
                         return $customPostTypeService->getCustomPostType();
                     },
                     $customPostTypeServices
                 )
-            );
+            ));
             // If there are no valid postTypes, then return no results
             // By not adding the post type, WordPress will fetch a "post"
             // Then, include a non-existing ID

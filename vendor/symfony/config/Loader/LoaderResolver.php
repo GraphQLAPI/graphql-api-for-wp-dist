@@ -34,8 +34,9 @@ class LoaderResolver implements LoaderResolverInterface
         }
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @return \Symfony\Component\Config\Loader\LoaderInterface|true
+     * @param mixed $resource
+     * @param string|null $type
      */
     public function resolve($resource, $type = null)
     {
@@ -46,7 +47,10 @@ class LoaderResolver implements LoaderResolverInterface
         }
         return \false;
     }
-    public function addLoader(LoaderInterface $loader)
+    /**
+     * @param \Symfony\Component\Config\Loader\LoaderInterface $loader
+     */
+    public function addLoader($loader)
     {
         $this->loaders[] = $loader;
         $loader->setResolver($this);
@@ -54,9 +58,9 @@ class LoaderResolver implements LoaderResolverInterface
     /**
      * Returns the registered loaders.
      *
-     * @return LoaderInterface[] An array of LoaderInterface instances
+     * @return LoaderInterface[]
      */
-    public function getLoaders()
+    public function getLoaders() : array
     {
         return $this->loaders;
     }

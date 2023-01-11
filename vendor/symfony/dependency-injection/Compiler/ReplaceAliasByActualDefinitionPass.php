@@ -22,13 +22,17 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class ReplaceAliasByActualDefinitionPass extends AbstractRecursivePass
 {
+    /**
+     * @var mixed[]
+     */
     private $replacements;
     /**
      * Process the Container to replace aliases with service definitions.
      *
      * @throws InvalidArgumentException if the service definition does not exist
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         // First collect all alias targets that need to be replaced
         $seenAliasTargets = [];
@@ -39,9 +43,12 @@ class ReplaceAliasByActualDefinitionPass extends AbstractRecursivePass
             if ('service_container' === $targetId) {
                 continue;
             }
-            // Check if target needs to be replaces
+            // Check if target needs to be replaced
             if (isset($replacements[$targetId])) {
                 $container->setAlias($definitionId, $replacements[$targetId])->setPublic($target->isPublic());
+                if ($target->isDeprecated()) {
+                    $container->getAlias($definitionId)->setDeprecated(...\array_values($target->getDeprecation('%alias_id%')));
+                }
             }
             // No need to process the same target twice
             if (isset($seenAliasTargets[$targetId])) {
@@ -65,15 +72,20 @@ class ReplaceAliasByActualDefinitionPass extends AbstractRecursivePass
             $container->setDefinition($definitionId, $definition);
             $container->removeDefinition($targetId);
             $replacements[$targetId] = $definitionId;
+            if ($target->isPublic() && $target->isDeprecated()) {
+                $definition->addTag('container.private', $target->getDeprecation('%service_id%'));
+            }
         }
         $this->replacements = $replacements;
         parent::process($container);
         $this->replacements = [];
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if ($value instanceof Reference && isset($this->replacements[$referenceId = (string) $value])) {
             // Perform the replacement

@@ -3,16 +3,9 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\ObjectModels;
 
-use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractType;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeTrait;
-use GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface;
-class UnionType extends AbstractType implements HasPossibleTypesTypeInterface
+class UnionType extends \GraphQLByPoP\GraphQLServer\ObjectModels\AbstractNamedType implements \GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeInterface
 {
-    use HasPossibleTypesTypeTrait;
-    public function initializeTypeDependencies() : void
-    {
-        $this->initPossibleTypes();
-    }
+    use \GraphQLByPoP\GraphQLServer\ObjectModels\HasPossibleTypesTypeTrait;
     public function getKind() : string
     {
         return \GraphQLByPoP\GraphQLServer\ObjectModels\TypeKinds::UNION;

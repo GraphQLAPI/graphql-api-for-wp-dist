@@ -4,7 +4,7 @@ services:
         autowire: true
         autoconfigure: true
 
-    memory_cache_item_pool:
+    transient_cache_item_pool:
         class: \PrefixedByPoP\Symfony\Component\Cache\Adapter\ArrayAdapter
 
     PoP\ComponentModel\Cache\CacheConfigurationManagerInterface:
@@ -17,34 +17,45 @@ services:
             $namespace: '@=service("PoP\\ComponentModel\\Cache\\CacheConfigurationManagerInterface").getNamespace()'
             $directory: '@=service("PoP\\ComponentModel\\Cache\\CacheConfigurationManagerInterface").getDirectory()'
 
-    PoP\ComponentModel\Container\ObjectDictionaryInterface:
-        class: \PoP\ComponentModel\Container\ObjectDictionary
+    PoP\ComponentModel\Dictionaries\ObjectDictionaryInterface:
+        class: \PoP\ComponentModel\Dictionaries\ObjectDictionary
 
     PoP\ComponentModel\Engine\EngineInterface:
         class: \PoP\ComponentModel\Engine\Engine
 
-    PoP\ComponentModel\Engine\DataloadingEngineInterface:
-        class: \PoP\ComponentModel\Engine\DataloadingEngine
+    PoP\ComponentModel\EntryComponent\EntryComponentManagerInterface:
+        class: \PoP\ComponentModel\EntryComponent\EntryComponentManager
 
-    memory_cache:
+    PoP\ComponentModel\ObjectSerialization\ObjectSerializationManagerInterface:
+        class: \PoP\ComponentModel\ObjectSerialization\ObjectSerializationManager
+
+    PoP\ComponentModel\TypeSerialization\TypeSerializationServiceInterface:
+        class: \PoP\ComponentModel\TypeSerialization\TypeSerializationService
+
+    PoP\ComponentModel\DirectivePipeline\DirectivePipelineServiceInterface:
+        class: \PoP\ComponentModel\DirectivePipeline\DirectivePipelineService
+
+    PoP\ComponentModel\Feedback\FeedbackEntryManagerInterface:
+        class: \PoP\ComponentModel\Feedback\FeedbackEntryManager
+
+    PoP\ComponentModel\Cache\PersistentCacheInterface:
         class: \PoP\ComponentModel\Cache\Cache
         arguments:
-            $cacheItemPool: '@memory_cache_item_pool'
+            $cacheItemPool: '@persistent_cache_item_pool'
+
+    PoP\ComponentModel\Cache\TransientCacheInterface:
+        class: \PoP\ComponentModel\Cache\Cache
+        arguments:
+            $cacheItemPool: '@transient_cache_item_pool'
 
     PoP\ComponentModel\ModelInstance\ModelInstanceInterface:
         class: \PoP\ComponentModel\ModelInstance\ModelInstance
 
-    PoP\ComponentModel\MutationResolution\MutationResolutionManagerInterface:
-        class: \PoP\ComponentModel\MutationResolution\MutationResolutionManager
-
     PoP\ComponentModel\Info\ApplicationInfoInterface:
         class: \PoP\ComponentModel\Info\ApplicationInfo
 
-    PoP\ComponentModel\ModuleFiltering\ModuleFilterManagerInterface:
-        class: \PoP\ComponentModel\ModuleFiltering\ModuleFilterManager
-
-    PoP\ComponentModel\HelperServices\FormInputHelperServiceInterface:
-        class: \PoP\ComponentModel\HelperServices\FormInputHelperService
+    PoP\ComponentModel\ComponentFiltering\ComponentFilterManagerInterface:
+        class: \PoP\ComponentModel\ComponentFiltering\ComponentFilterManager
 
     PoP\ComponentModel\HelperServices\DataloadHelperServiceInterface:
         class: \PoP\ComponentModel\HelperServices\DataloadHelperService
@@ -58,23 +69,41 @@ services:
     PoP\ComponentModel\HelperServices\ApplicationStateHelperServiceInterface:
         class: \PoP\ComponentModel\HelperServices\ApplicationStateHelperService
 
-    PoP\ComponentModel\CheckpointProcessors\:
-        resource: '../src/CheckpointProcessors/*'
+    PoP\ComponentModel\State\:
+        resource: '../src/State/*'
 
-    PoP\ComponentModel\FormInputs\:
-        resource: '../src/FormInputs/*'
+    PoP\ComponentModel\Checkpoints\:
+        resource: '../src/Checkpoints/*'
 
-    PoP\ComponentModel\ModuleFilters\:
-        resource: '../src/ModuleFilters/*'
+    PoP\ComponentModel\FeedbackItemProviders\:
+        resource: '../src/FeedbackItemProviders/*'
+
+    PoP\ComponentModel\Hooks\:
+        resource: '../src/Hooks/*'
+
+    PoP\ComponentModel\ComponentFilters\:
+        resource: '../src/ComponentFilters/*'
+
+    PoP\ComponentModel\ComponentProcessors\:
+        resource: '../src/ComponentProcessors/*'
+
+    PoP\ComponentModel\ComponentRoutingProcessors\:
+        resource: '../src/ComponentRoutingProcessors/*'
 
     PoP\ComponentModel\QueryInputOutputHandlers\:
         resource: '../src/QueryInputOutputHandlers/*'
 
-    PoP\ComponentModel\ErrorHandling\ErrorProviderInterface:
-        class: \PoP\ComponentModel\ErrorHandling\ErrorProvider
+    PoP\ComponentModel\DataStructureFormatters\:
+        resource: '../src/DataStructureFormatters/*'
 
-    PoP\ComponentModel\ModulePath\ModulePathManagerInterface:
-        class: \PoP\ComponentModel\ModulePath\ModulePathManager
+    PoP\ComponentModel\Error\ErrorProviderInterface:
+        class: \PoP\ComponentModel\Error\ErrorProvider
+
+    PoP\ComponentModel\ComponentPath\ComponentPathManagerInterface:
+        class: \PoP\ComponentModel\ComponentPath\ComponentPathManager
+
+    PoP\ComponentModel\ComponentHelpers\ComponentHelpersInterface:
+        class: \PoP\ComponentModel\ComponentHelpers\ComponentHelpers
 
     default_data_structure_formatter:
         class: PoP\ComponentModel\DataStructure\DefaultDataStructureFormatter
@@ -83,22 +112,16 @@ services:
     PoP\ComponentModel\DataStructure\DataStructureManagerInterface:
         class: \PoP\ComponentModel\DataStructure\DataStructureManager
         arguments:
-            PoP\ComponentModel\DataStructure\DataStructureFormatterInterface: '@default_data_structure_formatter'
+            PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface: '@default_data_structure_formatter'
 
-    PoP\ComponentModel\ModulePath\ModulePathHelpersInterface:
-        class: \PoP\ComponentModel\ModulePath\ModulePathHelpers
+    PoP\ComponentModel\ComponentPath\ComponentPathHelpersInterface:
+        class: \PoP\ComponentModel\ComponentPath\ComponentPathHelpers
 
-    PoP\ComponentModel\Instances\InstanceManagerInterface:
-        class: \PoP\ComponentModel\Instances\InstanceManager
+    PoP\ComponentModel\ComponentProcessors\ComponentProcessorManagerInterface:
+        class: \PoP\ComponentModel\ComponentProcessors\ComponentProcessorManager
 
-    PoP\ComponentModel\ModuleProcessors\ModuleProcessorManagerInterface:
-        class: \PoP\ComponentModel\ModuleProcessors\ModuleProcessorManager
-
-    PoP\ComponentModel\FilterInputProcessors\FilterInputProcessorManagerInterface:
-        class: \PoP\ComponentModel\FilterInputProcessors\FilterInputProcessorManager
-
-    PoP\ComponentModel\CheckpointProcessors\CheckpointProcessorManagerInterface:
-        class: \PoP\ComponentModel\CheckpointProcessors\CheckpointProcessorManager
+    PoP\ComponentModel\Registries\MandatoryFieldDirectiveResolverRegistryInterface:
+        class: \PoP\ComponentModel\Registries\MandatoryFieldDirectiveResolverRegistry
 
     PoP\ComponentModel\Registries\TypeRegistryInterface:
         class: \PoP\ComponentModel\Registries\TypeRegistry
@@ -106,25 +129,23 @@ services:
     PoP\ComponentModel\Registries\DirectiveRegistryInterface:
         class: \PoP\ComponentModel\Registries\DirectiveRegistry
 
-    PoP\ComponentModel\Registries\FieldInterfaceRegistryInterface:
-        class: \PoP\ComponentModel\Registries\FieldInterfaceRegistry
+    PoP\ComponentModel\Registries\MetaDirectiveRegistryInterface:
+        class: \PoP\ComponentModel\Registries\MetaDirectiveRegistry
 
-    PoP\FieldQuery\FeedbackMessageStoreInterface:
-        class: \PoP\ComponentModel\Schema\FeedbackMessageStore
-    PoP\ComponentModel\Schema\FeedbackMessageStoreInterface:
-        class: \PoP\ComponentModel\Schema\FeedbackMessageStore
+    PoP\ComponentModel\Registries\DynamicVariableDefinerDirectiveRegistryInterface:
+        class: \PoP\ComponentModel\Registries\DynamicVariableDefinerDirectiveRegistry
 
-    # Override the service from FieldQuery
-    PoP\FieldQuery\FieldQueryInterpreterInterface:
-        class: \PoP\ComponentModel\Schema\FieldQueryInterpreter
-    PoP\ComponentModel\Schema\FieldQueryInterpreterInterface:
-        class: \PoP\ComponentModel\Schema\FieldQueryInterpreter
+    PoP\ComponentModel\Registries\OperationDependencyDefinerDirectiveRegistryInterface:
+        class: \PoP\ComponentModel\Registries\OperationDependencyDefinerDirectiveRegistry
 
-    PoP\ComponentModel\Schema\TypeCastingExecuterInterface:
-        class: \PoP\ComponentModel\Schema\TypeCastingExecuter
+    PoP\ComponentModel\Schema\InputCoercingServiceInterface:
+        class: \PoP\ComponentModel\Schema\InputCoercingService
 
-    PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface:
-        class: \PoP\ComponentModel\Schema\SchemaDefinitionService
+    PoP\ComponentModel\Schema\SchemaCastingServiceInterface:
+        class: \PoP\ComponentModel\Schema\SchemaCastingService
+
+    PoP\ComponentModel\Schema\SchemaNamespacingServiceInterface:
+        class: \PoP\ComponentModel\Schema\SchemaNamespacingService
 
     PoP\ComponentModel\AttachableExtensions\AttachableExtensionManagerInterface:
         class: \PoP\ComponentModel\AttachableExtensions\AttachableExtensionManager
@@ -132,5 +153,17 @@ services:
     PoP\ComponentModel\AttachableExtensions\AttachExtensionServiceInterface:
         class: \PoP\ComponentModel\AttachableExtensions\AttachExtensionService
 
-    PoP\ModuleRouting\RouteModuleProcessorManagerInterface:
-        class: \PoP\ComponentModel\ModuleRouting\RouteModuleProcessorManager
+    PoP\ComponentRouting\ComponentRoutingProcessorManagerInterface:
+        class: \PoP\ComponentModel\ComponentRouting\ComponentRoutingProcessorManager
+
+    PoP\ComponentModel\Versioning\VersioningServiceInterface:
+        class: \PoP\ComponentModel\Versioning\VersioningService
+
+    PoP\ComponentModel\Response\OutputServiceInterface:
+        class: \PoP\ComponentModel\Response\OutputService
+
+    PoP\ComponentModel\Response\DatabaseEntryManagerInterface:
+        class: \PoP\ComponentModel\Response\DatabaseEntryManager
+
+    PoP\ComponentModel\Variables\VariableManagerInterface:
+        class: \PoP\ComponentModel\Variables\VariableManager

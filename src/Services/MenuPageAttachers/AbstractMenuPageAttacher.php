@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\MenuPageAttachers;
 
-use GraphQLAPI\GraphQLAPI\Services\Menus\AbstractMenu;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use GraphQLAPI\GraphQLAPI\Services\Menus\MenuInterface;
+use PoP\Root\Services\BasicServiceTrait;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 
 /**
@@ -13,22 +13,9 @@ use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
  */
 abstract class AbstractMenuPageAttacher extends AbstractAutomaticallyInstantiatedService
 {
-    /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
-     */
-    protected $instanceManager;
-    public function __construct(InstanceManagerInterface $instanceManager)
-    {
-        $this->instanceManager = $instanceManager;
-    }
-    abstract public function getMenuClass(): string;
+    use BasicServiceTrait;
 
-    protected function getMenu(): AbstractMenu
-    {
-        $menuClass = $this->getMenuClass();
-        /** @var AbstractMenu */
-        return $this->instanceManager->getInstance($menuClass);
-    }
+    abstract public function getMenu(): MenuInterface;
 
     protected function getMenuName(): string
     {
@@ -51,7 +38,7 @@ abstract class AbstractMenuPageAttacher extends AbstractAutomaticallyInstantiate
     {
         \add_action(
             'admin_menu',
-            [$this, 'addMenuPages'],
+            \Closure::fromCallable([$this, 'addMenuPages']),
             $this->getPriority()
         );
     }

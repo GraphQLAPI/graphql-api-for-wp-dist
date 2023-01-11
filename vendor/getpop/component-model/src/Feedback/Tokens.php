@@ -5,10 +5,12 @@ namespace PoP\ComponentModel\Feedback;
 
 class Tokens
 {
-    const PATH = 'path';
-    const NAME = 'name';
-    const MESSAGE = 'message';
-    const NESTED = 'nested';
-    const EXTENSIONS = 'extensions';
-    const ID_FIELDS = 'idFields';
+    public const MESSAGE = 'message';
+    public const LOCATIONS = 'locations';
+    public const EXTENSIONS = 'extensions';
+    public const PATH = 'path';
+    public const FIELD = 'field';
+    public const DYNAMIC_FIELD = 'dynamicField';
+    public const IDS = 'ids';
+    public const CAUSES = 'causes';
 }

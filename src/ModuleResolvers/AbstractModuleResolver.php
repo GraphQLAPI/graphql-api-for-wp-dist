@@ -4,33 +4,31 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
-// use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
-
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverInterface;
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\Translation\TranslationAPIInterface;
+use PoP\Root\Services\BasicServiceTrait;
 
 abstract class AbstractModuleResolver implements ModuleResolverInterface
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $instanceManager;
+    private $moduleRegistry;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
      */
-    protected $moduleRegistry;
-    /**
-     * @var \PoP\Translation\TranslationAPIInterface
-     */
-    protected $translationAPI;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, TranslationAPIInterface $translationAPI)
+    final public function setModuleRegistry($moduleRegistry): void
     {
-        $this->instanceManager = $instanceManager;
         $this->moduleRegistry = $moduleRegistry;
-        $this->translationAPI = $translationAPI;
     }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+
     /**
      * The priority to display the modules from this resolver in the Modules page.
      * The higher the number, the earlier it shows
@@ -41,29 +39,50 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
     }
 
     /**
-     * @return array<array> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @return array<string[]> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @param string $module
      */
-    public function getDependedModuleLists(string $module): array
+    public function getDependedModuleLists($module): array
     {
         return [];
     }
 
-    public function areRequirementsSatisfied(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function areRequirementsSatisfied($module): bool
     {
         return true;
     }
 
-    public function canBeDisabled(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function canBeDisabled($module): bool
     {
         return true;
     }
 
-    public function isHidden(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function isHidden($module): bool
     {
         return false;
     }
 
-    public function getID(string $module): string
+    /**
+     * @param string $module
+     */
+    public function areSettingsHidden($module): bool
+    {
+        return false;
+    }
+
+    /**
+     * @param string $module
+     */
+    public function getID($module): string
     {
         $moduleID = strtolower($module);
         // $moduleID = strtolower(str_replace(
@@ -84,21 +103,29 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
         );
     }
 
-    public function getDescription(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getDescription($module): string
     {
         return '';
     }
 
     /**
      * Name of the setting item, to store in the DB
+     * @param string $module
+     * @param string $option
      */
-    public function getSettingOptionName(string $module, string $option): string
+    public function getSettingOptionName($module, $option): string
     {
         // Use slug to remove the "\" which can create trouble
         return $this->getSlug($module) . '_' . $option;
     }
 
-    public function hasSettings(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function hasSettings($module): bool
     {
         return !empty($this->getSettings($module));
     }
@@ -107,9 +134,10 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
      * Array with key as the name of the setting, and value as its definition:
      * type (input, checkbox, select), enum values (if it is a select)
      *
-     * @return array<array> List of settings for the module, each entry is an array with property => value
+     * @return array<array<string,mixed>> List of settings for the module, each entry is an array with property => value
+     * @param string $module
      */
-    public function getSettings(string $module): array
+    public function getSettings($module): array
     {
         return [];
     }
@@ -117,8 +145,10 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
     /**
      * Indicate if the given value is valid for that option
      * @param mixed $value
+     * @param string $module
+     * @param string $option
      */
-    public function isValidValue(string $module, string $option, $value): bool
+    public function isValidValue($module, $option, $value): bool
     {
         return true;
     }
@@ -126,13 +156,18 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
     /**
      * Default value for an option set by the module
      * @return mixed
+     * @param string $module
+     * @param string $option
      */
-    public function getSettingsDefaultValue(string $module, string $option)
+    public function getSettingsDefaultValue($module, $option)
     {
         return null;
     }
 
-    public function isEnabledByDefault(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function isEnabledByDefault($module): bool
     {
         return true;
     }
@@ -146,11 +181,11 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
     //     $moduleURLBase = $this->getURLBase($module);
     //     return \trailingslashit($moduleURLBase) . $moduleSlug . '/';
     // }
-
     /**
      * By default, the slug is the module's name, without the owner/package
+     * @param string $module
      */
-    public function getSlug(string $module): string
+    public function getSlug($module): string
     {
         $pos = strrpos($module, '\\');
         if ($pos !== false) {
@@ -165,20 +200,24 @@ abstract class AbstractModuleResolver implements ModuleResolverInterface
     //  */
     // protected function getURLBase(string $module): string
     // {
-    //     return ComponentConfiguration::getModuleURLBase();
+    //     /** @var ModuleConfiguration */
+    //     $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+    //     return $moduleConfiguration->getModuleURLBase();
     // }
     /**
      * Does the module have HTML Documentation?
+     * @param string $module
      */
-    public function hasDocumentation(string $module): bool
+    public function hasDocumentation($module): bool
     {
         return !empty($this->getDocumentation($module));
     }
 
     /**
      * HTML Documentation for the module
+     * @param string $module
      */
-    public function getDocumentation(string $module): ?string
+    public function getDocumentation($module): ?string
     {
         return null;
     }

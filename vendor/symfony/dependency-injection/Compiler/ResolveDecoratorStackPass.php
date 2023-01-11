@@ -22,21 +22,16 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class ResolveDecoratorStackPass implements CompilerPassInterface
 {
-    private $tag;
-    public function __construct(string $tag = 'container.stack')
-    {
-        if (0 < \func_num_args()) {
-            trigger_deprecation('symfony/dependency-injection', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
-        }
-        $this->tag = $tag;
-    }
-    public function process(ContainerBuilder $container)
+    /**
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
+     */
+    public function process($container)
     {
         $stacks = [];
-        foreach ($container->findTaggedServiceIds($this->tag) as $id => $tags) {
+        foreach ($container->findTaggedServiceIds('container.stack') as $id => $tags) {
             $definition = $container->getDefinition($id);
             if (!$definition instanceof ChildDefinition) {
-                throw new InvalidArgumentException(\sprintf('Invalid service "%s": only definitions with a "parent" can have the "%s" tag.', $id, $this->tag));
+                throw new InvalidArgumentException(\sprintf('Invalid service "%s": only definitions with a "parent" can have the "container.stack" tag.', $id));
             }
             if (!($stack = $definition->getArguments())) {
                 throw new InvalidArgumentException(\sprintf('Invalid service "%s": the stack of decorators is empty.', $id));

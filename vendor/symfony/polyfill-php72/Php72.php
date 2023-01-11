@@ -70,7 +70,7 @@ final class Php72
             return 'Windows';
         }
         $map = ['Darwin' => 'Darwin', 'DragonFly' => 'BSD', 'FreeBSD' => 'BSD', 'NetBSD' => 'BSD', 'OpenBSD' => 'BSD', 'Linux' => 'Linux', 'SunOS' => 'Solaris'];
-        return isset($map[\PHP_OS]) ? $map[\PHP_OS] : 'Unknown';
+        return $map[\PHP_OS] ?? 'Unknown';
     }
     public static function spl_object_id($object)
     {

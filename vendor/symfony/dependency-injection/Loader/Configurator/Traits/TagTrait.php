@@ -17,18 +17,26 @@ trait TagTrait
      * Adds a tag for this definition.
      *
      * @return $this
+     * @param string $name
+     * @param mixed[] $attributes
      */
-    public final function tag(string $name, array $attributes = [])
+    public final function tag($name, $attributes = [])
     {
         if ('' === $name) {
             throw new InvalidArgumentException(\sprintf('The tag name for service "%s" must be a non-empty string.', $this->id));
         }
-        foreach ($attributes as $attribute => $value) {
-            if (!\is_scalar($value) && null !== $value) {
-                throw new InvalidArgumentException(\sprintf('A tag attribute must be of a scalar-type for service "%s", tag "%s", attribute "%s".', $this->id, $name, $attribute));
-            }
-        }
+        $this->validateAttributes($name, $attributes);
         $this->definition->addTag($name, $attributes);
         return $this;
+    }
+    private function validateAttributes(string $tagName, array $attributes, string $prefix = '') : void
+    {
+        foreach ($attributes as $attribute => $value) {
+            if (\is_array($value)) {
+                $this->validateAttributes($tagName, $value, $attribute . '.');
+            } elseif (!\is_scalar($value ?? '')) {
+                throw new InvalidArgumentException(\sprintf('A tag attribute must be of a scalar-type or an array of scalar-types for service "%s", tag "%s", attribute "%s".', $this->id, $tagName, $prefix . $attribute));
+            }
+        }
     }
 }

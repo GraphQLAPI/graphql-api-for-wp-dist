@@ -5,20 +5,14 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\SchemaConfiguratorExecuters;
 
 use GraphQLAPI\GraphQLAPI\Services\SchemaConfigurators\SchemaConfiguratorInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\Root\Component\ApplicationEvents;
+use PoP\Root\Services\BasicServiceTrait;
+use PoP\Root\Module\ApplicationEvents;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 
 abstract class AbstractSchemaConfiguratorExecuter extends AbstractAutomaticallyInstantiatedService
 {
-    /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
-     */
-    protected $instanceManager;
-    public function __construct(InstanceManagerInterface $instanceManager)
-    {
-        $this->instanceManager = $instanceManager;
-    }
+    use BasicServiceTrait;
+
     public function getInstantiationEvent(): string
     {
         return ApplicationEvents::BOOT;

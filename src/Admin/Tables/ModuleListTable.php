@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Admin\Tables;
 
+use GraphQLAPI\GraphQLAPI\App;
 use GraphQLAPI\GraphQLAPI\ConditionalOnContext\Admin\SystemServices\TableActions\ModuleListTableAction;
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\Facades\Registries\ModuleRegistryFacade;
 use GraphQLAPI\GraphQLAPI\Facades\Registries\ModuleTypeRegistryFacade;
-use GraphQLAPI\GraphQLAPI\PluginManagement\MainPluginManager;
 use GraphQLAPI\GraphQLAPI\Services\MenuPages\ModulesMenuPage;
 use GraphQLAPI\GraphQLAPI\Services\MenuPages\SettingsMenuPage;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use PoP\ComponentModel\Facades\Instances\SystemInstanceManagerFacade;
+use PoP\Root\Facades\Instances\InstanceManagerFacade;
+use PoP\Root\Facades\Instances\SystemInstanceManagerFacade;
 
 /**
  * Module Table
@@ -40,7 +40,7 @@ class ModuleListTable extends AbstractItemListTable
     /**
      * Return all the items to display on the table
      *
-     * @return array<array> Each item is an array of prop => value
+     * @return array<array<string,mixed>> Each item is an array of prop => value
      */
     public function getAllItems(): array
     {
@@ -65,6 +65,7 @@ class ModuleListTable extends AbstractItemListTable
                     'can-be-disabled' => $moduleResolver->canBeDisabled($module),
                     'can-be-enabled' => !$isEnabled && $moduleRegistry->canModuleBeEnabled($module),
                     'has-settings' => $moduleResolver->hasSettings($module),
+                    'are-settings-hidden' => $moduleResolver->areSettingsHidden($module),
                     'name' => $moduleResolver->getName($module),
                     'description' => $moduleResolver->getDescription($module),
                     'depends-on' => $moduleResolver->getDependedModuleLists($module),
@@ -82,13 +83,13 @@ class ModuleListTable extends AbstractItemListTable
      */
     protected function getCurrentView(): string
     {
-        return !empty($_REQUEST[self::URL_PARAM_MODULE_TYPE] ?? null) ? $_REQUEST[self::URL_PARAM_MODULE_TYPE] : '';
+        return \PoP\Root\App::request(self::URL_PARAM_MODULE_TYPE) ?? \PoP\Root\App::query(self::URL_PARAM_MODULE_TYPE, '');
     }
 
     /**
      * Gets the list of views available on this table.
      *
-     * @return array<string, string>
+     * @return array<string,string>
      * phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
      */
     protected function get_views()
@@ -99,7 +100,7 @@ class ModuleListTable extends AbstractItemListTable
         // Module page URL
         $url = admin_url(sprintf(
             'admin.php?page=%s',
-            esc_attr($_REQUEST['page'] ?? '')
+            esc_attr(\PoP\Root\App::request('page') ?? \PoP\Root\App::query('page', ''))
         ));
 
         // All entries
@@ -173,7 +174,7 @@ class ModuleListTable extends AbstractItemListTable
     {
         /**
          * Cast object so PHPStan doesn't throw error
-         * @var array<string, mixed>
+         * @var array<string,mixed>
          */
         $item = $item;
         switch ($column_name) {
@@ -282,7 +283,7 @@ class ModuleListTable extends AbstractItemListTable
     {
         /**
          * Cast object so PHPStan doesn't throw error
-         * @var array<string, mixed>
+         * @var array<string,mixed>
          */
         $item = $item;
         return sprintf(
@@ -295,7 +296,7 @@ class ModuleListTable extends AbstractItemListTable
     /**
      * Method for name column
      *
-     * @param array<string, string> $item an array of DB data
+     * @param array<string,string> $item an array of DB data
      *
      * @return string
      * phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -307,7 +308,7 @@ class ModuleListTable extends AbstractItemListTable
         $currentView = $this->getCurrentView();
         $maybeCurrentViewParam = !empty($currentView) ? '&' . self::URL_PARAM_MODULE_TYPE . '=' . $currentView : '';
         $linkPlaceholder = '<a href="?page=%s&action=%s&item=%s&_wpnonce=%s' . ($maybeCurrentViewParam) . '">%s</a>';
-        $page = esc_attr($_REQUEST['page'] ?? '');
+        $page = esc_attr(\PoP\Root\App::request('page') ?? \PoP\Root\App::query('page', ''));
         $actions = [];
         if ($item['is-enabled']) {
             // If it is enabled, offer to disable it
@@ -326,7 +327,7 @@ class ModuleListTable extends AbstractItemListTable
             }
 
             // Maybe add settings links
-            if ($item['has-settings']) {
+            if ($item['has-settings'] && !$item['are-settings-hidden']) {
                 $instanceManager = InstanceManagerFacade::getInstance();
                 /**
                  * @var SettingsMenuPage
@@ -376,7 +377,7 @@ class ModuleListTable extends AbstractItemListTable
     /**
      *  Associative array of columns
      *
-     * @return array<string, string>
+     * @return array<string,string>
      * phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
      */
     public function get_columns()
@@ -401,7 +402,7 @@ class ModuleListTable extends AbstractItemListTable
     /**
      * Returns an associative array containing the bulk action
      *
-     * @return array<string, string>
+     * @return array<string,string>
      * phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
      */
     public function get_bulk_actions()
@@ -413,13 +414,13 @@ class ModuleListTable extends AbstractItemListTable
     }
 
     /**
-     * Get a list of CSS classes for the WP_List_Table table tag.
-     *
-     * @since 3.1.0
-     *
-     * @return string[] Array of CSS classes for the table tag.
-     * phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-     */
+    * Get a list of CSS classes for the WP_List_Table table tag.
+    *
+    * @since 3.1.0
+    *
+     * @return mixed[]|string[] Array of CSS classes for the table tag.
+    phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+    */
     protected function get_table_classes()
     {
         // return array_merge(
@@ -448,7 +449,7 @@ class ModuleListTable extends AbstractItemListTable
     {
         /**
          * Cast object so PHPStan doesn't throw error
-         * @var array<string, mixed>
+         * @var array<string,mixed>
          */
         $item = $item;
         return sprintf(
@@ -470,7 +471,7 @@ class ModuleListTable extends AbstractItemListTable
     {
         /**
          * Cast object so PHPStan doesn't throw error
-         * @var array<string, mixed>
+         * @var array<string,mixed>
          */
         $arrayItem = $item;
         if ($this->usePluginTableStyle()) {
@@ -534,8 +535,8 @@ class ModuleListTable extends AbstractItemListTable
     {
         parent::enqueueAssets();
 
-        $mainPluginURL = (string) MainPluginManager::getConfig('url');
-        $mainPluginVersion = (string) MainPluginManager::getConfig('version');
+        $mainPluginURL = App::getMainPlugin()->getPluginURL();
+        $mainPluginVersion = App::getMainPlugin()->getPluginVersion();
 
         /**
          * Fix the issues with the WP List Table

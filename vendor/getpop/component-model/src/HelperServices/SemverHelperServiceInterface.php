@@ -7,6 +7,8 @@ interface SemverHelperServiceInterface
 {
     /**
      * Determine if given version satisfies given constraints.
+     * @param string $version
+     * @param string $constraints
      */
-    public function satisfies(string $version, string $constraints) : bool;
+    public function satisfies($version, $constraints) : bool;
 }

@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
 use Error;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\GeneralUtils;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\EditorHelpers;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use GraphQLAPI\GraphQLAPI\App;
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
-use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
-use GraphQLAPI\GraphQLAPI\Services\BlockCategories\AbstractBlockCategory;
+use GraphQLAPI\GraphQLAPI\Services\BlockCategories\BlockCategoryInterface;
 use GraphQLAPI\GraphQLAPI\Services\EditorScripts\HasDocumentationScriptTrait;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\EditorHelpers;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\LocaleHelper;
+use GraphQLAPI\PluginUtils\Services\Helpers\StringConversion;
+use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
+use PoP\Root\Services\BasicServiceTrait;
 
 /**
  * Base class for a Gutenberg block, within a multi-block plugin.
@@ -23,26 +25,91 @@ use GraphQLAPI\GraphQLAPI\Services\EditorScripts\HasDocumentationScriptTrait;
  * (this package provides the scaffolding for a single-block plugin,
  * so the plugin .php file is ignored registering a single block is ignored, and everything else is used)
  */
-abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
+abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService implements BlockInterface
 {
     use HasDocumentationScriptTrait;
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $instanceManager;
+    private $moduleRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface|null
      */
-    protected $moduleRegistry;
+    private $userAuthorization;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface
+     * @var \GraphQLAPI\PluginUtils\Services\Helpers\StringConversion|null
      */
-    protected $userAuthorization;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, UserAuthorizationInterface $userAuthorization)
+    private $stringConversion;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EditorHelpers|null
+     */
+    private $editorHelpers;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\LocaleHelper|null
+     */
+    private $localeHelper;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
+     */
+    final public function setModuleRegistry($moduleRegistry): void
     {
-        $this->instanceManager = $instanceManager;
         $this->moduleRegistry = $moduleRegistry;
+    }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface $userAuthorization
+     */
+    final public function setUserAuthorization($userAuthorization): void
+    {
         $this->userAuthorization = $userAuthorization;
+    }
+    final protected function getUserAuthorization(): UserAuthorizationInterface
+    {
+        /** @var UserAuthorizationInterface */
+        return $this->userAuthorization = $this->userAuthorization ?? $this->instanceManager->getInstance(UserAuthorizationInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\PluginUtils\Services\Helpers\StringConversion $stringConversion
+     */
+    final public function setStringConversion($stringConversion): void
+    {
+        $this->stringConversion = $stringConversion;
+    }
+    final protected function getStringConversion(): StringConversion
+    {
+        /** @var StringConversion */
+        return $this->stringConversion = $this->stringConversion ?? $this->instanceManager->getInstance(StringConversion::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\EditorHelpers $editorHelpers
+     */
+    final public function setEditorHelpers($editorHelpers): void
+    {
+        $this->editorHelpers = $editorHelpers;
+    }
+    final protected function getEditorHelpers(): EditorHelpers
+    {
+        /** @var EditorHelpers */
+        return $this->editorHelpers = $this->editorHelpers ?? $this->instanceManager->getInstance(EditorHelpers::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\LocaleHelper $localeHelper
+     */
+    final public function setLocaleHelper($localeHelper): void
+    {
+        $this->localeHelper = $localeHelper;
+    }
+    final protected function getLocaleHelper(): LocaleHelper
+    {
+        /** @var LocaleHelper */
+        return $this->localeHelper = $this->localeHelper ?? $this->instanceManager->getInstance(LocaleHelper::class);
     }
 
     /**
@@ -50,7 +117,7 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
      */
     final public function initialize(): void
     {
-        \add_action('init', [$this, 'initBlock']);
+        \add_action('init', \Closure::fromCallable([$this, 'initBlock']));
     }
 
     public function getEnablingModule(): ?string
@@ -65,7 +132,7 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
     {
         $enablingModule = $this->getEnablingModule();
         if ($enablingModule !== null) {
-            return $this->moduleRegistry->isModuleEnabled($enablingModule);
+            return $this->getModuleRegistry()->isModuleEnabled($enablingModule);
         }
         return parent::isServiceEnabled();
     }
@@ -97,9 +164,10 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
     /**
      * Produce the HTML for dynamic blocks
      *
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         return '';
     }
@@ -127,6 +195,12 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
     {
         return false;
     }
+
+    protected function registerHighlightJSCSS(): bool
+    {
+        return true;
+    }
+
     /**
      * The block full name: namespace/blockName
      */
@@ -154,9 +228,7 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
      */
     final protected function getBlockLocalizationName(): string
     {
-        /** @var GeneralUtils */
-        $generalUtils = $this->instanceManager->getInstance(GeneralUtils::class);
-        return $generalUtils->dashesToCamelCase($this->getBlockRegistrationName());
+        return $this->getStringConversion()->dashesToCamelCase($this->getBlockRegistrationName());
     }
     /**
      * Block class name: wp-block-namespace-blockName
@@ -170,9 +242,9 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
     }
 
     /**
-     * Block align class
+     * Block align class name
      */
-    public function getAlignClass(): string
+    public function getAlignClassName(): string
     {
         return '';
     }
@@ -180,7 +252,7 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
     /**
      * Pass localized data to the block
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getLocalizedData(): array
     {
@@ -203,16 +275,7 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
         return $this->getPluginDir() . '/blocks/' . $this->getBlockName();
     }
 
-    protected function getBlockCategory(): ?AbstractBlockCategory
-    {
-        if ($blockCategoryClass = $this->getBlockCategoryClass()) {
-            $blockCategory = $this->instanceManager->getInstance($blockCategoryClass);
-            return $blockCategory;
-        }
-        return null;
-    }
-
-    protected function getBlockCategoryClass(): ?string
+    protected function getBlockCategory(): ?BlockCategoryInterface
     {
         return null;
     }
@@ -272,11 +335,23 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
          */
         if (\is_admin()) {
             if ($postTypes = $this->getAllowedPostTypes()) {
-                /** @var EditorHelpers */
-                $editorHelpers = $this->instanceManager->getInstance(EditorHelpers::class);
-                if (!in_array($editorHelpers->getEditingPostType(), $postTypes)) {
+                if (!in_array($this->getEditorHelpers()->getEditingPostType(), $postTypes)) {
                     return;
                 }
+            }
+
+            /**
+             * Register Highlight.js CSS file for documentation
+             */
+            if ($this->registerHighlightJSCSS()) {
+                $mainPluginURL = App::getMainPlugin()->getPluginURL();
+                $mainPluginVersion = App::getMainPlugin()->getPluginVersion();
+                \wp_enqueue_style(
+                    'highlight-style',
+                    $mainPluginURL . 'assets/css/vendors/highlight-11.6.0/a11y-dark.min.css',
+                    array(),
+                    $mainPluginVersion
+                );
             }
         }
 
@@ -349,10 +424,10 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
             /**
              * Show only if the user has the right permission
              */
-            if ($this->userAuthorization->canAccessSchemaEditor()) {
-                $blockConfiguration['render_callback'] = [$this, 'renderBlock'];
+            if ($this->getUserAuthorization()->canAccessSchemaEditor()) {
+                $blockConfiguration['render_callback'] = \Closure::fromCallable([$this, 'renderBlock']);
             } else {
-                $blockConfiguration['render_callback'] = [$this, 'renderUnauthorizedAccess'];
+                $blockConfiguration['render_callback'] = \Closure::fromCallable([$this, 'renderUnauthorizedAccess']);
             }
         }
 
@@ -360,10 +435,10 @@ abstract class AbstractBlock extends AbstractAutomaticallyInstantiatedService
          * Localize the script with custom data
          * Execute on hook "wp_print_scripts" and not now,
          * because `getLocalizedData` might call EndpointHelpers->getAdminConfigurableSchemaGraphQLEndpoint(),
-         * which calls ComponentModelComponentConfiguration::namespaceTypesAndInterfaces(),
+         * which calls ComponentModelModuleConfiguration::mustNamespaceTypes(),
          * which is initialized during "wp"
          */
-        \add_action('wp_print_scripts', function () use ($scriptRegistrationName) {
+        \add_action('wp_print_scripts', function () use ($scriptRegistrationName): void {
             if ($localizedData = $this->getLocalizedData()) {
                 \wp_localize_script(
                     $scriptRegistrationName,

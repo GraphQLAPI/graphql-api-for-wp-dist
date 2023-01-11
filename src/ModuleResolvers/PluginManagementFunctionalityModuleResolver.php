@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
+use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface;
 use GraphQLAPI\GraphQLAPI\ModuleSettings\Properties;
 use GraphQLAPI\GraphQLAPI\Plugin;
 
@@ -22,6 +22,24 @@ class PluginManagementFunctionalityModuleResolver extends AbstractFunctionalityM
     public const OPTION_PRINT_SETTINGS_WITH_TABS = 'print-settings-with-tabs';
 
     /**
+     * @var \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface|null
+     */
+    private $markdownContentParser;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface $markdownContentParser
+     */
+    final public function setMarkdownContentParser($markdownContentParser): void
+    {
+        $this->markdownContentParser = $markdownContentParser;
+    }
+    final protected function getMarkdownContentParser(): MarkdownContentParserInterface
+    {
+        /** @var MarkdownContentParserInterface */
+        return $this->markdownContentParser = $this->markdownContentParser ?? $this->instanceManager->getInstance(MarkdownContentParserInterface::class);
+    }
+
+    /**
      * @return string[]
      */
     public function getModulesToResolve(): array
@@ -31,46 +49,65 @@ class PluginManagementFunctionalityModuleResolver extends AbstractFunctionalityM
         ];
     }
 
-    public function canBeDisabled(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function canBeDisabled($module): bool
     {
         switch ($module) {
             case self::GENERAL:
                 return false;
+            default:
+                return parent::canBeDisabled($module);
         }
-        return parent::canBeDisabled($module);
     }
 
-    public function isHidden(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function isHidden($module): bool
     {
         switch ($module) {
             case self::GENERAL:
                 return true;
+            default:
+                return parent::isHidden($module);
         }
-        return parent::isHidden($module);
     }
 
-    public function getName(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getName($module): string
     {
-        $names = [
-            self::GENERAL => \__('General', 'graphql-api'),
-        ];
-        return $names[$module] ?? $module;
+        switch ($module) {
+            case self::GENERAL:
+                return \__('General', 'graphql-api');
+            default:
+                return $module;
+        }
     }
 
-    public function getDescription(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getDescription($module): string
     {
         switch ($module) {
             case self::GENERAL:
                 return \__('General options for the plugin', 'graphql-api');
+            default:
+                return parent::getDescription($module);
         }
-        return parent::getDescription($module);
     }
 
     /**
      * Default value for an option set by the module
      * @return mixed
+     * @param string $module
+     * @param string $option
      */
-    public function getSettingsDefaultValue(string $module, string $option)
+    public function getSettingsDefaultValue($module, $option)
     {
         $defaultValues = [
             self::GENERAL => [
@@ -84,12 +121,13 @@ class PluginManagementFunctionalityModuleResolver extends AbstractFunctionalityM
     /**
      * Array with the inputs to show as settings for the module
      *
-     * @return array<array> List of settings for the module, each entry is an array with property => value
+     * @return array<array<string,mixed>> List of settings for the module, each entry is an array with property => value
+     * @param string $module
      */
-    public function getSettings(string $module): array
+    public function getSettings($module): array
     {
         $moduleSettings = parent::getSettings($module);
-        if ($module == self::GENERAL) {
+        if ($module === self::GENERAL) {
             $option = self::OPTION_ADD_RELEASE_NOTES_ADMIN_NOTICE;
             $moduleSettings[] = [
                 Properties::INPUT => $option,

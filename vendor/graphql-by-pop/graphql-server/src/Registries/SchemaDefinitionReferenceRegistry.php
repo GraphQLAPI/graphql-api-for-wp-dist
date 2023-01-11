@@ -3,409 +3,371 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Registries;
 
-use GraphQLByPoP\GraphQLQuery\ComponentConfiguration as GraphQLQueryComponentConfiguration;
-use GraphQLByPoP\GraphQLQuery\Schema\SchemaElements;
 use GraphQLByPoP\GraphQLServer\Cache\CacheTypes;
-use GraphQLByPoP\GraphQLServer\ComponentConfiguration;
-use GraphQLByPoP\GraphQLServer\Environment;
-use GraphQLByPoP\GraphQLServer\Facades\Schema\GraphQLSchemaDefinitionServiceFacade;
-use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractDynamicType;
-use GraphQLByPoP\GraphQLServer\ObjectModels\AbstractSchemaDefinitionReferenceObject;
-use GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInterface;
-use GraphQLByPoP\GraphQLServer\Schema\SchemaDefinition as GraphQLServerSchemaDefinition;
+use GraphQLByPoP\GraphQLServer\Module;
+use GraphQLByPoP\GraphQLServer\ModuleConfiguration;
+use GraphQLByPoP\GraphQLServer\ObjectModels\SchemaDefinitionReferenceObjectInterface;
+use GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface;
 use GraphQLByPoP\GraphQLServer\Schema\SchemaDefinitionHelpers;
-use GraphQLByPoP\GraphQLServer\Schema\SchemaHelpers;
-use PoP\API\Cache\CacheUtils;
-use PoP\API\ComponentConfiguration as APIComponentConfiguration;
-use PoP\API\Facades\SchemaDefinitionRegistryFacade;
-use PoP\ComponentModel\Directives\DirectiveTypes;
-use PoP\ComponentModel\Facades\Cache\PersistentCacheFacade;
+use PoP\ComponentModel\Module as ComponentModelModule;
+use PoP\ComponentModel\ModuleConfiguration as ComponentModelModuleConfiguration;
+use PoP\ComponentModel\Cache\PersistentCacheInterface;
+use PoP\ComponentModel\Directives\DirectiveKinds;
+use PoP\ComponentModel\Exception\SchemaReferenceException;
 use PoP\ComponentModel\Schema\SchemaDefinition;
-use PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface;
-use PoP\ComponentModel\State\ApplicationState;
-use PoP\Translation\TranslationAPIInterface;
-class SchemaDefinitionReferenceRegistry implements SchemaDefinitionReferenceRegistryInterface
+use PoP\ComponentModel\TypeResolvers\ScalarType\IntScalarTypeResolver;
+use PoP\Engine\Cache\CacheUtils;
+use PoP\GraphQLParser\Module as GraphQLParserModule;
+use PoP\GraphQLParser\ModuleConfiguration as GraphQLParserModuleConfiguration;
+use PoP\Root\App;
+use PoP\Root\Services\BasicServiceTrait;
+use PoPAPI\API\Module as APIModule;
+use PoPAPI\API\ModuleConfiguration as APIModuleConfiguration;
+use PoPAPI\API\Schema\SchemaDefinitionServiceInterface;
+use PoPAPI\API\Schema\TypeKinds;
+class SchemaDefinitionReferenceRegistry implements \GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInterface
 {
+    use BasicServiceTrait;
     /**
-     * @var array<string, mixed>
+     * @var array<string,mixed>|null
      */
-    protected $fullSchemaDefinition;
+    protected $fullSchemaDefinitionForGraphQL;
     /**
-     * @var array<string, AbstractSchemaDefinitionReferenceObject>
+     * @var array<string,SchemaDefinitionReferenceObjectInterface>
      */
     protected $fullSchemaDefinitionReferenceDictionary = [];
     /**
-     * @var AbstractDynamicType[]
+     * @var \PoP\ComponentModel\Cache\PersistentCacheInterface|null
      */
-    protected $dynamicTypes = [];
+    private $persistentCache;
     /**
-     * @var \PoP\Translation\TranslationAPIInterface
+     * @var \PoPAPI\API\Schema\SchemaDefinitionServiceInterface|null
      */
-    protected $translationAPI;
+    private $schemaDefinitionService;
     /**
-     * @var \PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface
+     * @var \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface|null
      */
-    protected $schemaDefinitionService;
-    public function __construct(TranslationAPIInterface $translationAPI, SchemaDefinitionServiceInterface $schemaDefinitionService)
+    private $graphQLSchemaDefinitionService;
+    /**
+     * @var \PoP\ComponentModel\TypeResolvers\ScalarType\IntScalarTypeResolver|null
+     */
+    private $intScalarTypeResolver;
+    /**
+     * Cannot autowire with "#[Required]" because its calling `getNamespace`
+     * on services.yaml produces an exception of PHP properties not initialized
+     * in its depended services.
+     * @param \PoP\ComponentModel\Cache\PersistentCacheInterface $persistentCache
+     */
+    public final function setPersistentCache($persistentCache) : void
     {
-        $this->translationAPI = $translationAPI;
+        $this->persistentCache = $persistentCache;
+    }
+    public final function getPersistentCache() : PersistentCacheInterface
+    {
+        /** @var PersistentCacheInterface */
+        return $this->persistentCache = $this->persistentCache ?? $this->instanceManager->getInstance(PersistentCacheInterface::class);
+    }
+    /**
+     * @param \PoPAPI\API\Schema\SchemaDefinitionServiceInterface $schemaDefinitionService
+     */
+    public final function setSchemaDefinitionService($schemaDefinitionService) : void
+    {
         $this->schemaDefinitionService = $schemaDefinitionService;
     }
-    /**
-     * It returns the full schema, expanded with all data required to satisfy
-     * GraphQL's introspection fields (starting from "__schema")
-     *
-     * It can store the value in the cache.
-     * Use cache with care: if the schema is dynamic, it should not be cached.
-     * Public schema: can cache, Private schema: cannot cache.
-     */
-    public function &getFullSchemaDefinition() : array
+    protected final function getSchemaDefinitionService() : SchemaDefinitionServiceInterface
     {
-        if (\is_null($this->fullSchemaDefinition)) {
-            // These are the configuration options to work with the "full schema"
-            $fieldArgs = ['deep' => \true, 'shape' => SchemaDefinition::ARGVALUE_SCHEMA_SHAPE_FLAT, 'compressed' => \true, 'useTypeName' => \true];
-            // Attempt to retrieve from the cache, if enabled
-            if ($useCache = APIComponentConfiguration::useSchemaDefinitionCache()) {
-                $persistentCache = PersistentCacheFacade::getInstance();
-                // Use different caches for the normal and namespaced schemas,
-                // or it throws exception if switching without deleting the cache (eg: when passing ?use_namespace=1)
-                $vars = ApplicationState::getVars();
-                $cacheType = CacheTypes::GRAPHQL_SCHEMA_DEFINITION;
-                $cacheKeyComponents = \array_merge($fieldArgs, CacheUtils::getSchemaCacheKeyComponents(), ['edit-schema' => isset($vars['edit-schema']) && $vars['edit-schema']]);
-                // For the persistentCache, use a hash to remove invalid characters (such as "()")
-                $cacheKey = \hash('md5', \json_encode($cacheKeyComponents));
-            }
-            if ($useCache) {
-                if ($persistentCache->hasCache($cacheKey, $cacheType)) {
-                    $this->fullSchemaDefinition = $persistentCache->getCache($cacheKey, $cacheType);
-                }
-            }
-            // If either not using cache, or using but the value had not been cached, then calculate the value
-            if (!$this->fullSchemaDefinition) {
-                // Get the schema definitions
-                $schemaDefinitionRegistry = SchemaDefinitionRegistryFacade::getInstance();
-                $this->fullSchemaDefinition = $schemaDefinitionRegistry->getSchemaDefinition($fieldArgs);
-                // Convert the schema from PoP's format to what GraphQL needs to work with
-                $this->prepareSchemaDefinitionForGraphQL();
-                // Store in the cache
-                if ($useCache) {
-                    $persistentCache->storeCache($cacheKey, $cacheType, $this->fullSchemaDefinition);
-                }
-            }
-        }
-        return $this->fullSchemaDefinition;
+        /** @var SchemaDefinitionServiceInterface */
+        return $this->schemaDefinitionService = $this->schemaDefinitionService ?? $this->instanceManager->getInstance(SchemaDefinitionServiceInterface::class);
     }
-    protected function prepareSchemaDefinitionForGraphQL() : void
+    /**
+     * @param \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface $graphQLSchemaDefinitionService
+     */
+    public final function setGraphQLSchemaDefinitionService($graphQLSchemaDefinitionService) : void
     {
-        $vars = ApplicationState::getVars();
-        $enableNestedMutations = $vars['nested-mutations-enabled'];
-        $graphQLSchemaDefinitionService = GraphQLSchemaDefinitionServiceFacade::getInstance();
-        $rootTypeSchemaKey = $graphQLSchemaDefinitionService->getRootTypeSchemaKey();
-        $queryRootTypeSchemaKey = null;
-        if (!$enableNestedMutations) {
-            $queryRootTypeSchemaKey = $graphQLSchemaDefinitionService->getQueryRootTypeSchemaKey();
+        $this->graphQLSchemaDefinitionService = $graphQLSchemaDefinitionService;
+    }
+    protected final function getGraphQLSchemaDefinitionService() : GraphQLSchemaDefinitionServiceInterface
+    {
+        /** @var GraphQLSchemaDefinitionServiceInterface */
+        return $this->graphQLSchemaDefinitionService = $this->graphQLSchemaDefinitionService ?? $this->instanceManager->getInstance(GraphQLSchemaDefinitionServiceInterface::class);
+    }
+    /**
+     * @param \PoP\ComponentModel\TypeResolvers\ScalarType\IntScalarTypeResolver $intScalarTypeResolver
+     */
+    public final function setIntScalarTypeResolver($intScalarTypeResolver) : void
+    {
+        $this->intScalarTypeResolver = $intScalarTypeResolver;
+    }
+    protected final function getIntScalarTypeResolver() : IntScalarTypeResolver
+    {
+        /** @var IntScalarTypeResolver */
+        return $this->intScalarTypeResolver = $this->intScalarTypeResolver ?? $this->instanceManager->getInstance(IntScalarTypeResolver::class);
+    }
+    /**
+     * @return array<string,mixed>
+     */
+    public function &getFullSchemaDefinitionForGraphQL() : array
+    {
+        if ($this->fullSchemaDefinitionForGraphQL === null) {
+            $this->fullSchemaDefinitionForGraphQL = $this->doGetGraphQLSchemaDefinition();
         }
-        // Remove the introspection fields that must not be added to the schema
-        // Field "__typename" from all types (GraphQL spec @ https://graphql.github.io/graphql-spec/draft/#sel-FAJZHABFBKjrL):
-        // "This field is implicit and does not appear in the fields list in any defined type."
-        unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_FIELDS]['__typename']);
-        // Fields "__schema" and "__type" from the query type (GraphQL spec @ https://graphql.github.io/graphql-spec/draft/#sel-FAJbHABABnD9ub):
-        // "These fields are implicit and do not appear in the fields list in the root type of the query operation."
-        unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$rootTypeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS]['__type']);
-        unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$rootTypeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS]['__schema']);
-        if (!$enableNestedMutations) {
-            unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$queryRootTypeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS]['__type']);
-            unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$queryRootTypeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS]['__schema']);
-        }
-        // Remove unneeded data
-        if (!Environment::addGlobalFieldsToSchema()) {
-            unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_FIELDS]);
-            unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS]);
-        }
-        if (!Environment::addSelfFieldToSchema()) {
-            /**
-             * Check if to remove the "self" field everywhere, or if to keep it just for the Root type
-             */
-            $keepSelfFieldForRootType = ComponentConfiguration::addSelfFieldForRootTypeToSchema();
-            foreach (\array_keys($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES]) as $typeSchemaKey) {
-                if (!$keepSelfFieldForRootType || $typeSchemaKey != $rootTypeSchemaKey && ($enableNestedMutations || $typeSchemaKey != $queryRootTypeSchemaKey)) {
-                    unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS]['self']);
-                }
+        /** @var array<string,mixed> */
+        return $this->fullSchemaDefinitionForGraphQL;
+    }
+    /**
+     * It can store the value in the cache.
+     *
+     * Use cache with care: If the schema is dynamic, it should not be cached!
+     *
+     *   Public schema: can cache
+     *   Private schema: cannot cache
+     *
+     * @return array<string,mixed>
+     */
+    private function &doGetGraphQLSchemaDefinition() : array
+    {
+        /**
+         * @var array<string,mixed>|null
+         */
+        $fullSchemaDefinitionForGraphQL = null;
+        // Attempt to retrieve from the cache, if enabled
+        /** @var APIModuleConfiguration */
+        $moduleConfiguration = App::getModule(APIModule::class)->getConfiguration();
+        if ($useCache = $moduleConfiguration->useSchemaDefinitionCache()) {
+            // Use different caches for the normal and namespaced schemas,
+            // or it throws exception if switching without deleting the cache (eg: when passing ?use_namespace=1)
+            $cacheType = CacheTypes::GRAPHQL_SCHEMA_DEFINITION;
+            $cacheKeyElements = \array_merge(CacheUtils::getSchemaCacheKeyElements(), ['edit-schema' => App::getState('edit-schema')]);
+            // For the persistentCache, use a hash to remove invalid characters (such as "()")
+            $cacheKey = \hash('md5', (string) \json_encode($cacheKeyElements));
+            $persistentCache = $this->getPersistentCache();
+            if ($persistentCache->hasCache($cacheKey, $cacheType)) {
+                $fullSchemaDefinitionForGraphQL = $persistentCache->getCache($cacheKey, $cacheType);
             }
         }
-        if (!Environment::addFullSchemaFieldToSchema()) {
-            unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$rootTypeSchemaKey][SchemaDefinition::ARGNAME_FIELDS]['fullSchema']);
-            if (!$enableNestedMutations) {
-                unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$queryRootTypeSchemaKey][SchemaDefinition::ARGNAME_FIELDS]['fullSchema']);
+        // If either not using cache, or using but the value had not been cached, then calculate the value
+        if ($fullSchemaDefinitionForGraphQL === null) {
+            // Get the schema definitions
+            $fullSchemaDefinitionForGraphQL = $this->getSchemaDefinitionService()->getFullSchemaDefinition();
+            // Convert the schema from PoP's format to what GraphQL needs to work with
+            $this->prepareSchemaDefinitionForGraphQL($fullSchemaDefinitionForGraphQL);
+            // Store in the cache
+            if ($useCache) {
+                $persistentCache->storeCache($cacheKey, $cacheType, $fullSchemaDefinitionForGraphQL);
+            }
+        }
+        /**
+         * @var array<string,mixed>
+         */
+        return $fullSchemaDefinitionForGraphQL;
+    }
+    /**
+     * @param array<string,mixed> $fullSchemaDefinitionForGraphQL
+     */
+    private function prepareSchemaDefinitionForGraphQL(array &$fullSchemaDefinitionForGraphQL) : void
+    {
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        $enableNestedMutations = $moduleConfiguration->enableNestedMutations();
+        $exposeSchemaIntrospectionFieldInSchema = $moduleConfiguration->exposeSchemaIntrospectionFieldInSchema();
+        $exposeGlobalFieldsInGraphQLSchema = $moduleConfiguration->exposeGlobalFieldsInGraphQLSchema();
+        $rootObjectTypeResolver = $this->getGraphQLSchemaDefinitionService()->getSchemaRootObjectTypeResolver();
+        $rootTypeName = $rootObjectTypeResolver->getMaybeNamespacedTypeName();
+        $queryRootTypeName = null;
+        $addConnectionFromRootToQueryRootAndMutationRoot = $moduleConfiguration->addConnectionFromRootToQueryRootAndMutationRoot();
+        if (!$enableNestedMutations || $addConnectionFromRootToQueryRootAndMutationRoot) {
+            $queryRootTypeResolver = $this->getGraphQLSchemaDefinitionService()->getSchemaQueryRootObjectTypeResolver();
+            $queryRootTypeName = $queryRootTypeResolver->getMaybeNamespacedTypeName();
+            // Remove the fields connecting from Root to QueryRoot and MutationRoot
+            unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][TypeKinds::OBJECT][$rootTypeName][SchemaDefinition::FIELDS]['queryRoot']);
+            unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][TypeKinds::OBJECT][$rootTypeName][SchemaDefinition::FIELDS]['mutationRoot']);
+        }
+        if ($exposeGlobalFieldsInGraphQLSchema) {
+            /**
+             * Remove the introspection fields that must not be added to the schema:
+             * [GraphQL spec] Field "__typename" from all types.
+             * > This field is implicit and does not appear in the fields list in any defined type.
+             * @see http://spec.graphql.org/draft/#sel-FAJVHCBvBBhC4iC
+             */
+            unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::GLOBAL_FIELDS]['__typename']);
+        } else {
+            unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::GLOBAL_FIELDS]);
+        }
+        /**
+         * These fields can be exposed in the schema when configuring ACL,
+         * as to remove user access to "__schema" to disable introspection
+         */
+        if (!$exposeSchemaIntrospectionFieldInSchema) {
+            /**
+             * Remove the introspection fields that must not be added to the schema:
+             * [GraphQL spec] Fields "__schema" and "__type" from the query type.
+             * > These fields are implicit and do not appear in the fields list in the root type of the query operation.
+             * @see http://spec.graphql.org/draft/#sel-FAJXHABcBlB6rF
+             */
+            unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][TypeKinds::OBJECT][$rootTypeName][SchemaDefinition::FIELDS]['__type']);
+            unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][TypeKinds::OBJECT][$rootTypeName][SchemaDefinition::FIELDS]['__schema']);
+            if ($queryRootTypeName !== null) {
+                unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][TypeKinds::OBJECT][$queryRootTypeName][SchemaDefinition::FIELDS]['__type']);
+                unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][TypeKinds::OBJECT][$queryRootTypeName][SchemaDefinition::FIELDS]['__schema']);
+            }
+        }
+        /**
+         * Remove unneeded data
+         *
+         * @var ComponentModelModuleConfiguration
+         */
+        $componentModelModuleConfiguration = App::getModule(ComponentModelModule::class)->getConfiguration();
+        if (!$componentModelModuleConfiguration->enableSelfField()) {
+            /** @var string $typeKind */
+            foreach ($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES] as $typeKind => $typeSchemaDefinitions) {
+                /** @var string $typeName */
+                foreach (\array_keys($typeSchemaDefinitions) as $typeName) {
+                    unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][$typeKind][$typeName][SchemaDefinition::FIELDS]['self']);
+                }
             }
         }
         // Maybe append the field/directive's version to its description, since this field is missing in GraphQL
-        $addVersionToSchemaFieldDescription = Environment::addVersionToSchemaFieldDescription();
+        $addVersionToGraphQLSchemaFieldDescription = $moduleConfiguration->addVersionToGraphQLSchemaFieldDescription();
         // When doing nested mutations, differentiate mutating fields by adding label "[Mutation]" in the description
         $addMutationLabelToSchemaFieldDescription = $enableNestedMutations;
-        // Maybe add param "nestedUnder" on the schema for each directive
-        $enableComposableDirectives = GraphQLQueryComponentConfiguration::enableComposableDirectives();
-        // Convert the field type from its internal representation (eg: "array:Post") to the GraphQL standard representation (eg: "[Post]")
-        // 1. Global fields, connections and directives
-        if (Environment::addGlobalFieldsToSchema()) {
-            foreach (\array_keys($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_FIELDS]) as $fieldName) {
-                $itemPath = [SchemaDefinition::ARGNAME_GLOBAL_FIELDS, $fieldName];
-                $this->introduceSDLNotationToFieldSchemaDefinition($itemPath);
-                if ($addVersionToSchemaFieldDescription) {
-                    $this->addVersionToSchemaFieldDescription($itemPath);
+        /** @var GraphQLParserModuleConfiguration */
+        $graphQLParserModuleConfiguration = App::getModule(GraphQLParserModule::class)->getConfiguration();
+        $enableComposableDirectives = $graphQLParserModuleConfiguration->enableComposableDirectives();
+        // Modify the schema definitions
+        // 1. Global fields and directives
+        if (($addVersionToGraphQLSchemaFieldDescription || $addMutationLabelToSchemaFieldDescription) && $exposeGlobalFieldsInGraphQLSchema) {
+            /** @var string $fieldName */
+            foreach (\array_keys($fullSchemaDefinitionForGraphQL[SchemaDefinition::GLOBAL_FIELDS]) as $fieldName) {
+                /** @var string[] */
+                $itemPath = [SchemaDefinition::GLOBAL_FIELDS, $fieldName];
+                if ($addVersionToGraphQLSchemaFieldDescription) {
+                    $this->addVersionToGraphQLSchemaFieldDescription($fullSchemaDefinitionForGraphQL, $itemPath);
                 }
                 if ($addMutationLabelToSchemaFieldDescription) {
-                    $this->addMutationLabelToSchemaFieldDescription($itemPath);
-                }
-            }
-            foreach (\array_keys($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS]) as $connectionName) {
-                $itemPath = [SchemaDefinition::ARGNAME_GLOBAL_CONNECTIONS, $connectionName];
-                $this->introduceSDLNotationToFieldSchemaDefinition($itemPath);
-                if ($addVersionToSchemaFieldDescription) {
-                    $this->addVersionToSchemaFieldDescription($itemPath);
-                }
-                if ($addMutationLabelToSchemaFieldDescription) {
-                    $this->addMutationLabelToSchemaFieldDescription($itemPath);
+                    $this->addMutationLabelToSchemaFieldDescription($fullSchemaDefinitionForGraphQL, $itemPath);
                 }
             }
         }
         // Remove all directives of types other than "Query", "Schema" and, maybe "Indexing"
-        $supportedDirectiveTypes = [DirectiveTypes::SCHEMA, DirectiveTypes::QUERY];
+        $supportedDirectiveKinds = [DirectiveKinds::SCHEMA, DirectiveKinds::QUERY];
         if ($enableComposableDirectives) {
-            $supportedDirectiveTypes[] = DirectiveTypes::INDEXING;
+            $supportedDirectiveKinds[] = DirectiveKinds::INDEXING;
         }
         $directivesNamesToRemove = [];
-        foreach (\array_keys($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES]) as $directiveName) {
-            if (!\in_array($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES][$directiveName][SchemaDefinition::ARGNAME_DIRECTIVE_TYPE], $supportedDirectiveTypes)) {
+        /** @var string $directiveName */
+        foreach (\array_keys($fullSchemaDefinitionForGraphQL[SchemaDefinition::GLOBAL_DIRECTIVES]) as $directiveName) {
+            if (!\in_array($fullSchemaDefinitionForGraphQL[SchemaDefinition::GLOBAL_DIRECTIVES][$directiveName][SchemaDefinition::DIRECTIVE_KIND], $supportedDirectiveKinds)) {
                 $directivesNamesToRemove[] = $directiveName;
             }
         }
         foreach ($directivesNamesToRemove as $directiveName) {
-            unset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES][$directiveName]);
+            unset($fullSchemaDefinitionForGraphQL[SchemaDefinition::GLOBAL_DIRECTIVES][$directiveName]);
         }
         // Add the directives
-        foreach (\array_keys($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES]) as $directiveName) {
-            $itemPath = [SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES, $directiveName];
-            $fieldOrDirectiveSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($this->fullSchemaDefinition, $itemPath);
-            $this->introduceSDLNotationToFieldOrDirectiveArgs($itemPath);
-            if ($enableComposableDirectives) {
-                $this->addNestedDirectiveDataToSchemaDirectiveArgs($itemPath);
+        /** @var string $directiveName */
+        foreach (\array_keys($fullSchemaDefinitionForGraphQL[SchemaDefinition::GLOBAL_DIRECTIVES]) as $directiveName) {
+            /** @var string[] */
+            $itemPath = [SchemaDefinition::GLOBAL_DIRECTIVES, $directiveName];
+            if ($addVersionToGraphQLSchemaFieldDescription) {
+                $this->addVersionToGraphQLSchemaFieldDescription($fullSchemaDefinitionForGraphQL, $itemPath);
             }
-            if ($addVersionToSchemaFieldDescription) {
-                $this->addVersionToSchemaFieldDescription($itemPath);
-            }
-            $this->maybeAddTypeToSchemaDirectiveDescription($itemPath);
+            $this->maybeAddTypeToSchemaDirectiveDescription($fullSchemaDefinitionForGraphQL, $itemPath);
         }
-        // 2. Each type's fields, connections and directives
-        foreach ($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES] as $typeSchemaKey => $typeSchemaDefinition) {
-            // No need for Union types
-            if ($typeSchemaDefinition[SchemaDefinition::ARGNAME_IS_UNION] ?? null) {
-                continue;
-            }
-            foreach (\array_keys($typeSchemaDefinition[SchemaDefinition::ARGNAME_FIELDS]) as $fieldName) {
-                $itemPath = [SchemaDefinition::ARGNAME_TYPES, $typeSchemaKey, SchemaDefinition::ARGNAME_FIELDS, $fieldName];
-                $this->introduceSDLNotationToFieldSchemaDefinition($itemPath);
-                if ($addVersionToSchemaFieldDescription) {
-                    $this->addVersionToSchemaFieldDescription($itemPath);
-                }
-                if ($addMutationLabelToSchemaFieldDescription) {
-                    $this->addMutationLabelToSchemaFieldDescription($itemPath);
-                }
-            }
-            foreach (\array_keys($typeSchemaDefinition[SchemaDefinition::ARGNAME_CONNECTIONS]) as $connectionName) {
-                $itemPath = [SchemaDefinition::ARGNAME_TYPES, $typeSchemaKey, SchemaDefinition::ARGNAME_CONNECTIONS, $connectionName];
-                $this->introduceSDLNotationToFieldSchemaDefinition($itemPath);
-                if ($addVersionToSchemaFieldDescription) {
-                    $this->addVersionToSchemaFieldDescription($itemPath);
-                }
-                if ($addMutationLabelToSchemaFieldDescription) {
-                    $this->addMutationLabelToSchemaFieldDescription($itemPath);
-                }
-            }
-            foreach (\array_keys($typeSchemaDefinition[SchemaDefinition::ARGNAME_DIRECTIVES]) as $directiveName) {
-                $itemPath = [SchemaDefinition::ARGNAME_TYPES, $typeSchemaKey, SchemaDefinition::ARGNAME_DIRECTIVES, $directiveName];
-                $this->introduceSDLNotationToFieldOrDirectiveArgs($itemPath);
-                if ($enableComposableDirectives) {
-                    $this->addNestedDirectiveDataToSchemaDirectiveArgs($itemPath);
-                }
-                if ($addVersionToSchemaFieldDescription) {
-                    $this->addVersionToSchemaFieldDescription($itemPath);
-                }
-            }
-        }
-        // 3. Interfaces
-        foreach ($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES] as $interfaceName => $interfaceSchemaDefinition) {
-            foreach (\array_keys($interfaceSchemaDefinition[SchemaDefinition::ARGNAME_FIELDS]) as $fieldName) {
-                $itemPath = [SchemaDefinition::ARGNAME_INTERFACES, $interfaceName, SchemaDefinition::ARGNAME_FIELDS, $fieldName];
-                $this->introduceSDLNotationToFieldSchemaDefinition($itemPath);
-                // if ($addVersionToSchemaFieldDescription) {
-                //     $this->addVersionToSchemaFieldDescription($itemPath);
-                // }
-            }
-        }
-        // Sort the elements in the schema alphabetically
-        if (ComponentConfiguration::sortSchemaAlphabetically()) {
-            // Sort types
-            \ksort($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES]);
-            // Sort fields, connections and interfaces for each type
-            foreach ($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES] as $typeSchemaKey => $typeSchemaDefinition) {
-                if (isset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey][SchemaDefinition::ARGNAME_FIELDS])) {
-                    \ksort($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey][SchemaDefinition::ARGNAME_FIELDS]);
-                }
-                if (isset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS])) {
-                    \ksort($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey][SchemaDefinition::ARGNAME_CONNECTIONS]);
-                }
-                if (isset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey][SchemaDefinition::ARGNAME_INTERFACES])) {
-                    \sort($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$typeSchemaKey][SchemaDefinition::ARGNAME_INTERFACES]);
-                }
-            }
-            // Sort directives
-            if (isset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES])) {
-                \ksort($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_GLOBAL_DIRECTIVES]);
-            }
-            /**
-             * Can NOT sort interfaces yet! Because interfaces may depend on other interfaces,
-             * they must follow their current order to be initialized,
-             * which happens when creating instances of `InterfaceType` in type `Schema`
-             *
-             * @todo Find a workaround if interfaces need to be sorted
-             */
-            // if (isset($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES])) {
-            //     ksort($this->fullSchemaDefinition[SchemaDefinition::ARGNAME_INTERFACES]);
-            // }
-        }
-        // Expand the full schema with more data that is needed for GraphQL
-        // Add the scalar types
-        $scalarTypeNames = [GraphQLServerSchemaDefinition::TYPE_ID, GraphQLServerSchemaDefinition::TYPE_STRING, GraphQLServerSchemaDefinition::TYPE_INT, GraphQLServerSchemaDefinition::TYPE_FLOAT, GraphQLServerSchemaDefinition::TYPE_BOOL, GraphQLServerSchemaDefinition::TYPE_OBJECT, GraphQLServerSchemaDefinition::TYPE_ANY_SCALAR, GraphQLServerSchemaDefinition::TYPE_MIXED, GraphQLServerSchemaDefinition::TYPE_ARRAY_KEY, GraphQLServerSchemaDefinition::TYPE_DATE, GraphQLServerSchemaDefinition::TYPE_TIME, GraphQLServerSchemaDefinition::TYPE_URL, GraphQLServerSchemaDefinition::TYPE_EMAIL, GraphQLServerSchemaDefinition::TYPE_IP];
-        foreach ($scalarTypeNames as $scalarTypeName) {
-            $this->fullSchemaDefinition[SchemaDefinition::ARGNAME_TYPES][$scalarTypeName] = [SchemaDefinition::ARGNAME_NAME => $scalarTypeName, SchemaDefinition::ARGNAME_NAMESPACED_NAME => $scalarTypeName, SchemaDefinition::ARGNAME_ELEMENT_NAME => $scalarTypeName, SchemaDefinition::ARGNAME_DESCRIPTION => null, SchemaDefinition::ARGNAME_DIRECTIVES => null, SchemaDefinition::ARGNAME_FIELDS => null, SchemaDefinition::ARGNAME_CONNECTIONS => null, SchemaDefinition::ARGNAME_INTERFACES => null];
-        }
-    }
-    /**
-     * Convert the field type from its internal representation (eg: "array:Post") to the GraphQL standard representation (eg: "[Post]")
-     */
-    protected function introduceSDLNotationToFieldSchemaDefinition(array $fieldSchemaDefinitionPath) : void
-    {
-        $fieldSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($this->fullSchemaDefinition, $fieldSchemaDefinitionPath);
-        $type = $fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE];
-        $fieldSchemaDefinition[SchemaDefinition::ARGNAME_TYPE] = SchemaHelpers::getTypeToOutputInSchema($type, $fieldSchemaDefinition[SchemaDefinition::ARGNAME_NON_NULLABLE] ?? null, $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY] ?? \false, $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY] ?? \false, $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY_OF_ARRAYS] ?? \false, $fieldSchemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY_OF_ARRAYS] ?? \false);
-        $this->introduceSDLNotationToFieldOrDirectiveArgs($fieldSchemaDefinitionPath);
-    }
-    protected function introduceSDLNotationToFieldOrDirectiveArgs(array $fieldOrDirectiveSchemaDefinitionPath) : void
-    {
-        $fieldOrDirectiveSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($this->fullSchemaDefinition, $fieldOrDirectiveSchemaDefinitionPath);
-        // Also for the fieldOrDirective arguments
-        if ($fieldOrDirectiveArgs = $fieldOrDirectiveSchemaDefinition[SchemaDefinition::ARGNAME_ARGS] ?? null) {
-            foreach ($fieldOrDirectiveArgs as $fieldOrDirectiveArgName => $fieldOrDirectiveArgSchemaDefinition) {
-                // The type is mandatory. If not provided, use the default one
-                $type = $fieldOrDirectiveArgSchemaDefinition[SchemaDefinition::ARGNAME_TYPE] ?? $this->schemaDefinitionService->getDefaultType();
-                $fieldOrDirectiveSchemaDefinition[SchemaDefinition::ARGNAME_ARGS][$fieldOrDirectiveArgName][SchemaDefinition::ARGNAME_TYPE] = SchemaHelpers::getTypeToOutputInSchema($type, $fieldOrDirectiveArgSchemaDefinition[SchemaDefinition::ARGNAME_MANDATORY] ?? null, $fieldOrDirectiveArgSchemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY] ?? \false, $fieldOrDirectiveArgSchemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY] ?? \false, $fieldOrDirectiveArgSchemaDefinition[SchemaDefinition::ARGNAME_IS_ARRAY_OF_ARRAYS] ?? \false, $fieldOrDirectiveArgSchemaDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY_OF_ARRAYS] ?? \false);
-                // If it is an input object, it may have its own args to also convert
-                if ($type == SchemaDefinition::TYPE_INPUT_OBJECT) {
-                    foreach ($fieldOrDirectiveArgSchemaDefinition[SchemaDefinition::ARGNAME_ARGS] ?? [] as $inputFieldArgName => $inputFieldArgDefinition) {
-                        $inputFieldType = $inputFieldArgDefinition[SchemaDefinition::ARGNAME_TYPE];
-                        $fieldOrDirectiveSchemaDefinition[SchemaDefinition::ARGNAME_ARGS][$fieldOrDirectiveArgName][SchemaDefinition::ARGNAME_ARGS][$inputFieldArgName][SchemaDefinition::ARGNAME_TYPE] = SchemaHelpers::getTypeToOutputInSchema($inputFieldType, $inputFieldArgDefinition[SchemaDefinition::ARGNAME_MANDATORY] ?? null, $inputFieldArgDefinition[SchemaDefinition::ARGNAME_IS_ARRAY] ?? \false, $inputFieldArgDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY] ?? \false, $inputFieldArgDefinition[SchemaDefinition::ARGNAME_IS_ARRAY_OF_ARRAYS] ?? \false, $inputFieldArgDefinition[SchemaDefinition::ARGNAME_IS_NON_NULLABLE_ITEMS_IN_ARRAY_OF_ARRAYS] ?? \false);
+        // 2. Each type's fields and directives
+        if ($addVersionToGraphQLSchemaFieldDescription || $addMutationLabelToSchemaFieldDescription) {
+            /** @var string $typeName */
+            foreach ($fullSchemaDefinitionForGraphQL[SchemaDefinition::TYPES][TypeKinds::OBJECT] as $typeName => $typeSchemaDefinition) {
+                /** @var string $fieldName */
+                foreach (\array_keys($typeSchemaDefinition[SchemaDefinition::FIELDS]) as $fieldName) {
+                    /** @var string[] */
+                    $itemPath = [SchemaDefinition::TYPES, TypeKinds::OBJECT, $typeName, SchemaDefinition::FIELDS, $fieldName];
+                    if ($addVersionToGraphQLSchemaFieldDescription) {
+                        $this->addVersionToGraphQLSchemaFieldDescription($fullSchemaDefinitionForGraphQL, $itemPath);
+                    }
+                    if ($addMutationLabelToSchemaFieldDescription) {
+                        $this->addMutationLabelToSchemaFieldDescription($fullSchemaDefinitionForGraphQL, $itemPath);
                     }
                 }
             }
+        }
+        // Sort the elements in the schema alphabetically (if not already sorted!)
+        /** @var APIModuleConfiguration */
+        $apiModuleConfiguration = App::getModule(APIModule::class)->getConfiguration();
+        if (!$apiModuleConfiguration->sortFullSchemaAlphabetically() && $moduleConfiguration->sortGraphQLSchemaAlphabetically()) {
+            $this->getSchemaDefinitionService()->sortFullSchemaAlphabetically($fullSchemaDefinitionForGraphQL);
         }
     }
     /**
      * When doing /?edit_schema=true, "Schema" type directives will also be added the FIELD location,
      * so that they show up in GraphiQL and can be added to a persisted query
      * When that happens, append '("Schema" type directive)' to the directive's description
+     *
+     * @param array<string,mixed> $fullSchemaDefinitionForGraphQL
+     * @param string[] $directiveSchemaDefinitionPath
      */
-    protected function maybeAddTypeToSchemaDirectiveDescription(array $directiveSchemaDefinitionPath) : void
+    private function maybeAddTypeToSchemaDirectiveDescription(array &$fullSchemaDefinitionForGraphQL, array $directiveSchemaDefinitionPath) : void
     {
-        $vars = ApplicationState::getVars();
-        if (isset($vars['edit-schema']) && $vars['edit-schema']) {
-            $directiveSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($this->fullSchemaDefinition, $directiveSchemaDefinitionPath);
-            if ($directiveSchemaDefinition[SchemaDefinition::ARGNAME_DIRECTIVE_TYPE] == DirectiveTypes::SCHEMA) {
-                $directiveSchemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] = \sprintf($this->translationAPI->__('%s %s', 'graphql-server'), \sprintf(
-                    '_%s_',
-                    // Make it italic using markdown
-                    $this->translationAPI->__('("Schema" type directive)', 'graphql-server')
-                ), $directiveSchemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION]);
-            }
+        if (!App::getState('edit-schema')) {
+            return;
         }
+        $directiveSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($fullSchemaDefinitionForGraphQL, $directiveSchemaDefinitionPath);
+        if ($directiveSchemaDefinition[SchemaDefinition::DIRECTIVE_KIND] !== DirectiveKinds::SCHEMA) {
+            return;
+        }
+        $directiveSchemaDefinition[SchemaDefinition::DESCRIPTION] = \sprintf($this->__('%s %s', 'graphql-server'), \sprintf(
+            '_%s_',
+            // Make it italic using markdown
+            $this->__('("Schema" type directive)', 'graphql-server')
+        ), $directiveSchemaDefinition[SchemaDefinition::DESCRIPTION]);
     }
     /**
      * Append the field or directive's version to its description
+     *
+     * @param array<string,mixed> $fullSchemaDefinitionForGraphQL
+     * @param string[] $fieldOrDirectiveSchemaDefinitionPath
      */
-    protected function addVersionToSchemaFieldDescription(array $fieldOrDirectiveSchemaDefinitionPath) : void
+    private function addVersionToGraphQLSchemaFieldDescription(array &$fullSchemaDefinitionForGraphQL, array $fieldOrDirectiveSchemaDefinitionPath) : void
     {
-        $fieldOrDirectiveSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($this->fullSchemaDefinition, $fieldOrDirectiveSchemaDefinitionPath);
-        if ($schemaFieldVersion = $fieldOrDirectiveSchemaDefinition[SchemaDefinition::ARGNAME_VERSION] ?? null) {
-            $fieldOrDirectiveSchemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] .= \sprintf(\sprintf(
-                $this->translationAPI->__(' _%s_', 'graphql-server'),
+        $fieldOrDirectiveSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($fullSchemaDefinitionForGraphQL, $fieldOrDirectiveSchemaDefinitionPath);
+        if ($schemaFieldVersion = $fieldOrDirectiveSchemaDefinition[SchemaDefinition::VERSION] ?? null) {
+            $fieldOrDirectiveSchemaDefinition[SchemaDefinition::DESCRIPTION] .= \sprintf(\sprintf(
+                $this->__(' _%s_', 'graphql-server'),
                 // Make it italic using markdown
-                $this->translationAPI->__('(Version: %s)', 'graphql-server')
+                $this->__('(Version: %s)', 'graphql-server')
             ), $schemaFieldVersion);
         }
     }
     /**
-     * Append param "nestedUnder" to the directive
+     * Append the "Mutation" label to the field's description
+     *
+     * @param array<string,mixed> $fullSchemaDefinitionForGraphQL
+     * @param string[] $fieldSchemaDefinitionPath
      */
-    protected function addNestedDirectiveDataToSchemaDirectiveArgs(array $directiveSchemaDefinitionPath) : void
+    private function addMutationLabelToSchemaFieldDescription(array &$fullSchemaDefinitionForGraphQL, array $fieldSchemaDefinitionPath) : void
     {
-        $directiveSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($this->fullSchemaDefinition, $directiveSchemaDefinitionPath);
-        $directiveSchemaDefinition[SchemaDefinition::ARGNAME_ARGS] = $directiveSchemaDefinition[SchemaDefinition::ARGNAME_ARGS] ?? [];
-        $directiveSchemaDefinition[SchemaDefinition::ARGNAME_ARGS][] = [SchemaDefinition::ARGNAME_NAME => SchemaElements::DIRECTIVE_PARAM_NESTED_UNDER, SchemaDefinition::ARGNAME_TYPE => GraphQLServerSchemaDefinition::TYPE_INT, SchemaDefinition::ARGNAME_DESCRIPTION => $this->translationAPI->__('Nest the directive under another one, indicated as a relative position from this one (a negative int)', 'graphql-server')];
+        $fieldSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($fullSchemaDefinitionForGraphQL, $fieldSchemaDefinitionPath);
+        if ($fieldSchemaDefinition[SchemaDefinition::EXTENSIONS][SchemaDefinition::FIELD_IS_MUTATION]) {
+            $fieldSchemaDefinition[SchemaDefinition::DESCRIPTION] = \sprintf($this->__('[Mutation] %s', 'graphql-server'), $fieldSchemaDefinition[SchemaDefinition::DESCRIPTION]);
+        }
     }
     /**
-     * Append the "Mutation" label to the field's description
+     * @param \GraphQLByPoP\GraphQLServer\ObjectModels\SchemaDefinitionReferenceObjectInterface $schemaDefinitionReferenceObject
      */
-    protected function addMutationLabelToSchemaFieldDescription(array $fieldSchemaDefinitionPath) : void
+    public function registerSchemaDefinitionReferenceObject($schemaDefinitionReferenceObject) : string
     {
-        $fieldSchemaDefinition =& SchemaDefinitionHelpers::advancePointerToPath($this->fullSchemaDefinition, $fieldSchemaDefinitionPath);
-        if ($fieldSchemaDefinition[SchemaDefinition::ARGNAME_FIELD_IS_MUTATION] ?? null) {
-            $fieldSchemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION] = \sprintf($this->translationAPI->__('[Mutation] %s', 'graphql-server'), $fieldSchemaDefinition[SchemaDefinition::ARGNAME_DESCRIPTION]);
+        $schemaDefinitionPath = $schemaDefinitionReferenceObject->getSchemaDefinitionPath();
+        $schemaDefinitionReferenceObjectID = SchemaDefinitionHelpers::getSchemaDefinitionReferenceObjectID($schemaDefinitionPath);
+        if (isset($this->fullSchemaDefinitionReferenceDictionary[$schemaDefinitionReferenceObjectID])) {
+            throw new SchemaReferenceException(\sprintf($this->__('A Schema Definition Reference Object with id \'%s\\s has already been registered', 'graphql-server'), $schemaDefinitionReferenceObjectID));
         }
+        $this->fullSchemaDefinitionReferenceDictionary[$schemaDefinitionReferenceObjectID] = $schemaDefinitionReferenceObject;
+        return $schemaDefinitionReferenceObjectID;
     }
-    public function registerSchemaDefinitionReference(AbstractSchemaDefinitionReferenceObject $referenceObject) : string
+    /**
+     * @param string $schemaDefinitionReferenceObjectID
+     */
+    public function getSchemaDefinitionReferenceObject($schemaDefinitionReferenceObjectID) : ?SchemaDefinitionReferenceObjectInterface
     {
-        $schemaDefinitionPath = $referenceObject->getSchemaDefinitionPath();
-        $referenceObjectID = SchemaDefinitionHelpers::getID($schemaDefinitionPath);
-        // Calculate and set the ID. If this is a nested type, its wrapping type will already have been registered under this ID
-        // Hence, register it under another one
-        while (isset($this->fullSchemaDefinitionReferenceDictionary[$referenceObjectID])) {
-            // Append the ID with a distinctive token at the end
-            $referenceObjectID .= '*';
-        }
-        $this->fullSchemaDefinitionReferenceDictionary[$referenceObjectID] = $referenceObject;
-        // Dynamic types are stored so that the schema can add them to its "types" field
-        if ($referenceObject->isDynamicType()) {
-            /** @var AbstractDynamicType */
-            $referenceObject = $referenceObject;
-            $this->dynamicTypes[] = $referenceObject;
-        }
-        return $referenceObjectID;
-    }
-    public function getSchemaDefinitionReference(string $referenceObjectID) : ?AbstractSchemaDefinitionReferenceObject
-    {
-        return $this->fullSchemaDefinitionReferenceDictionary[$referenceObjectID];
-    }
-    public function getDynamicTypes(bool $filterRepeated = \true) : array
-    {
-        // Watch out! When an ObjectType or InterfaceType implements an interface,
-        // and a field of dynamicType (such as "status", which is an ENUM)
-        // is covered by the interface, then the field definition will be
-        // that one from the interface's perspective.
-        // Hence, this field may be registered several times, as coming
-        // from different ObjectTypes implementing the same interface!
-        // (Eg: both Post and Page have field "status" from interface CustomPost)
-        // If $filterRepeated is true, remove instances with a repeated name
-        if ($filterRepeated) {
-            $dynamicTypes = $typeNames = [];
-            foreach ($this->dynamicTypes as $type) {
-                $typeName = $type->getName();
-                if (!\in_array($typeName, $typeNames)) {
-                    $dynamicTypes[] = $type;
-                    $typeNames[] = $typeName;
-                }
-            }
-            return $dynamicTypes;
-        }
-        return $this->dynamicTypes;
+        return $this->fullSchemaDefinitionReferenceDictionary[$schemaDefinitionReferenceObjectID] ?? null;
     }
 }

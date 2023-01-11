@@ -1,0 +1,20 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoP\GraphQLParser\Query\GraphQLQueryStringFormatterInterface:
+        class: \PoP\GraphQLParser\Query\GraphQLQueryStringFormatter
+
+    PoP\GraphQLParser\AST\ASTHelperServiceInterface:
+        class: \PoP\GraphQLParser\AST\ASTHelperService
+
+    PoP\GraphQLParser\AST\ASTNodeDuplicatorServiceInterface:
+        class: \PoP\GraphQLParser\AST\ASTNodeDuplicatorService
+
+    PoP\GraphQLParser\FeedbackItemProviders\:
+        resource: '../src/FeedbackItemProviders/*'
+
+    PoP\GraphQLParser\State\:
+        resource: '../src/State/*'

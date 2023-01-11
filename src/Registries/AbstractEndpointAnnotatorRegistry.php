@@ -14,7 +14,10 @@ abstract class AbstractEndpointAnnotatorRegistry implements EndpointAnnotatorReg
      */
     protected $endpointAnnotators = [];
 
-    public function addEndpointAnnotator(EndpointAnnotatorInterface $endpointAnnotator): void
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\EndpointAnnotatorInterface $endpointAnnotator
+     */
+    public function addEndpointAnnotator($endpointAnnotator): void
     {
         $this->endpointAnnotators[] = $endpointAnnotator;
     }
@@ -30,11 +33,11 @@ abstract class AbstractEndpointAnnotatorRegistry implements EndpointAnnotatorReg
      */
     public function getEnabledEndpointAnnotators(): array
     {
-        return array_filter(
+        return array_values(array_filter(
             $this->getEndpointAnnotators(),
             function (ServiceInterface $service) {
                 return $service->isServiceEnabled();
             }
-        );
+        ));
     }
 }

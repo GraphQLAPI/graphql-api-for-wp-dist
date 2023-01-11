@@ -1,0 +1,18 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPCMSSchema\CategoriesWP\LooseContracts\:
+        resource: '../src/LooseContracts/*'
+
+    PoPCMSSchema\CategoriesWP\Hooks\:
+        resource: '../src/Hooks/*'
+
+    PoPCMSSchema\Categories\TypeAPIs\QueryableCategoryTypeAPIInterface:
+        class: \PoPCMSSchema\CategoriesWP\TypeAPIs\QueryableCategoryTypeAPI
+
+    PoPCMSSchema\Categories\TypeAPIs\QueryableTaxonomyCategoryListTypeAPIInterface:
+        class: \PoPCMSSchema\CategoriesWP\TypeAPIs\QueryableTaxonomyCategoryListTypeAPI
+

@@ -3,32 +3,38 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DataStructure;
 
-use PoP\ComponentModel\DataStructure\DataStructureFormatterInterface;
-use PoP\ComponentModel\State\ApplicationState;
+use PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface;
+use PoP\Root\App;
 class DataStructureManager implements \PoP\ComponentModel\DataStructure\DataStructureManagerInterface
 {
     /**
-     * @var array<string, DataStructureFormatterInterface>
+     * @var array<string,DataStructureFormatterInterface>
      */
     public $formatters = [];
     /**
-     * @var \PoP\ComponentModel\DataStructure\DataStructureFormatterInterface
+     * @var \PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface
      */
     protected $defaultFormatter;
     public function __construct(DataStructureFormatterInterface $defaultFormatter)
     {
         $this->defaultFormatter = $defaultFormatter;
     }
-    public function addDataStructureFormatter(DataStructureFormatterInterface $formatter) : void
+    /**
+     * @param \PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface $formatter
+     */
+    public function addDataStructureFormatter($formatter) : void
     {
         $this->formatters[$formatter->getName()] = $formatter;
     }
-    public function setDefaultDataStructureFormatter(DataStructureFormatterInterface $defaultFormatter) : void
+    /**
+     * @param \PoP\ComponentModel\DataStructureFormatters\DataStructureFormatterInterface $defaultFormatter
+     */
+    public function setDefaultDataStructureFormatter($defaultFormatter) : void
     {
         $this->defaultFormatter = $defaultFormatter;
     }
     /**
-     * @param string $name
+     * @param string|null $name
      */
     public function getDataStructureFormatter($name = null) : DataStructureFormatterInterface
     {
@@ -37,9 +43,8 @@ class DataStructureManager implements \PoP\ComponentModel\DataStructure\DataStru
             return $this->formatters[$name];
         }
         // Return the one saved in the vars
-        $vars = ApplicationState::getVars();
-        $name = $vars['datastructure'];
-        if ($name && isset($this->formatters[$name])) {
+        $name = App::getState('datastructure');
+        if ($name !== null && isset($this->formatters[$name])) {
             return $this->formatters[$name];
         }
         return $this->defaultFormatter;

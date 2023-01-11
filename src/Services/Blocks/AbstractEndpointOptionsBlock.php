@@ -19,9 +19,10 @@ abstract class AbstractEndpointOptionsBlock extends AbstractBlock
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         // Append "-front" because this style must be used only on the client, not on the admin
         $className = $this->getBlockClassName() . '-front';
@@ -33,7 +34,7 @@ abstract class AbstractEndpointOptionsBlock extends AbstractBlock
 EOT;
         return sprintf(
             $blockContentPlaceholder,
-            $className . ' ' . $this->getAlignClass(),
+            $className . ' ' . $this->getAlignClassName(),
             $className . '__title',
             \__('Options', 'graphql-api'),
             $this->getBlockContent($attributes, $content)
@@ -41,9 +42,10 @@ EOT;
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    protected function getBlockContent(array $attributes, string $content): string
+    protected function getBlockContent($attributes, $content): string
     {
         $blockContentPlaceholder = '<p><strong>%s</strong> %s</p>';
         return sprintf(

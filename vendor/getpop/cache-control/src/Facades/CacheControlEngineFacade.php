@@ -3,8 +3,8 @@
 declare (strict_types=1);
 namespace PoP\CacheControl\Facades;
 
+use PoP\Root\App;
 use PoP\CacheControl\Managers\CacheControlEngineInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
 class CacheControlEngineFacade
 {
     public static function getInstance() : CacheControlEngineInterface
@@ -12,7 +12,7 @@ class CacheControlEngineFacade
         /**
          * @var CacheControlEngineInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(CacheControlEngineInterface::class);
+        $service = App::getContainer()->get(CacheControlEngineInterface::class);
         return $service;
     }
 }

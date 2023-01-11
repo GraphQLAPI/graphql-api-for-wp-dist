@@ -5,32 +5,42 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\ContentProcessors;
 
 use GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface;
-use PoP\ComponentModel\HelperServices\RequestHelperServiceInterface;
 
 class MarkdownContentParser extends AbstractContentParser implements MarkdownContentParserInterface
 {
     /**
-     * @var \GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface
+     * @var \GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface|null
      */
-    protected $markdownConvertorInterface;
-    public function __construct(RequestHelperServiceInterface $requestHelperService, MarkdownConvertorInterface $markdownConvertorInterface, ?string $baseDir = null, ?string $baseURL = null)
+    private $markdownConvertor;
+
+    /**
+     * @param \GraphQLAPI\MarkdownConvertor\MarkdownConvertorInterface $markdownConvertor
+     */
+    final public function setMarkdownConvertor($markdownConvertor): void
     {
-        $this->markdownConvertorInterface = $markdownConvertorInterface;
-        parent::__construct($requestHelperService, $baseDir, $baseURL);
+        $this->markdownConvertor = $markdownConvertor;
     }
+    final protected function getMarkdownConvertor(): MarkdownConvertorInterface
+    {
+        /** @var MarkdownConvertorInterface */
+        return $this->markdownConvertor = $this->markdownConvertor ?? $this->instanceManager->getInstance(MarkdownConvertorInterface::class);
+    }
+
     /**
      * Parse the file's Markdown into HTML Content
+     * @param string $fileContent
      */
-    protected function getHTMLContent(string $fileContent): string
+    protected function getHTMLContent($fileContent): string
     {
         return $this->convertMarkdownToHTML($fileContent);
     }
 
     /**
      * Parse the file's Markdown into HTML Content
+     * @param string $markdownContent
      */
-    public function convertMarkdownToHTML(string $markdownContent): string
+    public function convertMarkdownToHTML($markdownContent): string
     {
-        return $this->markdownConvertorInterface->convertMarkdownToHTML($markdownContent);
+        return $this->getMarkdownConvertor()->convertMarkdownToHTML($markdownContent);
     }
 }

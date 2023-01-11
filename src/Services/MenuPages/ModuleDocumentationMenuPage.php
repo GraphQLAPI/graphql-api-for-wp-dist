@@ -6,14 +6,9 @@ namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\ContentProcessors\PluginMarkdownContentRetrieverTrait;
+use GraphQLAPI\GraphQLAPI\Exception\ContentNotExistsException;
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\MenuPageHelper;
-use GraphQLAPI\GraphQLAPI\Services\MenuPages\AbstractDocsMenuPage;
-use GraphQLAPI\GraphQLAPI\Services\MenuPages\ModulesMenuPage;
-use InvalidArgumentException;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Root\App;
 
 /**
  * Module Documentation menu page
@@ -21,33 +16,44 @@ use PoP\ComponentModel\Instances\InstanceManagerInterface;
 class ModuleDocumentationMenuPage extends AbstractDocsMenuPage
 {
     use PluginMarkdownContentRetrieverTrait;
-    /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
-     */
-    protected $moduleRegistry;
 
-    public function __construct(
-        InstanceManagerInterface $instanceManager,
-        MenuPageHelper $menuPageHelper,
-        EndpointHelpers $endpointHelpers,
-        ModuleRegistryInterface $moduleRegistry
-    ) {
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
+     */
+    private $moduleRegistry;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\MenuPages\ModulesMenuPage|null
+     */
+    private $modulesMenuPage;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
+     */
+    final public function setModuleRegistry($moduleRegistry): void
+    {
         $this->moduleRegistry = $moduleRegistry;
-        parent::__construct(
-            $instanceManager,
-            $menuPageHelper,
-            $endpointHelpers
-        );
+    }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\MenuPages\ModulesMenuPage $modulesMenuPage
+     */
+    final public function setModulesMenuPage($modulesMenuPage): void
+    {
+        $this->modulesMenuPage = $modulesMenuPage;
+    }
+    final protected function getModulesMenuPage(): ModulesMenuPage
+    {
+        /** @var ModulesMenuPage */
+        return $this->modulesMenuPage = $this->modulesMenuPage ?? $this->instanceManager->getInstance(ModulesMenuPage::class);
     }
 
     public function getMenuPageSlug(): string
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
-        /**
-         * @var ModulesMenuPage
-         */
-        $modulesMenuPage = $instanceManager->getInstance(ModulesMenuPage::class);
-        return $modulesMenuPage->getMenuPageSlug();
+        return $this->getModulesMenuPage()->getMenuPageSlug();
     }
 
     /**
@@ -55,7 +61,7 @@ class ModuleDocumentationMenuPage extends AbstractDocsMenuPage
      */
     protected function isCurrentScreen(): bool
     {
-        return $this->menuPageHelper->isDocumentationScreen() && parent::isCurrentScreen();
+        return $this->getMenuPageHelper()->isDocumentationScreen() && parent::isCurrentScreen();
     }
 
     protected function openInModalWindow(): bool
@@ -73,12 +79,15 @@ class ModuleDocumentationMenuPage extends AbstractDocsMenuPage
         // This is crazy: passing ?module=Foo\Bar\module,
         // and then doing $_GET['module'], returns "Foo\\Bar\\module"
         // So parse the URL to extract the "module" param
-        $vars = [];
-        parse_str($_SERVER['REQUEST_URI'], $vars);
-        $module = urldecode($vars[RequestParams::MODULE]);
+        /** @var array<string,mixed> */
+        $result = [];
+        parse_str(App::server('REQUEST_URI'), $result);
+        /** @var string */
+        $requestedModule = $result[RequestParams::MODULE];
+        $module = urldecode($requestedModule);
         try {
-            $moduleResolver = $this->moduleRegistry->getModuleResolver($module);
-        } catch (InvalidArgumentException $exception) {
+            $moduleResolver = $this->getModuleRegistry()->getModuleResolver($module);
+        } catch (ContentNotExistsException $exception) {
             return sprintf(
                 '<p>%s</p>',
                 sprintf(

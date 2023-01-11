@@ -18,8 +18,9 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader;
 class DirectoryLoader extends FileLoader
 {
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $file
+     * @return mixed
+     * @param string|null $type
      */
     public function load($file, $type = null)
     {
@@ -36,16 +37,17 @@ class DirectoryLoader extends FileLoader
                 $this->import($dir, null, \false, $path);
             }
         }
+        return null;
     }
     /**
-     * {@inheritdoc}
-     * @param string $type
+     * @param mixed $resource
+     * @param string|null $type
      */
-    public function supports($resource, $type = null)
+    public function supports($resource, $type = null) : bool
     {
         if ('directory' === $type) {
             return \true;
         }
-        return null === $type && \is_string($resource) && '/' === \substr($resource, -1);
+        return null === $type && \is_string($resource) && \substr_compare($resource, '/', -\strlen('/')) === 0;
     }
 }

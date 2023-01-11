@@ -4,34 +4,75 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\EndpointExecuters;
 
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLEndpointCustomPostTypeInterface;
 use GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\ClientEndpointAnnotatorInterface;
 use GraphQLByPoP\GraphQLClientsForWP\Clients\AbstractClient;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use GraphQLByPoP\GraphQLClientsForWP\Constants\CustomHeaders;
+use PoP\EngineWP\HelperServices\TemplateHelpersInterface;
+use PoP\Root\App;
 
-abstract class AbstractClientEndpointExecuter extends AbstractEndpointExecuter
+abstract class AbstractClientEndpointExecuter extends AbstractCPTEndpointExecuter implements EndpointExecuterServiceTagInterface
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType|null
      */
-    protected $graphQLCustomEndpointCustomPostType;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType)
+    private $graphQLCustomEndpointCustomPostType;
+    /**
+     * @var \PoP\EngineWP\HelperServices\TemplateHelpersInterface|null
+     */
+    private $templateHelpers;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType
+     */
+    final public function setGraphQLCustomEndpointCustomPostType($graphQLCustomEndpointCustomPostType): void
     {
         $this->graphQLCustomEndpointCustomPostType = $graphQLCustomEndpointCustomPostType;
-        parent::__construct($instanceManager, $moduleRegistry);
     }
+    final protected function getGraphQLCustomEndpointCustomPostType(): GraphQLCustomEndpointCustomPostType
+    {
+        /** @var GraphQLCustomEndpointCustomPostType */
+        return $this->graphQLCustomEndpointCustomPostType = $this->graphQLCustomEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
+    }
+    /**
+     * @param \PoP\EngineWP\HelperServices\TemplateHelpersInterface $templateHelpers
+     */
+    final public function setTemplateHelpers($templateHelpers): void
+    {
+        $this->templateHelpers = $templateHelpers;
+    }
+    final protected function getTemplateHelpers(): TemplateHelpersInterface
+    {
+        /** @var TemplateHelpersInterface */
+        return $this->templateHelpers = $this->templateHelpers ?? $this->instanceManager->getInstance(TemplateHelpersInterface::class);
+    }
+
     protected function getCustomPostType(): GraphQLEndpointCustomPostTypeInterface
     {
-        return $this->graphQLCustomEndpointCustomPostType;
+        return $this->getGraphQLCustomEndpointCustomPostType();
     }
 
     public function executeEndpoint(): void
     {
-        // Print the HTML from the client, and that's it
-        echo $this->getClient()->getClientHTML();
-        die;
+        $response = App::getResponse();
+        $response->setContent($this->getClient()->getClientHTML());
+        $response->headers->set('content-type', 'text/html');
+
+        /**
+         * Add a Custom Header with the GraphQL endpoint to the response.
+         *
+         * Add it always (i.e. for both PROD and DEV) so that:
+         *
+         * - DEV: Can test that enabling/disabling the client works.
+         * - PROD: Can execute the "PROD Integration Tests"
+         * - In General: it's easier to find this useful information
+         *               (the endpoint is also printed in the HTML)
+         */
+        $response->headers->set(CustomHeaders::CLIENT_ENDPOINT, $this->getClient()->getEndpoint());
+
+        // Add a hook to send the Response to the client.
+        $this->getTemplateHelpers()->sendResponseToClient();
     }
 
     abstract protected function getClient(): AbstractClient;

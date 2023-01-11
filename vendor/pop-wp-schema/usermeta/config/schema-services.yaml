@@ -1,0 +1,10 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+
+    PoPWPSchema\UserMeta\SchemaHooks\:
+        resource: '../src/SchemaHooks/*'
+
+    PoPWPSchema\UserMeta\TypeResolvers\:
+        resource: '../src/TypeResolvers/*'

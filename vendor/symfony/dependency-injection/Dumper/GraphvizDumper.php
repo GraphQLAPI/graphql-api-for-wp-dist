@@ -28,9 +28,18 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class GraphvizDumper extends Dumper
 {
+    /**
+     * @var mixed[]
+     */
     private $nodes;
+    /**
+     * @var mixed[]
+     */
     private $edges;
     // All values should be strings
+    /**
+     * @var mixed[]
+     */
     private $options = ['graph' => ['ratio' => 'compress'], 'node' => ['fontsize' => '11', 'fontname' => 'Arial', 'shape' => 'record'], 'edge' => ['fontsize' => '9', 'fontname' => 'Arial', 'color' => 'grey', 'arrowhead' => 'open', 'arrowsize' => '0.5'], 'node.instance' => ['fillcolor' => '#9999ff', 'style' => 'filled'], 'node.definition' => ['fillcolor' => '#eeeeee'], 'node.missing' => ['fillcolor' => '#ff9999', 'style' => 'filled']];
     /**
      * Dumps the service container as a graphviz graph.
@@ -43,10 +52,9 @@ class GraphvizDumper extends Dumper
      *  * node.instance: The default options for services that are defined directly by object instances
      *  * node.definition: The default options for services that are defined via service definition instances
      *  * node.missing: The default options for missing services
-     *
-     * @return string The dot representation of the service container
+     * @param mixed[] $options
      */
-    public function dump(array $options = [])
+    public function dump($options = []) : string
     {
         foreach (['graph', 'node', 'edge', 'node.instance', 'node.definition', 'node.missing'] as $key) {
             if (isset($options[$key])) {
@@ -101,19 +109,20 @@ class GraphvizDumper extends Dumper
                 } elseif ('service_container' !== (string) $argument) {
                     $lazyEdge = $lazy || $this->container->getDefinition((string) $argument)->isLazy();
                 }
-                $edges[] = ['name' => $name, 'required' => $required, 'to' => $argument, 'lazy' => $lazyEdge];
+                $edges[] = [['name' => $name, 'required' => $required, 'to' => $argument, 'lazy' => $lazyEdge]];
             } elseif ($argument instanceof ArgumentInterface) {
-                $edges = \array_merge($edges, $this->findEdges($id, $argument->getValues(), $required, $name, \true));
+                $edges[] = $this->findEdges($id, $argument->getValues(), $required, $name, \true);
             } elseif ($argument instanceof Definition) {
-                $edges = \array_merge($edges, $this->findEdges($id, $argument->getArguments(), $required, ''), $this->findEdges($id, $argument->getProperties(), \false, ''));
+                $edges[] = $this->findEdges($id, $argument->getArguments(), $required, '');
+                $edges[] = $this->findEdges($id, $argument->getProperties(), \false, '');
                 foreach ($argument->getMethodCalls() as $call) {
-                    $edges = \array_merge($edges, $this->findEdges($id, $call[1], \false, $call[0] . '()'));
+                    $edges[] = $this->findEdges($id, $call[1], \false, $call[0] . '()');
                 }
             } elseif (\is_array($argument)) {
-                $edges = \array_merge($edges, $this->findEdges($id, $argument, $required, $name, $lazy));
+                $edges[] = $this->findEdges($id, $argument, $required, $name, $lazy);
             }
         }
-        return $edges;
+        return \array_merge([], ...$edges);
     }
     private function findNodes() : array
     {
@@ -121,12 +130,12 @@ class GraphvizDumper extends Dumper
         $container = $this->cloneContainer();
         foreach ($container->getDefinitions() as $id => $definition) {
             $class = $definition->getClass();
-            if ('\\' === \substr($class, 0, 1)) {
+            if (\strncmp($class, '\\', \strlen('\\')) === 0) {
                 $class = \substr($class, 1);
             }
             try {
                 $class = $this->container->getParameterBag()->resolveValue($class);
-            } catch (ParameterNotFoundException $e) {
+            } catch (ParameterNotFoundException $exception) {
             }
             $nodes[$id] = ['class' => \str_replace('\\', '\\\\', $class), 'attributes' => \array_merge($this->options['node.definition'], ['style' => $definition->isShared() ? 'filled' : 'dotted'])];
             $container->setDefinition($id, new Definition('stdClass'));

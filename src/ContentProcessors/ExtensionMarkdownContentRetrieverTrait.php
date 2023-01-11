@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ContentProcessors;
 
-use GraphQLAPI\GraphQLAPI\PluginManagement\ExtensionManager;
+use GraphQLAPI\GraphQLAPI\App;
+use GraphQLAPI\GraphQLAPI\PluginSkeleton\ExtensionInterface;
 
 trait ExtensionMarkdownContentRetrieverTrait
 {
+    /**
+     * @phpstan-return class-string<ExtensionInterface>
+     */
     abstract protected function getExtensionClass(): string;
 
     /**
@@ -15,10 +19,7 @@ trait ExtensionMarkdownContentRetrieverTrait
      */
     protected function getBaseDir(): string
     {
-        return (string) ExtensionManager::getConfig(
-            $this->getExtensionClass(),
-            'dir'
-        );
+        return App::getExtension($this->getExtensionClass())->getPluginDir();
     }
 
     /**
@@ -26,9 +27,6 @@ trait ExtensionMarkdownContentRetrieverTrait
      */
     protected function getBaseURL(): string
     {
-        return (string) ExtensionManager::getConfig(
-            $this->getExtensionClass(),
-            'url'
-        );
+        return App::getExtension($this->getExtensionClass())->getPluginURL();
     }
 }

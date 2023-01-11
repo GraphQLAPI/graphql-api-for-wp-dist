@@ -21,11 +21,14 @@ use PrefixedByPoP\Symfony\Component\Cache\Traits\ProxyTrait;
  */
 class Psr16Adapter extends AbstractAdapter implements PruneableInterface, ResettableInterface
 {
+    use ProxyTrait;
     /**
      * @internal
      */
     protected const NS_SEPARATOR = '_';
-    use ProxyTrait;
+    /**
+     * @var object
+     */
     private $miss;
     public function __construct(CacheInterface $pool, string $namespace = '', int $defaultLifetime = 0)
     {
@@ -34,9 +37,9 @@ class Psr16Adapter extends AbstractAdapter implements PruneableInterface, Resett
         $this->miss = new \stdClass();
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doFetch(array $ids)
+    protected function doFetch($ids) : iterable
     {
         foreach ($this->pool->getMultiple($ids, $this->miss) as $key => $value) {
             if ($this->miss !== $value) {
@@ -45,30 +48,32 @@ class Psr16Adapter extends AbstractAdapter implements PruneableInterface, Resett
         }
     }
     /**
-     * {@inheritdoc}
+     * @param string $id
      */
-    protected function doHave(string $id)
+    protected function doHave($id) : bool
     {
         return $this->pool->has($id);
     }
     /**
-     * {@inheritdoc}
+     * @param string $namespace
      */
-    protected function doClear(string $namespace)
+    protected function doClear($namespace) : bool
     {
         return $this->pool->clear();
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doDelete(array $ids)
+    protected function doDelete($ids) : bool
     {
         return $this->pool->deleteMultiple($ids);
     }
     /**
-     * {@inheritdoc}
+     * @return mixed[]|bool
+     * @param mixed[] $values
+     * @param int $lifetime
      */
-    protected function doSave(array $values, int $lifetime)
+    protected function doSave($values, $lifetime)
     {
         return $this->pool->setMultiple($values, 0 === $lifetime ? null : $lifetime);
     }

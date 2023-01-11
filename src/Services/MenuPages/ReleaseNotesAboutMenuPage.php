@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
 use GraphQLAPI\GraphQLAPI\ContentProcessors\PluginMarkdownContentRetrieverTrait;
-use PoP\ComponentModel\Facades\Instances\InstanceManagerFacade;
 
 /**
  * Release notes menu page
@@ -14,14 +13,27 @@ class ReleaseNotesAboutMenuPage extends AbstractDocAboutMenuPage
 {
     use PluginMarkdownContentRetrieverTrait;
 
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\MenuPages\AboutMenuPage|null
+     */
+    private $aboutMenuPage;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\MenuPages\AboutMenuPage $aboutMenuPage
+     */
+    final public function setAboutMenuPage($aboutMenuPage): void
+    {
+        $this->aboutMenuPage = $aboutMenuPage;
+    }
+    final protected function getAboutMenuPage(): AboutMenuPage
+    {
+        /** @var AboutMenuPage */
+        return $this->aboutMenuPage = $this->aboutMenuPage ?? $this->instanceManager->getInstance(AboutMenuPage::class);
+    }
+
     public function getMenuPageSlug(): string
     {
-        $instanceManager = InstanceManagerFacade::getInstance();
-        /**
-         * @var AboutMenuPage
-         */
-        $modulesMenuPage = $instanceManager->getInstance(AboutMenuPage::class);
-        return $modulesMenuPage->getMenuPageSlug();
+        return $this->getAboutMenuPage()->getMenuPageSlug();
     }
 
     /**
@@ -29,7 +41,7 @@ class ReleaseNotesAboutMenuPage extends AbstractDocAboutMenuPage
      */
     protected function isCurrentScreen(): bool
     {
-        return $this->menuPageHelper->isDocumentationScreen() && parent::isCurrentScreen();
+        return $this->getMenuPageHelper()->isDocumentationScreen() && parent::isCurrentScreen();
     }
 
     protected function getRelativePathDir(): string

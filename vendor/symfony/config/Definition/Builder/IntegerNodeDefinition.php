@@ -20,10 +20,8 @@ class IntegerNodeDefinition extends NumericNodeDefinition
 {
     /**
      * Instantiates a Node.
-     *
-     * @return IntegerNode The node
      */
-    protected function instantiateNode()
+    protected function instantiateNode() : \PrefixedByPoP\Symfony\Component\Config\Definition\ScalarNode
     {
         return new IntegerNode($this->name, $this->parent, $this->min, $this->max, $this->pathSeparator);
     }

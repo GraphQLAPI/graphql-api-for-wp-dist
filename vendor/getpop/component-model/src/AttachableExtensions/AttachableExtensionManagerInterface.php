@@ -3,12 +3,18 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\AttachableExtensions;
 
-use PoP\ComponentModel\AttachableExtensions\AttachableExtensionInterface;
 interface AttachableExtensionManagerInterface
 {
-    public function attachExtensionToClass(string $attachableClass, string $group, AttachableExtensionInterface $attachableExtension) : void;
+    /**
+     * @param string $attachableClass Class or "*" to represent _any_ class
+     * @param string $group
+     * @param \PoP\ComponentModel\AttachableExtensions\AttachableExtensionInterface $attachableExtension
+     */
+    public function attachExtensionToClass($attachableClass, $group, $attachableExtension) : void;
     /**
      * @return AttachableExtensionInterface[]
+     * @param string $attachableClass
+     * @param string $group
      */
-    public function getAttachedExtensions(string $attachableClass, string $group) : array;
+    public function getAttachedExtensions($attachableClass, $group) : array;
 }

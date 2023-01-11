@@ -10,19 +10,28 @@ use GraphQLByPoP\GraphQLClientsForWP\ConditionalOnContext\UseGraphiQLExplorer\Ov
 class AdminGraphiQLWithExplorerClient extends GraphiQLWithExplorerClient
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers|null
      */
-    protected $endpointHelpers;
-    public function __construct(EndpointHelpers $endpointHelpers)
+    private $endpointHelpers;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers $endpointHelpers
+     */
+    final public function setEndpointHelpers($endpointHelpers): void
     {
         $this->endpointHelpers = $endpointHelpers;
     }
+    final protected function getEndpointHelpers(): EndpointHelpers
+    {
+        /** @var EndpointHelpers */
+        return $this->endpointHelpers = $this->endpointHelpers ?? $this->instanceManager->getInstance(EndpointHelpers::class);
+    }
 
     /**
-     * Endpoint URL
+     * Endpoint URL or URL Path
      */
-    protected function getEndpointURL(): string
+    protected function getEndpointURLOrURLPath(): ?string
     {
-        return $this->endpointHelpers->getAdminConfigurableSchemaGraphQLEndpoint();
+        return $this->getEndpointHelpers()->getAdminConfigurableSchemaGraphQLEndpoint();
     }
 }

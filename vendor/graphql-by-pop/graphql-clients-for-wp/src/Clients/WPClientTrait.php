@@ -4,31 +4,38 @@ declare(strict_types=1);
 
 namespace GraphQLByPoP\GraphQLClientsForWP\Clients;
 
-use GraphQLByPoP\GraphQLClientsForWP\ComponentConfiguration;
-use GraphQLByPoP\GraphQLEndpointForWP\ComponentConfiguration as GraphQLEndpointForWPComponentConfiguration;
+use GraphQLByPoP\GraphQLClientsForWP\Module;
+use GraphQLByPoP\GraphQLClientsForWP\ModuleConfiguration;
+use GraphQLByPoP\GraphQLEndpointForWP\Module as GraphQLEndpointForWPModule;
+use GraphQLByPoP\GraphQLEndpointForWP\ModuleConfiguration as GraphQLEndpointForWPModuleConfiguration;
+use PoP\Root\App;
 
 trait WPClientTrait
 {
     /**
      * Base URL
      */
-    protected function getComponentBaseURL(): ?string
+    protected function getModuleBaseURL(): ?string
     {
-        return ComponentConfiguration::getGraphQLClientsComponentURL();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return $moduleConfiguration->getGraphQLClientsComponentURL();
     }
     /**
      * Base Dir
      */
-    protected function getComponentBaseDir(): string
+    protected function getModuleBaseDir(): string
     {
         return dirname(__FILE__, 3);
     }
 
     /**
-     * Endpoint URL
+     * Endpoint URL or URL Path
      */
-    protected function getEndpointURL(): string
+    protected function getEndpointURLOrURLPath(): ?string
     {
-        return GraphQLEndpointForWPComponentConfiguration::getGraphQLAPIEndpoint();
+        /** @var GraphQLEndpointForWPModuleConfiguration */
+        $moduleConfiguration = App::getModule(GraphQLEndpointForWPModule::class)->getConfiguration();
+        return $moduleConfiguration->getGraphQLAPIEndpoint();
     }
 }

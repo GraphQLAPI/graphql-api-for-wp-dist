@@ -16,8 +16,9 @@ trait ArgumentTrait
      * Sets the arguments to pass to the service constructor/factory method.
      *
      * @return $this
+     * @param mixed[] $arguments
      */
-    public final function args(array $arguments)
+    public final function args($arguments)
     {
         $this->definition->setArguments(static::processValue($arguments, \true));
         return $this;
@@ -25,10 +26,9 @@ trait ArgumentTrait
     /**
      * Sets one argument to pass to the service constructor/factory method.
      *
-     * @param string|int $key
-     * @param mixed      $value
-     *
      * @return $this
+     * @param string|int $key
+     * @param mixed $value
      */
     public final function arg($key, $value)
     {

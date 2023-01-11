@@ -3,9 +3,9 @@
 declare (strict_types=1);
 namespace PoP\Engine\Schema;
 
-use PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface as ComponentModelSchemaDefinitionServiceInterface;
-interface SchemaDefinitionServiceInterface extends ComponentModelSchemaDefinitionServiceInterface
+use PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface as UpstreamSchemaDefinitionServiceInterface;
+use PoP\ComponentModel\TypeResolvers\ObjectType\ObjectTypeResolverInterface;
+interface SchemaDefinitionServiceInterface extends UpstreamSchemaDefinitionServiceInterface
 {
-    public function getRootTypeSchemaKey() : string;
-    public function getRootTypeResolverClass() : string;
+    public function getSchemaRootObjectTypeResolver() : ObjectTypeResolverInterface;
 }

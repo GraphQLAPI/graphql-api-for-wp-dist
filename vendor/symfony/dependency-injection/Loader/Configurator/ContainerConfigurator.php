@@ -27,12 +27,33 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression;
 class ContainerConfigurator extends AbstractConfigurator
 {
     public const FACTORY = 'container';
+    /**
+     * @var \Symfony\Component\DependencyInjection\ContainerBuilder
+     */
     private $container;
+    /**
+     * @var \Symfony\Component\DependencyInjection\Loader\PhpFileLoader
+     */
     private $loader;
+    /**
+     * @var mixed[]
+     */
     private $instanceof;
+    /**
+     * @var string
+     */
     private $path;
+    /**
+     * @var string
+     */
     private $file;
+    /**
+     * @var int
+     */
     private $anonymousCount = 0;
+    /**
+     * @var string|null
+     */
     private $env;
     public function __construct(ContainerBuilder $container, PhpFileLoader $loader, array &$instanceof, string $path, string $file, string $env = null)
     {
@@ -43,7 +64,11 @@ class ContainerConfigurator extends AbstractConfigurator
         $this->file = $file;
         $this->env = $env;
     }
-    public final function extension(string $namespace, array $config)
+    /**
+     * @param string $namespace
+     * @param mixed[] $config
+     */
+    public final function extension($namespace, $config)
     {
         if (!$this->container->hasExtension($namespace)) {
             $extensions = \array_filter(\array_map(function (ExtensionInterface $ext) {
@@ -53,7 +78,12 @@ class ContainerConfigurator extends AbstractConfigurator
         }
         $this->container->loadFromExtension($namespace, static::processValue($config));
     }
-    public final function import(string $resource, string $type = null, $ignoreErrors = \false)
+    /**
+     * @param bool|string $ignoreErrors
+     * @param string $resource
+     * @param string|null $type
+     */
+    public final function import($resource, $type = null, $ignoreErrors = \false)
     {
         $this->loader->setCurrentDir(\dirname($this->path));
         $this->loader->import($resource, $type, $ignoreErrors, $this->file);
@@ -74,9 +104,10 @@ class ContainerConfigurator extends AbstractConfigurator
         return $this->env;
     }
     /**
-     * @return static
+     * @return $this
+     * @param string $path
      */
-    public final function withPath(string $path)
+    public final function withPath($path)
     {
         $clone = clone $this;
         $clone->path = $clone->file = $path;
@@ -92,31 +123,11 @@ function param(string $name) : ParamConfigurator
     return new ParamConfigurator($name);
 }
 /**
- * Creates a service reference.
- *
- * @deprecated since Symfony 5.1, use service() instead.
- */
-function ref(string $id) : ReferenceConfigurator
-{
-    trigger_deprecation('symfony/dependency-injection', '5.1', '"%s()" is deprecated, use "service()" instead.', __FUNCTION__);
-    return new ReferenceConfigurator($id);
-}
-/**
  * Creates a reference to a service.
  */
 function service(string $serviceId) : ReferenceConfigurator
 {
     return new ReferenceConfigurator($serviceId);
-}
-/**
- * Creates an inline service.
- *
- * @deprecated since Symfony 5.1, use inline_service() instead.
- */
-function inline(string $class = null) : InlineServiceConfigurator
-{
-    trigger_deprecation('symfony/dependency-injection', '5.1', '"%s()" is deprecated, use "inline_service()" instead.', __FUNCTION__);
-    return new InlineServiceConfigurator(new Definition($class));
 }
 /**
  * Creates an inline service.
@@ -145,17 +156,19 @@ function iterator(array $values) : IteratorArgument
 }
 /**
  * Creates a lazy iterator by tag name.
+ * @param string|mixed[] $exclude
  */
-function tagged_iterator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null, string $defaultPriorityMethod = null) : TaggedIteratorArgument
+function tagged_iterator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null, string $defaultPriorityMethod = null, $exclude = []) : TaggedIteratorArgument
 {
-    return new TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \false, $defaultPriorityMethod);
+    return new TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \false, $defaultPriorityMethod, (array) $exclude);
 }
 /**
  * Creates a service locator by tag name.
+ * @param string|mixed[] $exclude
  */
-function tagged_locator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null) : ServiceLocatorArgument
+function tagged_locator(string $tag, string $indexAttribute = null, string $defaultIndexMethod = null, string $defaultPriorityMethod = null, $exclude = []) : ServiceLocatorArgument
 {
-    return new ServiceLocatorArgument(new TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \true));
+    return new ServiceLocatorArgument(new TaggedIteratorArgument($tag, $indexAttribute, $defaultIndexMethod, \true, $defaultPriorityMethod, (array) $exclude));
 }
 /**
  * Creates an expression.
@@ -177,4 +190,19 @@ function abstract_arg(string $description) : AbstractArgument
 function env(string $name) : EnvConfigurator
 {
     return new EnvConfigurator($name);
+}
+/**
+ * Creates a closure service reference.
+ */
+function service_closure(string $serviceId) : ClosureReferenceConfigurator
+{
+    return new ClosureReferenceConfigurator($serviceId);
+}
+/**
+ * Creates a closure.
+ * @param string|mixed[]|\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator|\Symfony\Component\ExpressionLanguage\Expression $callable
+ */
+function closure($callable) : InlineServiceConfigurator
+{
+    return (new InlineServiceConfigurator(new Definition('Closure')))->factory(['Closure', 'fromCallable'])->args([$callable]);
 }

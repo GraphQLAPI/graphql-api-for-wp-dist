@@ -17,7 +17,6 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
  */
 class ServiceConfigurator extends AbstractServiceConfigurator
 {
-    public const FACTORY = 'services';
     use Traits\AbstractTrait;
     use Traits\ArgumentTrait;
     use Traits\AutoconfigureTrait;
@@ -37,12 +36,28 @@ class ServiceConfigurator extends AbstractServiceConfigurator
     use Traits\ShareTrait;
     use Traits\SyntheticTrait;
     use Traits\TagTrait;
+    public const FACTORY = 'services';
+    /**
+     * @var \Symfony\Component\DependencyInjection\ContainerBuilder
+     */
     private $container;
+    /**
+     * @var mixed[]
+     */
     private $instanceof;
+    /**
+     * @var bool
+     */
     private $allowParent;
+    /**
+     * @var string|null
+     */
     private $path;
+    /**
+     * @var bool
+     */
     private $destructed = \false;
-    public function __construct(ContainerBuilder $container, array $instanceof, bool $allowParent, ServicesConfigurator $parent, Definition $definition, $id, array $defaultTags, string $path = null)
+    public function __construct(ContainerBuilder $container, array $instanceof, bool $allowParent, ServicesConfigurator $parent, Definition $definition, ?string $id, array $defaultTags, string $path = null)
     {
         $this->container = $container;
         $this->instanceof = $instanceof;

@@ -3,8 +3,8 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Facades\AttachableExtensions;
 
+use PoP\Root\App;
 use PoP\ComponentModel\AttachableExtensions\AttachExtensionServiceInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
 class AttachExtensionServiceFacade
 {
     public static function getInstance() : AttachExtensionServiceInterface
@@ -12,7 +12,7 @@ class AttachExtensionServiceFacade
         /**
          * @var AttachExtensionServiceInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(AttachExtensionServiceInterface::class);
+        $service = App::getContainer()->get(AttachExtensionServiceInterface::class);
         return $service;
     }
 }

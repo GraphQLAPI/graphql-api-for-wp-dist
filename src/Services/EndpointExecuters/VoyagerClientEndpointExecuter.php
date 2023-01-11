@@ -6,30 +6,47 @@ namespace GraphQLAPI\GraphQLAPI\Services\EndpointExecuters;
 
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\ClientFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointVoyagerClient;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
 use GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\ClientEndpointAnnotatorInterface;
 use GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\VoyagerClientEndpointAnnotator;
 use GraphQLByPoP\GraphQLClientsForWP\Clients\AbstractClient;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 
-class VoyagerClientEndpointExecuter extends AbstractClientEndpointExecuter implements CustomEndpointExecuterServiceTagInterface
+class VoyagerClientEndpointExecuter extends AbstractClientEndpointExecuter implements EndpointExecuterServiceTagInterface
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointVoyagerClient
+     * @var \GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointVoyagerClient|null
      */
-    protected $customEndpointVoyagerClient;
+    private $customEndpointVoyagerClient;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\VoyagerClientEndpointAnnotator
+     * @var \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\VoyagerClientEndpointAnnotator|null
      */
-    protected $voyagerClientEndpointExecuter;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType, CustomEndpointVoyagerClient $customEndpointVoyagerClient, VoyagerClientEndpointAnnotator $voyagerClientEndpointExecuter)
+    private $voyagerClientEndpointAnnotator;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Clients\CustomEndpointVoyagerClient $customEndpointVoyagerClient
+     */
+    final public function setCustomEndpointVoyagerClient($customEndpointVoyagerClient): void
     {
         $this->customEndpointVoyagerClient = $customEndpointVoyagerClient;
-        $this->voyagerClientEndpointExecuter = $voyagerClientEndpointExecuter;
-        parent::__construct($instanceManager, $moduleRegistry, $graphQLCustomEndpointCustomPostType);
     }
+    final protected function getCustomEndpointVoyagerClient(): CustomEndpointVoyagerClient
+    {
+        /** @var CustomEndpointVoyagerClient */
+        return $this->customEndpointVoyagerClient = $this->customEndpointVoyagerClient ?? $this->instanceManager->getInstance(CustomEndpointVoyagerClient::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\EndpointAnnotators\VoyagerClientEndpointAnnotator $voyagerClientEndpointAnnotator
+     */
+    final public function setVoyagerClientEndpointAnnotator($voyagerClientEndpointAnnotator): void
+    {
+        $this->voyagerClientEndpointAnnotator = $voyagerClientEndpointAnnotator;
+    }
+    final protected function getVoyagerClientEndpointAnnotator(): VoyagerClientEndpointAnnotator
+    {
+        /** @var VoyagerClientEndpointAnnotator */
+        return $this->voyagerClientEndpointAnnotator = $this->voyagerClientEndpointAnnotator ?? $this->instanceManager->getInstance(VoyagerClientEndpointAnnotator::class);
+    }
+
     public function getEnablingModule(): ?string
     {
         return ClientFunctionalityModuleResolver::INTERACTIVE_SCHEMA_FOR_CUSTOM_ENDPOINTS;
@@ -42,11 +59,11 @@ class VoyagerClientEndpointExecuter extends AbstractClientEndpointExecuter imple
 
     protected function getClient(): AbstractClient
     {
-        return $this->customEndpointVoyagerClient;
+        return $this->getCustomEndpointVoyagerClient();
     }
 
     protected function getClientEndpointAnnotator(): ClientEndpointAnnotatorInterface
     {
-        return $this->voyagerClientEndpointExecuter;
+        return $this->getVoyagerClientEndpointAnnotator();
     }
 }

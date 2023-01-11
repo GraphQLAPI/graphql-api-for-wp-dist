@@ -19,62 +19,61 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\EnvParameterEx
  */
 class Compiler
 {
+    /**
+     * @var \Symfony\Component\DependencyInjection\Compiler\PassConfig
+     */
     private $passConfig;
+    /**
+     * @var mixed[]
+     */
     private $log = [];
+    /**
+     * @var \Symfony\Component\DependencyInjection\Compiler\ServiceReferenceGraph
+     */
     private $serviceReferenceGraph;
     public function __construct()
     {
         $this->passConfig = new PassConfig();
         $this->serviceReferenceGraph = new ServiceReferenceGraph();
     }
-    /**
-     * Returns the PassConfig.
-     *
-     * @return PassConfig The PassConfig instance
-     */
-    public function getPassConfig()
+    public function getPassConfig() : PassConfig
     {
         return $this->passConfig;
     }
-    /**
-     * Returns the ServiceReferenceGraph.
-     *
-     * @return ServiceReferenceGraph The ServiceReferenceGraph instance
-     */
-    public function getServiceReferenceGraph()
+    public function getServiceReferenceGraph() : ServiceReferenceGraph
     {
         return $this->serviceReferenceGraph;
     }
     /**
-     * Adds a pass to the PassConfig.
+     * @param \Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface $pass
+     * @param string $type
+     * @param int $priority
      */
-    public function addPass(CompilerPassInterface $pass, string $type = PassConfig::TYPE_BEFORE_OPTIMIZATION, int $priority = 0)
+    public function addPass($pass, $type = PassConfig::TYPE_BEFORE_OPTIMIZATION, $priority = 0)
     {
         $this->passConfig->addPass($pass, $type, $priority);
     }
     /**
      * @final
+     * @param \Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface $pass
+     * @param string $message
      */
-    public function log(CompilerPassInterface $pass, string $message)
+    public function log($pass, $message)
     {
-        if (\false !== \strpos($message, "\n")) {
+        if (\strpos($message, "\n") !== \false) {
             $message = \str_replace("\n", "\n" . \get_class($pass) . ': ', \trim($message));
         }
         $this->log[] = \get_class($pass) . ': ' . $message;
     }
-    /**
-     * Returns the log.
-     *
-     * @return array Log array
-     */
-    public function getLog()
+    public function getLog() : array
     {
         return $this->log;
     }
     /**
      * Run the Compiler and process all Passes.
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function compile(ContainerBuilder $container)
+    public function compile($container)
     {
         try {
             foreach ($this->passConfig->getPasses() as $pass) {
@@ -87,7 +86,6 @@ class Compiler
                 $msg = $prev->getMessage();
                 if ($msg !== ($resolvedMsg = $container->resolveEnvPlaceholders($msg, null, $usedEnvs))) {
                     $r = new \ReflectionProperty($prev, 'message');
-                    $r->setAccessible(\true);
                     $r->setValue($prev, $resolvedMsg);
                 }
             } while ($prev = $prev->getPrevious());

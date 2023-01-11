@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Facades\ContentProcessors;
 
-use PoP\Root\Container\ContainerBuilderFactory;
+use PoP\Root\App;
 use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface;
 
 class MarkdownContentParserFacade
@@ -14,7 +14,7 @@ class MarkdownContentParserFacade
         /**
          * @var MarkdownContentParserInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(MarkdownContentParserInterface::class);
+        $service = App::getContainer()->get(MarkdownContentParserInterface::class);
         return $service;
     }
 }

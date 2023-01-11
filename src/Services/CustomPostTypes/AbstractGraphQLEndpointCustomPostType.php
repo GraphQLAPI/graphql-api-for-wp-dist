@@ -4,34 +4,33 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\CustomPostTypes;
 
+use PoP\Root\App;
 use GraphQLAPI\GraphQLAPI\Constants\BlockAttributeNames;
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\Registries\EndpointAnnotatorRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\EndpointExecuterRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\AbstractCustomPostType;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\Hooks\HooksAPIInterface;
 use WP_Post;
 
 abstract class AbstractGraphQLEndpointCustomPostType extends AbstractCustomPostType implements GraphQLEndpointCustomPostTypeInterface
 {
     /**
-     * @var \PoP\Hooks\HooksAPIInterface
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers|null
      */
-    protected $hooksAPI;
+    private $blockHelpers;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers $blockHelpers
      */
-    protected $blockHelpers;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, UserAuthorizationInterface $userAuthorization, HooksAPIInterface $hooksAPI, BlockHelpers $blockHelpers)
+    final public function setBlockHelpers($blockHelpers): void
     {
-        $this->hooksAPI = $hooksAPI;
         $this->blockHelpers = $blockHelpers;
-        parent::__construct($instanceManager, $moduleRegistry, $userAuthorization);
     }
+    final protected function getBlockHelpers(): BlockHelpers
+    {
+        /** @var BlockHelpers */
+        return $this->blockHelpers = $this->blockHelpers ?? $this->instanceManager->getInstance(BlockHelpers::class);
+    }
+
     /**
      * Whenever this CPT is saved/updated, the timestamp must be regenerated,
      * because it contains the SchemaConfiguration block, which contains
@@ -54,8 +53,8 @@ abstract class AbstractGraphQLEndpointCustomPostType extends AbstractCustomPostT
      * Get actions to add for this CPT
      * "View" action must be attached ?view=source, and the view link is called "Execute"
      *
-     * @param WP_Post $post
-     * @return array<string, string>
+     * @return array<string,string>
+     * @param \WP_Post $post
      */
     protected function getCustomPostTypeTableActions($post): array
     {
@@ -128,8 +127,6 @@ abstract class AbstractGraphQLEndpointCustomPostType extends AbstractCustomPostT
         return $actions;
     }
 
-    abstract protected function getEndpointExecuterRegistry(): EndpointExecuterRegistryInterface;
-
     abstract protected function getEndpointAnnotatorRegistry(): EndpointAnnotatorRegistryInterface;
 
     /**
@@ -145,37 +142,6 @@ abstract class AbstractGraphQLEndpointCustomPostType extends AbstractCustomPostT
                 wp_die(\__('Access forbidden', 'graphql-api'));
             }
         }, 0);
-
-        /**
-         * Call it on "boot" after the WP_Query is parsed, so the single CPT
-         * is loaded, and asking for `is_singular(CPT)` works.
-         *
-         * Important: load it before anything else, so it can load the hooks
-         * from `executeGraphQLQuery` before these are called, which is
-         * triggered also on "boot"
-         */
-        add_action(
-            'popcms:boot',
-            function (): void {
-                /**
-                 * Execute the EndpointExecuters from the Registry:
-                 *
-                 * Only 1 executer should be executed, from among (or other injected ones):
-                 *
-                 * - Query resolution
-                 * - GraphiQL client
-                 * - Voyager client
-                 * - View query source
-                 *
-                 * All others will have `isServiceEnabled` => false, by checking
-                 * their expected value of ?view=...
-                 */
-                foreach ($this->getEndpointExecuterRegistry()->getEnabledEndpointExecuters() as $endpointExecuter) {
-                    $endpointExecuter->executeEndpoint();
-                }
-            },
-            0
-        );
     }
 
     /**
@@ -183,17 +149,20 @@ abstract class AbstractGraphQLEndpointCustomPostType extends AbstractCustomPostT
      */
     protected function isAccessForbidden(): bool
     {
-        return $this->hooksAPI->applyFilters(
+        return App::applyFilters(
             Hooks::FORBID_ACCESS,
-            false
+            false,
+            $this
         );
     }
 
     /**
      * Read the options block and check the value of attribute "isEndpointEnabled"
      * @param \WP_Post|int $postOrID
+     * @param string $attribute
+     * @param bool $default
      */
-    protected function isOptionsBlockValueOn($postOrID, string $attribute, bool $default): bool
+    protected function isOptionsBlockValueOn($postOrID, $attribute, $default): bool
     {
         $optionsBlockDataItem = $this->getOptionsBlockDataItem($postOrID);
         // If there was no options block, something went wrong in the post content
@@ -220,12 +189,12 @@ abstract class AbstractGraphQLEndpointCustomPostType extends AbstractCustomPostT
     }
 
     /**
-     * @return array<string, mixed>|null Data inside the block is saved as key (string) => value
+     * @return array<string,mixed>|null Data inside the block is saved as key (string) => value
      * @param \WP_Post|int $postOrID
      */
     public function getOptionsBlockDataItem($postOrID): ?array
     {
-        return $this->blockHelpers->getSingleBlockOfTypeFromCustomPost(
+        return $this->getBlockHelpers()->getSingleBlockOfTypeFromCustomPost(
             $postOrID,
             $this->getEndpointOptionsBlock()
         );

@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Registries;
 
-use InvalidArgumentException;
+use GraphQLAPI\GraphQLAPI\Exception\ModuleTypeNotExistsException;
 use GraphQLAPI\GraphQLAPI\Services\ModuleTypeResolvers\ModuleTypeResolverInterface;
 
 class ModuleTypeRegistry implements ModuleTypeRegistryInterface
 {
     /**
-     * @var array<string, ModuleTypeResolverInterface>
+     * @var array<string,ModuleTypeResolverInterface>
      */
     protected $moduleTypeResolvers = [];
 
-    public function addModuleTypeResolver(ModuleTypeResolverInterface $moduleTypeResolver): void
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\ModuleTypeResolvers\ModuleTypeResolverInterface $moduleTypeResolver
+     */
+    public function addModuleTypeResolver($moduleTypeResolver): void
     {
         foreach ($moduleTypeResolver->getModuleTypesToResolve() as $moduleType) {
             $this->moduleTypeResolvers[$moduleType] = $moduleTypeResolver;
@@ -22,12 +25,13 @@ class ModuleTypeRegistry implements ModuleTypeRegistryInterface
     }
 
     /**
-     * @throws InvalidArgumentException If module does not exist
+     * @throws ModuleTypeNotExistsException If module does not exist
+     * @param string $moduleType
      */
-    public function getModuleTypeResolver(string $moduleType): ModuleTypeResolverInterface
+    public function getModuleTypeResolver($moduleType): ModuleTypeResolverInterface
     {
         if (!isset($this->moduleTypeResolvers[$moduleType])) {
-            throw new InvalidArgumentException(sprintf(
+            throw new ModuleTypeNotExistsException(sprintf(
                 \__('Module type \'%s\' does not exist', 'graphql-api'),
                 $moduleType
             ));

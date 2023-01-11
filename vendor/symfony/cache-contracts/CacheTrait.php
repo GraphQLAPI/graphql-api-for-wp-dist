@@ -23,19 +23,26 @@ use PrefixedByPoP\Psr\Log\LoggerInterface;
 trait CacheTrait
 {
     /**
-     * {@inheritdoc}
+     * @return mixed
+     * @param string $key
+     * @param callable $callback
+     * @param float|null $beta
+     * @param mixed[]|null $metadata
      */
-    public function get(string $key, callable $callback, $beta = null, &$metadata = null)
+    public function get($key, $callback, $beta = null, &$metadata = null)
     {
         return $this->doGet($this, $key, $callback, $beta, $metadata);
     }
     /**
-     * {@inheritdoc}
+     * @param string $key
      */
-    public function delete(string $key) : bool
+    public function delete($key) : bool
     {
         return $this->deleteItem($key);
     }
+    /**
+     * @return mixed
+     */
     private function doGet(CacheItemPoolInterface $pool, string $key, callable $callback, ?float $beta, array &$metadata = null, LoggerInterface $logger = null)
     {
         if (0 > ($beta = $beta ?? 1.0)) {
@@ -52,7 +59,7 @@ trait CacheTrait
             if ($recompute = $ctime && $expiry && $expiry <= ($now = \microtime(\true)) - $ctime / 1000 * $beta * \log(\random_int(1, \PHP_INT_MAX) / \PHP_INT_MAX)) {
                 // force applying defaultLifetime to expiry
                 $item->expiresAt(null);
-                $logger && $logger->info('Item "{key}" elected for early recomputation {delta}s before its expiration', ['key' => $key, 'delta' => \sprintf('%.1f', $expiry - $now)]);
+                ($logger2 = $logger) ? $logger2->info('Item "{key}" elected for early recomputation {delta}s before its expiration', ['key' => $key, 'delta' => \sprintf('%.1f', $expiry - $now)]) : null;
             }
         }
         if ($recompute) {

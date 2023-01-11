@@ -7,6 +7,7 @@ use PoP\Root\Environment;
 class ApplicationInfo implements \PoP\ComponentModel\Info\ApplicationInfoInterface
 {
     /**
+     * @readonly
      * @var string
      */
     private $version;

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\EditorScripts;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\UserInterfaceFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Services\Scripts\MainPluginScriptTrait;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType;
+use GraphQLAPI\GraphQLAPI\Services\Scripts\MainPluginScriptTrait;
 
 /**
  * Components required to edit a GraphQL Persisted Query CPT
@@ -14,6 +14,24 @@ use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpoint
 class PersistedQueryEndpointComponentEditorScript extends AbstractEditorScript
 {
     use MainPluginScriptTrait;
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType|null
+     */
+    private $graphQLPersistedQueryEndpointCustomPostType;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType $graphQLPersistedQueryEndpointCustomPostType
+     */
+    final public function setGraphQLPersistedQueryEndpointCustomPostType($graphQLPersistedQueryEndpointCustomPostType): void
+    {
+        $this->graphQLPersistedQueryEndpointCustomPostType = $graphQLPersistedQueryEndpointCustomPostType;
+    }
+    final protected function getGraphQLPersistedQueryEndpointCustomPostType(): GraphQLPersistedQueryEndpointCustomPostType
+    {
+        /** @var GraphQLPersistedQueryEndpointCustomPostType */
+        return $this->graphQLPersistedQueryEndpointCustomPostType = $this->graphQLPersistedQueryEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLPersistedQueryEndpointCustomPostType::class);
+    }
 
     /**
      * Block name
@@ -67,12 +85,10 @@ class PersistedQueryEndpointComponentEditorScript extends AbstractEditorScript
      */
     protected function getAllowedPostTypes(): array
     {
-        /** @var GraphQLPersistedQueryEndpointCustomPostType */
-        $customPostTypeService = $this->instanceManager->getInstance(GraphQLPersistedQueryEndpointCustomPostType::class);
         return array_merge(
             parent::getAllowedPostTypes(),
             [
-                $customPostTypeService->getCustomPostType(),
+                $this->getGraphQLPersistedQueryEndpointCustomPostType()->getCustomPostType(),
             ]
         );
     }

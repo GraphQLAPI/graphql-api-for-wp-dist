@@ -3,25 +3,39 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Cache;
 
+use PoP\ComponentModel\Module;
+use PoP\ComponentModel\ModuleInfo;
 use PoP\ComponentModel\Constants\CachePlaceholders;
-use PoP\ComponentModel\ComponentInfo;
+use PoP\Root\App;
 trait ReplaceCurrentExecutionDataWithPlaceholdersTrait
 {
-    protected function getCacheReplacements()
+    /**
+     * @return array<int|string,int|string>
+     */
+    protected function getCacheReplacements() : array
     {
-        return [ComponentInfo::get('unique-id') => CachePlaceholders::UNIQUE_ID, ComponentInfo::get('rand') => CachePlaceholders::RAND, ComponentInfo::get('time') => CachePlaceholders::TIME];
+        /** @var ModuleInfo */
+        $moduleInfo = App::getModule(Module::class)->getInfo();
+        return [$moduleInfo->getUniqueID() => CachePlaceholders::UNIQUE_ID, $moduleInfo->getRand() => CachePlaceholders::RAND, $moduleInfo->getTime() => CachePlaceholders::TIME];
     }
-    protected function replaceCurrentExecutionDataWithPlaceholders($content)
+    /**
+     * @param string $content
+     */
+    protected function replaceCurrentExecutionDataWithPlaceholders($content) : string
     {
         $replacements = $this->getCacheReplacements();
         return \str_replace(\array_keys($replacements), \array_values($replacements), $content);
     }
+    /**
+     * @param string|string[]|null $content
+     * @return string|string[]|null
+     */
     protected function replacePlaceholdersWithCurrentExecutionData($content)
     {
         /**
          * Content may be null if it had not been cached
          */
-        if (\is_null($content)) {
+        if ($content === null) {
             return null;
         }
         // Replace the placeholder for the uniqueId with the current uniqueId
@@ -35,7 +49,7 @@ trait ReplaceCurrentExecutionDataWithPlaceholdersTrait
              * is to json_encode() it, do the str_replace() and then json_decode() it
              * @see https://www.php.net/manual/en/function.str-replace.php#100871
              */
-            return \json_decode(\str_replace($replaceFrom, $replaceTo, \json_encode($content)), \true);
+            return \json_decode(\str_replace($replaceFrom, $replaceTo, (string) \json_encode($content)), \true);
         }
         return \str_replace($replaceFrom, $replaceTo, $content);
     }

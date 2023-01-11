@@ -3,15 +3,19 @@
 declare (strict_types=1);
 namespace GraphQLAPI\ExternalDependencyWrappers\Symfony\Component\Filesystem;
 
-use RuntimeException;
-use PrefixedByPoP\Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Exception;
+use GraphQLAPI\ExternalDependencyWrappers\Symfony\Component\Exception\IOException;
+use PoP\ComponentModel\Misc\GeneralUtils;
+use PoP\Root\Services\StandaloneServiceTrait;
 use PrefixedByPoP\Symfony\Component\Filesystem\Filesystem;
 /**
  * Wrapper for Symfony\Component\Filesystem\Filesystem
  */
 class FilesystemWrapper
 {
+    use StandaloneServiceTrait;
     /**
+     * @readonly
      * @var \Symfony\Component\Filesystem\Filesystem
      */
     private $fileSystem;
@@ -22,17 +26,22 @@ class FilesystemWrapper
     /**
      * Removes files or directories.
      *
-     * @param string|iterable $files A filename, an array of files, or a \Traversable instance to remove
+     * @param string|iterable<mixed> $files A filename, an array of files, or a \Traversable instance to remove
      *
-     * @throws RuntimeException When removal fails
+     * @throws IOException When removal fails
      */
     public function remove($files) : void
     {
         try {
             $this->fileSystem->remove($files);
-        } catch (IOExceptionInterface $e) {
+        } catch (Exception $e) {
+            if (\is_string($files)) {
+                $fileItems = $files;
+            } else {
+                $fileItems = \implode($this->getTranslationAPI()->__(', ', 'external-dependency-wrappers'), GeneralUtils::iterableToArray($files));
+            }
             // Throw own exception
-            throw new RuntimeException($e->getMessage());
+            throw new IOException(\sprintf($this->getTranslationAPI()->__('Could not remove file(s) or folder(s): %s', 'external-dependency-wrappers'), $fileItems), 0, $e);
         }
     }
 }

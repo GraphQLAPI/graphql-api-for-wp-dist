@@ -1,0 +1,18 @@
+<?php
+
+declare (strict_types=1);
+namespace PoPCMSSchema\CustomPosts\ObjectTypeResolverPickers;
+
+use PoPCMSSchema\CustomPosts\Module;
+use PoPCMSSchema\CustomPosts\ModuleConfiguration;
+use PoP\ComponentModel\App;
+trait CustomPostObjectTypeResolverPickerTrait
+{
+    public abstract function getCustomPostType() : string;
+    public function isServiceEnabled() : bool
+    {
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return \in_array($this->getCustomPostType(), $moduleConfiguration->getQueryableCustomPostTypes());
+    }
+}

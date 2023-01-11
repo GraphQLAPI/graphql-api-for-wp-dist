@@ -23,6 +23,9 @@ use PrefixedByPoP\Symfony\Component\Config\Resource\SelfCheckingResourceChecker;
  */
 class ConfigCache extends ResourceCheckerConfigCache
 {
+    /**
+     * @var bool
+     */
     private $debug;
     /**
      * @param string $file  The absolute cache path
@@ -42,10 +45,8 @@ class ConfigCache extends ResourceCheckerConfigCache
      *
      * This implementation always returns true when debug is off and the
      * cache file exists.
-     *
-     * @return bool true if the cache is fresh, false otherwise
      */
-    public function isFresh()
+    public function isFresh() : bool
     {
         if (!$this->debug && \is_file($this->getPath())) {
             return \true;

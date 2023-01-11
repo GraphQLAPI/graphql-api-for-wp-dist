@@ -8,7 +8,10 @@ use PoP\Root\Container\CompilerPasses\AbstractCompilerPass;
 use PoP\Root\Container\ContainerBuilderWrapperInterface;
 abstract class AbstractAttachExtensionCompilerPass extends AbstractCompilerPass
 {
-    protected function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void
+    /**
+     * @param \PoP\Root\Container\ContainerBuilderWrapperInterface $containerBuilderWrapper
+     */
+    protected function doProcess($containerBuilderWrapper) : void
     {
         $event = $this->getAttachExtensionEvent();
         $attachableClassGroups = $this->getAttachableClassGroups();
@@ -29,7 +32,7 @@ abstract class AbstractAttachExtensionCompilerPass extends AbstractCompilerPass
                  * Then, if autoconfigure => false, the service is registered in the container,
                  * but the class is not attached.
                  * This is used for disabling the Schema services,
-                 * together with ForceAutoconfigureYamlFileLoader
+                 * together with SchemaServiceYamlFileLoader
                  */
                 if ($definition->isAutoconfigured()) {
                     $attachExtensionServiceDefinition->addMethodCall('enqueueExtension', [$event, $attachableGroup, $this->createReference($definitionID)]);

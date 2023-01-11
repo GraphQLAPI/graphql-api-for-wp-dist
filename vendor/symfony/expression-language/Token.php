@@ -27,9 +27,9 @@ class Token
     public const OPERATOR_TYPE = 'operator';
     public const PUNCTUATION_TYPE = 'punctuation';
     /**
-     * @param string                $type   The type of the token (self::*_TYPE)
-     * @param string|int|float|null $value  The token value
-     * @param int                   $cursor The cursor position in the source
+     * @param string $type   The type of the token (self::*_TYPE)
+     * @param int    $cursor The cursor position in the source
+     * @param string|int|float|null $value
      */
     public function __construct(string $type, $value, ?int $cursor)
     {
@@ -39,21 +39,17 @@ class Token
     }
     /**
      * Returns a string representation of the token.
-     *
-     * @return string A string representation of the token
      */
-    public function __toString()
+    public function __toString() : string
     {
         return \sprintf('%3d %-11s %s', $this->cursor, \strtoupper($this->type), $this->value);
     }
     /**
      * Tests the current token for a type and/or a value.
-     *
-     * @param string $type The type to test
-     *
-     * @return bool
+     * @param string $type
+     * @param string|null $value
      */
-    public function test($type, string $value = null)
+    public function test($type, $value = null) : bool
     {
         return $this->type === $type && (null === $value || $this->value == $value);
     }

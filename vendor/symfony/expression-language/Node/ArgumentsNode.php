@@ -18,7 +18,10 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  */
 class ArgumentsNode extends ArrayNode
 {
-    public function compile(Compiler $compiler)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Compiler $compiler
+     */
+    public function compile($compiler)
     {
         $this->compileArguments($compiler, \false);
     }

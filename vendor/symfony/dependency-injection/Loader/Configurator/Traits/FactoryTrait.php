@@ -12,20 +12,23 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurato
 
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator;
+use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression;
 trait FactoryTrait
 {
     /**
      * Sets a factory.
      *
-     * @param string|array|ReferenceConfigurator $factory A PHP callable reference
-     *
      * @return $this
+     * @param string|mixed[]|\Symfony\Component\DependencyInjection\Loader\Configurator\ReferenceConfigurator|\Symfony\Component\ExpressionLanguage\Expression $factory
      */
     public final function factory($factory)
     {
         if (\is_string($factory) && 1 === \substr_count($factory, ':')) {
             $factoryParts = \explode(':', $factory);
             throw new InvalidArgumentException(\sprintf('Invalid factory "%s": the "service:method" notation is not available when using PHP-based DI configuration. Use "[service(\'%s\'), \'%s\']" instead.', $factory, $factoryParts[0], $factoryParts[1]));
+        }
+        if ($factory instanceof Expression) {
+            $factory = '@=' . $factory;
         }
         $this->definition->setFactory(static::processValue($factory, \true));
         return $this;

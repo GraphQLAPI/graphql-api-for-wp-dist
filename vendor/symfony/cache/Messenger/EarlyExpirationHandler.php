@@ -18,8 +18,8 @@ use PrefixedByPoP\Symfony\Component\Messenger\Handler\MessageHandlerInterface;
  */
 class EarlyExpirationHandler implements MessageHandlerInterface
 {
-    private $reverseContainer;
-    private $processedNonces = [];
+    private ReverseContainer $reverseContainer;
+    private array $processedNonces = [];
     public function __construct(ReverseContainer $reverseContainer)
     {
         $this->reverseContainer = $reverseContainer;
@@ -47,12 +47,12 @@ class EarlyExpirationHandler implements MessageHandlerInterface
             }
         }
         static $setMetadata;
-        $setMetadata ?? ($setMetadata = \Closure::bind(function (CacheItem $item, float $startTime) {
+        $setMetadata ??= \Closure::bind(function (CacheItem $item, float $startTime) {
             if ($item->expiry > ($endTime = \microtime(\true))) {
                 $item->newMetadata[CacheItem::METADATA_EXPIRY] = $item->expiry;
                 $item->newMetadata[CacheItem::METADATA_CTIME] = (int) \ceil(1000 * ($endTime - $startTime));
             }
-        }, null, CacheItem::class));
+        }, null, CacheItem::class);
         $startTime = \microtime(\true);
         $pool = $message->findPool($this->reverseContainer);
         $callback = $message->findCallback($this->reverseContainer);

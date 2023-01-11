@@ -26,7 +26,7 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidTypeExcep
 class ScalarNode extends VariableNode
 {
     /**
-     * {@inheritdoc}
+     * @param mixed $value
      */
     protected function validateType($value)
     {
@@ -40,9 +40,9 @@ class ScalarNode extends VariableNode
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
      */
-    protected function isValueEmpty($value)
+    protected function isValueEmpty($value) : bool
     {
         // assume environment variables are never empty (which in practice is likely to be true during runtime)
         // not doing so breaks many configs that are valid today
@@ -51,9 +51,6 @@ class ScalarNode extends VariableNode
         }
         return null === $value || '' === $value;
     }
-    /**
-     * {@inheritdoc}
-     */
     protected function getValidPlaceholderTypes() : array
     {
         return ['bool', 'int', 'float', 'string'];

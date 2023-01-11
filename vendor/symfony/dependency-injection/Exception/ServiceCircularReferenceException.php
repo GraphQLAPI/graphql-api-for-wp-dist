@@ -17,7 +17,13 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Exception;
  */
 class ServiceCircularReferenceException extends RuntimeException
 {
+    /**
+     * @var string
+     */
     private $serviceId;
+    /**
+     * @var mixed[]
+     */
     private $path;
     public function __construct(string $serviceId, array $path, \Throwable $previous = null)
     {

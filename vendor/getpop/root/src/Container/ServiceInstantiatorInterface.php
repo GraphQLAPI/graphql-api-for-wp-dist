@@ -11,10 +11,14 @@ use PoP\Root\Services\AutomaticallyInstantiatedServiceInterface;
  */
 interface ServiceInstantiatorInterface
 {
-    public function addService(AutomaticallyInstantiatedServiceInterface $service) : void;
+    /**
+     * @param \PoP\Root\Services\AutomaticallyInstantiatedServiceInterface $service
+     */
+    public function addService($service) : void;
     /**
      * The SystemContainer requires no events => pass null
-     * The ApplicationContainer has 3 events (beforeBoot, boot, afterBoot)
+     * The ApplicationContainer has 3 events (moduleLoaded, boot, afterBoot)
+     * @param string|null $event
      */
-    public function initializeServices(?string $event = null) : void;
+    public function initializeServices($event = null) : void;
 }

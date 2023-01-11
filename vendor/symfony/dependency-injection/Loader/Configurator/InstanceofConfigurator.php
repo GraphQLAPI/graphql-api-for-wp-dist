@@ -16,7 +16,6 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
  */
 class InstanceofConfigurator extends AbstractServiceConfigurator
 {
-    public const FACTORY = 'instanceof';
     use Traits\AutowireTrait;
     use Traits\BindTrait;
     use Traits\CallTrait;
@@ -26,6 +25,10 @@ class InstanceofConfigurator extends AbstractServiceConfigurator
     use Traits\PublicTrait;
     use Traits\ShareTrait;
     use Traits\TagTrait;
+    public const FACTORY = 'instanceof';
+    /**
+     * @var string|null
+     */
     private $path;
     public function __construct(ServicesConfigurator $parent, Definition $definition, string $id, string $path = null)
     {
@@ -34,9 +37,9 @@ class InstanceofConfigurator extends AbstractServiceConfigurator
     }
     /**
      * Defines an instanceof-conditional to be applied to following service definitions.
-     * @return $this
+     * @param string $fqcn
      */
-    public final function instanceof(string $fqcn)
+    public final function instanceof($fqcn) : self
     {
         return $this->parent->instanceof($fqcn);
     }

@@ -11,6 +11,7 @@
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Compiler;
 
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 /**
  * This is a directed graph of your services.
  *
@@ -64,8 +65,10 @@ class ServiceReferenceGraph
     }
     /**
      * Connects 2 nodes together in the Graph.
+     * @param mixed $sourceValue
+     * @param mixed $destValue
      */
-    public function connect(?string $sourceId, $sourceValue, ?string $destId, $destValue = null, $reference = null, bool $lazy = \false, bool $weak = \false, bool $byConstructor = \false)
+    public function connect(?string $sourceId, $sourceValue, ?string $destId, $destValue = null, Reference $reference = null, bool $lazy = \false, bool $weak = \false, bool $byConstructor = \false)
     {
         if (null === $sourceId || null === $destId) {
             return;
@@ -76,6 +79,9 @@ class ServiceReferenceGraph
         $sourceNode->addOutEdge($edge);
         $destNode->addInEdge($edge);
     }
+    /**
+     * @param mixed $value
+     */
     private function createNode(string $id, $value) : ServiceReferenceGraphNode
     {
         if (isset($this->nodes[$id]) && $this->nodes[$id]->getValue() === $value) {

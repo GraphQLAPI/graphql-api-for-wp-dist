@@ -16,7 +16,10 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Expression;
  */
 abstract class AbstractCompilerPass implements CompilerPassInterface
 {
-    public final function process(ContainerBuilder $containerBuilder) : void
+    /**
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $containerBuilder
+     */
+    public final function process($containerBuilder) : void
     {
         if (!$this->enabled()) {
             return;
@@ -25,17 +28,24 @@ abstract class AbstractCompilerPass implements CompilerPassInterface
     }
     /**
      * Compiler passes must implement the logic in this function, not in `process`
+     * @param \PoP\Root\Container\ContainerBuilderWrapperInterface $containerBuilderWrapper
      */
-    protected abstract function doProcess(ContainerBuilderWrapperInterface $containerBuilderWrapper) : void;
+    protected abstract function doProcess($containerBuilderWrapper) : void;
     protected function enabled() : bool
     {
         return \true;
     }
-    protected function createReference(string $id) : Reference
+    /**
+     * @param string $id
+     */
+    protected function createReference($id) : Reference
     {
         return new Reference($id);
     }
-    protected function createExpression(string $expression) : Expression
+    /**
+     * @param string $expression
+     */
+    protected function createExpression($expression) : Expression
     {
         return new Expression($expression);
     }

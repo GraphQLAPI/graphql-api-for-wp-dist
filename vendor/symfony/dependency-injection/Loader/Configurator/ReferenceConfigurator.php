@@ -16,9 +16,11 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class ReferenceConfigurator extends AbstractConfigurator
 {
-    /** @internal */
+    /** @internal
+     * @var string */
     protected $id;
-    /** @internal */
+    /** @internal
+     * @var int */
     protected $invalidBehavior = ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE;
     public function __construct(string $id)
     {
@@ -48,10 +50,7 @@ class ReferenceConfigurator extends AbstractConfigurator
         $this->invalidBehavior = ContainerInterface::IGNORE_ON_UNINITIALIZED_REFERENCE;
         return $this;
     }
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString() : string
     {
         return $this->id;
     }

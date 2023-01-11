@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointConfigurationFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\Services\BlockCategories\BlockCategoryInterface;
 use GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\MainPluginBlockTrait;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointEditorBlockServiceTagInterface;
 
 /**
  * Persisted Query API Hierarchy block
@@ -19,6 +17,24 @@ class PersistedQueryEndpointAPIHierarchyBlock extends AbstractBlock implements P
     use OptionsBlockTrait;
 
     public const ATTRIBUTE_NAME_INHERIT_QUERY = 'inheritQuery';
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory|null
+     */
+    private $persistedQueryEndpointBlockCategory;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory $persistedQueryEndpointBlockCategory
+     */
+    final public function setPersistedQueryEndpointBlockCategory($persistedQueryEndpointBlockCategory): void
+    {
+        $this->persistedQueryEndpointBlockCategory = $persistedQueryEndpointBlockCategory;
+    }
+    final protected function getPersistedQueryEndpointBlockCategory(): PersistedQueryEndpointBlockCategory
+    {
+        /** @var PersistedQueryEndpointBlockCategory */
+        return $this->persistedQueryEndpointBlockCategory = $this->persistedQueryEndpointBlockCategory ?? $this->instanceManager->getInstance(PersistedQueryEndpointBlockCategory::class);
+    }
 
     protected function getBlockName(): string
     {
@@ -32,7 +48,7 @@ class PersistedQueryEndpointAPIHierarchyBlock extends AbstractBlock implements P
 
     public function getEnablingModule(): ?string
     {
-        return EndpointFunctionalityModuleResolver::API_HIERARCHY;
+        return EndpointConfigurationFunctionalityModuleResolver::API_HIERARCHY;
     }
 
     protected function isDynamicBlock(): bool
@@ -57,15 +73,24 @@ class PersistedQueryEndpointAPIHierarchyBlock extends AbstractBlock implements P
         return 'en';
     }
 
-    protected function getBlockCategoryClass(): ?string
+    /**
+     * Register style-index.css
+     */
+    protected function registerCommonStyleCSS(): bool
     {
-        return PersistedQueryEndpointBlockCategory::class;
+        return true;
+    }
+
+    protected function getBlockCategory(): ?BlockCategoryInterface
+    {
+        return $this->getPersistedQueryEndpointBlockCategory();
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         // Append "-front" because this style must be used only on the client, not on the admin
         $className = $this->getBlockClassName() . '-front';
@@ -108,7 +133,7 @@ EOT;
 
         return sprintf(
             $blockContentPlaceholder,
-            $className . ' ' . $this->getAlignClass(),
+            $className . ' ' . $this->getAlignClassName(),
             $className . '__title',
             \__('API Hierarchy', 'graphql-api'),
             $blockContent

@@ -4,29 +4,41 @@ services:
         autowire: true
         autoconfigure: true
 
+    GraphQLByPoP\GraphQLServer\Registries\MandatoryOperationDirectiveResolverRegistryInterface:
+        class: \GraphQLByPoP\GraphQLServer\Registries\MandatoryOperationDirectiveResolverRegistry
+
     GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistryInterface:
         class: \GraphQLByPoP\GraphQLServer\Registries\SchemaDefinitionReferenceRegistry
-
-    PoP\ComponentModel\Schema\SchemaDefinitionServiceInterface:
-        class: \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionService
 
     GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface:
         class: \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionService
 
+    GraphQLByPoP\GraphQLServer\Syntax\GraphQLSyntaxServiceInterface:
+        class: \GraphQLByPoP\GraphQLServer\Syntax\GraphQLSyntaxService
+
+    GraphQLByPoP\GraphQLServer\QueryResolution\GraphQLQueryASTTransformationServiceInterface:
+        class: \GraphQLByPoP\GraphQLServer\QueryResolution\GraphQLQueryASTTransformationService
+
+    GraphQLByPoP\GraphQLServer\State\:
+        resource: '../src/State/*'
+
     GraphQLByPoP\GraphQLServer\Hooks\:
         resource: '../src/Hooks/*'
 
-    GraphQLByPoP\GraphQLServer\ModuleProcessors\:
-        resource: '../src/ModuleProcessors/*'
+    GraphQLByPoP\GraphQLServer\ComponentProcessors\:
+        resource: '../src/ComponentProcessors/*'
 
-    GraphQLByPoP\GraphQLServer\RouteModuleProcessors\:
-        resource: '../src/RouteModuleProcessors/*'
-
-    GraphQLByPoP\GraphQLServer\Enums\:
-        resource: '../src/Enums/*'
+    GraphQLByPoP\GraphQLServer\ComponentRoutingProcessors\:
+        resource: '../src/ComponentRoutingProcessors/*'
 
     GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot:
         class: \GraphQLByPoP\GraphQLServer\ObjectModels\QueryRoot
 
     GraphQLByPoP\GraphQLServer\ObjectModels\MutationRoot:
         class: \GraphQLByPoP\GraphQLServer\ObjectModels\MutationRoot
+
+    GraphQLByPoP\GraphQLServer\IFTTT\MandatoryDirectivesForFieldsRootTypeEntryDuplicatorInterface:
+        class: \GraphQLByPoP\GraphQLServer\IFTTT\MandatoryDirectivesForFieldsRootTypeEntryDuplicator
+
+    GraphQLByPoP\GraphQLServer\Helpers\TypeResolverHelperInterface:
+        class: \GraphQLByPoP\GraphQLServer\Helpers\TypeResolverHelper

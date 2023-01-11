@@ -15,8 +15,14 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Argument;
  */
 final class AbstractArgument
 {
+    /**
+     * @var string
+     */
     private $text;
-    private $context;
+    /**
+     * @var string
+     */
+    private $context = '';
     public function __construct(string $text = '')
     {
         $this->text = \trim($text, '. ');

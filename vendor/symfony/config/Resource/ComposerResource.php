@@ -19,7 +19,13 @@ namespace PrefixedByPoP\Symfony\Component\Config\Resource;
  */
 class ComposerResource implements SelfCheckingResourceInterface
 {
+    /**
+     * @var mixed[]
+     */
     private $vendors;
+    /**
+     * @var mixed[]
+     */
     private static $runtimeVendors;
     public function __construct()
     {
@@ -30,17 +36,14 @@ class ComposerResource implements SelfCheckingResourceInterface
     {
         return \array_keys($this->vendors);
     }
-    /**
-     * {@inheritdoc}
-     */
     public function __toString() : string
     {
         return __CLASS__;
     }
     /**
-     * {@inheritdoc}
+     * @param int $timestamp
      */
-    public function isFresh(int $timestamp) : bool
+    public function isFresh($timestamp) : bool
     {
         self::refresh();
         return \array_values(self::$runtimeVendors) === \array_values($this->vendors);
@@ -49,7 +52,7 @@ class ComposerResource implements SelfCheckingResourceInterface
     {
         self::$runtimeVendors = [];
         foreach (\get_declared_classes() as $class) {
-            if ('C' === $class[0] && 0 === \strpos($class, 'ComposerAutoloaderInit')) {
+            if ('C' === $class[0] && \strncmp($class, 'ComposerAutoloaderInit', \strlen('ComposerAutoloaderInit')) === 0) {
                 $r = new \ReflectionClass($class);
                 $v = \dirname($r->getFileName(), 2);
                 if (\is_file($v . '/composer/installed.json')) {

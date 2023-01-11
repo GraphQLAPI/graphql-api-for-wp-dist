@@ -3,8 +3,8 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\Facades\HelperServices;
 
+use PoP\Root\App;
 use PoP\ComponentModel\HelperServices\RequestHelperServiceInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
 class RequestHelperServiceFacade
 {
     public static function getInstance() : RequestHelperServiceInterface
@@ -12,7 +12,7 @@ class RequestHelperServiceFacade
         /**
          * @var RequestHelperServiceInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(RequestHelperServiceInterface::class);
+        $service = App::getContainer()->get(RequestHelperServiceInterface::class);
         return $service;
     }
 }

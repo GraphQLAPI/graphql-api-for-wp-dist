@@ -10,6 +10,7 @@
  */
 namespace PrefixedByPoP\Symfony\Component\Config\Definition\Builder;
 
+use PrefixedByPoP\Symfony\Component\Config\Definition\NodeInterface;
 use PrefixedByPoP\Symfony\Component\Config\Definition\VariableNode;
 /**
  * This class provides a fluent interface for defining a node.
@@ -20,17 +21,12 @@ class VariableNodeDefinition extends NodeDefinition
 {
     /**
      * Instantiate a Node.
-     *
-     * @return VariableNode The node
      */
-    protected function instantiateNode()
+    protected function instantiateNode() : VariableNode
     {
         return new VariableNode($this->name, $this->parent, $this->pathSeparator);
     }
-    /**
-     * {@inheritdoc}
-     */
-    protected function createNode()
+    protected function createNode() : NodeInterface
     {
         $node = $this->instantiateNode();
         if (null !== $this->normalization) {

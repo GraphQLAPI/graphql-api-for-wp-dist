@@ -3,8 +3,8 @@
 declare (strict_types=1);
 namespace PoP\LooseContracts\Facades;
 
+use PoP\Root\App;
 use PoP\LooseContracts\NameResolverInterface;
-use PoP\Root\Container\ContainerBuilderFactory;
 class NameResolverFacade
 {
     public static function getInstance() : NameResolverInterface
@@ -12,7 +12,7 @@ class NameResolverFacade
         /**
          * @var NameResolverInterface
          */
-        $service = ContainerBuilderFactory::getInstance()->get(NameResolverInterface::class);
+        $service = App::getContainer()->get(NameResolverInterface::class);
         return $service;
     }
 }

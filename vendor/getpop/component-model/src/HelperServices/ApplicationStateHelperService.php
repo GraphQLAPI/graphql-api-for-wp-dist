@@ -3,12 +3,12 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\HelperServices;
 
-use PoP\ComponentModel\State\ApplicationState;
+use PoP\Root\App;
+use PoP\ComponentModel\Constants\Outputs;
 class ApplicationStateHelperService implements \PoP\ComponentModel\HelperServices\ApplicationStateHelperServiceInterface
 {
     public function doingJSON() : bool
     {
-        $vars = ApplicationState::getVars();
-        return $vars['output'] == \PoP\ComponentModel\Constants\Outputs::JSON;
+        return App::getState('output') === Outputs::JSON;
     }
 }

@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Settings;
 
 use GraphQLAPI\GraphQLAPI\Facades\Registries\SystemModuleRegistryFacade;
-use GraphQLAPI\GraphQLAPI\Settings\Options;
 
 class UserSettingsManager implements UserSettingsManagerInterface
 {
+    private const TIMESTAMP_CONTAINER = 'container';
+    private const TIMESTAMP_OPERATIONAL = 'operational';
+
     /**
      * Cache the values in memory
      *
-     * @var array<string, array>
+     * @var array<string,array<string,mixed>>
      */
     protected $options = [];
 
@@ -36,37 +38,85 @@ class UserSettingsManager implements UserSettingsManagerInterface
      *
      * By providing `time()`, the cached service container is always
      * a one-time-use before accessing the wp-admin and
-     * having a new timestamp generated via `invalidateCache`.
+     * having a new timestamp generated via `purgeContainer`.
+     * @param string $key
      */
-    public function getTimestamp(): int
+    protected function getTimestamp($key): int
     {
-        return (int) \get_option(Options::TIMESTAMP, time());
+        $timestamps = \get_option(Options::TIMESTAMPS, [$key => time()]);
+        return (int) $timestamps[$key];
+    }
+    /**
+     * Static timestamp, reflecting when the service container has been regenerated.
+     * Should change not so often
+     */
+    public function getContainerTimestamp(): int
+    {
+        return $this->getTimestamp(self::TIMESTAMP_CONTAINER);
+    }
+    /**
+     * Dynamic timestamp, reflecting when new entities modifying the schema are
+     * added to the DB. Can change often
+     */
+    public function getOperationalTimestamp(): int
+    {
+        return $this->getTimestamp(self::TIMESTAMP_OPERATIONAL);
     }
     /**
      * Store the current time to indicate the latest executed write to DB,
-     * concerning plugin activation, module enabled/disabled, user settings updated
+     * concerning plugin activation, module enabled/disabled, user settings updated,
+     * to refresh the Service Container.
+     *
+     * When this value is updated, the "operational" timestamp is also updated.
      */
-    public function storeTimestamp(): void
+    public function storeContainerTimestamp(): void
     {
-        \update_option(Options::TIMESTAMP, time());
+        $time = time();
+        $timestamps = [
+            self::TIMESTAMP_CONTAINER => $time,
+            self::TIMESTAMP_OPERATIONAL => $time,
+        ];
+        \update_option(Options::TIMESTAMPS, $timestamps);
+    }
+    /**
+     * Store the current time to indicate the latest executed write to DB,
+     * concerning CPT entity created or modified (such as Schema Configuration,
+     * ACL, etc), to refresh the GraphQL schema
+     */
+    public function storeOperationalTimestamp(): void
+    {
+        $timestamps = [
+            self::TIMESTAMP_CONTAINER => $this->getContainerTimestamp(),
+            self::TIMESTAMP_OPERATIONAL => time(),
+        ];
+        \update_option(Options::TIMESTAMPS, $timestamps);
     }
     /**
      * Remove the timestamp
      */
-    public function removeTimestamp(): void
+    public function removeTimestamps(): void
     {
-        \delete_option(Options::TIMESTAMP);
+        \delete_option(Options::TIMESTAMPS);
     }
 
-    public function hasSetting(string $item): bool
+    /**
+     * @param string $module
+     * @param string $option
+     */
+    public function hasSetting($module, $option): bool
     {
+        $moduleRegistry = SystemModuleRegistryFacade::getInstance();
+        $moduleResolver = $moduleRegistry->getModuleResolver($module);
+        $item = $moduleResolver->getSettingOptionName($module, $option);
         return $this->hasItem(Options::SETTINGS, $item);
     }
 
     /**
      * @return mixed
+     * @param string $module
+     * @param string $option
      */
-    public function getSetting(string $module, string $option)
+    public function getSetting($module, $option)
     {
         $moduleRegistry = SystemModuleRegistryFacade::getInstance();
         $moduleResolver = $moduleRegistry->getModuleResolver($module);
@@ -81,40 +131,107 @@ class UserSettingsManager implements UserSettingsManagerInterface
         return $moduleResolver->getSettingsDefaultValue($module, $option);
     }
 
-    public function hasSetModuleEnabled(string $moduleID): bool
+    /**
+     * @param mixed $value
+     * @param string $module
+     * @param string $option
+     */
+    public function setSetting($module, $option, $value): void
+    {
+        $moduleRegistry = SystemModuleRegistryFacade::getInstance();
+        $moduleResolver = $moduleRegistry->getModuleResolver($module);
+
+        $item = $moduleResolver->getSettingOptionName($module, $option);
+
+        $this->setOptionItem(Options::SETTINGS, $item, $value);
+    }
+
+    /**
+     * @param array<string,mixed> $optionValues
+     * @param string $module
+     */
+    public function setSettings($module, $optionValues): void
+    {
+        $moduleRegistry = SystemModuleRegistryFacade::getInstance();
+        $moduleResolver = $moduleRegistry->getModuleResolver($module);
+
+        $itemValues = [];
+        foreach ($optionValues as $option => $value) {
+            $item = $moduleResolver->getSettingOptionName($module, $option);
+            $itemValues[$item] = $value;
+        }
+
+        $this->setOptionItems(Options::SETTINGS, $itemValues);
+    }
+
+    /**
+     * @param string $moduleID
+     */
+    public function hasSetModuleEnabled($moduleID): bool
     {
         return $this->hasItem(Options::MODULES, $moduleID);
     }
 
-    public function isModuleEnabled(string $moduleID): bool
+    /**
+     * @param string $moduleID
+     */
+    public function isModuleEnabled($moduleID): bool
     {
         return (bool) $this->getItem(Options::MODULES, $moduleID);
     }
 
-    public function setModuleEnabled(string $moduleID, bool $isEnabled): void
+    /**
+     * @param string $moduleID
+     * @param bool $isEnabled
+     */
+    public function setModuleEnabled($moduleID, $isEnabled): void
     {
-        $this->storeItem(Options::MODULES, $moduleID, $isEnabled);
-
-        // Update the timestamp
-        $this->storeTimestamp();
+        $this->setOptionItem(Options::MODULES, $moduleID, $isEnabled);
     }
 
     /**
-     * @param array<string, bool> $moduleIDValues
+     * @param mixed $value
+     * @param string $optionName
+     * @param string $item
      */
-    public function setModulesEnabled(array $moduleIDValues): void
+    protected function setOptionItem($optionName, $item, $value): void
+    {
+        $this->storeItem($optionName, $item, $value);
+
+        // Update the timestamp
+        $this->storeContainerTimestamp();
+    }
+
+    /**
+     * @param array<string,mixed> $itemValues
+     * @param string $optionName
+     */
+    protected function setOptionItems($optionName, $itemValues): void
+    {
+        $this->storeItems($optionName, $itemValues);
+
+        // Update the timestamp
+        $this->storeContainerTimestamp();
+    }
+
+    /**
+     * @param array<string,bool> $moduleIDValues
+     */
+    public function setModulesEnabled($moduleIDValues): void
     {
         $this->storeItems(Options::MODULES, $moduleIDValues);
 
         // Update the timestamp
-        $this->storeTimestamp();
+        $this->storeContainerTimestamp();
     }
 
     /**
      * Get the stored value for the option under the group
      * @return mixed
+     * @param string $optionName
+     * @param string $item
      */
-    protected function getItem(string $optionName, string $item)
+    protected function getItem($optionName, $item)
     {
         $this->maybeLoadOptions($optionName);
         return $this->options[$optionName][$item];
@@ -122,8 +239,10 @@ class UserSettingsManager implements UserSettingsManagerInterface
 
     /**
      * Is there a stored value for the option under the group
+     * @param string $optionName
+     * @param string $item
      */
-    protected function hasItem(string $optionName, string $item): bool
+    protected function hasItem($optionName, $item): bool
     {
         $this->maybeLoadOptions($optionName);
         return isset($this->options[$optionName][$item]);
@@ -131,8 +250,9 @@ class UserSettingsManager implements UserSettingsManagerInterface
 
     /**
      * Load the options from the DB
+     * @param string $optionName
      */
-    protected function maybeLoadOptions(string $optionName): void
+    protected function maybeLoadOptions($optionName): void
     {
         // Lazy load the options
         if (!isset($this->options[$optionName])) {
@@ -143,8 +263,10 @@ class UserSettingsManager implements UserSettingsManagerInterface
     /**
      * Store the options in the DB
      * @param mixed $value
+     * @param string $optionName
+     * @param string $item
      */
-    protected function storeItem(string $optionName, string $item, $value): void
+    protected function storeItem($optionName, $item, $value): void
     {
         $this->storeItems($optionName, [$item => $value]);
     }
@@ -152,9 +274,10 @@ class UserSettingsManager implements UserSettingsManagerInterface
     /**
      * Store the options in the DB
      *
-     * @param array<string, mixed> $itemValues
+     * @param array<string,mixed> $itemValues
+     * @param string $optionName
      */
-    protected function storeItems(string $optionName, array $itemValues): void
+    protected function storeItems($optionName, $itemValues): void
     {
         $this->maybeLoadOptions($optionName);
         // Change the values of the items

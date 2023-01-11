@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
+use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface;
 use GraphQLAPI\GraphQLAPI\Plugin;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
 
 class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModuleResolver
 {
@@ -13,8 +13,25 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
     use UserInterfaceFunctionalityModuleResolverTrait;
 
     public const EXCERPT_AS_DESCRIPTION = Plugin::NAMESPACE . '\excerpt-as-description';
-    public const LOW_LEVEL_PERSISTED_QUERY_EDITING = Plugin::NAMESPACE . '\low-level-persisted-query-editing';
     public const WELCOME_GUIDES = Plugin::NAMESPACE . '\welcome-guides';
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface|null
+     */
+    private $markdownContentParser;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface $markdownContentParser
+     */
+    final public function setMarkdownContentParser($markdownContentParser): void
+    {
+        $this->markdownContentParser = $markdownContentParser;
+    }
+    final protected function getMarkdownContentParser(): MarkdownContentParserInterface
+    {
+        /** @var MarkdownContentParserInterface */
+        return $this->markdownContentParser = $this->markdownContentParser ?? $this->instanceManager->getInstance(MarkdownContentParserInterface::class);
+    }
 
     /**
      * @return string[]
@@ -22,24 +39,18 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
     public function getModulesToResolve(): array
     {
         return [
-            self::LOW_LEVEL_PERSISTED_QUERY_EDITING,
             self::EXCERPT_AS_DESCRIPTION,
             self::WELCOME_GUIDES,
         ];
     }
 
     /**
-     * @return array<array> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @return array<string[]> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @param string $module
      */
-    public function getDependedModuleLists(string $module): array
+    public function getDependedModuleLists($module): array
     {
         switch ($module) {
-            case self::LOW_LEVEL_PERSISTED_QUERY_EDITING:
-                return [
-                    [
-                        EndpointFunctionalityModuleResolver::PERSISTED_QUERIES,
-                    ],
-                ];
             case self::EXCERPT_AS_DESCRIPTION:
                 return [];
             case self::WELCOME_GUIDES:
@@ -53,7 +64,10 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
         return parent::getDependedModuleLists($module);
     }
 
-    public function areRequirementsSatisfied(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function areRequirementsSatisfied($module): bool
     {
         switch ($module) {
             case self::WELCOME_GUIDES:
@@ -70,7 +84,10 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
         return parent::areRequirementsSatisfied($module);
     }
 
-    public function isHidden(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function isHidden($module): bool
     {
         switch ($module) {
             case self::WELCOME_GUIDES:
@@ -79,23 +96,29 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
         return parent::isHidden($module);
     }
 
-    public function getName(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getName($module): string
     {
-        $names = [
-            self::EXCERPT_AS_DESCRIPTION => \__('Excerpt as Description', 'graphql-api'),
-            self::LOW_LEVEL_PERSISTED_QUERY_EDITING => \__('Low-Level Persisted Query Editing', 'graphql-api'),
-            self::WELCOME_GUIDES => \__('Welcome Guides', 'graphql-api'),
-        ];
-        return $names[$module] ?? $module;
+        switch ($module) {
+            case self::EXCERPT_AS_DESCRIPTION:
+                return \__('Excerpt as Description', 'graphql-api');
+            case self::WELCOME_GUIDES:
+                return \__('Welcome Guides', 'graphql-api');
+            default:
+                return $module;
+        }
     }
 
-    public function getDescription(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getDescription($module): string
     {
         switch ($module) {
             case self::EXCERPT_AS_DESCRIPTION:
                 return \__('Provide a description of the different entities (Custom Endpoints, Persisted Queries, and others) through their excerpt', 'graphql-api');
-            case self::LOW_LEVEL_PERSISTED_QUERY_EDITING:
-                return \__('Have access to directives to be applied to the schema when editing persisted queries', 'graphql-api');
             case self::WELCOME_GUIDES:
                 return sprintf(
                     \__('Display welcome guides which demonstrate how to use the plugin\'s different functionalities. <em>It requires WordPress version \'%s\' or above, or Gutenberg version \'%s\' or above</em>', 'graphql-api'),
@@ -106,10 +129,12 @@ class UserInterfaceFunctionalityModuleResolver extends AbstractFunctionalityModu
         return parent::getDescription($module);
     }
 
-    public function isEnabledByDefault(string $module): bool
+    /**
+     * @param string $module
+     */
+    public function isEnabledByDefault($module): bool
     {
         switch ($module) {
-            case self::LOW_LEVEL_PERSISTED_QUERY_EDITING:
             case self::WELCOME_GUIDES:
                 return false;
         }

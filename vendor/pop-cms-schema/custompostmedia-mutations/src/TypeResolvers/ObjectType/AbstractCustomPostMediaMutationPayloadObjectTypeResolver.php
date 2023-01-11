@@ -1,0 +1,9 @@
+<?php
+
+declare (strict_types=1);
+namespace PoPCMSSchema\CustomPostMediaMutations\TypeResolvers\ObjectType;
+
+use PoPSchema\SchemaCommons\TypeResolvers\ObjectType\AbstractObjectMutationPayloadObjectTypeResolver;
+abstract class AbstractCustomPostMediaMutationPayloadObjectTypeResolver extends AbstractObjectMutationPayloadObjectTypeResolver
+{
+}

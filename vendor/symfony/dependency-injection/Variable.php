@@ -25,15 +25,15 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection;
  */
 class Variable
 {
+    /**
+     * @var string
+     */
     private $name;
     public function __construct(string $name)
     {
         $this->name = $name;
     }
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString() : string
     {
         return $this->name;
     }

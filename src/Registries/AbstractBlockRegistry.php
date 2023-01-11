@@ -4,37 +4,40 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Registries;
 
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
+use GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface;
 use PoP\Root\Services\ServiceInterface;
 
-class AbstractBlockRegistry implements BlockRegistryInterface
+abstract class AbstractBlockRegistry implements BlockRegistryInterface
 {
     /**
-     * @var AbstractBlock[]
+     * @var BlockInterface[]
      */
     protected $blocks = [];
 
-    public function addBlock(AbstractBlock $block): void
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface $block
+     */
+    public function addBlock($block): void
     {
         $this->blocks[] = $block;
     }
     /**
-     * @return AbstractBlock[]
+     * @return BlockInterface[]
      */
     public function getBlocks(): array
     {
         return $this->blocks;
     }
     /**
-     * @return AbstractBlock[]
+     * @return BlockInterface[]
      */
     public function getEnabledBlocks(): array
     {
-        return array_filter(
+        return array_values(array_filter(
             $this->getBlocks(),
             function (ServiceInterface $service) {
                 return $service->isServiceEnabled();
             }
-        );
+        ));
     }
 }

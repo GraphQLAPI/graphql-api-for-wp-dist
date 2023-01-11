@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
-use GraphQLAPI\GraphQLAPI\Services\MenuPages\AbstractPluginMenuPage;
 use GraphQLAPI\GraphQLAPI\Admin\Tables\AbstractItemListTable;
 
 /**
@@ -64,6 +63,9 @@ abstract class AbstractTableMenuPage extends AbstractPluginMenuPage
         return str_replace(' ', '_', strtolower($this->getScreenOptionLabel())) . '_per_page';
     }
 
+    /**
+     * @return class-string<AbstractItemListTable>
+     */
     abstract protected function getTableClass(): string;
 
     public function initializeTable(): void
@@ -126,13 +128,13 @@ abstract class AbstractTableMenuPage extends AbstractPluginMenuPage
          */
         \add_action(
             'admin_menu',
-            function () {
+            function (): void {
                 /**
                  * Attach to the hook corresponding to this page
                  */
                 \add_action(
                     'load-' . $this->getHookName(),
-                    [$this, 'initializeTable']
+                    \Closure::fromCallable([$this, 'initializeTable'])
                 );
             },
             PHP_INT_MAX

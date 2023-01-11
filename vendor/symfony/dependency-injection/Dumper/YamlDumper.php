@@ -35,27 +35,27 @@ use PrefixedByPoP\Symfony\Component\Yaml\Yaml;
  */
 class YamlDumper extends Dumper
 {
+    /**
+     * @var YmlDumper
+     */
     private $dumper;
     /**
      * Dumps the service container as an YAML string.
-     *
-     * @return string A YAML string representing of the service container
+     * @param mixed[] $options
      */
-    public function dump(array $options = [])
+    public function dump($options = []) : string
     {
-        if (!\class_exists(\PrefixedByPoP\Symfony\Component\Yaml\Dumper::class)) {
+        if (!\class_exists(YmlDumper::class)) {
             throw new LogicException('Unable to dump the container as the Symfony Yaml Component is not installed.');
         }
-        if (null === $this->dumper) {
-            $this->dumper = new YmlDumper();
-        }
+        $this->dumper = $this->dumper ?? new YmlDumper();
         return $this->container->resolveEnvPlaceholders($this->addParameters() . "\n" . $this->addServices());
     }
     private function addService(string $id, Definition $definition) : string
     {
         $code = "    {$id}:\n";
         if ($class = $definition->getClass()) {
-            if ('\\' === \substr($class, 0, 1)) {
+            if (\strncmp($class, '\\', \strlen('\\')) === 0) {
                 $class = \substr($class, 1);
             }
             $code .= \sprintf("        class: %s\n", $this->dumper->dump($class));
@@ -185,9 +185,7 @@ class YamlDumper extends Dumper
     }
     /**
      * Dumps callable to YAML format.
-     *
      * @param mixed $callable
-     *
      * @return mixed
      */
     private function dumpCallable($callable)
@@ -204,15 +202,15 @@ class YamlDumper extends Dumper
     /**
      * Dumps the value to YAML format.
      *
-     * @return mixed
-     *
      * @throws RuntimeException When trying to dump object or resource
+     * @param mixed $value
+     * @return mixed
      */
     private function dumpValue($value)
     {
         if ($value instanceof ServiceClosureArgument) {
             $value = $value->getValues()[0];
-            return new TaggedValue('service_closure', $this->getServiceCall((string) $value, $value));
+            return new TaggedValue('service_closure', $this->dumpValue($value));
         }
         if ($value instanceof ArgumentInterface) {
             $tag = $value;
@@ -227,6 +225,12 @@ class YamlDumper extends Dumper
                     if (null !== $tag->getDefaultPriorityMethod()) {
                         $content['default_priority_method'] = $tag->getDefaultPriorityMethod();
                     }
+                }
+                if ($excludes = $tag->getExclude()) {
+                    if (!\is_array($content)) {
+                        $content = ['tag' => $content];
+                    }
+                    $content['exclude'] = 1 === \count($excludes) ? $excludes[0] : $excludes;
                 }
                 return new TaggedValue($value instanceof TaggedIteratorArgument ? 'tagged_iterator' : 'tagged_locator', $content);
             }
@@ -253,7 +257,7 @@ class YamlDumper extends Dumper
             return $this->getExpressionCall((string) $value);
         } elseif ($value instanceof Definition) {
             return new TaggedValue('service', (new Parser())->parse("_:\n" . $this->addService('_', $value), Yaml::PARSE_CUSTOM_TAGS)['_']['_']);
-        } elseif ($value instanceof \PrefixedByPoP\UnitEnum) {
+        } elseif ($value instanceof \UnitEnum) {
             return new TaggedValue('php/const', \sprintf('%s::%s', \get_class($value), $value->name));
         } elseif ($value instanceof AbstractArgument) {
             return new TaggedValue('abstract', $value->getText());
@@ -292,7 +296,7 @@ class YamlDumper extends Dumper
         foreach ($parameters as $key => $value) {
             if (\is_array($value)) {
                 $value = $this->prepareParameters($value, $escape);
-            } elseif ($value instanceof Reference || \is_string($value) && 0 === \strpos($value, '@')) {
+            } elseif ($value instanceof Reference || \is_string($value) && \strncmp($value, '@', \strlen('@')) === 0) {
                 $value = '@' . $value;
             }
             $filtered[$key] = $value;

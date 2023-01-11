@@ -14,7 +14,10 @@ abstract class AbstractEndpointExecuterRegistry implements EndpointExecuterRegis
      */
     protected $endpointExecuters = [];
 
-    public function addEndpointExecuter(EndpointExecuterInterface $endpointExecuter): void
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\EndpointExecuters\EndpointExecuterInterface $endpointExecuter
+     */
+    public function addEndpointExecuter($endpointExecuter): void
     {
         $this->endpointExecuters[] = $endpointExecuter;
     }
@@ -32,11 +35,11 @@ abstract class AbstractEndpointExecuterRegistry implements EndpointExecuterRegis
      */
     public function getEnabledEndpointExecuters(): array
     {
-        return array_filter(
+        return array_values(array_filter(
             $this->getEndpointExecuters(),
             function (ServiceInterface $service) {
                 return $service->isServiceEnabled();
             }
-        );
+        ));
     }
 }

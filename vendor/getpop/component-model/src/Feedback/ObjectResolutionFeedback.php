@@ -1,0 +1,68 @@
+<?php
+
+declare (strict_types=1);
+namespace PoP\ComponentModel\Feedback;
+
+use PoP\ComponentModel\Engine\EngineIterationFieldSet;
+use PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface;
+use PoP\GraphQLParser\Spec\Parser\Ast\AstInterface;
+use PoP\GraphQLParser\Spec\Parser\Ast\Directive;
+use PoP\Root\Feedback\FeedbackItemResolution;
+/**
+ * The ObjectResolutionFeedback is used to store errors that happen during
+ * a directive pipeline stage. The `$astNode` is where the error
+ * happens, and the `$directive` is the Directive executing that
+ * stage on the pipeline.
+ */
+class ObjectResolutionFeedback extends \PoP\ComponentModel\Feedback\AbstractQueryFeedback implements \PoP\ComponentModel\Feedback\ObjectResolutionFeedbackInterface
+{
+    /**
+     * @var \PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface
+     */
+    protected $relationalTypeResolver;
+    /**
+     * @var Directive
+     */
+    protected $directive;
+    /**
+     * @var array<(string | int), EngineIterationFieldSet>
+     */
+    protected $idFieldSet;
+    /**
+     * @param Directive $directive At what stage from the Directive pipeline does the error happen
+     * @param array<string|int,EngineIterationFieldSet> $idFieldSet
+     * @param array<string,mixed> $extensions
+     */
+    public function __construct(FeedbackItemResolution $feedbackItemResolution, AstInterface $astNode, RelationalTypeResolverInterface $relationalTypeResolver, Directive $directive, array $idFieldSet, array $extensions = [])
+    {
+        $this->relationalTypeResolver = $relationalTypeResolver;
+        $this->directive = $directive;
+        $this->idFieldSet = $idFieldSet;
+        parent::__construct($feedbackItemResolution, $astNode, $extensions);
+    }
+    /**
+     * @param array<string|int,EngineIterationFieldSet> $idFieldSet
+     * @param \PoP\ComponentModel\Feedback\ObjectTypeFieldResolutionFeedbackInterface $objectTypeFieldResolutionFeedback
+     * @param \PoP\ComponentModel\TypeResolvers\RelationalTypeResolverInterface $relationalTypeResolver
+     * @param \PoP\GraphQLParser\Spec\Parser\Ast\Directive $directive
+     */
+    public static function fromObjectTypeFieldResolutionFeedback($objectTypeFieldResolutionFeedback, $relationalTypeResolver, $directive, $idFieldSet) : self
+    {
+        return new self($objectTypeFieldResolutionFeedback->getFeedbackItemResolution(), $objectTypeFieldResolutionFeedback->getAstNode(), $relationalTypeResolver, $directive, $idFieldSet, $objectTypeFieldResolutionFeedback->getExtensions());
+    }
+    public function getDirective() : Directive
+    {
+        return $this->directive;
+    }
+    public function getRelationalTypeResolver() : RelationalTypeResolverInterface
+    {
+        return $this->relationalTypeResolver;
+    }
+    /**
+     * @return array<string|int,EngineIterationFieldSet>
+     */
+    public function getIDFieldSet() : array
+    {
+        return $this->idFieldSet;
+    }
+}

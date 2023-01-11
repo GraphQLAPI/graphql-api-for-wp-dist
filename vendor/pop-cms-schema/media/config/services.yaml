@@ -1,0 +1,11 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPCMSSchema\Media\ComponentProcessors\:
+        resource: '../src/ComponentProcessors/*'
+
+    PoPCMSSchema\Media\FilterInputs\:
+        resource: '../src/FilterInputs/*'

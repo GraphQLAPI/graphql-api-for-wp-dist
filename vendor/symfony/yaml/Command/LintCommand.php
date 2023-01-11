@@ -10,8 +10,11 @@
  */
 namespace PrefixedByPoP\Symfony\Component\Yaml\Command;
 
+use PrefixedByPoP\Symfony\Component\Console\Attribute\AsCommand;
 use PrefixedByPoP\Symfony\Component\Console\CI\GithubActionReporter;
 use PrefixedByPoP\Symfony\Component\Console\Command\Command;
+use PrefixedByPoP\Symfony\Component\Console\Completion\CompletionInput;
+use PrefixedByPoP\Symfony\Component\Console\Completion\CompletionSuggestions;
 use PrefixedByPoP\Symfony\Component\Console\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\Console\Exception\RuntimeException;
 use PrefixedByPoP\Symfony\Component\Console\Input\InputArgument;
@@ -28,27 +31,38 @@ use PrefixedByPoP\Symfony\Component\Yaml\Yaml;
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
  * @author Robin Chalas <robin.chalas@gmail.com>
  */
+#[AsCommand(name: 'lint:yaml', description: 'Lint a YAML file and outputs encountered errors')]
 class LintCommand extends Command
 {
-    protected static $defaultName = 'lint:yaml';
-    protected static $defaultDescription = 'Lint a YAML file and outputs encountered errors';
+    /**
+     * @var \Symfony\Component\Yaml\Parser
+     */
     private $parser;
+    /**
+     * @var string|null
+     */
     private $format;
+    /**
+     * @var bool
+     */
     private $displayCorrectFiles;
+    /**
+     * @var \Closure|null
+     */
     private $directoryIteratorProvider;
+    /**
+     * @var \Closure|null
+     */
     private $isReadableProvider;
     public function __construct(string $name = null, callable $directoryIteratorProvider = null, callable $isReadableProvider = null)
     {
         parent::__construct($name);
-        $this->directoryIteratorProvider = $directoryIteratorProvider;
-        $this->isReadableProvider = $isReadableProvider;
+        $this->directoryIteratorProvider = null === $directoryIteratorProvider ? null : \Closure::fromCallable($directoryIteratorProvider);
+        $this->isReadableProvider = null === $isReadableProvider ? null : \Closure::fromCallable($isReadableProvider);
     }
-    /**
-     * {@inheritdoc}
-     */
     protected function configure()
     {
-        $this->setDescription(self::$defaultDescription)->addArgument('filename', InputArgument::IS_ARRAY, 'A file, a directory or "-" for reading from STDIN')->addOption('format', null, InputOption::VALUE_REQUIRED, 'The output format')->addOption('parse-tags', null, InputOption::VALUE_NONE, 'Parse custom tags')->setHelp(<<<EOF
+        $this->addArgument('filename', InputArgument::IS_ARRAY, 'A file, a directory or "-" for reading from STDIN')->addOption('format', null, InputOption::VALUE_REQUIRED, 'The output format')->addOption('exclude', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Path(s) to exclude')->addOption('parse-tags', null, InputOption::VALUE_NEGATABLE, 'Parse custom tags', null)->setHelp(<<<EOF
 The <info>%command.name%</info> command lints a YAML file and outputs to STDOUT
 the first encountered syntax error.
 
@@ -65,14 +79,24 @@ Or of a whole directory:
   <info>php %command.full_name% dirname</info>
   <info>php %command.full_name% dirname --format=json</info>
 
+You can also exclude one or more specific files:
+
+  <info>php %command.full_name% dirname --exclude="dirname/foo.yaml" --exclude="dirname/bar.yaml"</info>
+
 EOF
 );
     }
-    protected function execute(InputInterface $input, OutputInterface $output)
+    /**
+     * @param \Symfony\Component\Console\Input\InputInterface $input
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
+     */
+    protected function execute($input, $output) : int
     {
         $io = new SymfonyStyle($input, $output);
         $filenames = (array) $input->getArgument('filename');
+        $excludes = $input->getOption('exclude');
         $this->format = $input->getOption('format');
+        $flags = $input->getOption('parse-tags');
         if ('github' === $this->format && !\class_exists(GithubActionReporter::class)) {
             throw new \InvalidArgumentException('The "github" format is only available since "symfony/console" >= 5.3.');
         }
@@ -80,8 +104,8 @@ EOF
             // Autodetect format according to CI environment
             $this->format = \class_exists(GithubActionReporter::class) && GithubActionReporter::isGithubActionEnvironment() ? 'github' : 'txt';
         }
+        $flags = $flags ? Yaml::PARSE_CUSTOM_TAGS : 0;
         $this->displayCorrectFiles = $output->isVerbose();
-        $flags = $input->getOption('parse-tags') ? Yaml::PARSE_CUSTOM_TAGS : 0;
         if (['-'] === $filenames) {
             return $this->display($io, [$this->validate(\file_get_contents('php://stdin'), $flags)]);
         }
@@ -94,7 +118,9 @@ EOF
                 throw new RuntimeException(\sprintf('File or directory "%s" is not readable.', $filename));
             }
             foreach ($this->getFiles($filename) as $file) {
-                $filesInfo[] = $this->validate(\file_get_contents($file), $flags, $file);
+                if (!\in_array($file->getPathname(), $excludes, \true)) {
+                    $filesInfo[] = $this->validate(\file_get_contents($file), $flags, $file);
+                }
             }
         }
         return $this->display($io, $filesInfo);
@@ -144,7 +170,7 @@ EOF
                 ++$erroredFiles;
                 $io->text('<error> ERROR </error>' . ($info['file'] ? \sprintf(' in %s', $info['file']) : ''));
                 $io->text(\sprintf('<error> >> %s</error>', $info['message']));
-                if (\false !== \strpos($info['message'], 'PARSE_CUSTOM_TAGS')) {
+                if (\strpos($info['message'], 'PARSE_CUSTOM_TAGS') !== \false) {
                     $suggestTagOption = \true;
                 }
                 if ($errorAsGithubAnnotations) {
@@ -167,7 +193,7 @@ EOF
             if (!$v['valid']) {
                 ++$errors;
             }
-            if (isset($v['message']) && \false !== \strpos($v['message'], 'PARSE_CUSTOM_TAGS')) {
+            if (isset($v['message']) && \strpos($v['message'], 'PARSE_CUSTOM_TAGS') !== \false) {
                 $v['message'] .= ' Use the --parse-tags option if you want parse custom tags.';
             }
         });
@@ -189,10 +215,7 @@ EOF
     }
     private function getParser() : Parser
     {
-        if (!$this->parser) {
-            $this->parser = new Parser();
-        }
-        return $this->parser;
+        return $this->parser = $this->parser ?? new Parser();
     }
     private function getDirectoryIterator(string $directory) : iterable
     {
@@ -213,5 +236,15 @@ EOF
             return ($this->isReadableProvider)($fileOrDirectory, $default);
         }
         return $default($fileOrDirectory);
+    }
+    /**
+     * @param \Symfony\Component\Console\Completion\CompletionInput $input
+     * @param \Symfony\Component\Console\Completion\CompletionSuggestions $suggestions
+     */
+    public function complete($input, $suggestions) : void
+    {
+        if ($input->mustSuggestOptionValuesFor('format')) {
+            $suggestions->suggestValues(['txt', 'json', 'github']);
+        }
     }
 }

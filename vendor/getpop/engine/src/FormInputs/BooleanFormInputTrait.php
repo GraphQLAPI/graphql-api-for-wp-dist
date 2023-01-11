@@ -7,20 +7,24 @@ use PoP\Engine\Constants\FormInputConstants;
 trait BooleanFormInputTrait
 {
     /**
+     * @param array<string,mixed>|null $source
      * @return mixed
      */
-    protected function getValueFromSource(array $source)
+    protected function getValueFromSource($source = null)
     {
-        // If it is not set, then return NULL, so that doing #formcomponentValue ignores value and proceeds to dbObject[dbObjectField]
-        if (!isset($source[$this->getName()])) {
+        // If it is not set, then return NULL, so that doing #formcomponentValue ignores value and proceeds to resolvedObject[resolvedObjectField]
+        $value = $this->getValueFromSourceOrRequest($this->getName(), $source);
+        if ($value === null) {
             return null;
         }
         if ($this->isMultiple()) {
             $ret = array();
-            if ($values = $source[$this->getName()]) {
-                foreach ($values as $value) {
-                    $ret[] = $value === FormInputConstants::BOOLSTRING_TRUE;
-                }
+            // Watch out passing a string as REST endpoint arg when array expected
+            if (!\is_array($value)) {
+                $value = [$value];
+            }
+            foreach ($value as $boolValue) {
+                $ret[] = $boolValue === FormInputConstants::BOOLSTRING_TRUE;
             }
             return $ret;
         }
@@ -28,6 +32,12 @@ trait BooleanFormInputTrait
         // but if they key has been set at all (checked: sends the attribute. unchecked: sends nothing)
         // Hence, for checkbox, it will always be true at this stage.
         // For select, it could be true or false
-        return $source[$this->getName()] === FormInputConstants::BOOLSTRING_TRUE;
+        return $value === FormInputConstants::BOOLSTRING_TRUE;
     }
+    /**
+     * @param array<string,mixed>|null $source
+     * @return mixed
+     * @param string $name
+     */
+    protected abstract function getValueFromSourceOrRequest($name, $source = null);
 }

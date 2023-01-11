@@ -16,29 +16,30 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Container;
  */
 class ContainerBag extends FrozenParameterBag implements ContainerBagInterface
 {
+    /**
+     * @var \Symfony\Component\DependencyInjection\Container
+     */
     private $container;
     public function __construct(Container $container)
     {
         $this->container = $container;
     }
-    /**
-     * {@inheritdoc}
-     */
-    public function all()
+    public function all() : array
     {
         return $this->container->getParameterBag()->all();
     }
     /**
-     * {@inheritdoc}
+     * @return mixed[]|bool|string|int|float|\UnitEnum|null
+     * @param string $name
      */
     public function get($name)
     {
         return $this->container->getParameter($name);
     }
     /**
-     * {@inheritdoc}
+     * @param string $name
      */
-    public function has($name)
+    public function has($name) : bool
     {
         return $this->container->hasParameter($name);
     }

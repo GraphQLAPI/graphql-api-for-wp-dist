@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Registries;
 
-use InvalidArgumentException;
+use GraphQLAPI\GraphQLAPI\Exception\ModuleTypeNotExistsException;
 use GraphQLAPI\GraphQLAPI\Services\ModuleTypeResolvers\ModuleTypeResolverInterface;
 
 interface ModuleTypeRegistryInterface
 {
-    public function addModuleTypeResolver(ModuleTypeResolverInterface $moduleTypeResolver): void;
     /**
-     * @throws InvalidArgumentException If module does not exist
+     * @param \GraphQLAPI\GraphQLAPI\Services\ModuleTypeResolvers\ModuleTypeResolverInterface $moduleTypeResolver
      */
-    public function getModuleTypeResolver(string $moduleType): ModuleTypeResolverInterface;
+    public function addModuleTypeResolver($moduleTypeResolver): void;
+    /**
+     * @throws ModuleTypeNotExistsException If module does not exist
+     * @param string $moduleType
+     */
+    public function getModuleTypeResolver($moduleType): ModuleTypeResolverInterface;
 }

@@ -1,0 +1,10 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+
+    PoPCMSSchema\CustomPosts\TypeResolvers\UnionType\CustomPostUnionTypeResolver:
+        class: \PoPCMSSchema\CustomPostsWP\Overrides\TypeResolvers\UnionType\CustomPostUnionTypeResolver
+
+    PoPCMSSchema\CustomPosts\ObjectTypeResolverPickers\CustomPostUnionGenericCustomPostObjectTypeResolverPicker:
+        class: \PoPCMSSchema\CustomPostsWP\Overrides\ObjectTypeResolverPickers\CustomPostUnionGenericCustomPostObjectTypeResolverPicker

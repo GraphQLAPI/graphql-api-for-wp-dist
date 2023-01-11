@@ -19,7 +19,13 @@ namespace PrefixedByPoP\Symfony\Component\Config\Resource;
  */
 class DirectoryResource implements SelfCheckingResourceInterface
 {
+    /**
+     * @var string
+     */
     private $resource;
+    /**
+     * @var string|null
+     */
     private $pattern;
     /**
      * @param string      $resource The file path to the resource
@@ -29,37 +35,29 @@ class DirectoryResource implements SelfCheckingResourceInterface
      */
     public function __construct(string $resource, string $pattern = null)
     {
-        $this->resource = \realpath($resource) ?: (\file_exists($resource) ? $resource : \false);
+        $resolvedResource = \realpath($resource) ?: (\file_exists($resource) ? $resource : \false);
         $this->pattern = $pattern;
-        if (\false === $this->resource || !\is_dir($this->resource)) {
+        if (\false === $resolvedResource || !\is_dir($resolvedResource)) {
             throw new \InvalidArgumentException(\sprintf('The directory "%s" does not exist.', $resource));
         }
+        $this->resource = $resolvedResource;
     }
-    /**
-     * {@inheritdoc}
-     */
     public function __toString() : string
     {
         return \md5(\serialize([$this->resource, $this->pattern]));
     }
-    /**
-     * @return string The file path to the resource
-     */
     public function getResource() : string
     {
         return $this->resource;
     }
-    /**
-     * Returns the pattern to restrict monitored files.
-     */
     public function getPattern() : ?string
     {
         return $this->pattern;
     }
     /**
-     * {@inheritdoc}
+     * @param int $timestamp
      */
-    public function isFresh(int $timestamp) : bool
+    public function isFresh($timestamp) : bool
     {
         if (!\is_dir($this->resource)) {
             return \false;
@@ -74,13 +72,13 @@ class DirectoryResource implements SelfCheckingResourceInterface
             }
             // always monitor directories for changes, except the .. entries
             // (otherwise deleted files wouldn't get detected)
-            if ($file->isDir() && '/..' === \substr($file, -3)) {
+            if ($file->isDir() && \substr_compare($file, '/..', -\strlen('/..')) === 0) {
                 continue;
             }
             // for broken links
             try {
                 $fileMTime = $file->getMTime();
-            } catch (\RuntimeException $e) {
+            } catch (\RuntimeException $exception) {
                 continue;
             }
             // early return if a file's mtime exceeds the passed timestamp

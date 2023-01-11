@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Registries;
 
+use GraphQLAPI\GraphQLAPI\Exception\UserAuthorizationException;
 use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationSchemes\DefaultUserAuthorizationSchemeServiceTagInterface;
 use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationSchemes\UserAuthorizationSchemeInterface;
-use InvalidArgumentException;
 
 class UserAuthorizationSchemeRegistry implements UserAuthorizationSchemeRegistryInterface
 {
@@ -17,10 +17,13 @@ class UserAuthorizationSchemeRegistry implements UserAuthorizationSchemeRegistry
     /**
      * @var \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationSchemes\UserAuthorizationSchemeInterface|null
      */
-    protected $defaultUserAuthorizationScheme;
+    private $defaultUserAuthorizationScheme;
 
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Security\UserAuthorizationSchemes\UserAuthorizationSchemeInterface $userAuthorizationScheme
+     */
     public function addUserAuthorizationScheme(
-        UserAuthorizationSchemeInterface $userAuthorizationScheme
+        $userAuthorizationScheme
     ): void {
         if ($userAuthorizationScheme instanceof DefaultUserAuthorizationSchemeServiceTagInterface) {
             $this->defaultUserAuthorizationScheme = $userAuthorizationScheme;
@@ -41,10 +44,13 @@ class UserAuthorizationSchemeRegistry implements UserAuthorizationSchemeRegistry
         return array_values($this->userAuthorizationSchemes);
     }
 
-    public function getUserAuthorizationScheme(string $name): UserAuthorizationSchemeInterface
+    /**
+     * @param string $name
+     */
+    public function getUserAuthorizationScheme($name): UserAuthorizationSchemeInterface
     {
         if (!isset($this->userAuthorizationSchemes[$name])) {
-            throw new InvalidArgumentException(sprintf(
+            throw new UserAuthorizationException(sprintf(
                 \__('User authorization scheme with name \'%s\' does not exist', 'graphql-api'),
                 $name
             ));
@@ -55,7 +61,7 @@ class UserAuthorizationSchemeRegistry implements UserAuthorizationSchemeRegistry
     public function getDefaultUserAuthorizationScheme(): UserAuthorizationSchemeInterface
     {
         if ($this->defaultUserAuthorizationScheme === null) {
-            throw new InvalidArgumentException(
+            throw new UserAuthorizationException(
                 \__('No default user authorization scheme has been set', 'graphql-api')
             );
         }

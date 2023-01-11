@@ -3,19 +3,18 @@
 declare (strict_types=1);
 namespace PoP\Definitions;
 
-use PoP\Definitions\Environment;
 abstract class AbstractDefinitionPersistence implements \PoP\Definitions\DefinitionPersistenceInterface
 {
     /**
-     * @var array<string, array>
+     * @var array<string,array<string,string>>
      */
     protected $definitions = [];
     /**
-     * @var array<string, array>
+     * @var array<string,array<string,string>>
      */
     protected $names = [];
     /**
-     * @var array<string, array>
+     * @var array<string,mixed[]>
      */
     protected $resolverData = [];
     /**
@@ -23,7 +22,7 @@ abstract class AbstractDefinitionPersistence implements \PoP\Definitions\Definit
      */
     protected $addedDefinition = \false;
     /**
-     * @var array<string, DefinitionResolverInterface>
+     * @var array<string,DefinitionResolverInterface>
      */
     protected $definition_resolvers = [];
     public function __construct()
@@ -43,36 +42,56 @@ abstract class AbstractDefinitionPersistence implements \PoP\Definitions\Definit
         }
     }
     /**
-     * @return array<string, DefinitionResolverInterface>
+     * @return array<string,DefinitionResolverInterface>
      */
     public function getDefinitionResolvers() : array
     {
         return $this->definition_resolvers;
     }
-    public function setDefinitionResolver(\PoP\Definitions\DefinitionResolverInterface $definition_resolver, string $group) : void
+    /**
+     * @param \PoP\Definitions\DefinitionResolverInterface $definition_resolver
+     * @param string $group
+     */
+    public function setDefinitionResolver($definition_resolver, $group) : void
     {
         $this->definition_resolvers[$group] = $definition_resolver;
         $definition_resolver->setPersistedData($this->resolverData[$group] ?? []);
     }
-    public function getDefinitionResolver(string $group) : ?\PoP\Definitions\DefinitionResolverInterface
+    /**
+     * @param string $group
+     */
+    public function getDefinitionResolver($group) : ?\PoP\Definitions\DefinitionResolverInterface
     {
-        return $this->definition_resolvers[$group];
+        return $this->definition_resolvers[$group] ?? null;
     }
-    public function getSavedDefinition(string $name, string $group) : ?string
+    /**
+     * @param string $name
+     * @param string $group
+     */
+    public function getSavedDefinition($name, $group) : ?string
     {
         if ($definition = $this->definitions[$group][$name] ?? null) {
             return $definition;
         }
         return null;
     }
-    public function getOriginalName(string $definition, string $group) : ?string
+    /**
+     * @param string $definition
+     * @param string $group
+     */
+    public function getOriginalName($definition, $group) : ?string
     {
         if ($name = $this->names[$group][$definition] ?? null) {
             return $name;
         }
         return null;
     }
-    public function saveDefinition(string $definition, string $name, string $group) : void
+    /**
+     * @param string $definition
+     * @param string $name
+     * @param string $group
+     */
+    public function saveDefinition($definition, $name, $group) : void
     {
         $this->definitions[$group][$name] = $definition;
         $this->names[$group][$definition] = $name;
@@ -80,7 +99,7 @@ abstract class AbstractDefinitionPersistence implements \PoP\Definitions\Definit
         $this->addedDefinition = \true;
     }
     /**
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getDatabase() : array
     {
@@ -92,7 +111,7 @@ abstract class AbstractDefinitionPersistence implements \PoP\Definitions\Definit
     }
     public function storeDefinitionsPersistently() : void
     {
-        if (Environment::disableDefinitionPersistence()) {
+        if (\PoP\Definitions\Environment::disableDefinitionPersistence()) {
             return;
         }
         if ($this->addedDefinition()) {
@@ -105,11 +124,11 @@ abstract class AbstractDefinitionPersistence implements \PoP\Definitions\Definit
         }
     }
     /**
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected abstract function getPersistedData() : array;
     /**
-     * @param array<string, mixed> $data
+     * @param array<string,mixed> $data
      */
-    protected abstract function persist(array $data) : void;
+    protected abstract function persist($data) : void;
 }

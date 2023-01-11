@@ -23,12 +23,33 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 class ServicesConfigurator extends AbstractConfigurator
 {
     public const FACTORY = 'services';
+    /**
+     * @var \Symfony\Component\DependencyInjection\Definition
+     */
     private $defaults;
+    /**
+     * @var \Symfony\Component\DependencyInjection\ContainerBuilder
+     */
     private $container;
+    /**
+     * @var \Symfony\Component\DependencyInjection\Loader\PhpFileLoader
+     */
     private $loader;
+    /**
+     * @var mixed[]
+     */
     private $instanceof;
+    /**
+     * @var string|null
+     */
     private $path;
+    /**
+     * @var string
+     */
     private $anonymousHash;
+    /**
+     * @var int
+     */
     private $anonymousCount;
     public function __construct(ContainerBuilder $container, PhpFileLoader $loader, array &$instanceof, string $path = null, int &$anonymousCount = 0)
     {
@@ -50,8 +71,9 @@ class ServicesConfigurator extends AbstractConfigurator
     }
     /**
      * Defines an instanceof-conditional to be applied to following service definitions.
+     * @param string $fqcn
      */
-    public final function instanceof(string $fqcn) : InstanceofConfigurator
+    public final function instanceof($fqcn) : InstanceofConfigurator
     {
         $this->instanceof[$fqcn] = $definition = new ChildDefinition('');
         return new InstanceofConfigurator($this, $definition, $fqcn, $this->path);
@@ -62,7 +84,7 @@ class ServicesConfigurator extends AbstractConfigurator
      * @param string|null $id    The service id, or null to create an anonymous service
      * @param string|null $class The class of the service, or null when $id is also the class name
      */
-    public final function set(?string $id, string $class = null) : ServiceConfigurator
+    public final function set($id, $class = null) : ServiceConfigurator
     {
         $defaults = $this->defaults;
         $definition = new Definition();
@@ -84,9 +106,11 @@ class ServicesConfigurator extends AbstractConfigurator
     }
     /**
      * Removes an already defined service definition or alias.
+     *
      * @return $this
+     * @param string $id
      */
-    public final function remove(string $id)
+    public final function remove($id)
     {
         $this->container->removeDefinition($id);
         $this->container->removeAlias($id);
@@ -94,8 +118,10 @@ class ServicesConfigurator extends AbstractConfigurator
     }
     /**
      * Creates an alias.
+     * @param string $id
+     * @param string $referencedId
      */
-    public final function alias(string $id, string $referencedId) : AliasConfigurator
+    public final function alias($id, $referencedId) : AliasConfigurator
     {
         $ref = static::processValue($referencedId, \true);
         $alias = new Alias((string) $ref);
@@ -107,17 +133,20 @@ class ServicesConfigurator extends AbstractConfigurator
     }
     /**
      * Registers a PSR-4 namespace using a glob pattern.
+     * @param string $namespace
+     * @param string $resource
      */
-    public final function load(string $namespace, string $resource) : PrototypeConfigurator
+    public final function load($namespace, $resource) : PrototypeConfigurator
     {
-        return new PrototypeConfigurator($this, $this->loader, $this->defaults, $namespace, $resource, \true);
+        return new PrototypeConfigurator($this, $this->loader, $this->defaults, $namespace, $resource, \true, $this->path);
     }
     /**
      * Gets an already defined service definition.
      *
      * @throws ServiceNotFoundException if the service definition does not exist
+     * @param string $id
      */
-    public final function get(string $id) : ServiceConfigurator
+    public final function get($id) : ServiceConfigurator
     {
         $definition = $this->container->getDefinition($id);
         return new ServiceConfigurator($this->container, $definition->getInstanceofConditionals(), \true, $this, $definition, $id, []);
@@ -126,8 +155,9 @@ class ServicesConfigurator extends AbstractConfigurator
      * Registers a stack of decorator services.
      *
      * @param InlineServiceConfigurator[]|ReferenceConfigurator[] $services
+     * @param string $id
      */
-    public final function stack(string $id, array $services) : AliasConfigurator
+    public final function stack($id, $services) : AliasConfigurator
     {
         foreach ($services as $i => $service) {
             if ($service instanceof InlineServiceConfigurator) {

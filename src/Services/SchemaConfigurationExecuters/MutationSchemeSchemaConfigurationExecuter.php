@@ -5,22 +5,44 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\SchemaConfigurationExecuters;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\SchemaConfigurationFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface;
 use GraphQLAPI\GraphQLAPI\Services\Blocks\SchemaConfigMutationSchemeBlock;
-use GraphQLByPoP\GraphQLServer\ComponentConfiguration as GraphQLServerComponentConfiguration;
+use GraphQLByPoP\GraphQLServer\Module as GraphQLServerModule;
 use GraphQLByPoP\GraphQLServer\Configuration\MutationSchemes;
 use GraphQLByPoP\GraphQLServer\Environment as GraphQLServerEnvironment;
-use PoP\ComponentModel\ComponentConfiguration\ComponentConfigurationHelpers;
-use PoP\Engine\ComponentConfiguration as EngineComponentConfiguration;
+use PoP\Root\Module\ModuleConfigurationHelpers;
+use PoP\Engine\Module as EngineModule;
 use PoP\Engine\Environment as EngineEnvironment;
 
 class MutationSchemeSchemaConfigurationExecuter extends AbstractSchemaConfigurationExecuter implements PersistedQueryEndpointSchemaConfigurationExecuterServiceTagInterface, EndpointSchemaConfigurationExecuterServiceTagInterface
 {
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\SchemaConfigMutationSchemeBlock|null
+     */
+    private $schemaConfigMutationSchemeBlock;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Blocks\SchemaConfigMutationSchemeBlock $schemaConfigMutationSchemeBlock
+     */
+    final public function setSchemaConfigMutationSchemeBlock($schemaConfigMutationSchemeBlock): void
+    {
+        $this->schemaConfigMutationSchemeBlock = $schemaConfigMutationSchemeBlock;
+    }
+    final protected function getSchemaConfigMutationSchemeBlock(): SchemaConfigMutationSchemeBlock
+    {
+        /** @var SchemaConfigMutationSchemeBlock */
+        return $this->schemaConfigMutationSchemeBlock = $this->schemaConfigMutationSchemeBlock ?? $this->instanceManager->getInstance(SchemaConfigMutationSchemeBlock::class);
+    }
+
     public function getEnablingModule(): ?string
     {
         return SchemaConfigurationFunctionalityModuleResolver::NESTED_MUTATIONS;
     }
 
-    public function executeSchemaConfiguration(int $schemaConfigurationID): void
+    /**
+     * @param int $schemaConfigurationID
+     */
+    public function executeSchemaConfiguration($schemaConfigurationID): void
     {
         $schemaConfigBlockDataItem = $this->getSchemaConfigBlockDataItem($schemaConfigurationID);
         if ($schemaConfigBlockDataItem !== null) {
@@ -41,33 +63,33 @@ class MutationSchemeSchemaConfigurationExecuter extends AbstractSchemaConfigurat
                 return;
             }
             // Define the settings value through a hook. Execute last so it overrides the default settings
-            $hookName = ComponentConfigurationHelpers::getHookName(
-                GraphQLServerComponentConfiguration::class,
+            $hookName = ModuleConfigurationHelpers::getHookName(
+                GraphQLServerModule::class,
                 GraphQLServerEnvironment::ENABLE_NESTED_MUTATIONS
             );
             \add_filter(
                 $hookName,
                 function () use ($mutationScheme) {
-                    return $mutationScheme != MutationSchemes::STANDARD;
+                    return $mutationScheme !== MutationSchemes::STANDARD;
                 },
                 PHP_INT_MAX
             );
-            $hookName = ComponentConfigurationHelpers::getHookName(
-                EngineComponentConfiguration::class,
+            $hookName = ModuleConfigurationHelpers::getHookName(
+                EngineModule::class,
                 EngineEnvironment::DISABLE_REDUNDANT_ROOT_TYPE_MUTATION_FIELDS
             );
             \add_filter(
                 $hookName,
                 function () use ($mutationScheme) {
-                    return $mutationScheme == MutationSchemes::NESTED_WITHOUT_REDUNDANT_ROOT_FIELDS;
+                    return $mutationScheme === MutationSchemes::NESTED_WITHOUT_REDUNDANT_ROOT_FIELDS;
                 },
                 PHP_INT_MAX
             );
         }
     }
 
-    protected function getBlockClass(): string
+    protected function getBlock(): BlockInterface
     {
-        return SchemaConfigMutationSchemeBlock::class;
+        return $this->getSchemaConfigMutationSchemeBlock();
     }
 }

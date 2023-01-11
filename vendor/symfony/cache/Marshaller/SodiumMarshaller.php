@@ -19,7 +19,13 @@ use PrefixedByPoP\Symfony\Component\Cache\Exception\InvalidArgumentException;
  */
 class SodiumMarshaller implements MarshallerInterface
 {
+    /**
+     * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface
+     */
     private $marshaller;
+    /**
+     * @var mixed[]
+     */
     private $decryptionKeys;
     /**
      * @param string[] $decryptionKeys The key at index "0" is required and is used to decrypt and encrypt values;
@@ -42,9 +48,10 @@ class SodiumMarshaller implements MarshallerInterface
         return \function_exists('sodium_crypto_box_seal');
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $values
+     * @param mixed[]|null $failed
      */
-    public function marshall(array $values, ?array &$failed) : array
+    public function marshall($values, &$failed) : array
     {
         $encryptionKey = \sodium_crypto_box_publickey($this->decryptionKeys[0]);
         $encryptedValues = [];
@@ -54,9 +61,10 @@ class SodiumMarshaller implements MarshallerInterface
         return $encryptedValues;
     }
     /**
-     * {@inheritdoc}
+     * @return mixed
+     * @param string $value
      */
-    public function unmarshall(string $value)
+    public function unmarshall($value)
     {
         foreach ($this->decryptionKeys as $k) {
             if (\false !== ($decryptedValue = @\sodium_crypto_box_seal_open($value, $k))) {

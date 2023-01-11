@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\MainPluginBlockTrait;
+use GraphQLAPI\GraphQLAPI\Services\BlockCategories\BlockCategoryInterface;
 use GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers;
 
 /**
  * GraphiQL block
@@ -21,14 +17,39 @@ abstract class AbstractGraphiQLBlock extends AbstractBlock
 
     public const ATTRIBUTE_NAME_QUERY = 'query';
     public const ATTRIBUTE_NAME_VARIABLES = 'variables';
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers|null
      */
-    protected $endpointHelpers;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, UserAuthorizationInterface $userAuthorization, EndpointHelpers $endpointHelpers)
+    private $endpointHelpers;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory|null
+     */
+    private $persistedQueryEndpointBlockCategory;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\EndpointHelpers $endpointHelpers
+     */
+    final public function setEndpointHelpers($endpointHelpers): void
     {
         $this->endpointHelpers = $endpointHelpers;
-        parent::__construct($instanceManager, $moduleRegistry, $userAuthorization);
+    }
+    final protected function getEndpointHelpers(): EndpointHelpers
+    {
+        /** @var EndpointHelpers */
+        return $this->endpointHelpers = $this->endpointHelpers ?? $this->instanceManager->getInstance(EndpointHelpers::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockCategories\PersistedQueryEndpointBlockCategory $persistedQueryEndpointBlockCategory
+     */
+    final public function setPersistedQueryEndpointBlockCategory($persistedQueryEndpointBlockCategory): void
+    {
+        $this->persistedQueryEndpointBlockCategory = $persistedQueryEndpointBlockCategory;
+    }
+    final protected function getPersistedQueryEndpointBlockCategory(): PersistedQueryEndpointBlockCategory
+    {
+        /** @var PersistedQueryEndpointBlockCategory */
+        return $this->persistedQueryEndpointBlockCategory = $this->persistedQueryEndpointBlockCategory ?? $this->instanceManager->getInstance(PersistedQueryEndpointBlockCategory::class);
     }
 
     protected function getBlockName(): string
@@ -36,9 +57,9 @@ abstract class AbstractGraphiQLBlock extends AbstractBlock
         return 'graphiql';
     }
 
-    protected function getBlockCategoryClass(): ?string
+    protected function getBlockCategory(): ?BlockCategoryInterface
     {
-        return PersistedQueryEndpointBlockCategory::class;
+        return $this->getPersistedQueryEndpointBlockCategory();
     }
 
     protected function isDynamicBlock(): bool
@@ -48,13 +69,13 @@ abstract class AbstractGraphiQLBlock extends AbstractBlock
 
     protected function getAdminGraphQLEndpoint(): string
     {
-        return $this->endpointHelpers->getAdminConfigurableSchemaGraphQLEndpoint();
+        return $this->getEndpointHelpers()->getAdminConfigurableSchemaGraphQLEndpoint();
     }
 
     /**
      * Pass localized data to the block
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getLocalizedData(): array
     {
@@ -120,13 +141,14 @@ abstract class AbstractGraphiQLBlock extends AbstractBlock
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         $content = sprintf(
             '<div class="%s">',
-            $this->getBlockClassName() . ' ' . $this->getAlignClass()
+            $this->getBlockClassName() . ' ' . $this->getAlignClassName()
         );
         $query = $attributes[self::ATTRIBUTE_NAME_QUERY] ?? '';
         $variables = $attributes[self::ATTRIBUTE_NAME_VARIABLES] ?? null;
@@ -135,7 +157,7 @@ abstract class AbstractGraphiQLBlock extends AbstractBlock
             \__('GraphQL Query:', 'graphql-api')
         ) . (
             $query ? sprintf(
-                '<pre><code class="prettyprint language-graphql">%s</code></pre>',
+                '<pre><code class="prettyprint hljs language-graphql">%s</code></pre>',
                 $query
             ) : sprintf(
                 '<p><em>%s</em></p>',
@@ -147,7 +169,7 @@ abstract class AbstractGraphiQLBlock extends AbstractBlock
                 '<p><strong>%s</strong></p>',
                 \__('Variables:', 'graphql-api')
             ) . sprintf(
-                '<pre><code class="prettyprint language-json">%s</code></pre>',
+                '<pre><code class="prettyprint hljs language-json">%s</code></pre>',
                 $variables
             );
         }

@@ -5,31 +5,48 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\EndpointExecuters;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\Blocks\PersistedQueryEndpointOptionsBlock;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLEndpointCustomPostTypeInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\GraphQLQueryPostTypeHelpers;
-use GraphQLByPoP\GraphQLRequest\Hooks\VarsHookSet as GraphQLRequestVarsHooks;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use WP_Post;
 
-class PersistedQueryEndpointGraphQLQueryResolutionEndpointExecuter extends AbstractGraphQLQueryResolutionEndpointExecuter implements PersistedQueryEndpointExecuterServiceTagInterface
+class PersistedQueryEndpointGraphQLQueryResolutionEndpointExecuter extends AbstractGraphQLQueryResolutionEndpointExecuter
 {
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType|null
      */
-    protected $graphQLPersistedQueryEndpointCustomPostType;
+    private $graphQLPersistedQueryEndpointCustomPostType;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\GraphQLQueryPostTypeHelpers
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\GraphQLQueryPostTypeHelpers|null
      */
-    protected $graphQLQueryPostTypeHelpers;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, GraphQLPersistedQueryEndpointCustomPostType $graphQLPersistedQueryEndpointCustomPostType, GraphQLQueryPostTypeHelpers $graphQLQueryPostTypeHelpers)
+    private $graphQLQueryPostTypeHelpers;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLPersistedQueryEndpointCustomPostType $graphQLPersistedQueryEndpointCustomPostType
+     */
+    final public function setGraphQLPersistedQueryEndpointCustomPostType($graphQLPersistedQueryEndpointCustomPostType): void
     {
         $this->graphQLPersistedQueryEndpointCustomPostType = $graphQLPersistedQueryEndpointCustomPostType;
-        $this->graphQLQueryPostTypeHelpers = $graphQLQueryPostTypeHelpers;
-        parent::__construct($instanceManager, $moduleRegistry);
     }
+    final protected function getGraphQLPersistedQueryEndpointCustomPostType(): GraphQLPersistedQueryEndpointCustomPostType
+    {
+        /** @var GraphQLPersistedQueryEndpointCustomPostType */
+        return $this->graphQLPersistedQueryEndpointCustomPostType = $this->graphQLPersistedQueryEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLPersistedQueryEndpointCustomPostType::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\GraphQLQueryPostTypeHelpers $graphQLQueryPostTypeHelpers
+     */
+    final public function setGraphQLQueryPostTypeHelpers($graphQLQueryPostTypeHelpers): void
+    {
+        $this->graphQLQueryPostTypeHelpers = $graphQLQueryPostTypeHelpers;
+    }
+    final protected function getGraphQLQueryPostTypeHelpers(): GraphQLQueryPostTypeHelpers
+    {
+        /** @var GraphQLQueryPostTypeHelpers */
+        return $this->graphQLQueryPostTypeHelpers = $this->graphQLQueryPostTypeHelpers ?? $this->instanceManager->getInstance(GraphQLQueryPostTypeHelpers::class);
+    }
+
     public function getEnablingModule(): ?string
     {
         return EndpointFunctionalityModuleResolver::PERSISTED_QUERIES;
@@ -37,57 +54,28 @@ class PersistedQueryEndpointGraphQLQueryResolutionEndpointExecuter extends Abstr
 
     protected function getCustomPostType(): GraphQLEndpointCustomPostTypeInterface
     {
-        return $this->graphQLPersistedQueryEndpointCustomPostType;
+        return $this->getGraphQLPersistedQueryEndpointCustomPostType();
     }
 
     /**
      * Provide the query to execute and its variables
      *
-     * @return mixed[] Array with 2 elements: [$graphQLQuery, $graphQLVariables]
+     * @return array{0:?string,1:?array<string,mixed>} Array of 2 elements: [query, variables]
+     * @param \WP_Post|null $graphQLQueryPost
      */
-    protected function getGraphQLQueryAndVariables(?WP_Post $graphQLQueryPost): array
+    public function getGraphQLQueryAndVariables($graphQLQueryPost): array
     {
         /**
-         * Extract the query from the post (or from its parents), and set it in $vars
+         * Extract the query from the post (or from its parents), and set it in the application state
          */
-        return $this->graphQLQueryPostTypeHelpers->getGraphQLQueryPostAttributes($graphQLQueryPost, true);
-    }
-
-    /**
-     * Check if requesting the single post of this CPT and, in this case, set the request with the needed API params
-     *
-     * @param array<array> $vars_in_array
-     */
-    public function addGraphQLVars(array $vars_in_array): void
-    {
-        $vars =& $vars_in_array[0];
-
-        /** @var GraphQLRequestVarsHooks */
-        $graphQLAPIRequestHookSet = $this->instanceManager->getInstance(GraphQLRequestVarsHooks::class);
-
-        // The Persisted Query is also standard GraphQL
-        $graphQLAPIRequestHookSet->setStandardGraphQLVars($vars);
-
-        // Remove the VarsHookSet from the GraphQLRequest, so it doesn't process the GraphQL query
-        // Otherwise it will add error "The query in the body is empty"
-        /**
-         * @var callable
-         */
-        $action = [$graphQLAPIRequestHookSet, 'addVars'];
-        \remove_action(
-            'ApplicationState:addVars',
-            $action,
-            20
-        );
-
-        // Execute the original logic
-        parent::addGraphQLVars($vars_in_array);
+        return $this->getGraphQLQueryPostTypeHelpers()->getGraphQLQueryPostAttributes($graphQLQueryPost, true);
     }
 
     /**
      * Indicate if the GraphQL variables must override the URL params
+     * @param \WP_Post|null $customPost
      */
-    protected function doURLParamsOverrideGraphQLVariables(?WP_Post $customPost): bool
+    public function doURLParamsOverrideGraphQLVariables($customPost): bool
     {
         if ($customPost === null) {
             return parent::doURLParamsOverrideGraphQLVariables($customPost);

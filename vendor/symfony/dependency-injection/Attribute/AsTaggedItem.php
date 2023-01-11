@@ -14,8 +14,8 @@ namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Attribute;
  * An attribute to tell under which index and priority a service class should be found in tagged iterators/locators.
  *
  * @author Nicolas Grekas <p@tchwork.com>
- * @annotation
  */
+#[\Attribute(\Attribute::TARGET_CLASS)]
 class AsTaggedItem
 {
     /**

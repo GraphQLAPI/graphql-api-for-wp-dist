@@ -23,7 +23,12 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
  */
 class CheckReferenceValidityPass extends AbstractRecursivePass
 {
-    protected function processValue($value, bool $isRoot = \false)
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
+     */
+    protected function processValue($value, $isRoot = \false)
     {
         if ($isRoot && $value instanceof Definition && ($value->isSynthetic() || $value->isAbstract())) {
             return $value;

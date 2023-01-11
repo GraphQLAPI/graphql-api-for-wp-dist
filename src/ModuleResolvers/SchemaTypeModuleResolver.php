@@ -4,28 +4,36 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\ModuleResolvers;
 
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\AbstractModuleResolver;
 use GraphQLAPI\GraphQLAPI\Constants\ModuleSettingOptions;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\ModuleResolverTrait;
+use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface;
 use GraphQLAPI\GraphQLAPI\ModuleSettings\Properties;
 use GraphQLAPI\GraphQLAPI\Plugin;
+use GraphQLAPI\GraphQLAPI\PluginEnvironment;
 use GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
+use GraphQLAPI\GraphQLAPI\Registries\TaxonomyRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\CustomPostTypeInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\Translation\TranslationAPIInterface;
-use PoPSchema\Comments\TypeResolvers\CommentTypeResolver;
-use PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver;
-use PoPSchema\GenericCustomPosts\TypeResolvers\GenericCustomPostTypeResolver;
-use PoPSchema\Media\TypeResolvers\MediaTypeResolver;
-use PoPSchema\Menus\TypeResolvers\MenuTypeResolver;
-use PoPSchema\Pages\TypeResolvers\PageTypeResolver;
-use PoPSchema\PostCategories\TypeResolvers\PostCategoryTypeResolver;
-use PoPSchema\Posts\TypeResolvers\PostTypeResolver;
-use PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver;
+use GraphQLAPI\GraphQLAPI\Services\Taxonomies\TaxonomyInterface;
+use PoPCMSSchema\Categories\TypeResolvers\ObjectType\GenericCategoryObjectTypeResolver;
+use PoPCMSSchema\Categories\TypeResolvers\UnionType\CategoryUnionTypeResolver;
+use PoPCMSSchema\Comments\TypeResolvers\ObjectType\CommentObjectTypeResolver;
+use PoPCMSSchema\CustomPosts\Module as CustomPostsModule;
+use PoPCMSSchema\CustomPosts\ModuleConfiguration as CustomPostsModuleConfiguration;
+use PoPCMSSchema\CustomPosts\TypeResolvers\ObjectType\GenericCustomPostObjectTypeResolver;
+use PoPCMSSchema\CustomPosts\TypeResolvers\UnionType\CustomPostUnionTypeResolver;
+use PoPCMSSchema\Media\TypeResolvers\ObjectType\MediaObjectTypeResolver;
+use PoPCMSSchema\Menus\TypeResolvers\ObjectType\MenuObjectTypeResolver;
+use PoPCMSSchema\Pages\TypeResolvers\ObjectType\PageObjectTypeResolver;
+use PoPCMSSchema\PostCategories\TypeResolvers\ObjectType\PostCategoryObjectTypeResolver;
+use PoPCMSSchema\PostTags\TypeResolvers\ObjectType\PostTagObjectTypeResolver;
+use PoPCMSSchema\Posts\TypeResolvers\ObjectType\PostObjectTypeResolver;
+use PoPCMSSchema\Tags\TypeResolvers\ObjectType\GenericTagObjectTypeResolver;
+use PoPCMSSchema\Tags\TypeResolvers\UnionType\TagUnionTypeResolver;
+use PoPCMSSchema\UserAvatars\TypeResolvers\ObjectType\UserAvatarObjectTypeResolver;
+use PoPCMSSchema\UserRolesWP\TypeResolvers\ObjectType\UserRoleObjectTypeResolver;
+use PoPCMSSchema\Users\TypeResolvers\ObjectType\UserObjectTypeResolver;
 use PoPSchema\SchemaCommons\Constants\Behaviors;
-use PoPSchema\UserRolesWP\TypeResolvers\UserRoleTypeResolver;
-use PoPSchema\Users\TypeResolvers\UserTypeResolver;
+use PoP\ComponentModel\App;
+use WP_Taxonomy;
 
 class SchemaTypeModuleResolver extends AbstractModuleResolver
 {
@@ -34,13 +42,12 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
     }
     use SchemaTypeModuleResolverTrait;
 
-    public const SCHEMA_ADMIN_SCHEMA = Plugin::NAMESPACE . '\schema-admin-schema';
     public const SCHEMA_CUSTOMPOSTS = Plugin::NAMESPACE . '\schema-customposts';
-    public const SCHEMA_GENERIC_CUSTOMPOSTS = Plugin::NAMESPACE . '\schema-generic-customposts';
     public const SCHEMA_POSTS = Plugin::NAMESPACE . '\schema-posts';
     public const SCHEMA_COMMENTS = Plugin::NAMESPACE . '\schema-comments';
     public const SCHEMA_USERS = Plugin::NAMESPACE . '\schema-users';
     public const SCHEMA_USER_ROLES = Plugin::NAMESPACE . '\schema-user-roles';
+    public const SCHEMA_USER_AVATARS = Plugin::NAMESPACE . '\schema-user-avatars';
     public const SCHEMA_PAGES = Plugin::NAMESPACE . '\schema-pages';
     public const SCHEMA_MEDIA = Plugin::NAMESPACE . '\schema-media';
     public const SCHEMA_TAGS = Plugin::NAMESPACE . '\schema-tags';
@@ -53,101 +60,340 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
     /**
      * Setting options
      */
-    public const OPTION_ADD_TYPE_TO_CUSTOMPOST_UNION_TYPE = 'add-type-to-custompost-union-type';
     public const OPTION_USE_SINGLE_TYPE_INSTEAD_OF_UNION_TYPE = 'use-single-type-instead-of-union-type';
+    public const OPTION_DEFAULT_AVATAR_SIZE = 'default-avatar-size';
+    public const OPTION_ROOT_COMMENT_LIST_DEFAULT_LIMIT = 'root-comment-list-default-limit';
+    public const OPTION_CUSTOMPOST_COMMENT_OR_COMMENT_RESPONSE_LIST_DEFAULT_LIMIT = 'custompost-comment-list-default-limit';
+    public const OPTION_TREAT_CUSTOMPOST_STATUS_AS_SENSITIVE_DATA = 'treat-custompost-status-as-admin-data';
+    public const OPTION_TREAT_COMMENT_STATUS_AS_SENSITIVE_DATA = 'treat-comment-status-as-admin-data';
+    public const OPTION_TREAT_USER_EMAIL_AS_SENSITIVE_DATA = 'treat-user-email-as-admin-data';
+    public const OPTION_TREAT_USER_ROLE_AS_SENSITIVE_DATA = 'treat-user-role-as-admin-data';
+    public const OPTION_TREAT_USER_CAPABILITY_AS_SENSITIVE_DATA = 'treat-user-capability-as-admin-data';
 
     /**
      * Hooks
      */
-    public const HOOK_GENERIC_CUSTOMPOST_TYPES = __CLASS__ . ':generic-custompost-types';
-    public const HOOK_REJECTED_GENERIC_CUSTOMPOST_TYPES = __CLASS__ . ':rejected-generic-custompost-types';
-    /**
-     * @var \PoPSchema\Comments\TypeResolvers\CommentTypeResolver|null
-     */
-    protected $commentTypeResolver;
-    /**
-     * @var \PoPSchema\CustomPosts\TypeResolvers\CustomPostUnionTypeResolver|null
-     */
-    protected $customPostUnionTypeResolver;
-    /**
-     * @var \PoPSchema\GenericCustomPosts\TypeResolvers\GenericCustomPostTypeResolver|null
-     */
-    protected $genericCustomPostTypeResolver;
-    /**
-     * @var \PoPSchema\Media\TypeResolvers\MediaTypeResolver|null
-     */
-    protected $mediaTypeResolver;
-    /**
-     * @var \PoPSchema\Pages\TypeResolvers\PageTypeResolver|null
-     */
-    protected $pageTypeResolver;
-    /**
-     * @var \PoPSchema\PostTags\TypeResolvers\PostTagTypeResolver|null
-     */
-    protected $postTagTypeResolver;
-    /**
-     * @var \PoPSchema\PostCategories\TypeResolvers\PostCategoryTypeResolver|null
-     */
-    protected $postCategoryTypeResolver;
-    /**
-     * @var \PoPSchema\Menus\TypeResolvers\MenuTypeResolver|null
-     */
-    protected $menuTypeResolver;
-    /**
-     * @var \PoPSchema\Posts\TypeResolvers\PostTypeResolver|null
-     */
-    protected $postTypeResolver;
-    /**
-     * @var \PoPSchema\UserRolesWP\TypeResolvers\UserRoleTypeResolver|null
-     */
-    protected $userRoleTypeResolver;
-    /**
-     * @var \PoPSchema\Users\TypeResolvers\UserTypeResolver|null
-     */
-    protected $userTypeResolver;
-    /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface|null
-     */
-    protected $customPostTypeRegistry;
+    public const HOOK_QUERYABLE_CUSTOMPOST_TYPES = __CLASS__ . ':queryable-custompost-types';
+    public const HOOK_REJECTED_QUERYABLE_CUSTOMPOST_TYPES = __CLASS__ . ':rejected-queryable-custompost-types';
+    public const HOOK_QUERYABLE_TAG_TAXONOMIES = __CLASS__ . ':queryable-tag-taxonomies';
+    public const HOOK_REJECTED_QUERYABLE_TAG_TAXONOMIES = __CLASS__ . ':rejected-queryable-tag-taxonomies';
+    public const HOOK_QUERYABLE_CATEGORY_TAXONOMIES = __CLASS__ . ':queryable-category-taxonomies';
+    public const HOOK_REJECTED_QUERYABLE_CATEGORY_TAXONOMIES = __CLASS__ . ':rejected-queryable-category-taxonomies';
 
     /**
+     * This comment used to be valid when using `autowire` functions
+     * to automatically inject all services. Since migrating to lazy getters,
+     * this same behavior is implicitly covered.
+     *
      * Make all properties nullable, becase the ModuleRegistry is registered
      * in the SystemContainer, where there are no typeResolvers so it will be null,
      * and in the ApplicationContainer, from where the "Modules" page is resolved
      * and which does have all the typeResolvers.
      * Function `getDescription` will only be accessed from the Application Container,
      * so the properties will not be null in that situation.
+     * @var \PoPCMSSchema\Comments\TypeResolvers\ObjectType\CommentObjectTypeResolver|null
      */
-    public function __construct(
-        InstanceManagerInterface $instanceManager,
-        ModuleRegistryInterface $moduleRegistry,
-        TranslationAPIInterface $translationAPI,
-        ?CommentTypeResolver $commentTypeResolver,
-        ?CustomPostUnionTypeResolver $customPostUnionTypeResolver,
-        ?GenericCustomPostTypeResolver $genericCustomPostTypeResolver,
-        ?MediaTypeResolver $mediaTypeResolver,
-        ?PageTypeResolver $pageTypeResolver,
-        ?PostTagTypeResolver $postTagTypeResolver,
-        ?PostCategoryTypeResolver $postCategoryTypeResolver,
-        ?MenuTypeResolver $menuTypeResolver,
-        ?PostTypeResolver $postTypeResolver,
-        ?UserRoleTypeResolver $userRoleTypeResolver,
-        ?UserTypeResolver $userTypeResolver,
-        ?CustomPostTypeRegistryInterface $customPostTypeRegistry
-    ) {
-        $this->commentTypeResolver = $commentTypeResolver;
+    private $commentObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\CustomPosts\TypeResolvers\UnionType\CustomPostUnionTypeResolver|null
+     */
+    private $customPostUnionTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Tags\TypeResolvers\UnionType\TagUnionTypeResolver|null
+     */
+    private $tagUnionTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Categories\TypeResolvers\UnionType\CategoryUnionTypeResolver|null
+     */
+    private $categoryUnionTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Media\TypeResolvers\ObjectType\MediaObjectTypeResolver|null
+     */
+    private $mediaObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Pages\TypeResolvers\ObjectType\PageObjectTypeResolver|null
+     */
+    private $pageObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\CustomPosts\TypeResolvers\ObjectType\GenericCustomPostObjectTypeResolver|null
+     */
+    private $genericCustomPostObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Tags\TypeResolvers\ObjectType\GenericTagObjectTypeResolver|null
+     */
+    private $genericTagObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Categories\TypeResolvers\ObjectType\GenericCategoryObjectTypeResolver|null
+     */
+    private $genericCategoryObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\PostTags\TypeResolvers\ObjectType\PostTagObjectTypeResolver|null
+     */
+    private $postTagObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\PostCategories\TypeResolvers\ObjectType\PostCategoryObjectTypeResolver|null
+     */
+    private $postCategoryObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Menus\TypeResolvers\ObjectType\MenuObjectTypeResolver|null
+     */
+    private $menuObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Posts\TypeResolvers\ObjectType\PostObjectTypeResolver|null
+     */
+    private $postObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\UserRolesWP\TypeResolvers\ObjectType\UserRoleObjectTypeResolver|null
+     */
+    private $userRoleObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\UserAvatars\TypeResolvers\ObjectType\UserAvatarObjectTypeResolver|null
+     */
+    private $userAvatarObjectTypeResolver;
+    /**
+     * @var \PoPCMSSchema\Users\TypeResolvers\ObjectType\UserObjectTypeResolver|null
+     */
+    private $userObjectTypeResolver;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface|null
+     */
+    private $customPostTypeRegistry;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Registries\TaxonomyRegistryInterface|null
+     */
+    private $taxonomyRegistry;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface|null
+     */
+    private $markdownContentParser;
+
+    /**
+     * @param \PoPCMSSchema\Comments\TypeResolvers\ObjectType\CommentObjectTypeResolver $commentObjectTypeResolver
+     */
+    final public function setCommentObjectTypeResolver($commentObjectTypeResolver): void
+    {
+        $this->commentObjectTypeResolver = $commentObjectTypeResolver;
+    }
+    final protected function getCommentObjectTypeResolver(): CommentObjectTypeResolver
+    {
+        /** @var CommentObjectTypeResolver */
+        return $this->commentObjectTypeResolver = $this->commentObjectTypeResolver ?? $this->instanceManager->getInstance(CommentObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\CustomPosts\TypeResolvers\UnionType\CustomPostUnionTypeResolver $customPostUnionTypeResolver
+     */
+    final public function setCustomPostUnionTypeResolver($customPostUnionTypeResolver): void
+    {
         $this->customPostUnionTypeResolver = $customPostUnionTypeResolver;
-        $this->genericCustomPostTypeResolver = $genericCustomPostTypeResolver;
-        $this->mediaTypeResolver = $mediaTypeResolver;
-        $this->pageTypeResolver = $pageTypeResolver;
-        $this->postTagTypeResolver = $postTagTypeResolver;
-        $this->postCategoryTypeResolver = $postCategoryTypeResolver;
-        $this->menuTypeResolver = $menuTypeResolver;
-        $this->postTypeResolver = $postTypeResolver;
-        $this->userRoleTypeResolver = $userRoleTypeResolver;
-        $this->userTypeResolver = $userTypeResolver;
+    }
+    final protected function getCustomPostUnionTypeResolver(): CustomPostUnionTypeResolver
+    {
+        /** @var CustomPostUnionTypeResolver */
+        return $this->customPostUnionTypeResolver = $this->customPostUnionTypeResolver ?? $this->instanceManager->getInstance(CustomPostUnionTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Tags\TypeResolvers\UnionType\TagUnionTypeResolver $tagUnionTypeResolver
+     */
+    final public function setTagUnionTypeResolver($tagUnionTypeResolver): void
+    {
+        $this->tagUnionTypeResolver = $tagUnionTypeResolver;
+    }
+    final protected function getTagUnionTypeResolver(): TagUnionTypeResolver
+    {
+        /** @var TagUnionTypeResolver */
+        return $this->tagUnionTypeResolver = $this->tagUnionTypeResolver ?? $this->instanceManager->getInstance(TagUnionTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Categories\TypeResolvers\UnionType\CategoryUnionTypeResolver $categoryUnionTypeResolver
+     */
+    final public function setCategoryUnionTypeResolver($categoryUnionTypeResolver): void
+    {
+        $this->categoryUnionTypeResolver = $categoryUnionTypeResolver;
+    }
+    final protected function getCategoryUnionTypeResolver(): CategoryUnionTypeResolver
+    {
+        /** @var CategoryUnionTypeResolver */
+        return $this->categoryUnionTypeResolver = $this->categoryUnionTypeResolver ?? $this->instanceManager->getInstance(CategoryUnionTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Media\TypeResolvers\ObjectType\MediaObjectTypeResolver $mediaObjectTypeResolver
+     */
+    final public function setMediaObjectTypeResolver($mediaObjectTypeResolver): void
+    {
+        $this->mediaObjectTypeResolver = $mediaObjectTypeResolver;
+    }
+    final protected function getMediaObjectTypeResolver(): MediaObjectTypeResolver
+    {
+        /** @var MediaObjectTypeResolver */
+        return $this->mediaObjectTypeResolver = $this->mediaObjectTypeResolver ?? $this->instanceManager->getInstance(MediaObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Pages\TypeResolvers\ObjectType\PageObjectTypeResolver $pageObjectTypeResolver
+     */
+    final public function setPageObjectTypeResolver($pageObjectTypeResolver): void
+    {
+        $this->pageObjectTypeResolver = $pageObjectTypeResolver;
+    }
+    final protected function getPageObjectTypeResolver(): PageObjectTypeResolver
+    {
+        /** @var PageObjectTypeResolver */
+        return $this->pageObjectTypeResolver = $this->pageObjectTypeResolver ?? $this->instanceManager->getInstance(PageObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\CustomPosts\TypeResolvers\ObjectType\GenericCustomPostObjectTypeResolver $genericCustomPostObjectTypeResolver
+     */
+    final public function setGenericCustomPostObjectTypeResolver($genericCustomPostObjectTypeResolver): void
+    {
+        $this->genericCustomPostObjectTypeResolver = $genericCustomPostObjectTypeResolver;
+    }
+    final protected function getGenericCustomPostObjectTypeResolver(): GenericCustomPostObjectTypeResolver
+    {
+        /** @var GenericCustomPostObjectTypeResolver */
+        return $this->genericCustomPostObjectTypeResolver = $this->genericCustomPostObjectTypeResolver ?? $this->instanceManager->getInstance(GenericCustomPostObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Tags\TypeResolvers\ObjectType\GenericTagObjectTypeResolver $genericTagObjectTypeResolver
+     */
+    final public function setGenericTagObjectTypeResolver($genericTagObjectTypeResolver): void
+    {
+        $this->genericTagObjectTypeResolver = $genericTagObjectTypeResolver;
+    }
+    final protected function getGenericTagObjectTypeResolver(): GenericTagObjectTypeResolver
+    {
+        /** @var GenericTagObjectTypeResolver */
+        return $this->genericTagObjectTypeResolver = $this->genericTagObjectTypeResolver ?? $this->instanceManager->getInstance(GenericTagObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Categories\TypeResolvers\ObjectType\GenericCategoryObjectTypeResolver $genericCategoryObjectTypeResolver
+     */
+    final public function setGenericCategoryObjectTypeResolver($genericCategoryObjectTypeResolver): void
+    {
+        $this->genericCategoryObjectTypeResolver = $genericCategoryObjectTypeResolver;
+    }
+    final protected function getGenericCategoryObjectTypeResolver(): GenericCategoryObjectTypeResolver
+    {
+        /** @var GenericCategoryObjectTypeResolver */
+        return $this->genericCategoryObjectTypeResolver = $this->genericCategoryObjectTypeResolver ?? $this->instanceManager->getInstance(GenericCategoryObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\PostTags\TypeResolvers\ObjectType\PostTagObjectTypeResolver $postTagObjectTypeResolver
+     */
+    final public function setPostTagObjectTypeResolver($postTagObjectTypeResolver): void
+    {
+        $this->postTagObjectTypeResolver = $postTagObjectTypeResolver;
+    }
+    final protected function getPostTagObjectTypeResolver(): PostTagObjectTypeResolver
+    {
+        /** @var PostTagObjectTypeResolver */
+        return $this->postTagObjectTypeResolver = $this->postTagObjectTypeResolver ?? $this->instanceManager->getInstance(PostTagObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\PostCategories\TypeResolvers\ObjectType\PostCategoryObjectTypeResolver $postCategoryObjectTypeResolver
+     */
+    final public function setPostCategoryObjectTypeResolver($postCategoryObjectTypeResolver): void
+    {
+        $this->postCategoryObjectTypeResolver = $postCategoryObjectTypeResolver;
+    }
+    final protected function getPostCategoryObjectTypeResolver(): PostCategoryObjectTypeResolver
+    {
+        /** @var PostCategoryObjectTypeResolver */
+        return $this->postCategoryObjectTypeResolver = $this->postCategoryObjectTypeResolver ?? $this->instanceManager->getInstance(PostCategoryObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Menus\TypeResolvers\ObjectType\MenuObjectTypeResolver $menuObjectTypeResolver
+     */
+    final public function setMenuObjectTypeResolver($menuObjectTypeResolver): void
+    {
+        $this->menuObjectTypeResolver = $menuObjectTypeResolver;
+    }
+    final protected function getMenuObjectTypeResolver(): MenuObjectTypeResolver
+    {
+        /** @var MenuObjectTypeResolver */
+        return $this->menuObjectTypeResolver = $this->menuObjectTypeResolver ?? $this->instanceManager->getInstance(MenuObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Posts\TypeResolvers\ObjectType\PostObjectTypeResolver $postObjectTypeResolver
+     */
+    final public function setPostObjectTypeResolver($postObjectTypeResolver): void
+    {
+        $this->postObjectTypeResolver = $postObjectTypeResolver;
+    }
+    final protected function getPostObjectTypeResolver(): PostObjectTypeResolver
+    {
+        /** @var PostObjectTypeResolver */
+        return $this->postObjectTypeResolver = $this->postObjectTypeResolver ?? $this->instanceManager->getInstance(PostObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\UserRolesWP\TypeResolvers\ObjectType\UserRoleObjectTypeResolver $userRoleObjectTypeResolver
+     */
+    final public function setUserRoleObjectTypeResolver($userRoleObjectTypeResolver): void
+    {
+        $this->userRoleObjectTypeResolver = $userRoleObjectTypeResolver;
+    }
+    final protected function getUserRoleObjectTypeResolver(): UserRoleObjectTypeResolver
+    {
+        /** @var UserRoleObjectTypeResolver */
+        return $this->userRoleObjectTypeResolver = $this->userRoleObjectTypeResolver ?? $this->instanceManager->getInstance(UserRoleObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\UserAvatars\TypeResolvers\ObjectType\UserAvatarObjectTypeResolver $userAvatarObjectTypeResolver
+     */
+    final public function setUserAvatarObjectTypeResolver($userAvatarObjectTypeResolver): void
+    {
+        $this->userAvatarObjectTypeResolver = $userAvatarObjectTypeResolver;
+    }
+    final protected function getUserAvatarObjectTypeResolver(): UserAvatarObjectTypeResolver
+    {
+        /** @var UserAvatarObjectTypeResolver */
+        return $this->userAvatarObjectTypeResolver = $this->userAvatarObjectTypeResolver ?? $this->instanceManager->getInstance(UserAvatarObjectTypeResolver::class);
+    }
+    /**
+     * @param \PoPCMSSchema\Users\TypeResolvers\ObjectType\UserObjectTypeResolver $userObjectTypeResolver
+     */
+    final public function setUserObjectTypeResolver($userObjectTypeResolver): void
+    {
+        $this->userObjectTypeResolver = $userObjectTypeResolver;
+    }
+    final protected function getUserObjectTypeResolver(): UserObjectTypeResolver
+    {
+        /** @var UserObjectTypeResolver */
+        return $this->userObjectTypeResolver = $this->userObjectTypeResolver ?? $this->instanceManager->getInstance(UserObjectTypeResolver::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\CustomPostTypeRegistryInterface $customPostTypeRegistry
+     */
+    final public function setCustomPostTypeRegistry($customPostTypeRegistry): void
+    {
         $this->customPostTypeRegistry = $customPostTypeRegistry;
-        parent::__construct($instanceManager, $moduleRegistry, $translationAPI);
+    }
+    final protected function getCustomPostTypeRegistry(): CustomPostTypeRegistryInterface
+    {
+        /** @var CustomPostTypeRegistryInterface */
+        return $this->customPostTypeRegistry = $this->customPostTypeRegistry ?? $this->instanceManager->getInstance(CustomPostTypeRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\TaxonomyRegistryInterface $taxonomyRegistry
+     */
+    final public function setTaxonomyRegistry($taxonomyRegistry): void
+    {
+        $this->taxonomyRegistry = $taxonomyRegistry;
+    }
+    final protected function getTaxonomyRegistry(): TaxonomyRegistryInterface
+    {
+        /** @var TaxonomyRegistryInterface */
+        return $this->taxonomyRegistry = $this->taxonomyRegistry ?? $this->instanceManager->getInstance(TaxonomyRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface $markdownContentParser
+     */
+    final public function setMarkdownContentParser($markdownContentParser): void
+    {
+        $this->markdownContentParser = $markdownContentParser;
+    }
+    final protected function getMarkdownContentParser(): MarkdownContentParserInterface
+    {
+        /** @var MarkdownContentParserInterface */
+        return $this->markdownContentParser = $this->markdownContentParser ?? $this->instanceManager->getInstance(MarkdownContentParserInterface::class);
     }
 
     /**
@@ -156,37 +402,37 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
     public function getModulesToResolve(): array
     {
         return [
-            self::SCHEMA_ADMIN_SCHEMA,
             self::SCHEMA_CUSTOMPOSTS,
-            self::SCHEMA_GENERIC_CUSTOMPOSTS,
             self::SCHEMA_POSTS,
             self::SCHEMA_PAGES,
             self::SCHEMA_USERS,
             self::SCHEMA_USER_ROLES,
+            self::SCHEMA_USER_AVATARS,
             self::SCHEMA_COMMENTS,
             self::SCHEMA_TAGS,
             self::SCHEMA_POST_TAGS,
             self::SCHEMA_CATEGORIES,
             self::SCHEMA_POST_CATEGORIES,
+            self::SCHEMA_MEDIA,
             self::SCHEMA_MENUS,
             self::SCHEMA_SETTINGS,
-            self::SCHEMA_MEDIA,
         ];
     }
 
     /**
-     * @return array<array> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @return array<string[]> List of entries that must be satisfied, each entry is an array where at least 1 module must be satisfied
+     * @param string $module
      */
-    public function getDependedModuleLists(string $module): array
+    public function getDependedModuleLists($module): array
     {
         switch ($module) {
             case self::SCHEMA_USER_ROLES:
+            case self::SCHEMA_USER_AVATARS:
                 return [
                     [
                         self::SCHEMA_USERS,
                     ],
                 ];
-            case self::SCHEMA_GENERIC_CUSTOMPOSTS:
             case self::SCHEMA_POSTS:
             case self::SCHEMA_PAGES:
             case self::SCHEMA_COMMENTS:
@@ -219,131 +465,110 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
         return parent::getDependedModuleLists($module);
     }
 
-    public function getName(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getName($module): string
     {
         switch ($module) {
-            case self::SCHEMA_ADMIN_SCHEMA:
-                return \__('Schema for the Admin', 'graphql-api');
-            case self::SCHEMA_GENERIC_CUSTOMPOSTS:
-                return \__('Schema Generic Custom Posts', 'graphql-api');
             case self::SCHEMA_POSTS:
-                return \__('Schema Posts', 'graphql-api');
+                return \__('Posts', 'graphql-api');
             case self::SCHEMA_COMMENTS:
-                return \__('Schema Comments', 'graphql-api');
+                return \__('Comments', 'graphql-api');
             case self::SCHEMA_USERS:
-                return \__('Schema Users', 'graphql-api');
+                return \__('Users', 'graphql-api');
             case self::SCHEMA_USER_ROLES:
-                return \__('Schema User Roles', 'graphql-api');
+                return \__('User Roles', 'graphql-api');
+            case self::SCHEMA_USER_AVATARS:
+                return \__('User Avatars', 'graphql-api');
             case self::SCHEMA_PAGES:
-                return \__('Schema Pages', 'graphql-api');
+                return \__('Pages', 'graphql-api');
             case self::SCHEMA_MEDIA:
-                return \__('Schema Media', 'graphql-api');
+                return \__('Media', 'graphql-api');
             case self::SCHEMA_TAGS:
-                return \__('Schema Tags', 'graphql-api');
+                return \__('Tags', 'graphql-api');
             case self::SCHEMA_POST_TAGS:
-                return \__('Schema Post Tags', 'graphql-api');
+                return \__('Post Tags', 'graphql-api');
             case self::SCHEMA_CATEGORIES:
-                return \__('Schema Categories', 'graphql-api');
+                return \__('Categories', 'graphql-api');
             case self::SCHEMA_POST_CATEGORIES:
-                return \__('Schema Post Categories', 'graphql-api');
+                return \__('Post Categories', 'graphql-api');
             case self::SCHEMA_MENUS:
-                return \__('Schema Menus', 'graphql-api');
+                return \__('Menus', 'graphql-api');
             case self::SCHEMA_SETTINGS:
-                return \__('Schema Settings', 'graphql-api');
+                return \__('Settings', 'graphql-api');
             case self::SCHEMA_CUSTOMPOSTS:
-                return \__('Schema Custom Posts', 'graphql-api');
+                return \__('Custom Posts', 'graphql-api');
             default:
                 return $module;
         }
     }
 
-    public function getDescription(string $module): string
+    /**
+     * @param string $module
+     */
+    public function getDescription($module): string
     {
-        /**
-         * Inner properties will not be null. Assign them their type,
-         * to avoid PHPStan errors
-         */
-        /** @var CommentTypeResolver */
-        $commentTypeResolver = $this->commentTypeResolver;
-        /** @var GenericCustomPostTypeResolver */
-        $genericCustomPostTypeResolver = $this->genericCustomPostTypeResolver;
-        /** @var MediaTypeResolver */
-        $mediaTypeResolver = $this->mediaTypeResolver;
-        /** @var PageTypeResolver */
-        $pageTypeResolver = $this->pageTypeResolver;
-        /** @var PostTagTypeResolver */
-        $postTagTypeResolver = $this->postTagTypeResolver;
-        /** @var PostCategoryTypeResolver */
-        $postCategoryTypeResolver = $this->postCategoryTypeResolver;
-        /** @var MenuTypeResolver */
-        $menuTypeResolver = $this->menuTypeResolver;
-        /** @var PostTypeResolver */
-        $postTypeResolver = $this->postTypeResolver;
-        /** @var UserRoleTypeResolver */
-        $userRoleTypeResolver = $this->userRoleTypeResolver;
-        /** @var UserTypeResolver */
-        $userTypeResolver = $this->userTypeResolver;
         switch ($module) {
-            case self::SCHEMA_ADMIN_SCHEMA:
-                return \__('Add "unrestricted" admin fields to the schema', 'graphql-api');
-            case self::SCHEMA_GENERIC_CUSTOMPOSTS:
-                return sprintf(
-                    \__('Query any custom post type (added to the schema or not), through a generic type <code>%1$s</code>', 'graphql-api'),
-                    $genericCustomPostTypeResolver->getTypeName()
-                );
             case self::SCHEMA_POSTS:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('posts', 'graphql-api'),
-                    $postTypeResolver->getTypeName()
+                    $this->getPostObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_USERS:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('users', 'graphql-api'),
-                    $userTypeResolver->getTypeName()
+                    $this->getUserObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_USER_ROLES:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('user roles', 'graphql-api'),
-                    $userRoleTypeResolver->getTypeName()
+                    $this->getUserRoleObjectTypeResolver()->getTypeName()
+                );
+            case self::SCHEMA_USER_AVATARS:
+                return sprintf(
+                    \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
+                    \__('user avatars', 'graphql-api'),
+                    $this->getUserAvatarObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_PAGES:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('pages', 'graphql-api'),
-                    $pageTypeResolver->getTypeName()
+                    $this->getPageObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_MEDIA:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('media elements', 'graphql-api'),
-                    $mediaTypeResolver->getTypeName()
+                    $this->getMediaObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_COMMENTS:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('comments', 'graphql-api'),
-                    $commentTypeResolver->getTypeName()
+                    $this->getCommentObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_POST_TAGS:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('post tags', 'graphql-api'),
-                    $postTagTypeResolver->getTypeName()
+                    $this->getPostTagObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_POST_CATEGORIES:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('post categories', 'graphql-api'),
-                    $postCategoryTypeResolver->getTypeName()
+                    $this->getPostCategoryObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_MENUS:
                 return sprintf(
                     \__('Query %1$s, through type <code>%2$s</code> added to the schema', 'graphql-api'),
                     \__('menus', 'graphql-api'),
-                    $menuTypeResolver->getTypeName()
+                    $this->getMenuObjectTypeResolver()->getTypeName()
                 );
             case self::SCHEMA_SETTINGS:
                 return \__('Fetch settings from the site', 'graphql-api');
@@ -358,14 +583,16 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
 
     /**
      * Does the module have HTML Documentation?
+     * @param string $module
      */
-    public function hasDocumentation(string $module): bool
+    public function hasDocumentation($module): bool
     {
         switch ($module) {
             case self::SCHEMA_POSTS:
             case self::SCHEMA_PAGES:
             case self::SCHEMA_USERS:
             case self::SCHEMA_USER_ROLES:
+            case self::SCHEMA_USER_AVATARS:
             case self::SCHEMA_COMMENTS:
             case self::SCHEMA_TAGS:
             case self::SCHEMA_POST_TAGS:
@@ -381,27 +608,42 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
     /**
      * Indicate if the given value is valid for that option
      * @param mixed $value
+     * @param string $module
+     * @param string $option
      */
-    public function isValidValue(string $module, string $option, $value): bool
+    public function isValidValue($module, $option, $value): bool
     {
         if (
-            in_array(
-                $module,
-                [
-                    self::SCHEMA_CUSTOMPOSTS,
-                    // self::SCHEMA_GENERIC_CUSTOMPOSTS,
-                    // self::SCHEMA_POSTS,
-                    self::SCHEMA_USERS,
-                    self::SCHEMA_TAGS,
-                    self::SCHEMA_CATEGORIES,
-                    // self::SCHEMA_PAGES,
-                ]
-            ) && in_array(
-                $option,
-                [
-                    ModuleSettingOptions::LIST_DEFAULT_LIMIT,
-                    ModuleSettingOptions::LIST_MAX_LIMIT,
-                ]
+            (
+                in_array(
+                    $module,
+                    [
+                        self::SCHEMA_CUSTOMPOSTS,
+                        self::SCHEMA_POSTS,
+                        self::SCHEMA_USERS,
+                        self::SCHEMA_MEDIA,
+                        self::SCHEMA_MENUS,
+                        self::SCHEMA_TAGS,
+                        self::SCHEMA_CATEGORIES,
+                        self::SCHEMA_PAGES,
+                    ]
+                ) && in_array(
+                    $option,
+                    [
+                        ModuleSettingOptions::LIST_DEFAULT_LIMIT,
+                        ModuleSettingOptions::LIST_MAX_LIMIT,
+                    ]
+                )
+            ) || (
+                $module === self::SCHEMA_COMMENTS
+                && in_array(
+                    $option,
+                    [
+                        self::OPTION_ROOT_COMMENT_LIST_DEFAULT_LIMIT,
+                        self::OPTION_CUSTOMPOST_COMMENT_OR_COMMENT_RESPONSE_LIST_DEFAULT_LIMIT,
+                        ModuleSettingOptions::LIST_MAX_LIMIT,
+                    ]
+                )
             )
         ) {
             // It can't be less than -1, or 0
@@ -415,52 +657,81 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
     /**
      * Default value for an option set by the module
      * @return mixed
+     * @param string $module
+     * @param string $option
      */
-    public function getSettingsDefaultValue(string $module, string $option)
+    public function getSettingsDefaultValue($module, $option)
     {
+        // Lower the security constraints for the static app
+        $useUnsafe = PluginEnvironment::areUnsafeDefaultsEnabled();
         $defaultValues = [
-            self::SCHEMA_ADMIN_SCHEMA => [
-                ModuleSettingOptions::ENABLE => false,
-            ],
             self::SCHEMA_CUSTOMPOSTS => [
                 ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
-                ModuleSettingOptions::LIST_MAX_LIMIT => 100,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 100,
                 self::OPTION_USE_SINGLE_TYPE_INSTEAD_OF_UNION_TYPE => false,
-            ],
-            self::SCHEMA_GENERIC_CUSTOMPOSTS => [
-                // ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
-                // ModuleSettingOptions::LIST_MAX_LIMIT => 100,
-                ModuleSettingOptions::CUSTOMPOST_TYPES => ['post'],
+                self::OPTION_TREAT_CUSTOMPOST_STATUS_AS_SENSITIVE_DATA => true,
+                ModuleSettingOptions::CUSTOMPOST_TYPES => ['post', 'page'],
             ],
             self::SCHEMA_POSTS => [
-                // ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
-                // ModuleSettingOptions::LIST_MAX_LIMIT => 100,
-                self::OPTION_ADD_TYPE_TO_CUSTOMPOST_UNION_TYPE => true,
+                ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 100,
             ],
             self::SCHEMA_PAGES => [
-                // ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
-                // ModuleSettingOptions::LIST_MAX_LIMIT => 100,
-                self::OPTION_ADD_TYPE_TO_CUSTOMPOST_UNION_TYPE => false,
+                ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 100,
             ],
             self::SCHEMA_USERS => [
                 ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
-                ModuleSettingOptions::LIST_MAX_LIMIT => 100,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 100,
+                self::OPTION_TREAT_USER_EMAIL_AS_SENSITIVE_DATA => true,
+            ],
+            self::SCHEMA_USER_ROLES => [
+                self::OPTION_TREAT_USER_ROLE_AS_SENSITIVE_DATA => true,
+                self::OPTION_TREAT_USER_CAPABILITY_AS_SENSITIVE_DATA => true,
+            ],
+            self::SCHEMA_MEDIA => [
+                ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 100,
+            ],
+            self::SCHEMA_MENUS => [
+                ModuleSettingOptions::LIST_DEFAULT_LIMIT => 10,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 100,
             ],
             self::SCHEMA_TAGS => [
                 ModuleSettingOptions::LIST_DEFAULT_LIMIT => 20,
-                ModuleSettingOptions::LIST_MAX_LIMIT => 200,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 200,
+                ModuleSettingOptions::TAG_TAXONOMIES => ['post_tag'],
             ],
             self::SCHEMA_CATEGORIES => [
                 ModuleSettingOptions::LIST_DEFAULT_LIMIT => 20,
-                ModuleSettingOptions::LIST_MAX_LIMIT => 200,
+                ModuleSettingOptions::LIST_MAX_LIMIT => $useUnsafe ? -1 : 200,
+                ModuleSettingOptions::CATEGORY_TAXONOMIES => ['category'],
             ],
             self::SCHEMA_SETTINGS => [
-                ModuleSettingOptions::ENTRIES => [
+                ModuleSettingOptions::ENTRIES => $useUnsafe ? [] : [
+                    'siteurl',
                     'home',
                     'blogname',
                     'blogdescription',
+                    'WPLANG',
+                    'posts_per_page',
+                    'comments_per_page',
+                    'date_format',
+                    'time_format',
+                    'blog_charset',
                 ],
-                ModuleSettingOptions::BEHAVIOR => Behaviors::ALLOWLIST,
+                ModuleSettingOptions::BEHAVIOR => $useUnsafe ?
+                    Behaviors::DENYLIST
+                    : Behaviors::ALLOWLIST,
+            ],
+            self::SCHEMA_USER_AVATARS => [
+                self::OPTION_DEFAULT_AVATAR_SIZE => 96,
+            ],
+            self::SCHEMA_COMMENTS => [
+                self::OPTION_ROOT_COMMENT_LIST_DEFAULT_LIMIT => 10,
+                self::OPTION_CUSTOMPOST_COMMENT_OR_COMMENT_RESPONSE_LIST_DEFAULT_LIMIT => -1,
+                ModuleSettingOptions::LIST_MAX_LIMIT => -1,
+                self::OPTION_TREAT_COMMENT_STATUS_AS_SENSITIVE_DATA => true,
             ],
         ];
         return $defaultValues[$module][$option] ?? null;
@@ -469,89 +740,46 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
     /**
      * Array with the inputs to show as settings for the module
      *
-     * @return array<array> List of settings for the module, each entry is an array with property => value
+     * @return array<array<string,mixed>> List of settings for the module, each entry is an array with property => value
+     * @param string $module
      */
-    public function getSettings(string $module): array
+    public function getSettings($module): array
     {
-        /**
-         * Inner properties will not be null. Assign them their type,
-         * to avoid PHPStan errors
-         */
-        /** @var CustomPostUnionTypeResolver */
-        $customPostUnionTypeResolver = $this->customPostUnionTypeResolver;
-        /** @var GenericCustomPostTypeResolver */
-        $genericCustomPostTypeResolver = $this->genericCustomPostTypeResolver;
-        /** @var PageTypeResolver */
-        $pageTypeResolver = $this->pageTypeResolver;
-        /** @var PostTypeResolver */
-        $postTypeResolver = $this->postTypeResolver;
-        /** @var CustomPostTypeRegistryInterface */
-        $customPostTypeRegistry = $this->customPostTypeRegistry;
-
         $moduleSettings = parent::getSettings($module);
         // Common variables to set the limit on the schema types
         $limitArg = 'limit';
         $unlimitedValue = -1;
         $defaultLimitMessagePlaceholder = \__('Number of results from querying %s when argument <code>%s</code> is not provided. Use <code>%s</code> for unlimited', 'graphql-api');
         $maxLimitMessagePlaceholder = \__('Maximum number of results from querying %s. Use <code>%s</code> for unlimited', 'graphql-api');
+        $sensitiveDataTitlePlaceholder = \__('Treat %s as “sensitive” data', 'graphql-api');
+        $sensitiveDataDescPlaceholder = \__('If checked, the <strong>%s</strong> data is exposed in the schema (whether as an object field for querying, or as an input field for filtering) only if the Schema Configuration has option <code>Expose Sensitive Data in the Schema</code> enabled', 'graphql-api');
+        $taxonomyDescPlaceholder = \__('This list contains all the "%1$shierarchical" taxonomies which are associated to queryable custom posts, i.e. those selected in "Included custom post types" in the Settings for "Custom Posts". Each %2$s taxonomy\'s associated custom post types is shown under <code>(CPT: ...)</code>. If your desired %2$s taxonomy does not appear here, make sure that all of its associated custom post types are in that allowlist.', 'graphql-api');
         // Do the if one by one, so that the SELECT do not get evaluated unless needed
-        if ($module == self::SCHEMA_ADMIN_SCHEMA) {
-            $option = ModuleSettingOptions::ENABLE;
-            $moduleSettings[] = [
-                Properties::INPUT => $option,
-                Properties::NAME => $this->getSettingOptionName(
-                    $module,
-                    $option
-                ),
-                Properties::TITLE => \__('Add admin fields to schema?', 'graphql-api'),
-                Properties::DESCRIPTION => \__('Add "unrestricted" fields to the GraphQL schema (such as <code>Root.unrestrictedPosts</code>, <code>Root.roles</code>, and others), to be used by the admin only.<hr/><strong>Watch out: Enable only if needed!</strong><br/>These fields can expose sensitive information, so they should be enabled only when the API is not publicly exposed (such as when using a local WordPress instance, to build a static site).<br/><br/><strong>Heads up!</strong><br/>If you need some fields but not others, then click the checkbox to enable all the "admin" fields, and then remove the unneeded fields via an Access Control List.', 'graphql-api'),
-                Properties::TYPE => Properties::TYPE_BOOL,
-            ];
-        } elseif (
+        if (
             in_array($module, [
                 self::SCHEMA_CUSTOMPOSTS,
-                // self::SCHEMA_GENERIC_CUSTOMPOSTS,
-                // self::SCHEMA_POSTS,
+                self::SCHEMA_POSTS,
                 self::SCHEMA_USERS,
+                self::SCHEMA_MEDIA,
+                self::SCHEMA_MENUS,
                 self::SCHEMA_TAGS,
                 self::SCHEMA_CATEGORIES,
-                // self::SCHEMA_PAGES,
+                self::SCHEMA_PAGES,
             ])
         ) {
-            $moduleEntries = [
-                self::SCHEMA_CUSTOMPOSTS => [
-                    'entities' => \__('custom posts', 'graphql-api'),
-                ],
-                // self::SCHEMA_GENERIC_CUSTOMPOSTS => [
-                //     'genericCustomPosts' => null,
-                // ],
-                // self::SCHEMA_POSTS => [
-                //     'posts' => null,
-                // ],
-                self::SCHEMA_USERS => [
-                    'entities' => \__('users', 'graphql-api'),
-                ],
-                self::SCHEMA_TAGS => [
-                    'entities' => \__('tags', 'graphql-api'),
-                ],
-                self::SCHEMA_CATEGORIES => [
-                    'entities' => \__('categories', 'graphql-api'),
-                ],
-                // self::SCHEMA_PAGES => [
-                //     'pages' => null,
-                // ],
+            $moduleEntities = [
+                self::SCHEMA_CUSTOMPOSTS => \__('custom posts', 'graphql-api'),
+                self::SCHEMA_POSTS => \__('posts', 'graphql-api'),
+                self::SCHEMA_USERS => \__('users', 'graphql-api'),
+                self::SCHEMA_MEDIA => \__('media items', 'graphql-api'),
+                self::SCHEMA_MENUS => \__('menus', 'graphql-api'),
+                self::SCHEMA_TAGS => \__('tags', 'graphql-api'),
+                self::SCHEMA_CATEGORIES => \__('categories', 'graphql-api'),
+                self::SCHEMA_PAGES => \__('pages', 'graphql-api'),
             ];
-            $moduleEntry = $moduleEntries[$module];
-            // If the options is not provided, use the default one
-            $entities = $moduleEntry['entities'];
-            $options = $moduleEntry['options'] ?? [
-                ModuleSettingOptions::LIST_DEFAULT_LIMIT,
-                ModuleSettingOptions::LIST_MAX_LIMIT,
-            ];
-            list(
-                $defaultLimitOption,
-                $maxLimitOption,
-            ) = $options;
+            $entities = $moduleEntities[$module];
+            $defaultLimitOption = ModuleSettingOptions::LIST_DEFAULT_LIMIT;
+            $maxLimitOption = ModuleSettingOptions::LIST_MAX_LIMIT;
             $moduleSettings[] = [
                 Properties::INPUT => $defaultLimitOption,
                 Properties::NAME => $this->getSettingOptionName(
@@ -590,7 +818,73 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
                 Properties::MIN_NUMBER => -1,
             ];
 
-            if ($module == self::SCHEMA_CUSTOMPOSTS) {
+            if ($module === self::SCHEMA_CUSTOMPOSTS) {
+                // Get the list of custom post types from the system
+                $possibleCustomPostTypes = \get_post_types();
+                /**
+                 * Not all custom post types make sense or are allowed.
+                 * Remove the ones that do not
+                 */
+                $pluginCustomPostTypes = array_map(
+                    function (CustomPostTypeInterface $customPostType) {
+                        return $customPostType->getCustomPostType();
+                    },
+                    $this->getCustomPostTypeRegistry()->getCustomPostTypes()
+                );
+                $rejectedQueryableCustomPostTypes = \apply_filters(
+                    self::HOOK_REJECTED_QUERYABLE_CUSTOMPOST_TYPES,
+                    array_merge(
+                        /**
+                         * Post Types from GraphQL API are just for configuration
+                         * and contain private data
+                         */
+                        $pluginCustomPostTypes,
+                        /**
+                         * WordPress internal CPTs.
+                         *
+                         * Watch out: Attachment has post_status "inherit",
+                         * which is by default not included in the "status"
+                         * filter, so the query must make it explicit:
+                         * `filter: { status: ["inherit"] }`.
+                         *
+                         * Similar with Revision and status "auto-draft"
+                         */
+                        $this->removeWordPressInternalCustomPostTypes()
+                            ? $this->getWordPressInternalCustomPostTypes()
+                            : []
+                    )
+                );
+                $possibleCustomPostTypes = array_values(array_diff(
+                    $possibleCustomPostTypes,
+                    $rejectedQueryableCustomPostTypes
+                ));
+                // Allow plugins to further remove unwanted custom post types
+                $possibleCustomPostTypes = \apply_filters(
+                    self::HOOK_QUERYABLE_CUSTOMPOST_TYPES,
+                    $possibleCustomPostTypes
+                );
+                sort($possibleCustomPostTypes);
+                // The possible values must have key and value
+                $possibleValues = [];
+                foreach ($possibleCustomPostTypes as $value) {
+                    $possibleValues[$value] = $value;
+                }
+                // Set the setting
+                $option = ModuleSettingOptions::CUSTOMPOST_TYPES;
+                $moduleSettings[] = [
+                    Properties::INPUT => $option,
+                    Properties::NAME => $this->getSettingOptionName(
+                        $module,
+                        $option
+                    ),
+                    Properties::TITLE => \__('Included custom post types', 'graphql-api'),
+                    Properties::DESCRIPTION => sprintf(\__('Select the custom post types that can be queried, to be accessible via <code>%s</code>. A custom post type will be represented by its own type in the schema (such as <code>%s</code> or <code>%s</code>) or, otherwise, via <code>%s</code>.<br/>Press <code>ctrl</code> or <code>shift</code> keys to select more than one', 'graphql-api'), $this->getCustomPostUnionTypeResolver()->getTypeName(), $this->getPostObjectTypeResolver()->getTypeName(), $this->getPageObjectTypeResolver()->getTypeName(), $this->getGenericCustomPostObjectTypeResolver()->getTypeName()),
+                    Properties::TYPE => Properties::TYPE_ARRAY,
+                    // Fetch all Schema Configurations from the DB
+                    Properties::POSSIBLE_VALUES => $possibleValues,
+                    Properties::IS_MULTIPLE => true,
+                ];
+
                 $option = self::OPTION_USE_SINGLE_TYPE_INSTEAD_OF_UNION_TYPE;
                 $moduleSettings[] = [
                     Properties::INPUT => $option,
@@ -599,130 +893,216 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
                         $option
                     ),
                     Properties::TITLE => \__('Use single type instead of union type?', 'graphql-api'),
-                    Properties::DESCRIPTION => sprintf(
-                        \__('If type <code>%s</code> is composed of only one type (eg: <code>%s</code>), then return this single type directly in field <code>%s</code>?', 'graphql-api'),
-                        $customPostUnionTypeResolver->getTypeName(),
-                        $postTypeResolver->getTypeName(),
-                        'customPosts'
-                    ),
+                    Properties::DESCRIPTION => sprintf(\__('If type <code>%s</code> is composed of only one type (eg: <code>%s</code>), then directly return this single type, instead of the union type?', 'graphql-api'), $this->getCustomPostUnionTypeResolver()->getTypeName(), $this->getPostObjectTypeResolver()->getTypeName()),
                     Properties::TYPE => Properties::TYPE_BOOL,
                 ];
+
+                $option = self::OPTION_TREAT_CUSTOMPOST_STATUS_AS_SENSITIVE_DATA;
+                $moduleSettings[] = [
+                    Properties::INPUT => $option,
+                    Properties::NAME => $this->getSettingOptionName(
+                        $module,
+                        $option
+                    ),
+                    Properties::TITLE => sprintf($sensitiveDataTitlePlaceholder, \__('custom post status', 'graphql-api')),
+                    Properties::DESCRIPTION => sprintf($sensitiveDataDescPlaceholder, \__('custom post status', 'graphql-api')),
+                    Properties::TYPE => Properties::TYPE_BOOL,
+                ];
+            } elseif ($module === self::SCHEMA_USERS) {
+                $option = self::OPTION_TREAT_USER_EMAIL_AS_SENSITIVE_DATA;
+                $moduleSettings[] = [
+                    Properties::INPUT => $option,
+                    Properties::NAME => $this->getSettingOptionName(
+                        $module,
+                        $option
+                    ),
+                    Properties::TITLE => sprintf($sensitiveDataTitlePlaceholder, \__('user email', 'graphql-api')),
+                    Properties::DESCRIPTION => sprintf($sensitiveDataDescPlaceholder, \__('user email', 'graphql-api')),
+                    Properties::TYPE => Properties::TYPE_BOOL,
+                ];
+            } elseif ($module === self::SCHEMA_TAGS) {
+                // Get the list of tag taxonomies from the system
+                $queryableTagTaxonomyNameObjects = $this->getQueryableCustomPostsAssociatedTaxonomies(false);
+                /**
+                 * Possibly not all tag taxonomies must be allowed.
+                 * Remove the ones that do not
+                 */
+                $pluginTagTaxonomies = array_map(
+                    function (TaxonomyInterface $taxonomy) {
+                        return $taxonomy->getTaxonomy();
+                    },
+                    $this->getTaxonomyRegistry()->getTaxonomies(false)
+                );
+                $rejectedQueryableTagTaxonomies = \apply_filters(
+                    self::HOOK_REJECTED_QUERYABLE_TAG_TAXONOMIES,
+                    []
+                );
+                $possibleTagTaxonomies = array_values(array_diff(
+                    array_keys($queryableTagTaxonomyNameObjects),
+                    $pluginTagTaxonomies,
+                    $rejectedQueryableTagTaxonomies
+                ));
+                // Allow plugins to further remove unwanted custom post types
+                $possibleTagTaxonomies = \apply_filters(
+                    self::HOOK_QUERYABLE_TAG_TAXONOMIES,
+                    $possibleTagTaxonomies
+                );
+                sort($possibleTagTaxonomies);
+
+                // The possible values must have key and value
+                $possibleValues = [];
+                foreach ($possibleTagTaxonomies as $tagTaxonomyName) {
+                    $tagTaxonomyObject = $queryableTagTaxonomyNameObjects[$tagTaxonomyName];
+                    $possibleValues[$tagTaxonomyName] = sprintf(
+                        $this->__('%s (CPT: "%s")', 'graphql-api'),
+                        $tagTaxonomyName,
+                        implode(
+                            $this->__('", "', 'graphql-api'),
+                            $tagTaxonomyObject->object_type
+                        )
+                    );
+                }
+                // Set the setting
+                $option = ModuleSettingOptions::TAG_TAXONOMIES;
+                $moduleSettings[] = [
+                    Properties::INPUT => $option,
+                    Properties::NAME => $this->getSettingOptionName(
+                        $module,
+                        $option
+                    ),
+                    Properties::TITLE => \__('Included tag taxonomies', 'graphql-api'),
+                    Properties::DESCRIPTION => sprintf(sprintf('%s<br/><br/>%s', sprintf($taxonomyDescPlaceholder, \__('non-', 'graphql-api'), \__('tag', 'graphql-api')), \__('Select the tag taxonomies that can be queried, to be accessible via <code>%s</code>. A tag taxonomy will be represented by its own type in the schema (such as <code>%s</code>) or, otherwise, via <code>%s</code>.<br/>Press <code>ctrl</code> or <code>shift</code> keys to select more than one', 'graphql-api')), $this->getTagUnionTypeResolver()->getTypeName(), $this->getPostTagObjectTypeResolver()->getTypeName(), $this->getGenericTagObjectTypeResolver()->getTypeName()),
+                    Properties::TYPE => Properties::TYPE_ARRAY,
+                    // Fetch all Schema Configurations from the DB
+                    Properties::POSSIBLE_VALUES => $possibleValues,
+                    Properties::IS_MULTIPLE => true,
+                ];
+            } elseif ($module === self::SCHEMA_CATEGORIES) {
+                // Get the list of category taxonomies from the system
+                $queryableCategoryTaxonomyNameObjects = $this->getQueryableCustomPostsAssociatedTaxonomies(true);
+                /**
+                 * Possibly not all category taxonomies must be allowed.
+                 * Remove the ones that do not
+                 */
+                $pluginCategoryTaxonomies = array_map(
+                    function (TaxonomyInterface $taxonomy) {
+                        return $taxonomy->getTaxonomy();
+                    },
+                    $this->getTaxonomyRegistry()->getTaxonomies(true)
+                );
+                $rejectedQueryableCategoryTaxonomies = \apply_filters(
+                    self::HOOK_REJECTED_QUERYABLE_CATEGORY_TAXONOMIES,
+                    []
+                );
+                $possibleCategoryTaxonomies = array_values(array_diff(
+                    array_keys($queryableCategoryTaxonomyNameObjects),
+                    $pluginCategoryTaxonomies,
+                    $rejectedQueryableCategoryTaxonomies
+                ));
+                // Allow plugins to further remove unwanted custom post types
+                $possibleCategoryTaxonomies = \apply_filters(
+                    self::HOOK_QUERYABLE_CATEGORY_TAXONOMIES,
+                    $possibleCategoryTaxonomies
+                );
+                sort($possibleCategoryTaxonomies);
+
+                // The possible values must have key and value
+                $possibleValues = [];
+                foreach ($possibleCategoryTaxonomies as $categoryTaxonomyName) {
+                    $categoryTaxonomyObject = $queryableCategoryTaxonomyNameObjects[$categoryTaxonomyName];
+                    $possibleValues[$categoryTaxonomyName] = sprintf(
+                        $this->__('%s (CPT: "%s")', 'graphql-api'),
+                        $categoryTaxonomyName,
+                        implode(
+                            $this->__('", "', 'graphql-api'),
+                            $categoryTaxonomyObject->object_type
+                        )
+                    );
+                }
+                // Set the setting
+                $option = ModuleSettingOptions::CATEGORY_TAXONOMIES;
+                $moduleSettings[] = [
+                    Properties::INPUT => $option,
+                    Properties::NAME => $this->getSettingOptionName(
+                        $module,
+                        $option
+                    ),
+                    Properties::TITLE => \__('Included category taxonomies', 'graphql-api'),
+                    Properties::DESCRIPTION => sprintf(sprintf('%s<br/><br/>%s', sprintf($taxonomyDescPlaceholder, '', \__('category', 'graphql-api')), \__('Select the category taxonomies that can be queried, to be accessible via <code>%s</code>. A tag taxonomy will be represented by its own type in the schema (such as <code>%s</code>) or, otherwise, via <code>%s</code>.<br/>Press <code>ctrl</code> or <code>shift</code> keys to select more than one', 'graphql-api')), $this->getCategoryUnionTypeResolver()->getTypeName(), $this->getPostCategoryObjectTypeResolver()->getTypeName(), $this->getGenericCategoryObjectTypeResolver()->getTypeName()),
+                    Properties::TYPE => Properties::TYPE_ARRAY,
+                    // Fetch all Schema Configurations from the DB
+                    Properties::POSSIBLE_VALUES => $possibleValues,
+                    Properties::IS_MULTIPLE => true,
+                ];
             }
-        } elseif (
-            in_array($module, [
-                self::SCHEMA_POSTS,
-                self::SCHEMA_PAGES,
-            ])
-        ) {
-            $titlePlaceholder = sprintf(
-                \__('Include type <code>%1$s</code> in <code>%2$s</code>?', 'graphql-api'),
-                '%1$s',
-                $customPostUnionTypeResolver->getTypeName()
-            );
-            $moduleTitles = [
-                self::SCHEMA_POSTS => sprintf(
-                    $titlePlaceholder,
-                    $postTypeResolver->getTypeName()
-                ),
-                self::SCHEMA_PAGES => sprintf(
-                    $titlePlaceholder,
-                    $pageTypeResolver->getTypeName()
-                ),
-            ];
-            $descriptionPlaceholder = sprintf(
-                \__('Results of type <code>%1$s</code> will be included when querying a field of type <code>%2$s</code> (such as <code>%3$s</code>)', 'graphql-api'),
-                '%1$s',
-                $customPostUnionTypeResolver->getTypeName(),
-                'customPosts'
-            );
-            $moduleDescriptions = [
-                self::SCHEMA_POSTS => sprintf(
-                    $descriptionPlaceholder,
-                    $postTypeResolver->getTypeName()
-                ),
-                self::SCHEMA_PAGES => sprintf(
-                    $descriptionPlaceholder,
-                    $pageTypeResolver->getTypeName()
-                ),
-            ];
-            $option = self::OPTION_ADD_TYPE_TO_CUSTOMPOST_UNION_TYPE;
+        } elseif ($module === self::SCHEMA_COMMENTS) {
+            $option = self::OPTION_ROOT_COMMENT_LIST_DEFAULT_LIMIT;
             $moduleSettings[] = [
                 Properties::INPUT => $option,
                 Properties::NAME => $this->getSettingOptionName(
                     $module,
                     $option
                 ),
-                Properties::TITLE => $moduleTitles[$module],
-                Properties::DESCRIPTION => $moduleDescriptions[$module],
-                Properties::TYPE => Properties::TYPE_BOOL,
-            ];
-        } elseif ($module == self::SCHEMA_GENERIC_CUSTOMPOSTS) {
-            // Get the list of custom post types from the system
-            $genericCustomPostTypes = \get_post_types();
-            /**
-             * Not all custom post types make sense or are allowed.
-             * Remove the ones that do not
-             */
-            $pluginCustomPostTypes = array_map(
-                function (CustomPostTypeInterface $customPostTypeService) {
-                    return $customPostTypeService->getCustomPostType();
-                },
-                $customPostTypeRegistry->getCustomPostTypes()
-            );
-            $rejectedGenericCustomPostTypes = \apply_filters(
-                self::HOOK_REJECTED_GENERIC_CUSTOMPOST_TYPES,
-                array_merge(
-                    // Post Types from GraphQL API are just for configuration
-                    // and contain private data
-                    $pluginCustomPostTypes,
-                    // WordPress internal CPTs
-                    // Attachment not allowed because its post_status="inherit",
-                    // not "publish", and the API filters by "publish" entries
-                    [
-                        'attachment',
-                        'revision',
-                        'nav_menu_item',
-                        'custom_css',
-                        'customize_changeset',
-                        'oembed_cache',
-                        'user_request',
-                        'wp_block',
-                        'wp_area',
-                    ]
-                )
-            );
-            $genericCustomPostTypes = array_values(array_diff(
-                $genericCustomPostTypes,
-                $rejectedGenericCustomPostTypes
-            ));
-            // Allow plugins to further remove unwanted custom post types
-            $genericCustomPostTypes = \apply_filters(
-                self::HOOK_GENERIC_CUSTOMPOST_TYPES,
-                $genericCustomPostTypes
-            );
-            // The possible values must have key and value
-            $possibleValues = [];
-            foreach ($genericCustomPostTypes as $genericCustomPostType) {
-                $possibleValues[$genericCustomPostType] = $genericCustomPostType;
-            }
-            // Set the setting
-            $option = ModuleSettingOptions::CUSTOMPOST_TYPES;
-            $moduleSettings[] = [
-                Properties::INPUT => $option,
-                Properties::NAME => $this->getSettingOptionName(
-                    $module,
-                    $option
-                ),
-                Properties::TITLE => \__('Included custom post types', 'graphql-api'),
+                Properties::TITLE => \__('Default limit for querying comments in the Root', 'graphql-api'),
                 Properties::DESCRIPTION => sprintf(
-                    \__('Results from these custom post types will be included when querying a field with type <code>%s</code> (such as <code>%s</code>)<br/>Press <code>ctrl</code> or <code>shift</code> keys to select more than one', 'graphql-api'),
-                    $genericCustomPostTypeResolver->getTypeName(),
-                    'genericCustomPosts'
+                    $defaultLimitMessagePlaceholder,
+                    '<code>Root.comments</code>',
+                    $limitArg,
+                    $unlimitedValue
                 ),
-                Properties::TYPE => Properties::TYPE_ARRAY,
-                // Fetch all Schema Configurations from the DB
-                Properties::POSSIBLE_VALUES => $possibleValues,
-                Properties::IS_MULTIPLE => true,
+                Properties::TYPE => Properties::TYPE_INT,
+                Properties::MIN_NUMBER => -1,
+            ];
+
+            $option = self::OPTION_CUSTOMPOST_COMMENT_OR_COMMENT_RESPONSE_LIST_DEFAULT_LIMIT;
+            $moduleSettings[] = [
+                Properties::INPUT => $option,
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
+                Properties::TITLE => \__('Default limit for querying comments under a custom post or comment', 'graphql-api'),
+                Properties::DESCRIPTION => sprintf(
+                    $defaultLimitMessagePlaceholder,
+                    sprintf(
+                        \__('%s and %s', 'graphql-api'),
+                        '<code>Commentable.comments</code>',
+                        '<code>Comment.responses</code>'
+                    ),
+                    $limitArg,
+                    $unlimitedValue
+                ),
+                Properties::TYPE => Properties::TYPE_INT,
+                Properties::MIN_NUMBER => -1,
+            ];
+
+            $option = ModuleSettingOptions::LIST_MAX_LIMIT;
+            $moduleSettings[] = [
+                Properties::INPUT => $option,
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
+                Properties::TITLE => \__('Max limit for querying comments', 'graphql-api'),
+                Properties::DESCRIPTION => sprintf(
+                    $maxLimitMessagePlaceholder,
+                    \__('comments', 'graphql-api'),
+                    $unlimitedValue
+                ),
+                Properties::TYPE => Properties::TYPE_INT,
+                Properties::MIN_NUMBER => -1,
+            ];
+
+            $option = self::OPTION_TREAT_COMMENT_STATUS_AS_SENSITIVE_DATA;
+            $moduleSettings[] = [
+                Properties::INPUT => $option,
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
+                Properties::TITLE => sprintf($sensitiveDataTitlePlaceholder, \__('comment status', 'graphql-api')),
+                Properties::DESCRIPTION => sprintf($sensitiveDataDescPlaceholder, \__('comment status', 'graphql-api')),
+                Properties::TYPE => Properties::TYPE_BOOL,
             ];
         } elseif (
             in_array($module, [
@@ -730,20 +1110,32 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
             ])
         ) {
             $entriesTitle = \__('Settings entries', 'graphql-api');
-            $headsUpDesc = sprintf(\__('<strong>Heads up:</strong> Entries surrounded with <code>/</code> are evaluated as regex (regular expressions).', 'graphql-api'), 'option');
-            $entryDesc = \__('Eg: Both entries <code>%1$s</code> and <code>/%2$s.*/</code> match option name <code>"%1$s"</code>.', 'graphql-api');
+            $headsUpDesc = \__('<strong>Heads up:</strong> Entries surrounded with <code>/</code> or <code>#</code> are evaluated as regex (regular expressions).', 'graphql-api');
+            $entryDesc = \__('<strong>Example:</strong> Any of these entries match option name <code>"%1$s"</code>: %2$s', 'graphql-api');
+            $ulStyle = 'list-style: initial; padding-left: 15px;';
+            $ulPlaceholder = '<ul style=" ' . $ulStyle . '"><li><code>%s</code></li></ul>';
             $moduleDescriptions = [
                 self::SCHEMA_SETTINGS => sprintf(
-                    \__('%1$s<hr/>%2$s<br/>%3$s', 'graphql-api'),
+                    \__('%1$s<hr/>%2$s<hr/>%3$s', 'graphql-api'),
                     sprintf(
                         \__('List of all the option names, to either allow or deny access to, when querying field <code>%s</code>.', 'graphql-api'),
-                        'option'
+                        'optionValue'
                     ),
                     $headsUpDesc,
                     sprintf(
                         $entryDesc,
                         'siteurl',
-                        'site'
+                        sprintf(
+                            $ulPlaceholder,
+                            implode(
+                                '</code></li><li><code>',
+                                [
+                                    'siteurl',
+                                    '/site.*/',
+                                    '#site([a-zA-Z]*)#',
+                                ]
+                            )
+                        )
                     )
                 ),
             ];
@@ -774,8 +1166,115 @@ class SchemaTypeModuleResolver extends AbstractModuleResolver
                     Behaviors::DENYLIST => \__('Deny access', 'graphql-api'),
                 ],
             ];
+        } elseif ($module === self::SCHEMA_USER_AVATARS) {
+            $option = self::OPTION_DEFAULT_AVATAR_SIZE;
+            $moduleSettings[] = [
+                Properties::INPUT => $option,
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
+                Properties::TITLE => \__('Default avatar size', 'graphql-api'),
+                Properties::DESCRIPTION => sprintf(
+                    \__('Size of the avatar (in pixels) when not providing argument <code>"size"</code> in field <code>%s.avatar</code>', 'graphql-api'),
+                    $this->getUserObjectTypeResolver()->getTypeName()
+                ),
+                Properties::TYPE => Properties::TYPE_INT,
+                Properties::MIN_NUMBER => 1,
+            ];
+        } elseif ($module === self::SCHEMA_USER_ROLES) {
+            $option = self::OPTION_TREAT_USER_ROLE_AS_SENSITIVE_DATA;
+            $moduleSettings[] = [
+                Properties::INPUT => $option,
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
+                Properties::TITLE => sprintf($sensitiveDataTitlePlaceholder, \__('user roles', 'graphql-api')),
+                Properties::DESCRIPTION => sprintf($sensitiveDataDescPlaceholder, \__('user roles', 'graphql-api')),
+                Properties::TYPE => Properties::TYPE_BOOL,
+            ];
+
+            $option = self::OPTION_TREAT_USER_CAPABILITY_AS_SENSITIVE_DATA;
+            $moduleSettings[] = [
+                Properties::INPUT => $option,
+                Properties::NAME => $this->getSettingOptionName(
+                    $module,
+                    $option
+                ),
+                Properties::TITLE => sprintf($sensitiveDataTitlePlaceholder, \__('user capabilities', 'graphql-api')),
+                Properties::DESCRIPTION => sprintf($sensitiveDataDescPlaceholder, \__('user capabilities', 'graphql-api')),
+                Properties::TYPE => Properties::TYPE_BOOL,
+            ];
         }
 
         return $moduleSettings;
+    }
+
+    protected function removeWordPressInternalCustomPostTypes(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getWordPressInternalCustomPostTypes(): array
+    {
+        return [
+            'attachment',
+            'custom_css',
+            'customize_changeset',
+            'nav_menu_item',
+            'oembed_cache',
+            'revision',
+            'user_request',
+            'wp_area',
+            'wp_block',
+            'wp_global_styles',
+            'wp_navigation',
+            'wp_template_part',
+            'wp_template',
+        ];
+    }
+
+    /**
+     * Retrieve the taxonomies which are associated to custom posts
+     * which have been enabled as queryable.
+     *
+     * Please notice all entries in "object_type" must be in the whitelist.
+     *
+     * @return array<string,WP_Taxonomy> Taxonomy name => taxonomy object
+     * @param bool $isHierarchical
+     */
+    protected function getQueryableCustomPostsAssociatedTaxonomies($isHierarchical): array
+    {
+        /** @var CustomPostsModuleConfiguration */
+        $moduleConfiguration = App::getModule(CustomPostsModule::class)->getConfiguration();
+        $queryableCustomPostTypes = $moduleConfiguration->getQueryableCustomPostTypes();
+
+        /** @var WP_Taxonomy[] */
+        $possibleTaxonomyObjects = \get_taxonomies(
+            [
+                'hierarchical' => $isHierarchical,
+            ],
+            'objects'
+        );
+
+        $possibleTaxonomyObjects = array_filter(
+            $possibleTaxonomyObjects,
+            function (WP_Taxonomy $taxonomy) use ($queryableCustomPostTypes) {
+                return array_diff(
+                    $taxonomy->object_type,
+                    $queryableCustomPostTypes
+                ) === [];
+            }
+        );
+
+        $possibleTaxonomyNameObjects = [];
+        foreach ($possibleTaxonomyObjects as $taxonomyObject) {
+            $possibleTaxonomyNameObjects[$taxonomyObject->name] = $taxonomyObject;
+        }
+        return $possibleTaxonomyNameObjects;
     }
 }

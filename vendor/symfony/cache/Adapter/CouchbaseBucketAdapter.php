@@ -23,7 +23,13 @@ class CouchbaseBucketAdapter extends AbstractAdapter
     private const MAX_KEY_LENGTH = 250;
     private const KEY_NOT_FOUND = 13;
     private const VALID_DSN_OPTIONS = ['operationTimeout', 'configTimeout', 'configNodeTimeout', 'n1qlTimeout', 'httpTimeout', 'configDelay', 'htconfigIdleTimeout', 'durabilityInterval', 'durabilityTimeout'];
+    /**
+     * @var \CouchbaseBucket
+     */
     private $bucket;
+    /**
+     * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface
+     */
     private $marshaller;
     public function __construct(\PrefixedByPoP\CouchbaseBucket $bucket, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
     {
@@ -37,14 +43,13 @@ class CouchbaseBucketAdapter extends AbstractAdapter
         $this->marshaller = $marshaller ?? new DefaultMarshaller();
     }
     /**
-     * @param array|string $servers
+     * @param mixed[]|string $servers
+     * @param mixed[] $options
      */
-    public static function createConnection($servers, array $options = []) : \PrefixedByPoP\CouchbaseBucket
+    public static function createConnection($servers, $options = []) : \PrefixedByPoP\CouchbaseBucket
     {
         if (\is_string($servers)) {
             $servers = [$servers];
-        } elseif (!\is_array($servers)) {
-            throw new \TypeError(\sprintf('Argument 1 passed to "%s()" must be array or string, "%s" given.', __METHOD__, \get_debug_type($servers)));
         }
         if (!static::isSupported()) {
             throw new CacheException('Couchbase >= 2.6.0 < 3.0.0 is required.');
@@ -60,7 +65,7 @@ class CouchbaseBucketAdapter extends AbstractAdapter
             $username = $options['username'];
             $password = $options['password'];
             foreach ($servers as $dsn) {
-                if (0 !== \strpos($dsn, 'couchbase:')) {
+                if (\strncmp($dsn, 'couchbase:', \strlen('couchbase:')) !== 0) {
                     throw new InvalidArgumentException(\sprintf('Invalid Couchbase DSN: "%s" does not start with "couchbase:".', $dsn));
                 }
                 \preg_match($dsnPattern, $dsn, $matches);
@@ -122,9 +127,9 @@ class CouchbaseBucketAdapter extends AbstractAdapter
         return $options;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doFetch(array $ids)
+    protected function doFetch($ids) : iterable
     {
         $resultsCouchbase = $this->bucket->get($ids);
         $results = [];
@@ -137,14 +142,14 @@ class CouchbaseBucketAdapter extends AbstractAdapter
         return $results;
     }
     /**
-     * {@inheritdoc}
+     * @param string $id
      */
     protected function doHave($id) : bool
     {
         return \false !== $this->bucket->get($id);
     }
     /**
-     * {@inheritdoc}
+     * @param string $namespace
      */
     protected function doClear($namespace) : bool
     {
@@ -155,9 +160,9 @@ class CouchbaseBucketAdapter extends AbstractAdapter
         return \false;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doDelete(array $ids) : bool
+    protected function doDelete($ids) : bool
     {
         $results = $this->bucket->remove(\array_values($ids));
         foreach ($results as $key => $result) {
@@ -169,9 +174,11 @@ class CouchbaseBucketAdapter extends AbstractAdapter
         return 0 === \count($results);
     }
     /**
-     * {@inheritdoc}
+     * @return mixed[]|bool
+     * @param mixed[] $values
+     * @param int $lifetime
      */
-    protected function doSave(array $values, $lifetime)
+    protected function doSave($values, $lifetime)
     {
         if (!($values = $this->marshaller->marshall($values, $failed))) {
             return $failed;

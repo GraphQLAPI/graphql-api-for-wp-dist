@@ -42,7 +42,7 @@ class Routes
      * @param  array          $options
      * @return \Brain\Cortex\Route\RouteInterface
      */
-    public static function add($path, $query, array $options = [])
+    public static function add($path, $query, $options = [])
     {
         self::checkTiming(__METHOD__);
         $routeObj = new QueryRoute($path, $query, $options);
@@ -72,7 +72,7 @@ class Routes
      * @param  array  $group
      * @return \Brain\Cortex\Group\GroupInterface
      */
-    public static function group($id, array $group)
+    public static function group($id, $group)
     {
         self::checkTiming(__METHOD__);
         $group['id'] = $id;

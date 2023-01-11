@@ -27,13 +27,23 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\TypedReference;
  */
 class ResolveInvalidReferencesPass implements CompilerPassInterface
 {
+    /**
+     * @var \Symfony\Component\DependencyInjection\ContainerBuilder
+     */
     private $container;
+    /**
+     * @var \Symfony\Component\DependencyInjection\Exception\RuntimeException
+     */
     private $signalingException;
+    /**
+     * @var string
+     */
     private $currentId;
     /**
      * Process the ContainerBuilder to resolve invalid references.
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
      */
-    public function process(ContainerBuilder $container)
+    public function process($container)
     {
         $this->container = $container;
         $this->signalingException = new RuntimeException('Invalid reference.');
@@ -42,15 +52,15 @@ class ResolveInvalidReferencesPass implements CompilerPassInterface
                 $this->processValue($definition);
             }
         } finally {
-            $this->container = $this->signalingException = null;
+            unset($this->container, $this->signalingException);
         }
     }
     /**
      * Processes arguments to determine invalid references.
      *
-     * @return mixed
-     *
      * @throws RuntimeException When an invalid reference is found
+     * @param mixed $value
+     * @return mixed
      */
     private function processValue($value, int $rootLevel = 0, int $level = 0)
     {
@@ -90,7 +100,7 @@ class ResolveInvalidReferencesPass implements CompilerPassInterface
                 $value = \array_values($value);
             }
         } elseif ($value instanceof Reference) {
-            if ($this->container->has($id = (string) $value)) {
+            if ($this->container->hasDefinition($id = (string) $value) ? !$this->container->getDefinition($id)->hasTag('container.excluded') : $this->container->hasAlias($id)) {
                 return $value;
             }
             $currentDefinition = $this->container->getDefinition($this->currentId);

@@ -18,6 +18,9 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Node\Node;
  */
 class ParsedExpression extends Expression
 {
+    /**
+     * @var \Symfony\Component\ExpressionLanguage\Node\Node
+     */
     private $nodes;
     public function __construct(string $expression, Node $nodes)
     {

@@ -21,19 +21,14 @@ use PrefixedByPoP\Symfony\Component\DependencyInjection\Reference;
 class ResolveNoPreloadPass extends AbstractRecursivePass
 {
     private const DO_PRELOAD_TAG = '.container.do_preload';
-    private $tagName;
-    private $resolvedIds = [];
-    public function __construct(string $tagName = 'container.no_preload')
-    {
-        if (0 < \func_num_args()) {
-            trigger_deprecation('symfony/dependency-injection', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
-        }
-        $this->tagName = $tagName;
-    }
     /**
-     * {@inheritdoc}
+     * @var mixed[]
      */
-    public function process(ContainerBuilder $container)
+    private $resolvedIds = [];
+    /**
+     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
+     */
+    public function process($container)
     {
         $this->container = $container;
         try {
@@ -57,14 +52,16 @@ class ResolveNoPreloadPass extends AbstractRecursivePass
             if ($definition->hasTag(self::DO_PRELOAD_TAG)) {
                 $definition->clearTag(self::DO_PRELOAD_TAG);
             } elseif (!$definition->isDeprecated() && !$definition->hasErrors()) {
-                $definition->addTag($this->tagName);
+                $definition->addTag('container.no_preload');
             }
         }
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
+     * @param bool $isRoot
      */
-    protected function processValue($value, bool $isRoot = \false)
+    protected function processValue($value, $isRoot = \false)
     {
         if ($value instanceof Reference && ContainerBuilder::IGNORE_ON_UNINITIALIZED_REFERENCE !== $value->getInvalidBehavior() && $this->container->hasDefinition($id = (string) $value)) {
             $definition = $this->container->getDefinition($id);
@@ -77,7 +74,7 @@ class ResolveNoPreloadPass extends AbstractRecursivePass
         if (!$value instanceof Definition) {
             return parent::processValue($value, $isRoot);
         }
-        if ($value->hasTag($this->tagName) || $value->isDeprecated() || $value->hasErrors()) {
+        if ($value->hasTag('container.no_preload') || $value->isDeprecated() || $value->hasErrors()) {
             return $value;
         }
         if ($isRoot) {

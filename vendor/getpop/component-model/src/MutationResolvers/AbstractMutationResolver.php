@@ -3,30 +3,18 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\MutationResolvers;
 
-use PoP\Hooks\HooksAPIInterface;
-use PoP\Translation\TranslationAPIInterface;
+use PoP\ComponentModel\Feedback\ObjectTypeFieldResolutionFeedbackStore;
+use PoP\ComponentModel\QueryResolution\FieldDataAccessorInterface;
+use PoP\Root\Services\BasicServiceTrait;
 abstract class AbstractMutationResolver implements \PoP\ComponentModel\MutationResolvers\MutationResolverInterface
 {
+    use BasicServiceTrait;
     /**
-     * @var \PoP\Translation\TranslationAPIInterface
+     * @param \PoP\ComponentModel\QueryResolution\FieldDataAccessorInterface $fieldDataAccessor
+     * @param \PoP\ComponentModel\Feedback\ObjectTypeFieldResolutionFeedbackStore $objectTypeFieldResolutionFeedbackStore
      */
-    protected $translationAPI;
-    /**
-     * @var \PoP\Hooks\HooksAPIInterface
-     */
-    protected $hooksAPI;
-    public function __construct(TranslationAPIInterface $translationAPI, HooksAPIInterface $hooksAPI)
+    public function validate($fieldDataAccessor, $objectTypeFieldResolutionFeedbackStore) : void
     {
-        $this->translationAPI = $translationAPI;
-        $this->hooksAPI = $hooksAPI;
-    }
-    public function validateErrors(array $form_data) : ?array
-    {
-        return null;
-    }
-    public function validateWarnings(array $form_data) : ?array
-    {
-        return null;
     }
     public function getErrorType() : int
     {

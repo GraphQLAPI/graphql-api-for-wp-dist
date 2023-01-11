@@ -11,8 +11,10 @@
 namespace PrefixedByPoP\Symfony\Component\DependencyInjection\Loader\Configurator;
 
 use PrefixedByPoP\Symfony\Component\Config\Loader\ParamConfigurator;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Alias;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\AbstractArgument;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ArgumentInterface;
+use PrefixedByPoP\Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Definition;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use PrefixedByPoP\Symfony\Component\DependencyInjection\Parameter;
@@ -22,11 +24,12 @@ abstract class AbstractConfigurator
 {
     public const FACTORY = 'unknown';
     /**
-     * @var callable(mixed, bool $allowService)|null
+     * @var callable(mixed, bool)|null
      */
     public static $valuePreProcessor;
-    /** @internal */
-    protected $definition;
+    /** @internal
+     * @var \Symfony\Component\DependencyInjection\Definition|\Symfony\Component\DependencyInjection\Alias|null */
+    protected $definition = null;
     public function __call(string $method, array $args)
     {
         if (\method_exists($this, 'set' . $method)) {
@@ -34,7 +37,7 @@ abstract class AbstractConfigurator
         }
         throw new \BadMethodCallException(\sprintf('Call to undefined method "%s::%s()".', static::class, $method));
     }
-    public function __sleep()
+    public function __sleep() : array
     {
         throw new \BadMethodCallException('Cannot serialize ' . __CLASS__);
     }
@@ -45,10 +48,10 @@ abstract class AbstractConfigurator
     /**
      * Checks that a value is valid, optionally replacing Definition and Reference configurators by their configure value.
      *
-     * @param mixed $value
-     * @param bool  $allowServices whether Definition and Reference are allowed; by default, only scalars and arrays are
+     * @param bool $allowServices whether Definition and Reference are allowed; by default, only scalars, arrays and enum are
      *
      * @return mixed the value, optionally cast to a Definition/Reference
+     * @param mixed $value
      */
     public static function processValue($value, $allowServices = \false)
     {
@@ -62,7 +65,8 @@ abstract class AbstractConfigurator
             $value = (self::$valuePreProcessor)($value, $allowServices);
         }
         if ($value instanceof ReferenceConfigurator) {
-            return new Reference($value->id, $value->invalidBehavior);
+            $reference = new Reference($value->id, $value->invalidBehavior);
+            return $value instanceof ClosureReferenceConfigurator ? new ServiceClosureArgument($reference) : $reference;
         }
         if ($value instanceof InlineServiceConfigurator) {
             $def = $value->definition;
@@ -78,6 +82,7 @@ abstract class AbstractConfigurator
         switch (\true) {
             case null === $value:
             case \is_scalar($value):
+            case $value instanceof \UnitEnum:
                 return $value;
             case $value instanceof ArgumentInterface:
             case $value instanceof Definition:

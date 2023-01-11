@@ -1,0 +1,23 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PoPCMSSchema\CustomPosts\State\:
+        resource: '../src/State/*'
+
+    PoPCMSSchema\CustomPosts\Hooks\:
+        resource: '../src/Hooks/*'
+
+    PoPCMSSchema\CustomPosts\LooseContracts\:
+        resource: '../src/LooseContracts/*'
+
+    PoPCMSSchema\CustomPosts\ComponentProcessors\:
+        resource: '../src/ComponentProcessors/*'
+
+    PoPCMSSchema\CustomPosts\FilterInputs\:
+        resource: '../src/FilterInputs/*'
+
+    PoPCMSSchema\CustomPosts\Registries\CustomPostObjectTypeResolverPickerRegistryInterface:
+        class: \PoPCMSSchema\CustomPosts\Registries\CustomPostObjectTypeResolverPickerRegistry

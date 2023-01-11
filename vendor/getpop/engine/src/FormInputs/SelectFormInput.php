@@ -8,6 +8,9 @@ class SelectFormInput extends FormInput
 {
     /**
      * Function to override
+     *
+     * @return mixed[]
+     * @param string|null $label
      */
     public function getAllValues($label = null) : array
     {
@@ -16,9 +19,12 @@ class SelectFormInput extends FormInput
         }
         return array();
     }
+    /**
+     * @return mixed
+     */
     public function getSelectedValue()
     {
-        if (\is_null($this->selected)) {
+        if ($this->selected === null) {
             return null;
         }
         $all = $this->getAllValues();

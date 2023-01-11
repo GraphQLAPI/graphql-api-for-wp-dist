@@ -3,70 +3,106 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\FormInputs;
 
-use Exception;
-use PoP\Translation\Facades\TranslationAPIFacade;
+use PoP\Root\App;
 class FormInput
 {
     /**
+     * @readonly
      * @var string
      */
     public $name;
     /**
+     * @readonly
      * @var mixed
      */
-    public $selected = null;
-    public function __construct($params = array())
+    public $selected;
+    /**
+     * @var array<string,mixed> $params
+     * @readonly
+     */
+    public $params;
+    /**
+     * @param array<string,mixed> $params
+     * @param mixed $selected
+     */
+    public function __construct(string $name, $selected = null, array $params = [])
     {
-        if (!isset($params['name'])) {
-            $translationAPI = TranslationAPIFacade::getInstance();
-            throw new Exception($translationAPI->__('Mandatory property \'name\' in \'$params\' is missing', 'component-model'));
-        }
-        $this->name = $params['name'];
+        $this->name = $name;
         // Selected value. If provided, use it
-        $this->selected = $params['selected'] ?? null;
+        $this->selected = $selected;
+        $this->params = $params;
     }
     public function isMultiple() : bool
     {
         return \false;
     }
     /**
+     * @param array<string,mixed>|null $source
      * @return mixed
      */
-    protected function getValueFromSource(array $source)
+    protected function getValueFromSource($source = null)
     {
-        // If not set, it will be NULL
-        $value = $source[$this->getName()] ?? null;
+        $value = $this->getValueFromSourceOrRequest($this->getName(), $source);
         // If it is multiple and the URL contains an empty value (eg: &searchfor[]=&), it will interpret it as array(''),
         // but instead it must be an empty array
         // if ($this->isMultiple() && $value && count($value) == 1 && $value[0] == '') {
         //     $value = array();
         // }
-        if ($this->isMultiple() && !\is_null($value)) {
-            $value = \array_filter($value);
+        if ($value !== null && $this->isMultiple()) {
+            // Watch out passing a string as REST endpoint arg when array expected
+            if (!\is_array($value)) {
+                $value = [$value];
+            }
+            return \array_filter($value);
         }
         return $value;
+    }
+    /**
+     * @param array<string,mixed>|null $source
+     * @return mixed
+     * @param string $name
+     */
+    protected function getValueFromSourceOrRequest($name, $source = null)
+    {
+        // If not set, it will be NULL
+        $value = null;
+        if ($source !== null) {
+            $value = $source[$name] ?? null;
+        }
+        return $value ?? App::request($name) ?? App::query($name);
     }
     public function getName() : string
     {
         return $this->name;
     }
     /**
-     * $_REQUEST has priority (for when editing post / user data, after submitting form this will override original post / user metadata values)
+     * $_POST/$_GET has priority (for when editing post / user data, after
+     * submitting form this will override original post / user metadata values)
+     *
+     * @param array<string,mixed>|null $source
      * @return mixed
      */
-    public function getValue(?array $source = null)
+    public function getValue($source = null)
     {
         // Empty values (eg: '', array()) can be the value. Only if NULL get a default value
-        if (!\is_null($this->selected)) {
+        if ($this->selected !== null) {
             return $this->selected;
         }
-        // If no source is passed, then use the request
-        $source = $source ?? $_REQUEST;
-        $selected = $this->getValueFromSource($source);
-        if (!\is_null($selected)) {
-            return $selected;
+        if (!$this->isInputSetInSource($source)) {
+            return $this->getDefaultValue();
         }
-        return $this->getDefaultValue();
+        return $this->getValueFromSource($source);
+    }
+    /**
+     * It checks if the key with the input's name has been set.
+     * Setting `key=null` counts as `true`
+     *
+     * @param array<string,mixed>|null $source
+     */
+    public function isInputSetInSource($source = null) : bool
+    {
+        $name = $this->getName();
+        return $source !== null && \array_key_exists($name, $source) || App::getRequest()->request->has($name) || App::getRequest()->query->has($name);
     }
     /**
      * Function to override

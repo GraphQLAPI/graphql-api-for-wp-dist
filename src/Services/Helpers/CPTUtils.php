@@ -10,9 +10,10 @@ class CPTUtils
 {
     /**
      * Get the description of the post, defined in the excerpt
+     * @param \WP_Post $post
      */
-    public function getCustomPostDescription(WP_Post $post): string
+    public function getCustomPostDescription($post): string
     {
-        return strip_tags($post->post_excerpt ?? '');
+        return strip_tags($post->post_excerpt);
     }
 }

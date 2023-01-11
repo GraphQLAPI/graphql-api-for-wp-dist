@@ -3,7 +3,8 @@
 declare (strict_types=1);
 namespace PoP\CacheControl\Schema;
 
-class SchemaDefinition extends \PoP\ComponentModel\Schema\SchemaDefinition
+use PoP\ComponentModel\Schema\SchemaDefinition as UpstreamSchemaDefinition;
+class SchemaDefinition extends UpstreamSchemaDefinition
 {
-    // const ARGNAME_MAX_AGE = 'maxAge';
+    // const MAX_AGE = 'maxAge';
 }

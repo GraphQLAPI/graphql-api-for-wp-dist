@@ -4,50 +4,87 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\CustomPostTypes;
 
-use GraphQLAPI\GraphQLAPI\ComponentConfiguration;
+use GraphQLAPI\GraphQLAPI\Module;
+use GraphQLAPI\GraphQLAPI\ModuleConfiguration;
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
 use GraphQLAPI\GraphQLAPI\Registries\BlockRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\CustomEndpointAnnotatorRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\CustomEndpointExecuterRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\EndpointAnnotatorRegistryInterface;
 use GraphQLAPI\GraphQLAPI\Registries\EndpointBlockRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\EndpointExecuterRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Security\UserAuthorizationInterface;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
+use GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface;
 use GraphQLAPI\GraphQLAPI\Services\Blocks\CustomEndpointOptionsBlock;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\AbstractGraphQLEndpointCustomPostType;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
-use GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLQueryTaxonomy;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
-use PoP\Hooks\HooksAPIInterface;
+use GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLEndpointCategoryTaxonomy;
+use GraphQLAPI\GraphQLAPI\Services\Taxonomies\TaxonomyInterface;
+use PoP\Root\App;
 
 class GraphQLCustomEndpointCustomPostType extends AbstractGraphQLEndpointCustomPostType
 {
     use WithBlockRegistryCustomPostTypeTrait;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\EndpointBlockRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\EndpointBlockRegistryInterface|null
      */
-    protected $endpointBlockRegistry;
+    private $endpointBlockRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\CustomEndpointExecuterRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\CustomEndpointAnnotatorRegistryInterface|null
      */
-    protected $customEndpointExecuterRegistryInterface;
+    private $customEndpointAnnotatorRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\CustomEndpointAnnotatorRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\CustomEndpointOptionsBlock|null
      */
-    protected $customEndpointAnnotatorRegistryInterface;
+    private $customEndpointOptionsBlock;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\Blocks\CustomEndpointOptionsBlock
+     * @var \GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLEndpointCategoryTaxonomy|null
      */
-    protected $customEndpointOptionsBlock;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry, UserAuthorizationInterface $userAuthorization, HooksAPIInterface $hooksAPI, BlockHelpers $blockHelpers, EndpointBlockRegistryInterface $endpointBlockRegistry, CustomEndpointExecuterRegistryInterface $customEndpointExecuterRegistryInterface, CustomEndpointAnnotatorRegistryInterface $customEndpointAnnotatorRegistryInterface, CustomEndpointOptionsBlock $customEndpointOptionsBlock)
+    private $graphQLEndpointCategoryTaxonomy;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\EndpointBlockRegistryInterface $endpointBlockRegistry
+     */
+    final public function setEndpointBlockRegistry($endpointBlockRegistry): void
     {
         $this->endpointBlockRegistry = $endpointBlockRegistry;
-        $this->customEndpointExecuterRegistryInterface = $customEndpointExecuterRegistryInterface;
-        $this->customEndpointAnnotatorRegistryInterface = $customEndpointAnnotatorRegistryInterface;
+    }
+    final protected function getEndpointBlockRegistry(): EndpointBlockRegistryInterface
+    {
+        /** @var EndpointBlockRegistryInterface */
+        return $this->endpointBlockRegistry = $this->endpointBlockRegistry ?? $this->instanceManager->getInstance(EndpointBlockRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\CustomEndpointAnnotatorRegistryInterface $customEndpointAnnotatorRegistry
+     */
+    final public function setCustomEndpointAnnotatorRegistry($customEndpointAnnotatorRegistry): void
+    {
+        $this->customEndpointAnnotatorRegistry = $customEndpointAnnotatorRegistry;
+    }
+    final protected function getCustomEndpointAnnotatorRegistry(): CustomEndpointAnnotatorRegistryInterface
+    {
+        /** @var CustomEndpointAnnotatorRegistryInterface */
+        return $this->customEndpointAnnotatorRegistry = $this->customEndpointAnnotatorRegistry ?? $this->instanceManager->getInstance(CustomEndpointAnnotatorRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Blocks\CustomEndpointOptionsBlock $customEndpointOptionsBlock
+     */
+    final public function setCustomEndpointOptionsBlock($customEndpointOptionsBlock): void
+    {
         $this->customEndpointOptionsBlock = $customEndpointOptionsBlock;
-        parent::__construct($instanceManager, $moduleRegistry, $userAuthorization, $hooksAPI, $blockHelpers);
+    }
+    final protected function getCustomEndpointOptionsBlock(): CustomEndpointOptionsBlock
+    {
+        /** @var CustomEndpointOptionsBlock */
+        return $this->customEndpointOptionsBlock = $this->customEndpointOptionsBlock ?? $this->instanceManager->getInstance(CustomEndpointOptionsBlock::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Taxonomies\GraphQLEndpointCategoryTaxonomy $graphQLEndpointCategoryTaxonomy
+     */
+    final public function setGraphQLEndpointCategoryTaxonomy($graphQLEndpointCategoryTaxonomy): void
+    {
+        $this->graphQLEndpointCategoryTaxonomy = $graphQLEndpointCategoryTaxonomy;
+    }
+    final protected function getGraphQLEndpointCategoryTaxonomy(): GraphQLEndpointCategoryTaxonomy
+    {
+        /** @var GraphQLEndpointCategoryTaxonomy */
+        return $this->graphQLEndpointCategoryTaxonomy = $this->graphQLEndpointCategoryTaxonomy ?? $this->instanceManager->getInstance(GraphQLEndpointCategoryTaxonomy::class);
     }
 
     /**
@@ -79,13 +116,15 @@ class GraphQLCustomEndpointCustomPostType extends AbstractGraphQLEndpointCustomP
      */
     protected function getSlugBase(): ?string
     {
-        return ComponentConfiguration::getCustomEndpointSlugBase();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return $moduleConfiguration->getCustomEndpointSlugBase();
     }
 
     /**
      * Custom post type name
      */
-    public function getCustomPostTypeName(): string
+    protected function getCustomPostTypeName(): string
     {
         return \__('GraphQL custom endpoint', 'graphql-api');
     }
@@ -93,11 +132,11 @@ class GraphQLCustomEndpointCustomPostType extends AbstractGraphQLEndpointCustomP
     /**
      * Custom Post Type plural name
      *
-     * @param bool $uppercase Indicate if the name must be uppercase (for starting a sentence) or, otherwise, lowercase
+     * @param bool $titleCase Indicate if the name must be title case (for starting a sentence) or, otherwise, lowercase
      */
-    protected function getCustomPostTypePluralNames(bool $uppercase): string
+    protected function getCustomPostTypePluralNames($titleCase): string
     {
-        return \__('GraphQL endpoints', 'graphql-api');
+        return \__('GraphQL custom endpoints', 'graphql-api');
     }
 
     /**
@@ -106,9 +145,9 @@ class GraphQLCustomEndpointCustomPostType extends AbstractGraphQLEndpointCustomP
      * @param string $name_uc Singular name uppercase
      * @param string $names_uc Plural name uppercase
      * @param string $names_lc Plural name lowercase
-     * @return array<string, string>
+     * @return array<string,string>
      */
-    protected function getCustomPostTypeLabels(string $name_uc, string $names_uc, string $names_lc): array
+    protected function getCustomPostTypeLabels($name_uc, $names_uc, $names_lc): array
     {
         /**
          * Because the name is too long, shorten it for the admin menu only
@@ -132,12 +171,12 @@ class GraphQLCustomEndpointCustomPostType extends AbstractGraphQLEndpointCustomP
     /**
      * Taxonomies
      *
-     * @return string[]
+     * @return TaxonomyInterface[]
      */
     protected function getTaxonomies(): array
     {
         return [
-            GraphQLQueryTaxonomy::TAXONOMY_CATEGORY,
+            $this->getGraphQLEndpointCategoryTaxonomy(),
         ];
     }
 
@@ -151,7 +190,7 @@ class GraphQLCustomEndpointCustomPostType extends AbstractGraphQLEndpointCustomP
 
     protected function getBlockRegistry(): BlockRegistryInterface
     {
-        return $this->endpointBlockRegistry;
+        return $this->getEndpointBlockRegistry();
     }
 
     /**
@@ -170,18 +209,13 @@ class GraphQLCustomEndpointCustomPostType extends AbstractGraphQLEndpointCustomP
         return __('View endpoint', 'graphql-api');
     }
 
-    public function getEndpointOptionsBlock(): AbstractBlock
+    public function getEndpointOptionsBlock(): BlockInterface
     {
-        return $this->customEndpointOptionsBlock;
-    }
-
-    protected function getEndpointExecuterRegistry(): EndpointExecuterRegistryInterface
-    {
-        return $this->customEndpointExecuterRegistryInterface;
+        return $this->getCustomEndpointOptionsBlock();
     }
 
     protected function getEndpointAnnotatorRegistry(): EndpointAnnotatorRegistryInterface
     {
-        return $this->customEndpointAnnotatorRegistryInterface;
+        return $this->getCustomEndpointAnnotatorRegistry();
     }
 }

@@ -16,9 +16,20 @@ use PrefixedByPoP\Psr\Container\ContainerInterface;
  *
  * @author Nicolas Grekas <p@tchwork.com>
  * @author Mateusz Sip <mateusz.sip@gmail.com>
+ *
+ * @template T of mixed
  */
 interface ServiceProviderInterface extends ContainerInterface
 {
+    /**
+     * @return T
+     * @param string $id
+     */
+    public function get($id);
+    /**
+     * @param string $id
+     */
+    public function has($id) : bool;
     /**
      * Returns an associative array of service types keyed by the identifiers provided by the current container.
      *

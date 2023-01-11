@@ -10,5 +10,5 @@ services:
     GraphQLByPoP\GraphQLRequest\Execution\QueryRetrieverInterface:
         class: \GraphQLByPoP\GraphQLRequest\Execution\QueryRetriever
 
-    GraphQLByPoP\GraphQLRequest\Hooks\:
-        resource: '../src/Hooks/*'
+    GraphQLByPoP\GraphQLRequest\State\:
+        resource: '../src/State/*'

@@ -6,23 +6,47 @@ namespace GraphQLAPI\GraphQLAPI\Services\Helpers;
 
 use GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointAPIHierarchyBlockAccessor;
 use GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointGraphiQLBlockAccessor;
+use PoP\Root\Services\BasicServiceTrait;
 use WP_Post;
 
 class GraphQLQueryPostTypeHelpers
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointGraphiQLBlockAccessor
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointGraphiQLBlockAccessor|null
      */
-    protected $persistedQueryEndpointGraphiQLBlockAccessor;
+    private $persistedQueryEndpointGraphiQLBlockAccessor;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointAPIHierarchyBlockAccessor
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointAPIHierarchyBlockAccessor|null
      */
-    protected $persistedQueryEndpointAPIHierarchyBlockAccessor;
-    public function __construct(PersistedQueryEndpointGraphiQLBlockAccessor $persistedQueryEndpointGraphiQLBlockAccessor, PersistedQueryEndpointAPIHierarchyBlockAccessor $persistedQueryEndpointAPIHierarchyBlockAccessor)
+    private $persistedQueryEndpointAPIHierarchyBlockAccessor;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointGraphiQLBlockAccessor $persistedQueryEndpointGraphiQLBlockAccessor
+     */
+    final public function setPersistedQueryEndpointGraphiQLBlockAccessor($persistedQueryEndpointGraphiQLBlockAccessor): void
     {
         $this->persistedQueryEndpointGraphiQLBlockAccessor = $persistedQueryEndpointGraphiQLBlockAccessor;
+    }
+    final protected function getPersistedQueryEndpointGraphiQLBlockAccessor(): PersistedQueryEndpointGraphiQLBlockAccessor
+    {
+        /** @var PersistedQueryEndpointGraphiQLBlockAccessor */
+        return $this->persistedQueryEndpointGraphiQLBlockAccessor = $this->persistedQueryEndpointGraphiQLBlockAccessor ?? $this->instanceManager->getInstance(PersistedQueryEndpointGraphiQLBlockAccessor::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockAccessors\PersistedQueryEndpointAPIHierarchyBlockAccessor $persistedQueryEndpointAPIHierarchyBlockAccessor
+     */
+    final public function setPersistedQueryEndpointAPIHierarchyBlockAccessor($persistedQueryEndpointAPIHierarchyBlockAccessor): void
+    {
         $this->persistedQueryEndpointAPIHierarchyBlockAccessor = $persistedQueryEndpointAPIHierarchyBlockAccessor;
     }
+    final protected function getPersistedQueryEndpointAPIHierarchyBlockAccessor(): PersistedQueryEndpointAPIHierarchyBlockAccessor
+    {
+        /** @var PersistedQueryEndpointAPIHierarchyBlockAccessor */
+        return $this->persistedQueryEndpointAPIHierarchyBlockAccessor = $this->persistedQueryEndpointAPIHierarchyBlockAccessor ?? $this->instanceManager->getInstance(PersistedQueryEndpointAPIHierarchyBlockAccessor::class);
+    }
+
     /**
      * A GraphQL Query Custom Post Type is hierarchical: each query post can have a parent,
      * enabling to fetch attributes from the parent post
@@ -37,11 +61,11 @@ class GraphQLQueryPostTypeHelpers
      * 2. Define a root GraphQL query without variables, and extend with posts "MobileApp" and "Website"
      * with different variables, eg: changing the value for `$limit`
      *
-     * @param \WP_Post $graphQLQueryPost The post to extract the attributes from
+     * @param WP_Post|null $graphQLQueryPost The post to extract the attributes from
      * @param bool $inheritAttributes Indicate if to fetch attributes (query/variables) from ancestor posts
-     * @return mixed[] Array with 2 elements: [$graphQLQuery, $graphQLVariables]
+     * @return array{0:string,1:array<string,mixed>} Array of 2 elements: [query, variables]
      */
-    public function getGraphQLQueryPostAttributes(?WP_Post $graphQLQueryPost, bool $inheritAttributes): array
+    public function getGraphQLQueryPostAttributes($graphQLQueryPost, $inheritAttributes): array
     {
         /**
          * Obtain the attributes from the block:
@@ -50,18 +74,21 @@ class GraphQLQueryPostTypeHelpers
          */
         $graphQLQuery = '';
         $graphQLVariables = [];
-        while (!is_null($graphQLQueryPost)) {
+        while ($graphQLQueryPost !== null) {
             /**
              * If the query has a parent, maybe get the query/variables from the parent
              */
             $inheritQuery = false;
             if ($inheritAttributes && $graphQLQueryPost->post_parent) {
-                $persistedQueryEndpointAPIHierarchyBlockAttributes = $this->persistedQueryEndpointAPIHierarchyBlockAccessor->getAttributes($graphQLQueryPost);
+                $persistedQueryEndpointAPIHierarchyBlockAttributes = $this->getPersistedQueryEndpointAPIHierarchyBlockAccessor()->getAttributes($graphQLQueryPost);
                 if ($persistedQueryEndpointAPIHierarchyBlockAttributes !== null) {
                     $inheritQuery = $persistedQueryEndpointAPIHierarchyBlockAttributes->isInheritQuery();
                 }
             }
-            $graphiQLBlockAttributes = $this->persistedQueryEndpointGraphiQLBlockAccessor->getAttributes($graphQLQueryPost);
+            $graphiQLBlockAttributes = $this->getPersistedQueryEndpointGraphiQLBlockAccessor()->getAttributes($graphQLQueryPost);
+            if ($graphiQLBlockAttributes === null) {
+                break;
+            }
             // Set the query unless it must be inherited from the parent
             if (empty($graphQLQuery) && !$inheritQuery) {
                 $graphQLQuery = $graphiQLBlockAttributes->getQuery();
@@ -78,7 +105,7 @@ class GraphQLQueryPostTypeHelpers
             if ($inheritQuery) {
                 $graphQLQueryPost = \get_post($graphQLQueryPost->post_parent);
                 // If it's trashed, then do not use
-                if (!is_null($graphQLQueryPost) && $graphQLQueryPost->post_status == 'trash') {
+                if ($graphQLQueryPost !== null && $graphQLQueryPost->post_status === 'trash') {
                     $graphQLQueryPost = null;
                 }
             } else {

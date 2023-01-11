@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
+use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface;
 use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentRetrieverTrait;
-use GraphQLAPI\GraphQLAPI\Services\MenuPages\AbstractPluginMenuPage;
 
 /**
  * Docs menu page
@@ -14,13 +14,32 @@ abstract class AbstractDocsMenuPage extends AbstractPluginMenuPage
 {
     use OpenInModalMenuPageTrait;
     use UseTabpanelMenuPageTrait;
+    use PrettyprintCodePageTrait;
     use MarkdownContentRetrieverTrait;
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface|null
+     */
+    private $markdownContentParser;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentParserInterface $markdownContentParser
+     */
+    final public function setMarkdownContentParser($markdownContentParser): void
+    {
+        $this->markdownContentParser = $markdownContentParser;
+    }
+    final protected function getMarkdownContentParser(): MarkdownContentParserInterface
+    {
+        /** @var MarkdownContentParserInterface */
+        return $this->markdownContentParser = $this->markdownContentParser ?? $this->instanceManager->getInstance(MarkdownContentParserInterface::class);
+    }
 
     public function print(): void
     {
         ?>
         <div
-            class="<?php echo implode(' ', $this->getDivClasses()) ?>"
+            class="<?php echo implode(' ', $this->getDivClassNames()) ?>"
         >
             <?php echo $this->getContentToPrint() ?>
         </div>
@@ -32,7 +51,7 @@ abstract class AbstractDocsMenuPage extends AbstractPluginMenuPage
      *
      * @return string[]
      */
-    protected function getDivClasses(): array
+    protected function getDivClassNames(): array
     {
         $classes = [];
         if ($this->openInModalWindow()) {
@@ -51,6 +70,11 @@ abstract class AbstractDocsMenuPage extends AbstractPluginMenuPage
     protected function useTabpanelForContent(): bool
     {
         return false;
+    }
+
+    protected function highlightCode(): bool
+    {
+        return true;
     }
 
     /**
@@ -72,6 +96,13 @@ abstract class AbstractDocsMenuPage extends AbstractPluginMenuPage
          */
         if ($this->useTabpanelForContent()) {
             $this->enqueueTabpanelAssets();
+        }
+
+        /**
+         * Add styles/scripts to use a tabpanel
+         */
+        if ($this->highlightCode()) {
+            $this->enqueueHighlightJSAssets();
         }
     }
 }

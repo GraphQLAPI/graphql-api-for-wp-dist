@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\Scripts;
 
 use Error;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\GeneralUtils;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
+use GraphQLAPI\PluginUtils\Services\Helpers\StringConversion;
+use PoP\Root\Services\BasicServiceTrait;
 use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
 
 /**
@@ -19,25 +19,48 @@ use PoP\Root\Services\AbstractAutomaticallyInstantiatedService;
  */
 abstract class AbstractScript extends AbstractAutomaticallyInstantiatedService
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $instanceManager;
+    private $moduleRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @var \GraphQLAPI\PluginUtils\Services\Helpers\StringConversion|null
      */
-    protected $moduleRegistry;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry)
+    private $stringConversion;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
+     */
+    final public function setModuleRegistry($moduleRegistry): void
     {
-        $this->instanceManager = $instanceManager;
         $this->moduleRegistry = $moduleRegistry;
     }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+    /**
+     * @param \GraphQLAPI\PluginUtils\Services\Helpers\StringConversion $stringConversion
+     */
+    final public function setStringConversion($stringConversion): void
+    {
+        $this->stringConversion = $stringConversion;
+    }
+    final protected function getStringConversion(): StringConversion
+    {
+        /** @var StringConversion */
+        return $this->stringConversion = $this->stringConversion ?? $this->instanceManager->getInstance(StringConversion::class);
+    }
+
     /**
      * Execute this function to initialize the script
      */
     final public function initialize(): void
     {
-        \add_action('init', [$this, 'initScript']);
+        \add_action('init', \Closure::fromCallable([$this, 'initScript']));
     }
 
     public function getEnablingModule(): ?string
@@ -52,7 +75,7 @@ abstract class AbstractScript extends AbstractAutomaticallyInstantiatedService
     {
         $enablingModule = $this->getEnablingModule();
         if ($enablingModule !== null) {
-            return $this->moduleRegistry->isModuleEnabled($enablingModule);
+            return $this->getModuleRegistry()->isModuleEnabled($enablingModule);
         }
         return parent::isServiceEnabled();
     }
@@ -85,15 +108,13 @@ abstract class AbstractScript extends AbstractAutomaticallyInstantiatedService
      */
     final protected function getScriptLocalizationName(): string
     {
-        /** @var GeneralUtils */
-        $generalUtils = $this->instanceManager->getInstance(GeneralUtils::class);
-        return $generalUtils->dashesToCamelCase($this->getScriptName());
+        return $this->getStringConversion()->dashesToCamelCase($this->getScriptName());
     }
 
     /**
      * Pass localized data to the block
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getLocalizedData(): array
     {
@@ -189,10 +210,10 @@ abstract class AbstractScript extends AbstractAutomaticallyInstantiatedService
          * Localize the script with custom data
          * Execute on hook "wp_print_scripts" and not now,
          * because `getLocalizedData` might call EndpointHelpers->getAdminConfigurableSchemaGraphQLEndpoint(),
-         * which calls ScriptModelScriptConfiguration::namespaceTypesAndInterfaces(),
+         * which calls ScriptModelScriptConfiguration::mustNamespaceTypes(),
          * which is initialized during "wp"
          */
-        \add_action('wp_print_scripts', function () use ($scriptName) {
+        \add_action('wp_print_scripts', function () use ($scriptName): void {
             if ($localizedData = $this->getLocalizedData()) {
                 \wp_localize_script(
                     $scriptName,

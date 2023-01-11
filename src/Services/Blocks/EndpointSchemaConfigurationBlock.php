@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\Blocks;
 
-use GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils;
-use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockRenderingHelpers;
-use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\ModuleResolvers\EndpointConfigurationFunctionalityModuleResolver;
+use GraphQLAPI\GraphQLAPI\Services\BlockCategories\BlockCategoryInterface;
 use GraphQLAPI\GraphQLAPI\Services\BlockCategories\EndpointBlockCategory;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockRenderingHelpers;
+use GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils;
 
 /**
  * SchemaConfiguration block
@@ -24,6 +25,56 @@ class EndpointSchemaConfigurationBlock extends AbstractBlock implements Persiste
     public const ATTRIBUTE_VALUE_SCHEMA_CONFIGURATION_NONE = -1;
     public const ATTRIBUTE_VALUE_SCHEMA_CONFIGURATION_INHERIT = -2;
 
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockRenderingHelpers|null
+     */
+    private $blockRenderingHelpers;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils|null
+     */
+    private $cptUtils;
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\BlockCategories\EndpointBlockCategory|null
+     */
+    private $endpointBlockCategory;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockRenderingHelpers $blockRenderingHelpers
+     */
+    final public function setBlockRenderingHelpers($blockRenderingHelpers): void
+    {
+        $this->blockRenderingHelpers = $blockRenderingHelpers;
+    }
+    final protected function getBlockRenderingHelpers(): BlockRenderingHelpers
+    {
+        /** @var BlockRenderingHelpers */
+        return $this->blockRenderingHelpers = $this->blockRenderingHelpers ?? $this->instanceManager->getInstance(BlockRenderingHelpers::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\CPTUtils $cptUtils
+     */
+    final public function setCPTUtils($cptUtils): void
+    {
+        $this->cptUtils = $cptUtils;
+    }
+    final protected function getCPTUtils(): CPTUtils
+    {
+        /** @var CPTUtils */
+        return $this->cptUtils = $this->cptUtils ?? $this->instanceManager->getInstance(CPTUtils::class);
+    }
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\BlockCategories\EndpointBlockCategory $endpointBlockCategory
+     */
+    final public function setEndpointBlockCategory($endpointBlockCategory): void
+    {
+        $this->endpointBlockCategory = $endpointBlockCategory;
+    }
+    final protected function getEndpointBlockCategory(): EndpointBlockCategory
+    {
+        /** @var EndpointBlockCategory */
+        return $this->endpointBlockCategory = $this->endpointBlockCategory ?? $this->instanceManager->getInstance(EndpointBlockCategory::class);
+    }
+
     protected function getBlockName(): string
     {
         return 'schema-configuration';
@@ -34,9 +85,9 @@ class EndpointSchemaConfigurationBlock extends AbstractBlock implements Persiste
         return 180;
     }
 
-    protected function getBlockCategoryClass(): ?string
+    protected function getBlockCategory(): ?BlockCategoryInterface
     {
-        return EndpointBlockCategory::class;
+        return $this->getEndpointBlockCategory();
     }
 
     protected function isDynamicBlock(): bool
@@ -47,22 +98,23 @@ class EndpointSchemaConfigurationBlock extends AbstractBlock implements Persiste
     /**
      * Pass localized data to the block
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function getLocalizedData(): array
     {
         return array_merge(
             parent::getLocalizedData(),
             [
-                'isAPIHierarchyEnabled' => $this->moduleRegistry->isModuleEnabled(EndpointFunctionalityModuleResolver::API_HIERARCHY),
+                'isAPIHierarchyEnabled' => $this->getModuleRegistry()->isModuleEnabled(EndpointConfigurationFunctionalityModuleResolver::API_HIERARCHY),
             ]
         );
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param array<string,mixed> $attributes
+     * @param string $content
      */
-    public function renderBlock(array $attributes, string $content): string
+    public function renderBlock($attributes, $content): string
     {
         /**
          * Print the list of all the contained Access Control blocks
@@ -84,21 +136,17 @@ EOF;
         } elseif ($schemaConfigurationID > 0) {
             $schemaConfigurationObject = \get_post($schemaConfigurationID);
             if (!is_null($schemaConfigurationObject)) {
-                /** @var BlockRenderingHelpers */
-                $blockRenderingHelpers = $this->instanceManager->getInstance(BlockRenderingHelpers::class);
-                /** @var CPTUtils */
-                $cptUtils = $this->instanceManager->getInstance(CPTUtils::class);
-                $schemaConfigurationDescription = $cptUtils->getCustomPostDescription($schemaConfigurationObject);
+                $schemaConfigurationDescription = $this->getCPTUtils()->getCustomPostDescription($schemaConfigurationObject);
                 $permalink = \get_permalink($schemaConfigurationObject->ID);
                 $schemaConfigurationContent = ($permalink ?
                     \sprintf(
                         '<code><a href="%s">%s</a></code>',
                         $permalink,
-                        $blockRenderingHelpers->getCustomPostTitle($schemaConfigurationObject)
+                        $this->getBlockRenderingHelpers()->getCustomPostTitle($schemaConfigurationObject)
                     ) :
                     \sprintf(
                         '<code>%s</code>',
-                        $blockRenderingHelpers->getCustomPostTitle($schemaConfigurationObject)
+                        $this->getBlockRenderingHelpers()->getCustomPostTitle($schemaConfigurationObject)
                     )
                 ) . ($schemaConfigurationDescription ?
                     '<br/><small>' . $schemaConfigurationDescription . '</small>'
@@ -114,5 +162,30 @@ EOF;
             \__('Schema Configuration', 'graphql-api'),
             $schemaConfigurationContent
         );
+    }
+
+    /**
+     * Add the locale language to the localized data?
+     */
+    protected function addLocalLanguage(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Default language for the script/component's documentation
+     */
+    protected function getDefaultLanguage(): ?string
+    {
+        // English
+        return 'en';
+    }
+
+    /**
+     * Register style-index.css
+     */
+    protected function registerCommonStyleCSS(): bool
+    {
+        return true;
     }
 }

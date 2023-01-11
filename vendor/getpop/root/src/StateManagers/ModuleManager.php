@@ -1,0 +1,102 @@
+<?php
+
+declare (strict_types=1);
+namespace PoP\Root\StateManagers;
+
+use PoP\Root\Module\ModuleInterface;
+use PoP\Root\Exception\ComponentNotExistsException;
+/**
+ * Keep a reference to all Components
+ */
+class ModuleManager implements \PoP\Root\StateManagers\ModuleManagerInterface
+{
+    /**
+     * The initialized modules, stored under their class
+     *
+     * @var array<class-string<ModuleInterface>,ModuleInterface>
+     */
+    protected $modules = [];
+    /**
+     * Register and initialize a module
+     *
+     * @param class-string<ModuleInterface> $moduleClass
+     */
+    public function register($moduleClass) : ModuleInterface
+    {
+        $module = new $moduleClass();
+        $this->modules[$moduleClass] = $module;
+        return $module;
+    }
+    /**
+     * @phpstan-param class-string<ModuleInterface> $moduleClass
+     * @throws ComponentNotExistsException If the class of the module does not exist or has not been initialized
+     * @param string $moduleClass
+     */
+    public function getModule($moduleClass) : ModuleInterface
+    {
+        if (!isset($this->modules[$moduleClass])) {
+            throw new ComponentNotExistsException(\sprintf('Module of class \'%s\' does not exist, or it has not been added for initialization', $moduleClass));
+        }
+        return $this->modules[$moduleClass];
+    }
+    /**
+     * Configure modules
+     */
+    public function configureComponents() : void
+    {
+        foreach ($this->modules as $module) {
+            if (!$module->isEnabled()) {
+                continue;
+            }
+            $module->configure();
+        }
+    }
+    /**
+     * Boot all modules
+     */
+    public function bootSystem() : void
+    {
+        foreach ($this->modules as $module) {
+            if (!$module->isEnabled()) {
+                continue;
+            }
+            $module->bootSystem();
+        }
+    }
+    /**
+     * Boot all modules
+     */
+    public function moduleLoaded() : void
+    {
+        foreach ($this->modules as $module) {
+            if (!$module->isEnabled()) {
+                continue;
+            }
+            $module->moduleLoaded();
+        }
+    }
+    /**
+     * Boot all modules
+     */
+    public function boot() : void
+    {
+        foreach ($this->modules as $module) {
+            if (!$module->isEnabled()) {
+                continue;
+            }
+            $module->boot();
+        }
+    }
+    /**
+     * Boot all modules
+     */
+    public function afterBoot() : void
+    {
+        foreach ($this->modules as $module) {
+            if (!$module->isEnabled()) {
+                continue;
+            }
+            $module->afterBoot();
+        }
+    }
+}

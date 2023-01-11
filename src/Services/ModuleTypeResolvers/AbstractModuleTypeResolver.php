@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\ModuleTypeResolvers;
 
-use GraphQLAPI\GraphQLAPI\Services\ModuleTypeResolvers\ModuleTypeResolverInterface;
-
 abstract class AbstractModuleTypeResolver implements ModuleTypeResolverInterface
 {
     /**
      * By default, the slug is the module's name, without the owner/package
+     * @param string $moduleType
      */
-    public function getSlug(string $moduleType): string
+    public function getSlug($moduleType): string
     {
         $pos = strrpos($moduleType, '\\');
         if ($pos !== false) {
@@ -22,8 +21,9 @@ abstract class AbstractModuleTypeResolver implements ModuleTypeResolverInterface
 
     /**
      * Provide a default name, just in case none is provided
+     * @param string $moduleType
      */
-    public function getName(string $moduleType): string
+    public function getName($moduleType): string
     {
         return $this->getSlug($moduleType);
     }

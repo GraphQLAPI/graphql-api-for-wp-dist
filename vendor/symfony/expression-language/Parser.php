@@ -24,17 +24,35 @@ class Parser
 {
     public const OPERATOR_LEFT = 1;
     public const OPERATOR_RIGHT = 2;
+    /**
+     * @var \Symfony\Component\ExpressionLanguage\TokenStream
+     */
     private $stream;
+    /**
+     * @var mixed[]
+     */
     private $unaryOperators;
+    /**
+     * @var mixed[]
+     */
     private $binaryOperators;
+    /**
+     * @var mixed[]
+     */
     private $functions;
+    /**
+     * @var mixed[]|null
+     */
     private $names;
-    private $lint;
+    /**
+     * @var bool
+     */
+    private $lint = \false;
     public function __construct(array $functions)
     {
         $this->functions = $functions;
         $this->unaryOperators = ['not' => ['precedence' => 50], '!' => ['precedence' => 50], '-' => ['precedence' => 500], '+' => ['precedence' => 500]];
-        $this->binaryOperators = ['or' => ['precedence' => 10, 'associativity' => self::OPERATOR_LEFT], '||' => ['precedence' => 10, 'associativity' => self::OPERATOR_LEFT], 'and' => ['precedence' => 15, 'associativity' => self::OPERATOR_LEFT], '&&' => ['precedence' => 15, 'associativity' => self::OPERATOR_LEFT], '|' => ['precedence' => 16, 'associativity' => self::OPERATOR_LEFT], '^' => ['precedence' => 17, 'associativity' => self::OPERATOR_LEFT], '&' => ['precedence' => 18, 'associativity' => self::OPERATOR_LEFT], '==' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '===' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '!=' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '!==' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '<' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '>' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '>=' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '<=' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'not in' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'in' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'matches' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '..' => ['precedence' => 25, 'associativity' => self::OPERATOR_LEFT], '+' => ['precedence' => 30, 'associativity' => self::OPERATOR_LEFT], '-' => ['precedence' => 30, 'associativity' => self::OPERATOR_LEFT], '~' => ['precedence' => 40, 'associativity' => self::OPERATOR_LEFT], '*' => ['precedence' => 60, 'associativity' => self::OPERATOR_LEFT], '/' => ['precedence' => 60, 'associativity' => self::OPERATOR_LEFT], '%' => ['precedence' => 60, 'associativity' => self::OPERATOR_LEFT], '**' => ['precedence' => 200, 'associativity' => self::OPERATOR_RIGHT]];
+        $this->binaryOperators = ['or' => ['precedence' => 10, 'associativity' => self::OPERATOR_LEFT], '||' => ['precedence' => 10, 'associativity' => self::OPERATOR_LEFT], 'and' => ['precedence' => 15, 'associativity' => self::OPERATOR_LEFT], '&&' => ['precedence' => 15, 'associativity' => self::OPERATOR_LEFT], '|' => ['precedence' => 16, 'associativity' => self::OPERATOR_LEFT], '^' => ['precedence' => 17, 'associativity' => self::OPERATOR_LEFT], '&' => ['precedence' => 18, 'associativity' => self::OPERATOR_LEFT], '==' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '===' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '!=' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '!==' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '<' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '>' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '>=' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '<=' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'not in' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'in' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'contains' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'starts with' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'ends with' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], 'matches' => ['precedence' => 20, 'associativity' => self::OPERATOR_LEFT], '..' => ['precedence' => 25, 'associativity' => self::OPERATOR_LEFT], '+' => ['precedence' => 30, 'associativity' => self::OPERATOR_LEFT], '-' => ['precedence' => 30, 'associativity' => self::OPERATOR_LEFT], '~' => ['precedence' => 40, 'associativity' => self::OPERATOR_LEFT], '*' => ['precedence' => 60, 'associativity' => self::OPERATOR_LEFT], '/' => ['precedence' => 60, 'associativity' => self::OPERATOR_LEFT], '%' => ['precedence' => 60, 'associativity' => self::OPERATOR_LEFT], '**' => ['precedence' => 200, 'associativity' => self::OPERATOR_RIGHT]];
     }
     /**
      * Converts a token stream to a node tree.
@@ -49,11 +67,11 @@ class Parser
      * variable 'container' can be used in the expression
      * but the compiled code will use 'this'.
      *
-     * @return Node\Node A node tree
-     *
      * @throws SyntaxError
+     * @param \Symfony\Component\ExpressionLanguage\TokenStream $stream
+     * @param mixed[] $names
      */
-    public function parse(TokenStream $stream, array $names = [])
+    public function parse($stream, $names = []) : Node\Node
     {
         $this->lint = \false;
         return $this->doParse($stream, $names);
@@ -65,8 +83,10 @@ class Parser
      * If you want to skip checking dynamic variable names, pass `null` instead of the array.
      *
      * @throws SyntaxError When the passed expression is invalid
+     * @param \Symfony\Component\ExpressionLanguage\TokenStream $stream
+     * @param mixed[]|null $names
      */
-    public function lint(TokenStream $stream, ?array $names = []) : void
+    public function lint($stream, $names = []) : void
     {
         $this->lint = \true;
         $this->doParse($stream, $names);
@@ -82,11 +102,13 @@ class Parser
         if (!$stream->isEOF()) {
             throw new SyntaxError(\sprintf('Unexpected token "%s" of value "%s".', $stream->current->type, $stream->current->value), $stream->current->cursor, $stream->getExpression());
         }
-        $this->stream = null;
-        $this->names = null;
+        unset($this->stream, $this->names);
         return $node;
     }
-    public function parseExpression(int $precedence = 0)
+    /**
+     * @param int $precedence
+     */
+    public function parseExpression($precedence = 0)
     {
         $expr = $this->getPrimary();
         $token = $this->stream->current;
@@ -119,8 +141,16 @@ class Parser
         }
         return $this->parsePrimaryExpression();
     }
-    protected function parseConditionalExpression(Node\Node $expr)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Node\Node $expr
+     */
+    protected function parseConditionalExpression($expr)
     {
+        while ($this->stream->current->test(Token::PUNCTUATION_TYPE, '??')) {
+            $this->stream->next();
+            $expr2 = $this->parseExpression();
+            $expr = new Node\NullCoalesceNode($expr, $expr2);
+        }
         while ($this->stream->current->test(Token::PUNCTUATION_TYPE, '?')) {
             $this->stream->next();
             if (!$this->stream->current->test(Token::PUNCTUATION_TYPE, ':')) {
@@ -249,18 +279,22 @@ class Parser
         $this->stream->expect(Token::PUNCTUATION_TYPE, '}', 'An opened hash is not properly closed');
         return $node;
     }
-    public function parsePostfixExpression(Node\Node $node)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Node\Node $node
+     */
+    public function parsePostfixExpression($node)
     {
         $token = $this->stream->current;
         while (Token::PUNCTUATION_TYPE == $token->type) {
-            if ('.' === $token->value) {
+            if ('.' === $token->value || '?.' === $token->value) {
+                $isNullSafe = '?.' === $token->value;
                 $this->stream->next();
                 $token = $this->stream->current;
                 $this->stream->next();
                 if (Token::NAME_TYPE !== $token->type && (Token::OPERATOR_TYPE !== $token->type || !\preg_match('/[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*/A', $token->value))) {
                     throw new SyntaxError('Expected name.', $token->cursor, $this->stream->getExpression());
                 }
-                $arg = new Node\ConstantNode($token->value, \true);
+                $arg = new Node\ConstantNode($token->value, \true, $isNullSafe);
                 $arguments = new Node\ArgumentsNode();
                 if ($this->stream->current->test(Token::PUNCTUATION_TYPE, '(')) {
                     $type = Node\GetAttrNode::METHOD_CALL;
@@ -291,7 +325,7 @@ class Parser
         $args = [];
         $this->stream->expect(Token::PUNCTUATION_TYPE, '(', 'A list of arguments must begin with an opening parenthesis');
         while (!$this->stream->current->test(Token::PUNCTUATION_TYPE, ')')) {
-            if (!empty($args)) {
+            if ($args) {
                 $this->stream->expect(Token::PUNCTUATION_TYPE, ',', 'Arguments must be separated by a comma');
             }
             $args[] = $this->parseExpression();

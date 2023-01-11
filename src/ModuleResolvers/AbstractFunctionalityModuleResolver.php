@@ -10,8 +10,9 @@ abstract class AbstractFunctionalityModuleResolver extends AbstractModuleResolve
 {
     /**
      * The type of the module
+     * @param string $module
      */
-    public function getModuleType(string $module): string
+    public function getModuleType($module): string
     {
         return ModuleTypeResolver::FUNCTIONALITY;
     }

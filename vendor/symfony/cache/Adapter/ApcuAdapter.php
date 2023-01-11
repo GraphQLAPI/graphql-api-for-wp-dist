@@ -18,11 +18,14 @@ use PrefixedByPoP\Symfony\Component\Cache\Marshaller\MarshallerInterface;
  */
 class ApcuAdapter extends AbstractAdapter
 {
+    /**
+     * @var \Symfony\Component\Cache\Marshaller\MarshallerInterface|null
+     */
     private $marshaller;
     /**
      * @throws CacheException if APCu is not enabled
      */
-    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $version = null, ?MarshallerInterface $marshaller = null)
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $version = null, MarshallerInterface $marshaller = null)
     {
         if (!static::isSupported()) {
             throw new CacheException('APCu is not enabled.');
@@ -42,12 +45,12 @@ class ApcuAdapter extends AbstractAdapter
     }
     public static function isSupported()
     {
-        return \function_exists('apcu_fetch') && \filter_var(\ini_get('apc.enabled'), \FILTER_VALIDATE_BOOLEAN);
+        return \function_exists('apcu_fetch') && \filter_var(\ini_get('apc.enabled'), \FILTER_VALIDATE_BOOL);
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doFetch(array $ids)
+    protected function doFetch($ids) : iterable
     {
         $unserializeCallbackHandler = \ini_set('unserialize_callback_func', __CLASS__ . '::handleUnserializeCallback');
         try {
@@ -65,23 +68,23 @@ class ApcuAdapter extends AbstractAdapter
         }
     }
     /**
-     * {@inheritdoc}
+     * @param string $id
      */
-    protected function doHave(string $id)
+    protected function doHave($id) : bool
     {
         return \apcu_exists($id);
     }
     /**
-     * {@inheritdoc}
+     * @param string $namespace
      */
-    protected function doClear(string $namespace)
+    protected function doClear($namespace) : bool
     {
-        return isset($namespace[0]) && \class_exists(\APCuIterator::class, \false) && ('cli' !== \PHP_SAPI || \filter_var(\ini_get('apc.enable_cli'), \FILTER_VALIDATE_BOOLEAN)) ? \apcu_delete(new \APCuIterator(\sprintf('/^%s/', \preg_quote($namespace, '/')), \APC_ITER_KEY)) : \apcu_clear_cache();
+        return isset($namespace[0]) && \class_exists(\APCUIterator::class, \false) && ('cli' !== \PHP_SAPI || \filter_var(\ini_get('apc.enable_cli'), \FILTER_VALIDATE_BOOL)) ? \apcu_delete(new \APCUIterator(\sprintf('/^%s/', \preg_quote($namespace, '/')), \APC_ITER_KEY)) : \apcu_clear_cache();
     }
     /**
-     * {@inheritdoc}
+     * @param mixed[] $ids
      */
-    protected function doDelete(array $ids)
+    protected function doDelete($ids) : bool
     {
         foreach ($ids as $id) {
             \apcu_delete($id);
@@ -89,9 +92,11 @@ class ApcuAdapter extends AbstractAdapter
         return \true;
     }
     /**
-     * {@inheritdoc}
+     * @return mixed[]|bool
+     * @param mixed[] $values
+     * @param int $lifetime
      */
-    protected function doSave(array $values, int $lifetime)
+    protected function doSave($values, $lifetime)
     {
         if (null !== $this->marshaller && !($values = $this->marshaller->marshall($values, $failed))) {
             return $failed;
@@ -103,6 +108,7 @@ class ApcuAdapter extends AbstractAdapter
             return \array_keys($failures);
         } catch (\Throwable $e) {
             if (1 === \count($values)) {
+                \reset($values);
                 // Workaround https://github.com/krakjoe/apcu/issues/170
                 \apcu_delete(\key($values));
             }

@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\MenuPages;
 
+use PoP\Root\App;
 use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
-use GraphQLAPI\GraphQLAPI\ContentProcessors\MarkdownContentRetrieverTrait;
 
 /**
  * Open documentation within the About page
  */
 abstract class AbstractDocAboutMenuPage extends AbstractDocsMenuPage
 {
-    use MarkdownContentRetrieverTrait;
-
     protected function openInModalWindow(): bool
     {
         return true;
@@ -25,7 +23,7 @@ abstract class AbstractDocAboutMenuPage extends AbstractDocsMenuPage
      * @param string[] $specialChars
      * @return string[]
      */
-    public function enableSpecialCharsForSanitization(array $specialChars): array
+    public function enableSpecialCharsForSanitization($specialChars): array
     {
         return array_diff(
             $specialChars,
@@ -45,13 +43,13 @@ abstract class AbstractDocAboutMenuPage extends AbstractDocsMenuPage
         // Enable "/" in the filename
         add_filter(
             'sanitize_file_name_chars',
-            [$this, 'enableSpecialCharsForSanitization']
+            \Closure::fromCallable([$this, 'enableSpecialCharsForSanitization'])
         );
-        $filename = $_REQUEST[RequestParams::DOC] ?? '';
-        $doc = \sanitize_file_name($filename . '.md');
+        $filename = App::query(RequestParams::DOC, '');
+        $doc = \sanitize_file_name($filename);
         remove_filter(
             'sanitize_file_name_chars',
-            [$this, 'enableSpecialCharsForSanitization']
+            \Closure::fromCallable([$this, 'enableSpecialCharsForSanitization'])
         );
         return $this->getMarkdownContent(
             $doc,

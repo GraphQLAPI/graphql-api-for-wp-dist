@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\EditorScripts;
 
 use GraphQLAPI\GraphQLAPI\ModuleResolvers\UserInterfaceFunctionalityModuleResolver;
-use GraphQLAPI\GraphQLAPI\Services\Scripts\MainPluginScriptTrait;
 use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType;
+use GraphQLAPI\GraphQLAPI\Services\Scripts\MainPluginScriptTrait;
 
 /**
  * Components required to edit a GraphQL endpoint CPT
@@ -14,6 +14,24 @@ use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPo
 class EndpointComponentEditorScript extends AbstractEditorScript
 {
     use MainPluginScriptTrait;
+
+    /**
+     * @var \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType|null
+     */
+    private $graphQLCustomEndpointCustomPostType;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLCustomEndpointCustomPostType $graphQLCustomEndpointCustomPostType
+     */
+    final public function setGraphQLCustomEndpointCustomPostType($graphQLCustomEndpointCustomPostType): void
+    {
+        $this->graphQLCustomEndpointCustomPostType = $graphQLCustomEndpointCustomPostType;
+    }
+    final protected function getGraphQLCustomEndpointCustomPostType(): GraphQLCustomEndpointCustomPostType
+    {
+        /** @var GraphQLCustomEndpointCustomPostType */
+        return $this->graphQLCustomEndpointCustomPostType = $this->graphQLCustomEndpointCustomPostType ?? $this->instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
+    }
 
     /**
      * Block name
@@ -67,12 +85,10 @@ class EndpointComponentEditorScript extends AbstractEditorScript
      */
     protected function getAllowedPostTypes(): array
     {
-        /** @var GraphQLCustomEndpointCustomPostType */
-        $customPostTypeService = $this->instanceManager->getInstance(GraphQLCustomEndpointCustomPostType::class);
         return array_merge(
             parent::getAllowedPostTypes(),
             [
-                $customPostTypeService->getCustomPostType(),
+                $this->getGraphQLCustomEndpointCustomPostType()->getCustomPostType(),
             ]
         );
     }

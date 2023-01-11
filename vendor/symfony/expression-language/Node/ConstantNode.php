@@ -18,17 +18,36 @@ use PrefixedByPoP\Symfony\Component\ExpressionLanguage\Compiler;
  */
 class ConstantNode extends Node
 {
+    /**
+     * @readonly
+     * @var bool
+     */
+    public $isNullSafe;
+    /**
+     * @var bool
+     */
     private $isIdentifier;
-    public function __construct($value, bool $isIdentifier = \false)
+    /**
+     * @param mixed $value
+     */
+    public function __construct($value, bool $isIdentifier = \false, bool $isNullSafe = \false)
     {
         $this->isIdentifier = $isIdentifier;
+        $this->isNullSafe = $isNullSafe;
         parent::__construct([], ['value' => $value]);
     }
-    public function compile(Compiler $compiler)
+    /**
+     * @param \Symfony\Component\ExpressionLanguage\Compiler $compiler
+     */
+    public function compile($compiler)
     {
         $compiler->repr($this->attributes['value']);
     }
-    public function evaluate(array $functions, array $values)
+    /**
+     * @param mixed[] $functions
+     * @param mixed[] $values
+     */
+    public function evaluate($functions, $values)
     {
         return $this->attributes['value'];
     }

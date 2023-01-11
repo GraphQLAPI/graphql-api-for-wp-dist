@@ -4,26 +4,31 @@ declare(strict_types=1);
 
 namespace GraphQLAPI\GraphQLAPI\Services\EndpointExecuters;
 
-use GraphQLAPI\GraphQLAPI\Constants\RequestParams;
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Services\CustomPostTypes\GraphQLEndpointCustomPostTypeInterface;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Root\Services\BasicServiceTrait;
 
 abstract class AbstractEndpointExecuter implements EndpointExecuterInterface
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $instanceManager;
+    private $moduleRegistry;
+
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
      */
-    protected $moduleRegistry;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry)
+    final public function setModuleRegistry($moduleRegistry): void
     {
-        $this->instanceManager = $instanceManager;
         $this->moduleRegistry = $moduleRegistry;
     }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
+
     public function getEnablingModule(): ?string
     {
         return null;
@@ -35,41 +40,15 @@ abstract class AbstractEndpointExecuter implements EndpointExecuterInterface
     public function isServiceEnabled(): bool
     {
         $enablingModule = $this->getEnablingModule();
-        if ($enablingModule !== null && !$this->moduleRegistry->isModuleEnabled($enablingModule)) {
+        if ($enablingModule !== null && !$this->getModuleRegistry()->isModuleEnabled($enablingModule)) {
             return false;
         }
 
         // Check the expected ?view=... is requested
-        if (!$this->isClientRequested()) {
-            return false;
-        }
-
-        // Check we're loading the corresponding CPT
-        $customPostType = $this->getCustomPostType();
-        if (!\is_singular($customPostType->getCustomPostType())) {
-            return false;
-        }
-
-        // Check the endpoint is not disabled
-        global $post;
-        if (!$customPostType->isEndpointEnabled($post)) {
+        if (!$this->isEndpointBeingRequested()) {
             return false;
         }
 
         return true;
     }
-
-    abstract protected function getCustomPostType(): GraphQLEndpointCustomPostTypeInterface;
-
-    /**
-     * Check the expected ?view=... is requested.
-     */
-    protected function isClientRequested(): bool
-    {
-        // Use `''` instead of `null` so that the query resolution
-        // works either without param or empty (?view=)
-        return ($_REQUEST[RequestParams::VIEW] ?? '') === $this->getView();
-    }
-
-    abstract protected function getView(): string;
 }

@@ -18,11 +18,14 @@ use PrefixedByPoP\Symfony\Component\Config\Definition\Exception\InvalidConfigura
  */
 class EnumNode extends ScalarNode
 {
+    /**
+     * @var mixed[]
+     */
     private $values;
     public function __construct(?string $name, NodeInterface $parent = null, array $values = [], string $pathSeparator = BaseNode::DEFAULT_PATH_SEPARATOR)
     {
         $values = \array_unique($values);
-        if (empty($values)) {
+        if (!$values) {
             throw new \InvalidArgumentException('$values must contain at least one element.');
         }
         parent::__construct($name, $parent, $pathSeparator);
@@ -33,7 +36,8 @@ class EnumNode extends ScalarNode
         return $this->values;
     }
     /**
-     * {@inheritdoc}
+     * @param mixed $value
+     * @return mixed
      */
     protected function finalizeValue($value)
     {
@@ -44,12 +48,5 @@ class EnumNode extends ScalarNode
             throw $ex;
         }
         return $value;
-    }
-    /**
-     * {@inheritdoc}
-     */
-    protected function allowPlaceholders() : bool
-    {
-        return \false;
     }
 }

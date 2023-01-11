@@ -5,43 +5,62 @@ declare(strict_types=1);
 namespace GraphQLAPI\GraphQLAPI\Services\SchemaConfigurationExecuters;
 
 use GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface;
-use GraphQLAPI\GraphQLAPI\Services\Blocks\AbstractBlock;
+use GraphQLAPI\GraphQLAPI\Services\Blocks\BlockInterface;
 use GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers;
-use PoP\ComponentModel\Instances\InstanceManagerInterface;
+use PoP\Root\Services\BasicServiceTrait;
 
 abstract class AbstractSchemaConfigurationExecuter implements SchemaConfigurationExecuterInterface
 {
+    use BasicServiceTrait;
+
     /**
-     * @var \PoP\ComponentModel\Instances\InstanceManagerInterface
+     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface|null
      */
-    protected $instanceManager;
+    private $moduleRegistry;
     /**
-     * @var \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface
+     * @var \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers|null
      */
-    protected $moduleRegistry;
-    public function __construct(InstanceManagerInterface $instanceManager, ModuleRegistryInterface $moduleRegistry)
+    private $blockHelpers;
+
+    /**
+     * @param \GraphQLAPI\GraphQLAPI\Registries\ModuleRegistryInterface $moduleRegistry
+     */
+    final public function setModuleRegistry($moduleRegistry): void
     {
-        $this->instanceManager = $instanceManager;
         $this->moduleRegistry = $moduleRegistry;
     }
+    final protected function getModuleRegistry(): ModuleRegistryInterface
+    {
+        /** @var ModuleRegistryInterface */
+        return $this->moduleRegistry = $this->moduleRegistry ?? $this->instanceManager->getInstance(ModuleRegistryInterface::class);
+    }
     /**
-     * @return array<string, mixed>|null Data inside the block is saved as key (string) => value
+     * @param \GraphQLAPI\GraphQLAPI\Services\Helpers\BlockHelpers $blockHelpers
      */
-    protected function getSchemaConfigBlockDataItem(int $schemaConfigurationID): ?array
+    final public function setBlockHelpers($blockHelpers): void
+    {
+        $this->blockHelpers = $blockHelpers;
+    }
+    final protected function getBlockHelpers(): BlockHelpers
     {
         /** @var BlockHelpers */
-        $blockHelpers = $this->instanceManager->getInstance(BlockHelpers::class);
-        /**
-         * @var AbstractBlock
-         */
-        $block = $this->instanceManager->getInstance($this->getBlockClass());
-        return $blockHelpers->getSingleBlockOfTypeFromCustomPost(
+        return $this->blockHelpers = $this->blockHelpers ?? $this->instanceManager->getInstance(BlockHelpers::class);
+    }
+
+    /**
+     * @return array<string,mixed>|null Data inside the block is saved as key (string) => value
+     * @param int $schemaConfigurationID
+     */
+    protected function getSchemaConfigBlockDataItem($schemaConfigurationID): ?array
+    {
+        $block = $this->getBlock();
+        return $this->getBlockHelpers()->getSingleBlockOfTypeFromCustomPost(
             $schemaConfigurationID,
             $block
         );
     }
 
-    abstract protected function getBlockClass(): string;
+    abstract protected function getBlock(): BlockInterface;
 
     public function getEnablingModule(): ?string
     {
@@ -55,7 +74,7 @@ abstract class AbstractSchemaConfigurationExecuter implements SchemaConfiguratio
     {
         $enablingModule = $this->getEnablingModule();
         if ($enablingModule !== null) {
-            return $this->moduleRegistry->isModuleEnabled($enablingModule);
+            return $this->getModuleRegistry()->isModuleEnabled($enablingModule);
         }
         return true;
     }

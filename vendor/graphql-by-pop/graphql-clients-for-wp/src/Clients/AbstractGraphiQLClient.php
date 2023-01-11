@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace GraphQLByPoP\GraphQLClientsForWP\Clients;
 
-use GraphQLByPoP\GraphQLClientsForWP\Clients\AbstractClient;
-use GraphQLByPoP\GraphQLClientsForWP\ComponentConfiguration;
+use PoP\Root\App;
+use GraphQLByPoP\GraphQLClientsForWP\Module;
+use GraphQLByPoP\GraphQLClientsForWP\ModuleConfiguration;
 
 abstract class AbstractGraphiQLClient extends AbstractClient
 {
@@ -14,10 +15,14 @@ abstract class AbstractGraphiQLClient extends AbstractClient
      */
     protected function isClientDisabled(): bool
     {
-        return ComponentConfiguration::isGraphiQLClientEndpointDisabled();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return $moduleConfiguration->isGraphiQLClientEndpointDisabled();
     }
-    protected function getEndpoint(): string
+    public function getEndpoint(): string
     {
-        return ComponentConfiguration::getGraphiQLClientEndpoint();
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        return $moduleConfiguration->getGraphiQLClientEndpoint();
     }
 }

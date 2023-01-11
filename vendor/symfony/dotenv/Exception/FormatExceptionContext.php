@@ -15,9 +15,21 @@ namespace PrefixedByPoP\Symfony\Component\Dotenv\Exception;
  */
 final class FormatExceptionContext
 {
+    /**
+     * @var string
+     */
     private $data;
+    /**
+     * @var string
+     */
     private $path;
+    /**
+     * @var int
+     */
     private $lineno;
+    /**
+     * @var int
+     */
     private $cursor;
     public function __construct(string $data, string $path, int $lineno, int $cursor)
     {

@@ -3,22 +3,26 @@
 declare (strict_types=1);
 namespace GraphQLByPoP\GraphQLServer\Hooks;
 
-use PoP\API\Cache\CacheUtils;
-use PoP\Hooks\AbstractHookSet;
-use PoP\ComponentModel\State\ApplicationState;
+use GraphQLByPoP\GraphQLServer\Module;
+use GraphQLByPoP\GraphQLServer\ModuleConfiguration;
+use PoP\Engine\Cache\CacheUtils;
+use PoP\Root\App;
+use PoP\Root\Hooks\AbstractHookSet;
 class SchemaCacheHookSet extends AbstractHookSet
 {
     protected function init() : void
     {
-        $this->hooksAPI->addFilter(CacheUtils::HOOK_SCHEMA_CACHE_KEY_COMPONENTS, array($this, 'getSchemaCacheKeyComponents'));
+        App::addFilter(CacheUtils::HOOK_SCHEMA_CACHE_KEY_ELEMENTS, \Closure::fromCallable([$this, 'getSchemaCacheKeyElements']));
     }
-    public function getSchemaCacheKeyComponents(array $components) : array
+    /**
+     * @return array<string,mixed>
+     * @param string[] $elements
+     */
+    public function getSchemaCacheKeyElements($elements) : array
     {
-        $vars = ApplicationState::getVars();
-        if ($graphQLOperationType = $vars['graphql-operation-type'] ?? null) {
-            $components['graphql-operation-type'] = $graphQLOperationType;
-        }
-        $components['nested-mutations-enabled'] = $vars['nested-mutations-enabled'];
-        return $components;
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        $elements['nested-mutations-enabled'] = $moduleConfiguration->enableNestedMutations();
+        return $elements;
     }
 }
