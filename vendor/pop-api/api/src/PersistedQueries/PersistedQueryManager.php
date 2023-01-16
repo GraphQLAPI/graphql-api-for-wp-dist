@@ -5,8 +5,4 @@ namespace PoPAPI\API\PersistedQueries;
 
 class PersistedQueryManager extends \PoPAPI\API\PersistedQueries\AbstractPersistedQueryManager
 {
-    protected function addQueryResolutionToSchema() : bool
-    {
-        return \true;
-    }
 }

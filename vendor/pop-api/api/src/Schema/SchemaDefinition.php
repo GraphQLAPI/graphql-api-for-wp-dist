@@ -10,5 +10,4 @@ class SchemaDefinition extends UpstreamSchemaDefinition
     public const TYPE_NAME = 'typeName';
     public const PERSISTED_FRAGMENTS = 'persistedFragments';
     public const PERSISTED_QUERIES = 'persistedQueries';
-    public const FRAGMENT_RESOLUTION = 'resolution';
 }

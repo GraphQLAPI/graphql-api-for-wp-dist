@@ -187,14 +187,14 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function getContainer() : ContainerInterface
     {
-        return self::getContainerBuilderFactory()->getInstance();
+        return self::$containerBuilderFactory->getInstance();
     }
     /**
      * Shortcut function.
      */
     public static final function getSystemContainer() : ContainerInterface
     {
-        return self::getSystemContainerBuilderFactory()->getInstance();
+        return self::$systemContainerBuilderFactory->getInstance();
     }
     /**
      * Shortcut function.
@@ -205,7 +205,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function getModule($moduleClass) : ModuleInterface
     {
-        return self::getModuleManager()->getModule($moduleClass);
+        return self::$moduleManager->getModule($moduleClass);
     }
     /**
      * Shortcut function.
@@ -214,7 +214,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function getState($keyOrPath)
     {
-        $appStateManager = self::getAppStateManager();
+        $appStateManager = self::$appStateManager;
         if (\is_array($keyOrPath)) {
             /** @var string[] */
             $path = $keyOrPath;
@@ -231,7 +231,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function hasState($keyOrPath)
     {
-        $appStateManager = self::getAppStateManager();
+        $appStateManager = self::$appStateManager;
         if (\is_array($keyOrPath)) {
             /** @var string[] */
             $path = $keyOrPath;
@@ -250,7 +250,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function addFilter($tag, $function_to_add, $priority = 10, $accepted_args = 1) : void
     {
-        self::getHookManager()->addFilter($tag, $function_to_add, $priority, $accepted_args);
+        self::$hookManager->addFilter($tag, $function_to_add, $priority, $accepted_args);
     }
     /**
      * Shortcut function.
@@ -260,7 +260,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function removeFilter($tag, $function_to_remove, $priority = 10) : bool
     {
-        return self::getHookManager()->removeFilter($tag, $function_to_remove, $priority);
+        return self::$hookManager->removeFilter($tag, $function_to_remove, $priority);
     }
     /**
      * Shortcut function.
@@ -271,7 +271,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function applyFilters($tag, $value, ...$args)
     {
-        return self::getHookManager()->applyFilters($tag, $value, ...$args);
+        return self::$hookManager->applyFilters($tag, $value, ...$args);
     }
     /**
      * Shortcut function.
@@ -282,7 +282,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function addAction($tag, $function_to_add, $priority = 10, $accepted_args = 1) : void
     {
-        self::getHookManager()->addAction($tag, $function_to_add, $priority, $accepted_args);
+        self::$hookManager->addAction($tag, $function_to_add, $priority, $accepted_args);
     }
     /**
      * Shortcut function.
@@ -292,7 +292,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function removeAction($tag, $function_to_remove, $priority = 10) : bool
     {
-        return self::getHookManager()->removeAction($tag, $function_to_remove, $priority);
+        return self::$hookManager->removeAction($tag, $function_to_remove, $priority);
     }
     /**
      * Shortcut function.
@@ -301,7 +301,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function doAction($tag, ...$args) : void
     {
-        self::getHookManager()->doAction($tag, ...$args);
+        self::$hookManager->doAction($tag, ...$args);
     }
     /**
      * Shortcut function.
@@ -313,7 +313,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function request($key, $default = null)
     {
-        return self::getRequest()->request->get($key, $default);
+        return self::$request->request->get($key, $default);
     }
     /**
      * Shortcut function.
@@ -325,7 +325,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function query($key, $default = null)
     {
-        return self::getRequest()->query->get($key, $default);
+        return self::$request->query->get($key, $default);
     }
     /**
      * Shortcut function.
@@ -337,7 +337,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function cookies($key, $default = null)
     {
-        return self::getRequest()->cookies->get($key, $default);
+        return self::$request->cookies->get($key, $default);
     }
     /**
      * Shortcut function.
@@ -349,7 +349,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function files($key, $default = null)
     {
-        return self::getRequest()->files->get($key, $default);
+        return self::$request->files->get($key, $default);
     }
     /**
      * Shortcut function.
@@ -361,7 +361,7 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function server($key, $default = null)
     {
-        return self::getRequest()->server->get($key, $default);
+        return self::$request->server->get($key, $default);
     }
     /**
      * Shortcut function.
@@ -373,6 +373,6 @@ class App implements \PoP\Root\AppInterface
      */
     public static final function headers($key, $default = null)
     {
-        return self::getRequest()->headers->get($key, $default);
+        return self::$request->headers->get($key, $default);
     }
 }

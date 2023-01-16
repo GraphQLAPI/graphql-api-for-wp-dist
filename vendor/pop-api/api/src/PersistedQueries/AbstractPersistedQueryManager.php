@@ -54,9 +54,5 @@ abstract class AbstractPersistedQueryManager implements \PoPAPI\API\PersistedQue
         if ($description) {
             $this->persistedQueriesForSchema[$queryName][SchemaDefinition::DESCRIPTION] = $description;
         }
-        if ($this->addQueryResolutionToSchema()) {
-            $this->persistedQueriesForSchema[$queryName][SchemaDefinition::FRAGMENT_RESOLUTION] = $queryResolution;
-        }
     }
-    protected abstract function addQueryResolutionToSchema() : bool;
 }

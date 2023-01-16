@@ -60,6 +60,26 @@ abstract class AbstractMetaFieldDirectiveResolver extends \PoP\ComponentModel\Di
      */
     protected function getNestedDirectivePipelineData($relationalTypeResolver, $fields, $engineIterationFeedbackStore) : ?SplObjectStorage
     {
+        /**
+         * If any Meta Directive doesn't have any composed directives,
+         * then the Parser will not cast it to MetaDirective.
+         *
+         * Eg:
+         *
+         * ```
+         * {
+         *   posts {
+         *     categoryNames
+         *       @forEach
+         *         ## Nothing here!
+         *   }
+         * }
+         * ```
+         */
+        if (!$this->directive instanceof MetaDirective) {
+            $engineIterationFeedbackStore->schemaFeedbackStore->addError(new SchemaFeedback(new FeedbackItemResolution(ErrorFeedbackItemProvider::class, ErrorFeedbackItemProvider::E5, [$this->getDirectiveName()]), $this->directive, $relationalTypeResolver, $fields));
+            return null;
+        }
         /** @var MetaDirective */
         $metaDirective = $this->directive;
         $nestedDirectives = $metaDirective->getNestedDirectives();

@@ -11,6 +11,7 @@ class Environment
     public const DISABLE_API = 'DISABLE_API';
     public const ENABLE_SETTING_NAMESPACING_BY_URL_PARAM = 'ENABLE_SETTING_NAMESPACING_BY_URL_PARAM';
     public const ADD_FULLSCHEMA_FIELD_TO_SCHEMA = 'ADD_FULLSCHEMA_FIELD_TO_SCHEMA';
+    public const ENABLE_PASSING_PERSISTED_QUERY_NAME_VIA_URL_PARAM = 'ENABLE_PASSING_PERSISTED_QUERY_NAME_VIA_URL_PARAM';
     public static function disableAPI() : bool
     {
         return \getenv(self::DISABLE_API) !== \false ? \strtolower(\getenv(self::DISABLE_API)) === "true" : \false;

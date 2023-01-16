@@ -15,6 +15,10 @@ abstract class AbstractField extends \PoP\GraphQLParser\Spec\Parser\Ast\Abstract
      */
     protected $uniqueID;
     /**
+     * @var string|null
+     */
+    protected $fieldOutputQueryString;
+    /**
      * @readonly
      * @var string
      */
@@ -112,7 +116,14 @@ abstract class AbstractField extends \PoP\GraphQLParser\Spec\Parser\Ast\Abstract
         }
         return \sprintf('%s%s%s%s', $this->getAlias() !== null ? \sprintf('%s: ', $this->getAlias()) : '', $this->getName(), $strFieldArguments, $strFieldDirectives);
     }
-    public function asFieldOutputQueryString() : string
+    public final function asFieldOutputQueryString() : string
+    {
+        if ($this->fieldOutputQueryString === null) {
+            $this->fieldOutputQueryString = $this->doAsFieldOutputQueryString();
+        }
+        return $this->fieldOutputQueryString;
+    }
+    protected function doAsFieldOutputQueryString() : string
     {
         // Generate the string for arguments
         $strFieldArguments = '';

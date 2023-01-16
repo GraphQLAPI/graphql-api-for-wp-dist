@@ -28,15 +28,15 @@ if (!function_exists('humbug_phpscoper_expose_class')) {
         }
     }
 }
-humbug_phpscoper_expose_class('ComposerAutoloaderInita1ecb45e40caefbbfc59085843cc0eed', 'PrefixedByPoP\ComposerAutoloaderInita1ecb45e40caefbbfc59085843cc0eed');
-humbug_phpscoper_expose_class('©', 'PrefixedByPoP\©');
-humbug_phpscoper_expose_class('JsonException', 'PrefixedByPoP\JsonException');
-humbug_phpscoper_expose_class('ValueError', 'PrefixedByPoP\ValueError');
+humbug_phpscoper_expose_class('CastToType', 'PrefixedByPoP\CastToType');
+humbug_phpscoper_expose_class('ComposerAutoloaderInitdaf294e8714ed90f022921d8410a82c3', 'PrefixedByPoP\ComposerAutoloaderInitdaf294e8714ed90f022921d8410a82c3');
 humbug_phpscoper_expose_class('PhpToken', 'PrefixedByPoP\PhpToken');
+humbug_phpscoper_expose_class('UnhandledMatchError', 'PrefixedByPoP\UnhandledMatchError');
+humbug_phpscoper_expose_class('ValueError', 'PrefixedByPoP\ValueError');
 humbug_phpscoper_expose_class('Stringable', 'PrefixedByPoP\Stringable');
 humbug_phpscoper_expose_class('Attribute', 'PrefixedByPoP\Attribute');
-humbug_phpscoper_expose_class('UnhandledMatchError', 'PrefixedByPoP\UnhandledMatchError');
-humbug_phpscoper_expose_class('CastToType', 'PrefixedByPoP\CastToType');
+humbug_phpscoper_expose_class('JsonException', 'PrefixedByPoP\JsonException');
+humbug_phpscoper_expose_class('©', 'PrefixedByPoP\©');
 
 // Function aliases. For more information see:
 // https://github.com/humbug/php-scoper/blob/master/docs/further-reading.md#function-aliases

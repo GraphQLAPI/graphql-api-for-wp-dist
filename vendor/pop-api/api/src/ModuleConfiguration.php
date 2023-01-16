@@ -44,4 +44,11 @@ class ModuleConfiguration extends AbstractModuleConfiguration
         $callback = \Closure::fromCallable([EnvironmentValueHelpers::class, 'toBool']);
         return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue, $callback);
     }
+    public function enablePassingPersistedQueryNameViaURLParam() : bool
+    {
+        $envVariable = \PoPAPI\API\Environment::ENABLE_PASSING_PERSISTED_QUERY_NAME_VIA_URL_PARAM;
+        $defaultValue = \false;
+        $callback = \Closure::fromCallable([EnvironmentValueHelpers::class, 'toBool']);
+        return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue, $callback);
+    }
 }

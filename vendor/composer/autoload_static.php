@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInita1ecb45e40caefbbfc59085843cc0eed
+class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
 {
     public static $files = array (
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
@@ -1086,11 +1086,8 @@ class ComposerStaticInita1ecb45e40caefbbfc59085843cc0eed
         'GraphQLByPoP\\GraphQLRequest\\Execution\\QueryRetriever' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/Execution/QueryRetriever.php',
         'GraphQLByPoP\\GraphQLRequest\\Execution\\QueryRetrieverInterface' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/Execution/QueryRetrieverInterface.php',
         'GraphQLByPoP\\GraphQLRequest\\Facades\\Execution\\QueryRetrieverFacade' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/Facades/Execution/QueryRetrieverFacade.php',
-        'GraphQLByPoP\\GraphQLRequest\\Facades\\GraphQLPersistedQueryManagerFacade' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/Facades/GraphQLPersistedQueryManagerFacade.php',
         'GraphQLByPoP\\GraphQLRequest\\Module' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/Module.php',
         'GraphQLByPoP\\GraphQLRequest\\ObjectModels\\GraphQLQueryPayload' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/ObjectModels/GraphQLQueryPayload.php',
-        'GraphQLByPoP\\GraphQLRequest\\PersistedQueries\\GraphQLPersistedQueryManager' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/PersistedQueries/GraphQLPersistedQueryManager.php',
-        'GraphQLByPoP\\GraphQLRequest\\PersistedQueries\\GraphQLPersistedQueryManagerInterface' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/PersistedQueries/GraphQLPersistedQueryManagerInterface.php',
         'GraphQLByPoP\\GraphQLRequest\\State\\AppStateProvider' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/State/AppStateProvider.php',
         'GraphQLByPoP\\GraphQLRequest\\StaticHelpers\\GraphQLQueryPayloadRetriever' => __DIR__ . '/..' . '/graphql-by-pop/graphql-request/src/StaticHelpers/GraphQLQueryPayloadRetriever.php',
         'GraphQLByPoP\\GraphQLServer\\Cache\\CacheTypes' => __DIR__ . '/..' . '/graphql-by-pop/graphql-server/src/Cache/CacheTypes.php',
@@ -3922,9 +3919,9 @@ class ComposerStaticInita1ecb45e40caefbbfc59085843cc0eed
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInita1ecb45e40caefbbfc59085843cc0eed::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInita1ecb45e40caefbbfc59085843cc0eed::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInita1ecb45e40caefbbfc59085843cc0eed::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitdaf294e8714ed90f022921d8410a82c3::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitdaf294e8714ed90f022921d8410a82c3::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitdaf294e8714ed90f022921d8410a82c3::$classMap;
 
         }, null, ClassLoader::class);
     }
