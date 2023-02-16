@@ -67,7 +67,7 @@ class IpUtils
         if (\strpos($ip, '/') !== \false) {
             [$address, $netmask] = \explode('/', $ip, 2);
             if ('0' === $netmask) {
-                return self::$checkedIps[$cacheKey] = \filter_var($address, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV4);
+                return self::$checkedIps[$cacheKey] = \false !== \filter_var($address, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV4);
             }
             if ($netmask < 0 || $netmask > 32) {
                 return self::$checkedIps[$cacheKey] = \false;

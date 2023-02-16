@@ -492,7 +492,7 @@ EOF;
                             $loop = [];
                         }
                     }
-                    $this->addCircularReferences($first, $loop, \true);
+                    $this->addCircularReferences($first, $loop, $loopByConstructor);
                     break;
                 }
             }
@@ -708,7 +708,7 @@ EOF;
             }
             $witherAssignation = '';
             if ($call[2] ?? \false) {
-                if (null !== $sharedNonLazyId && $lastWitherIndex === $k) {
+                if (null !== $sharedNonLazyId && $lastWitherIndex === $k && 'instance' === $variableName) {
                     $witherAssignation = \sprintf('$this->%s[\'%s\'] = ', $definition->isPublic() ? 'services' : 'privates', $sharedNonLazyId);
                 }
                 $witherAssignation .= \sprintf('$%s = ', $variableName);

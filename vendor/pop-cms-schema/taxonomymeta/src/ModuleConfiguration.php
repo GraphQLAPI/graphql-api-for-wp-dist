@@ -21,7 +21,7 @@ class ModuleConfiguration extends AbstractModuleConfiguration
     public function getTaxonomyMetaBehavior() : string
     {
         $envVariable = \PoPCMSSchema\TaxonomyMeta\Environment::TAXONOMY_META_BEHAVIOR;
-        $defaultValue = Behaviors::ALLOWLIST;
+        $defaultValue = Behaviors::ALLOW;
         return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue);
     }
 }

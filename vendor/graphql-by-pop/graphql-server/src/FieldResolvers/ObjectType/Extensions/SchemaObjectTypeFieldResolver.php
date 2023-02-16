@@ -8,6 +8,7 @@ use GraphQLByPoP\GraphQLServer\ModuleConfiguration;
 use GraphQLByPoP\GraphQLServer\ObjectModels\Field;
 use GraphQLByPoP\GraphQLServer\ObjectModels\ObjectType;
 use GraphQLByPoP\GraphQLServer\ObjectModels\Schema;
+use GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\FieldObjectTypeResolver;
 use GraphQLByPoP\GraphQLServer\TypeResolvers\ObjectType\SchemaObjectTypeResolver;
 use PoP\ComponentModel\App;
@@ -19,7 +20,6 @@ use PoP\ComponentModel\TypeResolvers\ConcreteTypeResolverInterface;
 use PoP\ComponentModel\TypeResolvers\InputTypeResolverInterface;
 use PoP\ComponentModel\TypeResolvers\ObjectType\ObjectTypeResolverInterface;
 use PoP\ComponentModel\TypeResolvers\ScalarType\BooleanScalarTypeResolver;
-use PoP\Engine\TypeResolvers\ObjectType\RootObjectTypeResolver;
 class SchemaObjectTypeFieldResolver extends AbstractObjectTypeFieldResolver
 {
     /**
@@ -31,9 +31,9 @@ class SchemaObjectTypeFieldResolver extends AbstractObjectTypeFieldResolver
      */
     private $fieldObjectTypeResolver;
     /**
-     * @var \PoP\Engine\TypeResolvers\ObjectType\RootObjectTypeResolver|null
+     * @var \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface|null
      */
-    private $rootObjectTypeResolver;
+    private $graphQLSchemaDefinitionService;
     /**
      * @param \PoP\ComponentModel\TypeResolvers\ScalarType\BooleanScalarTypeResolver $booleanScalarTypeResolver
      */
@@ -59,16 +59,16 @@ class SchemaObjectTypeFieldResolver extends AbstractObjectTypeFieldResolver
         return $this->fieldObjectTypeResolver = $this->fieldObjectTypeResolver ?? $this->instanceManager->getInstance(FieldObjectTypeResolver::class);
     }
     /**
-     * @param \PoP\Engine\TypeResolvers\ObjectType\RootObjectTypeResolver $rootObjectTypeResolver
+     * @param \GraphQLByPoP\GraphQLServer\Schema\GraphQLSchemaDefinitionServiceInterface $graphQLSchemaDefinitionService
      */
-    public final function setRootObjectTypeResolver($rootObjectTypeResolver) : void
+    public final function setGraphQLSchemaDefinitionService($graphQLSchemaDefinitionService) : void
     {
-        $this->rootObjectTypeResolver = $rootObjectTypeResolver;
+        $this->graphQLSchemaDefinitionService = $graphQLSchemaDefinitionService;
     }
-    protected final function getRootObjectTypeResolver() : RootObjectTypeResolver
+    protected final function getGraphQLSchemaDefinitionService() : GraphQLSchemaDefinitionServiceInterface
     {
-        /** @var RootObjectTypeResolver */
-        return $this->rootObjectTypeResolver = $this->rootObjectTypeResolver ?? $this->instanceManager->getInstance(RootObjectTypeResolver::class);
+        /** @var GraphQLSchemaDefinitionServiceInterface */
+        return $this->graphQLSchemaDefinitionService = $this->graphQLSchemaDefinitionService ?? $this->instanceManager->getInstance(GraphQLSchemaDefinitionServiceInterface::class);
     }
     /**
      * @return array<class-string<ObjectTypeResolverInterface>>
@@ -169,14 +169,18 @@ class SchemaObjectTypeFieldResolver extends AbstractObjectTypeFieldResolver
         switch ($fieldDataAccessor->getFieldName()) {
             case 'globalFields':
                 /**
-                 * Get the Root type from the schema,
-                 * and obtain the global fields from it
+                 * Get the QueryRoot type from the schema,
+                 * and obtain the global fields from it.
+                 *
+                 * Get it from this type, because by default env var
+                 * `EXPOSE_GLOBAL_FIELDS_IN_ROOT_TYPE_ONLY_IN_GRAPHQL_SCHEMA`
+                 * is enabled.
                  */
-                $rootNamespacedTypeName = $this->getRootObjectTypeResolver()->getNamespacedTypeName();
+                $queryRootNamespacedTypeName = $this->getGraphQLSchemaDefinitionService()->getSchemaQueryRootObjectTypeResolver()->getNamespacedTypeName();
                 /** @var ObjectType */
-                $rootType = $schema->getType($rootNamespacedTypeName);
-                $rootTypeFields = $rootType->getFields($fieldDataAccessor->getValue('includeDeprecated') ?? \false, \true);
-                $globalFields = \array_filter($rootTypeFields, function (Field $field) {
+                $queryRootType = $schema->getType($queryRootNamespacedTypeName);
+                $queryRootTypeFields = $queryRootType->getFields($fieldDataAccessor->getValue('includeDeprecated') ?? \false, \true);
+                $globalFields = \array_filter($queryRootTypeFields, function (Field $field) {
                     return $field->getExtensions()->isGlobal();
                 });
                 return \array_map(function (Field $field) {

@@ -71,7 +71,7 @@ trait FieldOrDirectiveDataAccessorTrait
              *   ```
              *   {
              *     id
-             *     echo(value: [$__id])
+             *     _echo(value: [$__id])
              *   }
              *   ```
              */
@@ -85,7 +85,7 @@ trait FieldOrDirectiveDataAccessorTrait
              *   ```
              *   {
              *     id
-             *     echo(value: {id: $__id})
+             *     _echo(value: {id: $__id})
              *   }
              *   ```
              */

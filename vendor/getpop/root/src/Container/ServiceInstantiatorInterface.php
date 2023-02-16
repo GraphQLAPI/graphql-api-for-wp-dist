@@ -17,7 +17,7 @@ interface ServiceInstantiatorInterface
     public function addService($service) : void;
     /**
      * The SystemContainer requires no events => pass null
-     * The ApplicationContainer has 3 events (moduleLoaded, boot, afterBoot)
+     * The ApplicationContainer has 4 events (moduleLoaded, preBoot, boot, afterBoot)
      * @param string|null $event
      */
     public function initializeServices($event = null) : void;

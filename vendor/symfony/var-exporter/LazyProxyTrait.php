@@ -28,8 +28,8 @@ trait LazyProxyTrait
      * Creates a lazy-loading virtual proxy.
      *
      * @param \Closure():object $initializer Returns the proxied object
+     * @param object $instance
      * @return $this
-     * @param $this|null $instance
      */
     public static function createLazyProxy($initializer, $instance = null)
     {

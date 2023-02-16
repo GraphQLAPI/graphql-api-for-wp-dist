@@ -44,7 +44,7 @@ abstract class AbstractParser extends UpstreamParser implements \PoP\GraphQLPars
      * ```
      * {
      *   someField
-     *   echo(value: $__someField)
+     *   _echo(value: $__someField)
      * }
      * ```
      *
@@ -562,8 +562,8 @@ abstract class AbstractParser extends UpstreamParser implements \PoP\GraphQLPars
      *
      * ```
      * {
-     *   first: echo(value: $second)
-     *   second: echo(value: $first)
+     *   first: _echo(value: $second)
+     *   second: _echo(value: $first)
      * }
      * ```
      *
@@ -571,7 +571,7 @@ abstract class AbstractParser extends UpstreamParser implements \PoP\GraphQLPars
      *
      * ```
      * {
-     *   field: echo(value: $field)
+     *   field: _echo(value: $field)
      * }
      * ```
      * @param string $name
@@ -593,7 +593,7 @@ abstract class AbstractParser extends UpstreamParser implements \PoP\GraphQLPars
      *   ```
      *   {
      *     id
-     *     echo(value: $__id)
+     *     _echo(value: $__id)
      *   }
      *   ```
      *

@@ -187,7 +187,7 @@ class Exporter
             case '' === $value:
                 return "''";
             case $value instanceof \UnitEnum:
-                return \ltrim(\var_export($value, \true), '\\');
+                return '\\' . \ltrim(\var_export($value, \true), '\\');
         }
         if ($value instanceof Reference) {
             if (0 <= $value->id) {

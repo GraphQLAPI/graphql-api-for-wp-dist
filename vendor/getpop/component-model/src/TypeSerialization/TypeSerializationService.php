@@ -95,7 +95,7 @@ class TypeSerializationService implements \PoP\ComponentModel\TypeSerialization\
                  *       self {
                  *           id
                  *       }
-                 *       nonLeaf: echo(value: $__self)
+                 *       nonLeaf: _echo(value: $__self)
                  *   }
                  *   ```
                  *

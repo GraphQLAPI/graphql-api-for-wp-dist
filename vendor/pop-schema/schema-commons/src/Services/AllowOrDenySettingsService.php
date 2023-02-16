@@ -17,7 +17,7 @@ class AllowOrDenySettingsService implements \PoPSchema\SchemaCommons\Services\Al
     public function isEntryAllowed($name, $entries, $behavior) : bool
     {
         if ($entries === []) {
-            return $behavior === Behaviors::DENYLIST;
+            return $behavior === Behaviors::DENY;
         }
         $matchResults = \array_filter(\array_map(function (string $termOrRegex) use($name) : bool {
             // Check if it is a regex expression
@@ -27,7 +27,7 @@ class AllowOrDenySettingsService implements \PoPSchema\SchemaCommons\Services\Al
             // Check it's a full match
             return $termOrRegex === $name;
         }, $entries));
-        if ($behavior == Behaviors::ALLOWLIST && \count($matchResults) === 0 || $behavior == Behaviors::DENYLIST && \count($matchResults) > 0) {
+        if ($behavior == Behaviors::ALLOW && \count($matchResults) === 0 || $behavior == Behaviors::DENY && \count($matchResults) > 0) {
             return \false;
         }
         return \true;

@@ -93,15 +93,27 @@ For instance, this query retrieves entries from multiple CPTS:
 }
 ```
 
-## Configuration
+## Defining the allowed Custom Post Types
 
-The custom post types that can be queried must be explicitly configured in the Settings page, under section "Included custom post types":
+The custom post types that can be queried must be explicitly configured. This can be done in 2 places.
+
+In the Schema Configuration applied to the endpoint, by selecting option `"Use custom configuration"` under "Customize configuration? (Or use default from Settings?)" and then selecting the desired items:
+
+![Selecting the allowed Custom Post Types in the Schema Configuration](../../images/customposts-schema-configuration-queryable-cpts.png "Selecting the allowed Custom Post Types in the Schema Configuration")
+
+Otherwise, the value defined under section "Included custom post types" in the Settings page for `Schema Custom Posts` is used:
 
 ![Selecting the allowed Custom Post Types in the Settings](../../images/customposts-settings-queryable-cpts.png "Selecting the allowed Custom Post Types in the Settings")
 
-Through the Settings for `Schema Custom Posts`, we can also define:
+## Additional configuration
+
+Through the Settings page, we can also define:
 
 - The default number of elements to retrieve (i.e. when field argument `limit` is not set) when querying for a list of any custom post type
 - The maximum number of elements that can be retrieved in a single query execution
 
 ![Settings for Custom Post limits](../../images/settings-customposts-limits.png "Settings for Custom Post limits")
+
+If there is only one type added to `CustomPostUnion` (eg: only `Post`), we can then have the fields that resolve to `CustomPostUnion` be instead resolved to that unique type instead:
+
+![Settings for Custom Posts](../../images/settings-customposts.png "Settings for Custom Post")

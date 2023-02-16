@@ -65,7 +65,7 @@ class GraphQLEndpointCategoryTaxonomy extends AbstractCategory
      */
     public function getTaxonomyPluralNames($titleCase = true): string
     {
-        return $titleCase ? \__('GraphQL Endpoint Categories', 'graphql-api') : \__('GraphQL endpoint categories', 'graphql-api');
+        return $titleCase ? \__('Endpoint Categories', 'graphql-api') : \__('endpoint categories', 'graphql-api');
     }
 
     /**

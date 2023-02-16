@@ -166,7 +166,7 @@ abstract class AbstractContentParser implements ContentParserInterface
     protected function getDefaultFileURL(): string
     {
         $lang = $this->getDefaultDocsLanguage();
-        return \trailingslashit($this->baseURL) . "docs/${lang}";
+        return \trailingslashit($this->baseURL) . 'docs/' . $lang;
     }
 
     /**

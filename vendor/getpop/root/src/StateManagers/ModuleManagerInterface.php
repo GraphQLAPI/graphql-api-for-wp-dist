@@ -35,6 +35,10 @@ interface ModuleManagerInterface
     /**
      * Boot all modules
      */
+    public function preBoot() : void;
+    /**
+     * Boot all modules
+     */
     public function boot() : void;
     /**
      * Boot all modules

@@ -88,4 +88,14 @@ class ModuleConfiguration extends AbstractModuleConfiguration
         $callback = \Closure::fromCallable([EnvironmentValueHelpers::class, 'toBool']);
         return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue, $callback);
     }
+    public function exposeGlobalFieldsInRootTypeOnlyInGraphQLSchema() : bool
+    {
+        if (!$this->exposeGlobalFieldsInGraphQLSchema()) {
+            return \false;
+        }
+        $envVariable = \GraphQLByPoP\GraphQLServer\Environment::EXPOSE_GLOBAL_FIELDS_IN_ROOT_TYPE_ONLY_IN_GRAPHQL_SCHEMA;
+        $defaultValue = \false;
+        $callback = \Closure::fromCallable([EnvironmentValueHelpers::class, 'toBool']);
+        return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue, $callback);
+    }
 }

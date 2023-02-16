@@ -21,7 +21,7 @@ class ModuleConfiguration extends AbstractModuleConfiguration
     public function getUserMetaBehavior() : string
     {
         $envVariable = \PoPCMSSchema\UserMeta\Environment::USER_META_BEHAVIOR;
-        $defaultValue = Behaviors::ALLOWLIST;
+        $defaultValue = Behaviors::ALLOW;
         return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue);
     }
 }

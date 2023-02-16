@@ -922,6 +922,27 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
         if (null !== $id && $definition->isShared() && (isset($this->services[$id]) || isset($this->privates[$id])) && (\true === $tryProxy || !$definition->isLazy())) {
             return $this->services[$id] ?? $this->privates[$id];
         }
+        $arrayIsList = function (array $array) : bool {
+            if (\function_exists('array_is_list')) {
+                return \array_is_list($array);
+            }
+            if ($array === []) {
+                return \true;
+            }
+            $current_key = 0;
+            foreach ($array as $key => $noop) {
+                if ($key !== $current_key) {
+                    return \false;
+                }
+                ++$current_key;
+            }
+            return \true;
+        };
+        if (!$arrayIsList($arguments)) {
+            $arguments = \array_combine(\array_map(function ($k) {
+                return \preg_replace('/^.*\\$/', '', $k);
+            }, \array_keys($arguments)), $arguments);
+        }
         if (null !== $factory) {
             $service = $factory(...$arguments);
             if (!$definition->isDeprecated() && \is_array($factory) && \is_string($factory[0])) {
@@ -934,11 +955,11 @@ class ContainerBuilder extends Container implements TaggedContainerInterface
             $r = new \ReflectionClass($parameterBag->resolveValue($definition->getClass()));
             if (\is_object($tryProxy)) {
                 if ($r->getConstructor()) {
-                    $tryProxy->__construct(...\array_values($arguments));
+                    $tryProxy->__construct(...$arguments);
                 }
                 $service = $tryProxy;
             } else {
-                $service = $r->getConstructor() ? $r->newInstanceArgs(\array_values($arguments)) : $r->newInstance();
+                $service = $r->getConstructor() ? $r->newInstanceArgs($arguments) : $r->newInstance();
             }
             if (!$definition->isDeprecated() && 0 < \strpos($r->getDocComment(), "\n * @deprecated ")) {
                 trigger_deprecation('', '', 'The "%s" service relies on the deprecated "%s" class. It should either be deprecated or its implementation upgraded.', $id, $r->name);

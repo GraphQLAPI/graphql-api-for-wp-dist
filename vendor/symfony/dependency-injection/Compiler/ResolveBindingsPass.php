@@ -158,8 +158,13 @@ class ResolveBindingsPass extends AbstractRecursivePass
                     throw $e;
                 }
             }
+            $names = [];
             foreach ($reflectionMethod->getParameters() as $key => $parameter) {
+                $names[$key] = $parameter->name;
                 if (\array_key_exists($key, $arguments) && '' !== $arguments[$key]) {
+                    continue;
+                }
+                if (\array_key_exists($parameter->name, $arguments) && '' !== $arguments[$parameter->name]) {
                     continue;
                 }
                 $typeHint = \ltrim(ProxyHelper::exportType($parameter) ?? '', '?');
@@ -182,8 +187,14 @@ class ResolveBindingsPass extends AbstractRecursivePass
                     $this->errorMessages[] = \sprintf('Did you forget to add the type "%s" to argument "$%s" of method "%s::%s()"?', $argumentType, $parameter->name, $reflectionMethod->class, $reflectionMethod->name);
                 }
             }
+            foreach ($names as $key => $name) {
+                if (\array_key_exists($name, $arguments) && (0 === $key || \array_key_exists($key - 1, $arguments))) {
+                    $arguments[$key] = $arguments[$name];
+                    unset($arguments[$name]);
+                }
+            }
             if ($arguments !== $call[1]) {
-                \ksort($arguments);
+                \ksort($arguments, \SORT_NATURAL);
                 $calls[$i][1] = $arguments;
             }
         }

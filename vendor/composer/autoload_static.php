@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
+class ComposerStaticInit4af4ae06f37c47a84e0a066881660869
 {
     public static $files = array (
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
@@ -747,8 +747,10 @@ class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
         'GraphQLAPI\\GraphQLAPI\\Constants\\BlockAttributeNames' => __DIR__ . '/../..' . '/src/Constants/BlockAttributeNames.php',
         'GraphQLAPI\\GraphQLAPI\\Constants\\BlockAttributeValues' => __DIR__ . '/../..' . '/src/Constants/BlockAttributeValues.php',
         'GraphQLAPI\\GraphQLAPI\\Constants\\BlockConstants' => __DIR__ . '/../..' . '/src/Constants/BlockConstants.php',
+        'GraphQLAPI\\GraphQLAPI\\Constants\\ConfigurationDefaultValues' => __DIR__ . '/../..' . '/src/Constants/ConfigurationDefaultValues.php',
         'GraphQLAPI\\GraphQLAPI\\Constants\\DocumentationConstants' => __DIR__ . '/../..' . '/src/Constants/DocumentationConstants.php',
         'GraphQLAPI\\GraphQLAPI\\Constants\\HTMLCodes' => __DIR__ . '/../..' . '/src/Constants/HTMLCodes.php',
+        'GraphQLAPI\\GraphQLAPI\\Constants\\HookNames' => __DIR__ . '/../..' . '/src/Constants/HookNames.php',
         'GraphQLAPI\\GraphQLAPI\\Constants\\ModuleSettingOptionValues' => __DIR__ . '/../..' . '/src/Constants/ModuleSettingOptionValues.php',
         'GraphQLAPI\\GraphQLAPI\\Constants\\ModuleSettingOptions' => __DIR__ . '/../..' . '/src/Constants/ModuleSettingOptions.php',
         'GraphQLAPI\\GraphQLAPI\\Constants\\QueryOptions' => __DIR__ . '/../..' . '/src/Constants/QueryOptions.php',
@@ -803,6 +805,7 @@ class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
         'GraphQLAPI\\GraphQLAPI\\Facades\\Registries\\TaxonomyRegistryFacade' => __DIR__ . '/../..' . '/src/Facades/Registries/TaxonomyRegistryFacade.php',
         'GraphQLAPI\\GraphQLAPI\\Facades\\Registries\\UserAuthorizationSchemeRegistryFacade' => __DIR__ . '/../..' . '/src/Facades/Registries/UserAuthorizationSchemeRegistryFacade.php',
         'GraphQLAPI\\GraphQLAPI\\Facades\\UserSettingsManagerFacade' => __DIR__ . '/../..' . '/src/Facades/UserSettingsManagerFacade.php',
+        'GraphQLAPI\\GraphQLAPI\\Facades\\WPDataModel\\WPDataModelProviderFacade' => __DIR__ . '/../..' . '/src/Facades/WPDataModel/WPDataModelProviderFacade.php',
         'GraphQLAPI\\GraphQLAPI\\Module' => __DIR__ . '/../..' . '/src/Module.php',
         'GraphQLAPI\\GraphQLAPI\\ModuleConfiguration' => __DIR__ . '/../..' . '/src/ModuleConfiguration.php',
         'GraphQLAPI\\GraphQLAPI\\ModuleResolvers\\AbstractFunctionalityModuleResolver' => __DIR__ . '/../..' . '/src/ModuleResolvers/AbstractFunctionalityModuleResolver.php',
@@ -921,6 +924,9 @@ class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractEndpointOptionsBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractEndpointOptionsBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractGraphiQLBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractGraphiQLBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractSchemaConfigBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractSchemaConfigBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractSchemaConfigCustomizableConfigurationBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractSchemaConfigCustomizableConfigurationBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractSchemaConfigSchemaAllowAccessToEntriesBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractSchemaConfigSchemaAllowAccessToEntriesBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractSchemaConfigSchemaMetaBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractSchemaConfigSchemaMetaBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\BlockInterface' => __DIR__ . '/../..' . '/src/Services/Blocks/BlockInterface.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\CustomEndpointOptionsBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/CustomEndpointOptionsBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\EditorBlockInterface' => __DIR__ . '/../..' . '/src/Services/Blocks/EditorBlockInterface.php',
@@ -938,6 +944,14 @@ class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigExposeSensitiveDataBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigExposeSensitiveDataBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigMutationSchemeBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigMutationSchemeBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigNamespacingBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigNamespacingBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaCategoriesBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaCategoriesBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaCommentMetaBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaCommentMetaBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaCustomPostMetaBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaCustomPostMetaBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaCustomPostsBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaCustomPostsBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaSettingsBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaSettingsBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaTagsBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaTagsBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaTaxonomyMetaBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaTaxonomyMetaBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSchemaUserMetaBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSchemaUserMetaBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\SchemaConfigSelfFieldsBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/SchemaConfigSelfFieldsBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\WithTypeFieldControlBlockTrait' => __DIR__ . '/../..' . '/src/Services/Blocks/WithTypeFieldControlBlockTrait.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Clients\\CustomEndpointClientTrait' => __DIR__ . '/../..' . '/src/Services/Clients/CustomEndpointClientTrait.php',
@@ -1017,14 +1031,25 @@ class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
         'GraphQLAPI\\GraphQLAPI\\Services\\ModuleTypeResolvers\\AbstractModuleTypeResolver' => __DIR__ . '/../..' . '/src/Services/ModuleTypeResolvers/AbstractModuleTypeResolver.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\ModuleTypeResolvers\\ModuleTypeResolver' => __DIR__ . '/../..' . '/src/Services/ModuleTypeResolvers/ModuleTypeResolver.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\ModuleTypeResolvers\\ModuleTypeResolverInterface' => __DIR__ . '/../..' . '/src/Services/ModuleTypeResolvers/ModuleTypeResolverInterface.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\AbstractCustomizableConfigurationSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/AbstractCustomizableConfigurationSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\AbstractDefaultEnableDisableFunctionalitySchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/AbstractDefaultEnableDisableFunctionalitySchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\AbstractSchemaAllowAccessToEntriesSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/AbstractSchemaAllowAccessToEntriesSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\AbstractSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/AbstractSchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\AbstractSchemaMetaSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/AbstractSchemaMetaSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\EndpointSchemaConfigurationExecuterServiceTagInterface' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/EndpointSchemaConfigurationExecuterServiceTagInterface.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\ExposeSensitiveDataSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/ExposeSensitiveDataSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\MutationSchemeSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/MutationSchemeSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\NamespacingSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/NamespacingSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\PersistedQueryEndpointSchemaConfigurationExecuterServiceTagInterface' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/PersistedQueryEndpointSchemaConfigurationExecuterServiceTagInterface.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaCategoriesSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaCategoriesSchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaCommentMetaSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaCommentMetaSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaConfigurationExecuterInterface' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaConfigurationExecuterInterface.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaCustomPostMetaSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaCustomPostMetaSchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaCustomPostsSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaCustomPostsSchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaSettingsSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaSettingsSchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaTagsSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaTagsSchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaTaxonomyMetaSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaTaxonomyMetaSchemaConfigurationExecuter.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SchemaUserMetaSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SchemaUserMetaSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfigurationExecuters\\SelfFieldsSchemaConfigurationExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfigurationExecuters/SelfFieldsSchemaConfigurationExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfiguratorExecuters\\AbstractLoadingCPTSchemaConfiguratorExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfiguratorExecuters/AbstractLoadingCPTSchemaConfiguratorExecuter.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\SchemaConfiguratorExecuters\\AbstractSchemaConfiguratorExecuter' => __DIR__ . '/../..' . '/src/Services/SchemaConfiguratorExecuters/AbstractSchemaConfiguratorExecuter.php',
@@ -1060,6 +1085,8 @@ class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
         'GraphQLAPI\\GraphQLAPI\\State\\PersistedQueryEndpointGraphQLQueryResolutionEndpointExecuterAppStateProvider' => __DIR__ . '/../..' . '/src/State/PersistedQueryEndpointGraphQLQueryResolutionEndpointExecuterAppStateProvider.php',
         'GraphQLAPI\\GraphQLAPI\\StaticHelpers\\LocaleUtils' => __DIR__ . '/../..' . '/src/StaticHelpers/LocaleUtils.php',
         'GraphQLAPI\\GraphQLAPI\\StaticHelpers\\PluginEnvironmentHelpers' => __DIR__ . '/../..' . '/src/StaticHelpers/PluginEnvironmentHelpers.php',
+        'GraphQLAPI\\GraphQLAPI\\WPDataModel\\WPDataModelProvider' => __DIR__ . '/../..' . '/src/WPDataModel/WPDataModelProvider.php',
+        'GraphQLAPI\\GraphQLAPI\\WPDataModel\\WPDataModelProviderInterface' => __DIR__ . '/../..' . '/src/WPDataModel/WPDataModelProviderInterface.php',
         'GraphQLAPI\\MarkdownConvertor\\Facades\\MarkdownConvertorFacade' => __DIR__ . '/..' . '/graphql-api/markdown-convertor/src/Facades/MarkdownConvertorFacade.php',
         'GraphQLAPI\\MarkdownConvertor\\MarkdownConvertor' => __DIR__ . '/..' . '/graphql-api/markdown-convertor/src/MarkdownConvertor.php',
         'GraphQLAPI\\MarkdownConvertor\\MarkdownConvertorInterface' => __DIR__ . '/..' . '/graphql-api/markdown-convertor/src/MarkdownConvertorInterface.php',
@@ -3919,9 +3946,9 @@ class ComposerStaticInitdaf294e8714ed90f022921d8410a82c3
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitdaf294e8714ed90f022921d8410a82c3::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitdaf294e8714ed90f022921d8410a82c3::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitdaf294e8714ed90f022921d8410a82c3::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit4af4ae06f37c47a84e0a066881660869::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit4af4ae06f37c47a84e0a066881660869::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit4af4ae06f37c47a84e0a066881660869::$classMap;
 
         }, null, ClassLoader::class);
     }

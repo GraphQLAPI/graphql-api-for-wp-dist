@@ -356,14 +356,17 @@ class AppLoader implements \PoP\Root\AppLoaderInterface
         return $this->skipSchemaForModuleCache[$moduleClass];
     }
     /**
-     * Trigger "moduleLoaded", "boot" and "afterBoot" events on all the Components,
-     * for them to execute any custom extra logic.
+     * Trigger "moduleLoaded", "preBoot", "boot" and "afterBoot"
+     * events on all the Components, for them to execute
+     * any custom extra logic.
      */
     public function bootApplicationModules() : void
     {
         $appStateManager = \PoP\Root\App::getAppStateManager();
         $appStateManager->initializeAppState($this->initialAppState);
         $moduleManager = \PoP\Root\App::getModuleManager();
+        // Allow to execute the SchemaConfigurator in this event
+        $moduleManager->preBoot();
         $moduleManager->boot();
         /**
          * After the services have been initialized, we can then parse the GraphQL query.

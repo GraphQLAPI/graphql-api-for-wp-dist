@@ -68,7 +68,7 @@ class MutationSchemaTypeModuleResolver extends AbstractModuleResolver
 
     public function getPriority(): int
     {
-        return $this->getUpstreamPriority() - 5;
+        return $this->getUpstreamPriority() - 3;
     }
 
     /**

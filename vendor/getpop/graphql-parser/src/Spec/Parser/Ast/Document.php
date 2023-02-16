@@ -470,7 +470,7 @@ class Document implements \PoP\GraphQLParser\Spec\Parser\Ast\DocumentInterface
          *
          * ```
          * query UpperCaseText($text: String!) {
-         *   echo(value: [[$text]])
+         *   _echo(value: [[$text]])
          * }
          * ```
          */
