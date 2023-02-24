@@ -45,7 +45,7 @@ class FormInput
         $value = $this->getValueFromSourceOrRequest($this->getName(), $source);
         // If it is multiple and the URL contains an empty value (eg: &searchfor[]=&), it will interpret it as array(''),
         // but instead it must be an empty array
-        // if ($this->isMultiple() && $value && count($value) == 1 && $value[0] == '') {
+        // if ($this->isMultiple() && $value && count($value) === 1 && $value[0] === '') {
         //     $value = array();
         // }
         if ($value !== null && $this->isMultiple()) {

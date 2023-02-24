@@ -1067,7 +1067,7 @@ abstract class AbstractComponentProcessor implements \PoP\ComponentModel\Compone
         $datasource = $this->getDatasource($component, $props);
         $ret[\PoP\ComponentModel\ComponentProcessors\DataloadingConstants::DATASOURCE] = $datasource;
         // Add the properties below either as static or mutableonrequest
-        if ($datasource == DataSources::IMMUTABLE) {
+        if ($datasource === DataSources::IMMUTABLE) {
             $this->addHeaddatasetcomponentDataProperties($ret, $component, $props);
         }
         return $ret;
@@ -1120,7 +1120,7 @@ abstract class AbstractComponentProcessor implements \PoP\ComponentModel\Compone
         $ret = array();
         // Add the properties below either as static or mutableonrequest
         $datasource = $this->getDatasource($component, $props);
-        if ($datasource == DataSources::MUTABLEONMODEL) {
+        if ($datasource === DataSources::MUTABLEONMODEL) {
             $this->addHeaddatasetcomponentDataProperties($ret, $component, $props);
         }
         // Fetch params from request?
@@ -1178,7 +1178,7 @@ abstract class AbstractComponentProcessor implements \PoP\ComponentModel\Compone
         $ret = array();
         // Add the properties below either as static or mutableonrequest
         $datasource = $this->getDatasource($component, $props);
-        if ($datasource == DataSources::MUTABLEONREQUEST) {
+        if ($datasource === DataSources::MUTABLEONREQUEST) {
             $this->addHeaddatasetcomponentDataProperties($ret, $component, $props);
         }
         // When loading data or execution an action, check if to validate checkpoints?

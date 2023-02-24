@@ -58,13 +58,13 @@ GRAPHQL;
         $ret = array();
         /** @var ModuleConfiguration */
         $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
-        $routeComponents = array($moduleConfiguration->getPostTagsRoute() => [PostTagFieldDataloadComponentProcessor::class, PostTagFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_TAGLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]]);
+        $routeComponents = array($moduleConfiguration->getPostTagsRoute() => new Component(PostTagFieldDataloadComponentProcessor::class, PostTagFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_TAGLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]));
         foreach ($routeComponents as $route => $component) {
             $ret[RequestNature::GENERIC][$route][] = ['component' => $component, 'conditions' => ['scheme' => APISchemes::API, 'datastructure' => $restDataStructureFormatter->getName()]];
         }
         /** @var PostsModuleConfiguration */
         $moduleConfiguration = App::getModule(PostsModule::class)->getConfiguration();
-        $routeComponents = array($moduleConfiguration->getPostsRoute() => [TagPostFieldDataloadComponentProcessor::class, TagPostFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_TAGPOSTLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]]);
+        $routeComponents = array($moduleConfiguration->getPostsRoute() => new Component(TagPostFieldDataloadComponentProcessor::class, TagPostFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_TAGPOSTLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]));
         foreach ($routeComponents as $route => $component) {
             $ret[TagRequestNature::TAG][$route][] = ['component' => $component, 'conditions' => ['scheme' => APISchemes::API, 'datastructure' => $restDataStructureFormatter->getName(), 'routing' => ['taxonomy-name' => $postTagTypeAPI->getPostTagTaxonomyName()]]];
         }

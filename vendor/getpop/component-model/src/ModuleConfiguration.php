@@ -230,4 +230,10 @@ class ModuleConfiguration extends AbstractModuleConfiguration
         $callback = \Closure::fromCallable([EnvironmentValueHelpers::class, 'toBool']);
         return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue, $callback);
     }
+    public function getClientIPAddressServerPropertyName() : string
+    {
+        $envVariable = \PoP\ComponentModel\Environment::CLIENT_IP_ADDRESS_SERVER_PROPERTY_NAME;
+        $defaultValue = 'REMOTE_ADDR';
+        return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue);
+    }
 }

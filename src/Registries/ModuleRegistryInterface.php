@@ -20,7 +20,7 @@ interface ModuleRegistryInterface
      * @param bool $onlyVisible
      * @param bool $onlyWithVisibleSettings
      */
-    public function getAllModules($onlyEnabled = false, $onlyHasSettings = false, $onlyVisible = true, $onlyWithVisibleSettings = false): array;
+    public function getAllModules($onlyEnabled = false, $onlyHasSettings = false, $onlyVisible = false, $onlyWithVisibleSettings = false): array;
     /**
      * @throws ModuleNotExistsException If module does not exist
      * @param string $module

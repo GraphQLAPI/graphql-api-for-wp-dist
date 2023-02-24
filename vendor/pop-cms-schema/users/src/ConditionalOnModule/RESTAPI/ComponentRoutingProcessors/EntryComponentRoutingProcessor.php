@@ -46,7 +46,7 @@ GRAPHQL;
         $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
         /** @var ComponentModelModuleConfiguration */
         $componentModelModuleConfiguration = App::getModule(ComponentModelModule::class)->getConfiguration();
-        $routeComponents = array($moduleConfiguration->getUsersRoute() => [FieldDataloadComponentProcessor::class, $componentModelModuleConfiguration->exposeSensitiveDataInSchema() ? FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_ADMINUSERLIST : FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_USERLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]]);
+        $routeComponents = array($moduleConfiguration->getUsersRoute() => new Component(FieldDataloadComponentProcessor::class, $componentModelModuleConfiguration->exposeSensitiveDataInSchema() ? FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_ADMINUSERLIST : FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_USERLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]));
         foreach ($routeComponents as $route => $component) {
             $ret[RequestNature::GENERIC][$route][] = ['component' => $component, 'conditions' => ['scheme' => APISchemes::API, 'datastructure' => $restDataStructureFormatter->getName()]];
         }

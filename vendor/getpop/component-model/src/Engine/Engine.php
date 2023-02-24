@@ -6,21 +6,21 @@ namespace PoP\ComponentModel\Engine;
 use PoP\ComponentModel\App;
 use PoP\ComponentModel\Cache\PersistentCacheInterface;
 use PoP\ComponentModel\Checkpoints\CheckpointInterface;
-use PoP\ComponentModel\Component\Component;
 use PoP\ComponentModel\ComponentFiltering\ComponentFilterManagerInterface;
 use PoP\ComponentModel\ComponentHelpers\ComponentHelpersInterface;
 use PoP\ComponentModel\ComponentPath\ComponentPathHelpersInterface;
 use PoP\ComponentModel\ComponentPath\ComponentPathManagerInterface;
 use PoP\ComponentModel\ComponentProcessors\ComponentProcessorManagerInterface;
 use PoP\ComponentModel\ComponentProcessors\DataloadingConstants;
+use PoP\ComponentModel\Component\Component;
 use PoP\ComponentModel\Configuration\Request;
-use PoP\ComponentModel\Constants\DatabasesOutputModes;
 use PoP\ComponentModel\Constants\DataLoading;
 use PoP\ComponentModel\Constants\DataOutputItems;
 use PoP\ComponentModel\Constants\DataOutputModes;
 use PoP\ComponentModel\Constants\DataProperties;
-use PoP\ComponentModel\Constants\DataSources;
 use PoP\ComponentModel\Constants\DataSourceSelectors;
+use PoP\ComponentModel\Constants\DataSources;
+use PoP\ComponentModel\Constants\DatabasesOutputModes;
 use PoP\ComponentModel\Constants\Params;
 use PoP\ComponentModel\Constants\Props;
 use PoP\ComponentModel\Constants\Response;
@@ -61,6 +61,15 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
     public const HOOK_ENGINE_ITERATION_START = __CLASS__ . ':engine-iteration-start';
     public const HOOK_ENGINE_ITERATION_ON_DATALOADING_COMPONENT = __CLASS__ . ':engine-iteration-on-dataloading-component';
     public const HOOK_ENGINE_ITERATION_END = __CLASS__ . ':engine-iteration-end';
+    public const HOOK_ENTRY_COMPONENT_INITIALIZATION = __CLASS__ . ':entry-component-initialization';
+    public const HOOK_GENERATE_DATA_BEGINNING = __CLASS__ . ':generate-data:beginning';
+    public const HOOK_PROCESS_AND_GENERATE_DATA_HELPER_CALCULATIONS = __CLASS__ . ':process-and-generate-data:helper-calculations';
+    public const HOOK_ADD_ETAG_HEADER = __CLASS__ . ':add-etag-header';
+    public const HOOK_ETAG_HEADER_COMMON_CODE = __CLASS__ . ':etag-header:common-code';
+    public const HOOK_EXTRA_ROUTES = __CLASS__ . ':extra-routes';
+    public const HOOK_REQUEST_META = __CLASS__ . ':request-meta';
+    public const HOOK_SESSION_META = __CLASS__ . ':session-meta';
+    public const HOOK_SITE_META = __CLASS__ . ':site-meta';
     protected const DATA_PROP_RELATIONAL_TYPE_RESOLVER = 'relationalTypeResolver';
     protected const DATA_PROP_ID_FIELD_SET = 'idFieldSet';
     /**
@@ -319,6 +328,14 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
         if ($engineState->entryComponent === null) {
             throw new ImpossibleToHappenException($this->__('No entry component for this request', 'component-model'));
         }
+        /**
+         * Allow modules to initialize some state related
+         * to the Component.
+         *
+         * Eg: the REST module can convert the "query" att
+         * into the AppState GraphQL AST
+         */
+        App::doAction(self::HOOK_ENTRY_COMPONENT_INITIALIZATION, $engineState->entryComponent);
         return $engineState->entryComponent;
     }
     /**
@@ -333,7 +350,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
      */
     protected function getEtagHeader() : ?string
     {
-        $addEtagHeader = App::applyFilters('\\PoP\\ComponentModel\\Engine:outputData:addEtagHeader', \true);
+        $addEtagHeader = App::applyFilters(self::HOOK_ADD_ETAG_HEADER, \true);
         if (!$addEtagHeader) {
             return null;
         }
@@ -369,7 +386,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
             $commoncode = \preg_replace('/"(' . \implode('|', $engineState->nocache_fields) . ')":[0-9]+,?/', '', $commoncode);
         }
         // Allow plug-ins to replace their own non-needed content (eg: thumbprints, defined in Core)
-        $commoncode = App::applyFilters('\\PoP\\ComponentModel\\Engine:etag_header:commoncode', $commoncode);
+        $commoncode = App::applyFilters(self::HOOK_ETAG_HEADER_COMMON_CODE, $commoncode);
         return \hash('md5', $commoncode);
     }
     /**
@@ -391,7 +408,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
             $engineState->extra_routes = Request::getExtraRoutes();
         }
         // Enable to add extra URLs in a fixed manner
-        $engineState->extra_routes = App::applyFilters('\\PoP\\ComponentModel\\Engine:getExtraRoutes', $engineState->extra_routes);
+        $engineState->extra_routes = App::applyFilters(self::HOOK_EXTRA_ROUTES, $engineState->extra_routes);
         return $engineState->extra_routes;
     }
     /**
@@ -460,7 +477,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
         // Reset the state
         App::regenerateEngineState();
         App::regenerateMutationResolutionStore();
-        App::doAction('\\PoP\\ComponentModel\\Engine:beginning');
+        App::doAction(self::HOOK_GENERATE_DATA_BEGINNING);
         // Process the request and obtain the results
         $this->processAndGenerateData();
         /**
@@ -572,13 +589,13 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
         // Static props are needed for both static/mutableonrequest operations, so build it always
         $engineState->model_props = $this->getModelPropsComponentTree($component);
         // If only getting static content, then no need to add the mutableonrequest props
-        if ($datasourceselector == DataSourceSelectors::ONLYMODEL) {
+        if ($datasourceselector === DataSourceSelectors::ONLYMODEL) {
             $engineState->props = $engineState->model_props;
         } else {
             $engineState->props = $this->addRequestPropsComponentTree($component, $engineState->model_props);
         }
         // Allow for extra operations (eg: calculate resources)
-        App::doAction('\\PoP\\ComponentModel\\Engine:helperCalculations', array(&$engineState->helperCalculations), $component, array(&$engineState->props));
+        App::doAction(self::HOOK_PROCESS_AND_GENERATE_DATA_HELPER_CALCULATIONS, array(&$engineState->helperCalculations), $component, array(&$engineState->props));
         $data = [];
         if (\in_array(DataOutputItems::DATASET_COMPONENT_SETTINGS, $dataoutputitems)) {
             $data = \array_merge($data, $this->getComponentDatasetSettings($component, $engineState->model_props, $engineState->props));
@@ -689,11 +706,11 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
         }
         // If there are multiple URIs, then the results must be returned under the corresponding $model_instance_id for "mutableonmodel", and $url for "mutableonrequest"
         list($has_extra_routes, $model_instance_id, $current_uri) = $this->listExtraRouteVars();
-        if ($dataoutputmode == DataOutputModes::SPLITBYSOURCES) {
+        if ($dataoutputmode === DataOutputModes::SPLITBYSOURCES) {
             if ($immutable_datasetsettings) {
                 $ret['datasetcomponentsettings']['immutable'] = $immutable_datasetsettings;
             }
-        } elseif ($dataoutputmode == DataOutputModes::COMBINED) {
+        } elseif ($dataoutputmode === DataOutputModes::COMBINED) {
             // If everything is combined, then it belongs under "mutableonrequest"
             if ($combined_datasetsettings = $immutable_datasetsettings) {
                 $ret['datasetcomponentsettings'] = $has_extra_routes ? array($current_uri => $combined_datasetsettings) : $combined_datasetsettings;
@@ -728,14 +745,14 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
             }
             $meta['filteredcomponents'] = $filteredsettings;
         }
-        return App::applyFilters('\\PoP\\ComponentModel\\Engine:request-meta', $meta);
+        return App::applyFilters(self::HOOK_REQUEST_META, $meta);
     }
     /**
      * @return array<string,mixed>
      */
     public function getSessionMeta() : array
     {
-        return App::applyFilters('\\PoP\\ComponentModel\\Engine:session-meta', []);
+        return App::applyFilters(self::HOOK_SESSION_META, []);
     }
     /**
      * Function to override by the ConfigurationComponentModel
@@ -763,7 +780,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
                 $meta['cachedsettings'] = $engineState->cachedsettings;
             }
         }
-        return App::applyFilters('\\PoP\\ComponentModel\\Engine:site-meta', $meta);
+        return App::applyFilters(self::HOOK_SITE_META, $meta);
     }
     /**
      * @param array<string,array{relationalTypeResolver: RelationalTypeResolverInterface, idFieldSet: array<string|int,EngineIterationFieldSet>}> $relationalTypeOutputKeyIDFieldSets
@@ -1073,7 +1090,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
             }
         }
         $model_data_properties = \array_merge_recursive($immutable_data_properties, $mutableonmodel_data_properties);
-        if ($datasourceselector == DataSourceSelectors::ONLYMODEL) {
+        if ($datasourceselector === DataSourceSelectors::ONLYMODEL) {
             $root_data_properties = $model_data_properties;
         } else {
             $mutableonrequest_data_properties = $root_processor->getMutableonrequestDataPropertiesDatasetcomponentTree($root_component, $root_props);
@@ -1109,7 +1126,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
             $data_properties =& $data_properties[$componentFullName][DataLoading::DATA_PROPERTIES];
             $datasource = $data_properties[DataloadingConstants::DATASOURCE] ?? null;
             // If we are only requesting data from the model alone, and this dataloading component depends on mutableonrequest, then skip it
-            if ($datasourceselector == DataSourceSelectors::ONLYMODEL && $datasource == DataSources::MUTABLEONREQUEST) {
+            if ($datasourceselector === DataSourceSelectors::ONLYMODEL && $datasource === DataSources::MUTABLEONREQUEST) {
                 continue;
             }
             // Load data if the property Skip Data Load is not true
@@ -1135,7 +1152,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
             $component_props = null;
             if (\in_array($datasource, array(DataSources::IMMUTABLE, DataSources::MUTABLEONMODEL))) {
                 $component_props =& $model_props;
-            } elseif ($datasource == DataSources::MUTABLEONREQUEST) {
+            } elseif ($datasource === DataSources::MUTABLEONREQUEST) {
                 $component_props =& $props;
             }
             $processor = $componentProcessorManager->getComponentProcessor($component);
@@ -1203,7 +1220,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
                     // these ones must be fetched even if the block has a static typeResolver
                     // If it has extend, add those ids under its relationalTypeOutputKey
                     $dataload_extend_settings = $processor->getModelSupplementaryDBObjectDataComponentTree($component, $model_props);
-                    if ($datasource == DataSources::MUTABLEONREQUEST) {
+                    if ($datasource === DataSources::MUTABLEONREQUEST) {
                         $dataload_extend_settings = \array_merge_recursive($dataload_extend_settings, $processor->getMutableonrequestSupplementaryDBObjectDataComponentTree($component, $props));
                     }
                     foreach ($dataload_extend_settings as $extendTypeOutputKey => $extend_data_properties) {
@@ -1222,19 +1239,19 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
             }
             // Save the results on either the static or mutableonrequest branches
             $datasetcomponentdata = $datasetcomponentmeta = null;
-            if ($datasource == DataSources::IMMUTABLE) {
+            if ($datasource === DataSources::IMMUTABLE) {
                 $datasetcomponentdata =& $immutable_datasetcomponentdata;
                 if ($add_meta) {
                     $datasetcomponentmeta =& $immutable_datasetcomponentmeta;
                 }
                 $engineState->componentdata =& $immutable_componentdata;
-            } elseif ($datasource == DataSources::MUTABLEONMODEL) {
+            } elseif ($datasource === DataSources::MUTABLEONMODEL) {
                 $datasetcomponentdata =& $mutableonmodel_datasetcomponentdata;
                 if ($add_meta) {
                     $datasetcomponentmeta =& $mutableonmodel_datasetcomponentmeta;
                 }
                 $engineState->componentdata =& $mutableonmodel_componentdata;
-            } elseif ($datasource == DataSources::MUTABLEONREQUEST) {
+            } elseif ($datasource === DataSources::MUTABLEONREQUEST) {
                 $datasetcomponentdata =& $mutableonrequest_datasetcomponentdata;
                 if ($add_meta) {
                     $datasetcomponentmeta =& $mutableonrequest_datasetcomponentmeta;
@@ -1269,7 +1286,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
                     }
                     if (\in_array($datasource, array(DataSources::IMMUTABLE, DataSources::MUTABLEONMODEL))) {
                         $referencer_component_props =& $referencer_model_props;
-                    } elseif ($datasource == DataSources::MUTABLEONREQUEST) {
+                    } elseif ($datasource === DataSources::MUTABLEONREQUEST) {
                         $referencer_component_props =& $referencer_props;
                     }
                     $this->processAndAddComponentData($referencer_componentPath, $referencer_component, $referencer_component_props, $data_properties, $dataaccess_checkpoint_validation, $mutation_checkpoint_validation, $executed, $objectIDs);
@@ -1287,7 +1304,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
         if (\in_array(DataOutputItems::COMPONENT_DATA, $dataoutputitems)) {
             // If there are multiple URIs, then the results must be returned under the corresponding $model_instance_id for "mutableonmodel", and $url for "mutableonrequest"
             list($has_extra_routes, $model_instance_id, $current_uri) = $this->listExtraRouteVars();
-            if ($dataoutputmode == DataOutputModes::SPLITBYSOURCES) {
+            if ($dataoutputmode === DataOutputModes::SPLITBYSOURCES) {
                 /** @phpstan-ignore-next-line */
                 if ($immutable_componentdata) {
                     $ret['componentdata']['immutable'] = $immutable_componentdata;
@@ -1326,7 +1343,7 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
                         $ret['datasetcomponentmeta']['mutableonrequest'] = $has_extra_routes ? array($current_uri => $mutableonrequest_datasetcomponentmeta) : $mutableonrequest_datasetcomponentmeta;
                     }
                 }
-            } elseif ($dataoutputmode == DataOutputModes::COMBINED) {
+            } elseif ($dataoutputmode === DataOutputModes::COMBINED) {
                 // If everything is combined, then it belongs under "mutableonrequest"
                 if ($combined_componentdata = \array_merge_recursive($immutable_componentdata, $mutableonmodel_componentdata, $mutableonrequest_componentdata)) {
                     $ret['componentdata'] = $has_extra_routes ? array($current_uri => $combined_componentdata) : $combined_componentdata;
@@ -1706,11 +1723,11 @@ class Engine implements \PoP\ComponentModel\Engine\EngineInterface
         }
         $dboutputmode = App::getState('dboutputmode');
         // Combine all the databases or send them separate
-        if ($dboutputmode == DatabasesOutputModes::SPLITBYDATABASES) {
+        if ($dboutputmode === DatabasesOutputModes::SPLITBYDATABASES) {
             $ret[$name] = $entries;
             return;
         }
-        if ($dboutputmode == DatabasesOutputModes::COMBINED) {
+        if ($dboutputmode === DatabasesOutputModes::COMBINED) {
             // Filter to make sure there are entries
             if ($entries = \array_filter($entries)) {
                 /** @var array<string,array<string|int,SplObjectStorage<FieldInterface,mixed>>> */

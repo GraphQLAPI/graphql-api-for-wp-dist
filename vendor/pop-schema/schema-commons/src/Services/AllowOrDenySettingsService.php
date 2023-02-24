@@ -20,6 +20,8 @@ class AllowOrDenySettingsService implements \PoPSchema\SchemaCommons\Services\Al
             return $behavior === Behaviors::DENY;
         }
         $matchResults = \array_filter(\array_map(function (string $termOrRegex) use($name) : bool {
+            // Remove whitespaces at either end of the string
+            $termOrRegex = \trim($termOrRegex);
             // Check if it is a regex expression
             if (\strncmp($termOrRegex, '/', \strlen('/')) === 0 && \substr_compare($termOrRegex, '/', -\strlen('/')) === 0 || \strncmp($termOrRegex, '#', \strlen('#')) === 0 && \substr_compare($termOrRegex, '#', -\strlen('#')) === 0) {
                 return \preg_match($termOrRegex, $name) === 1;
@@ -27,7 +29,7 @@ class AllowOrDenySettingsService implements \PoPSchema\SchemaCommons\Services\Al
             // Check it's a full match
             return $termOrRegex === $name;
         }, $entries));
-        if ($behavior == Behaviors::ALLOW && \count($matchResults) === 0 || $behavior == Behaviors::DENY && \count($matchResults) > 0) {
+        if ($behavior === Behaviors::ALLOW && \count($matchResults) === 0 || $behavior === Behaviors::DENY && \count($matchResults) > 0) {
             return \false;
         }
         return \true;

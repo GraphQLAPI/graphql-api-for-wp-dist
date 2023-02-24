@@ -11,7 +11,7 @@ class GraphQLSyntaxService implements \GraphQLByPoP\GraphQLServer\Syntax\GraphQL
      */
     public function isListWrappingType($typeNameOrID) : bool
     {
-        return \substr($typeNameOrID, 0, 1) == '[' && \substr($typeNameOrID, -1) == ']';
+        return \substr($typeNameOrID, 0, 1) === '[' && \substr($typeNameOrID, -1) === ']';
     }
     /**
      * Extract the nested types inside the list
@@ -27,7 +27,7 @@ class GraphQLSyntaxService implements \GraphQLByPoP\GraphQLServer\Syntax\GraphQL
      */
     public function isNonNullWrappingType($typeNameOrID) : bool
     {
-        return \substr($typeNameOrID, -1) == '!';
+        return \substr($typeNameOrID, -1) === '!';
     }
     /**
      * Extract the nested types which are "non null"

@@ -3,11 +3,13 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\HelperServices;
 
-use PoP\Root\App;
 use PoP\ComponentModel\Constants\Params;
 use PoP\ComponentModel\Misc\GeneralUtils;
-use PoP\Root\Services\BasicServiceTrait;
+use PoP\ComponentModel\Module;
+use PoP\ComponentModel\ModuleConfiguration;
 use PoP\Definitions\Constants\Params as DefinitionsParams;
+use PoP\Root\App;
+use PoP\Root\Services\BasicServiceTrait;
 class RequestHelperService implements \PoP\ComponentModel\HelperServices\RequestHelperServiceInterface
 {
     use BasicServiceTrait;
@@ -57,5 +59,27 @@ class RequestHelperService implements \PoP\ComponentModel\HelperServices\Request
          */
         $host = $useHostRequestedByClient ? App::server('HTTP_HOST') : App::server('SERVER_NAME');
         return $protocol . "://" . $host . $port . App::server('REQUEST_URI');
+    }
+    /**
+     * Retrieve the visitor's IP address. If the property name
+     * to query under $_SERVER is not the right one (see below),
+     * it shall return `null`.
+     *
+     * By default it gets the IP from $_SERVER['REMOTE_ADDR'],
+     * and the property name can be configured via the environmen
+     * variable `CLIENT_IP_ADDRESS_SERVER_PROPERTY_NAME`.
+     *
+     * Depending on the environment, some candidates are:
+     *
+     * - 'HTTP_CLIENT_IP'
+     * - 'HTTP_CF_CONNECTING_IP' (for Cloudflare)
+     * - 'HTTP_X_FORWARDED_FOR' (for AWS)
+     */
+    public function getClientIPAddress() : ?string
+    {
+        /** @var ModuleConfiguration */
+        $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
+        $serverPropertyName = $moduleConfiguration->getClientIPAddressServerPropertyName();
+        return App::server($serverPropertyName);
     }
 }

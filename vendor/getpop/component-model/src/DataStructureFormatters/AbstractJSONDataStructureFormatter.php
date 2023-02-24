@@ -3,6 +3,11 @@
 declare (strict_types=1);
 namespace PoP\ComponentModel\DataStructureFormatters;
 
+use PoP\ComponentModel\App;
+use PoP\ComponentModel\Constants\DatabasesOutputModes;
+use PoP\GraphQLParser\Spec\Parser\Ast\FieldInterface;
+use SplObjectStorage;
+use stdClass;
 abstract class AbstractJSONDataStructureFormatter extends \PoP\ComponentModel\DataStructureFormatters\AbstractDataStructureFormatter
 {
     public function getContentType() : string
@@ -15,5 +20,64 @@ abstract class AbstractJSONDataStructureFormatter extends \PoP\ComponentModel\Da
     public function getOutputContent(&$data) : string
     {
         return (string) \json_encode($data);
+    }
+    /**
+     * @return array<string,mixed>
+     * @param array<string,mixed> $data
+     */
+    public function getFormattedData($data) : array
+    {
+        /**
+         * Convert entries from SplObjectStorage to string
+         */
+        if (isset($data['databases'])) {
+            $data['databases'] = $this->getDatabasesOutput($data['databases']);
+        }
+        if (isset($data['unionTypeOutputKeyIDs'])) {
+            $data['unionTypeOutputKeyIDs'] = $this->getDatabasesOutput($data['unionTypeOutputKeyIDs']);
+        }
+        return $data;
+    }
+    /**
+     * @return array<string,mixed>
+     * @param array<string,array<string|int,SplObjectStorage<FieldInterface,mixed>>>|array<string,array<string,array<string|int,SplObjectStorage<FieldInterface,mixed>>>> $databases
+     */
+    protected function getDatabasesOutput($databases) : array
+    {
+        $outputDatabase = [];
+        $dboutputmode = App::getState('dboutputmode');
+        if ($dboutputmode === DatabasesOutputModes::SPLITBYDATABASES) {
+            /**
+             * Notifications can appear under "database" and
+             * "userstatedatabase", showing different fields on each.
+             */
+            foreach ($databases as $databaseName => $database) {
+                $this->addDatabaseOutput($database, $outputDatabase);
+            }
+        } elseif ($dboutputmode === DatabasesOutputModes::COMBINED) {
+            $this->addDatabaseOutput($databases, $outputDatabase);
+        }
+        return $outputDatabase;
+    }
+    /**
+     * The "databases" contains entries of type SplObjectStorage,
+     * so these must be handled separately.
+     *
+     * @param array<string,array<string|int,SplObjectStorage<FieldInterface,mixed>>> $database
+     * @param array<string,array<string|int,stdClass>> $outputDatabase
+     */
+    protected function addDatabaseOutput(&$database, &$outputDatabase) : void
+    {
+        foreach ($database as $dbKey => $dbObjectIDStorage) {
+            foreach ($dbObjectIDStorage as $dbObjectID => $dbObjectStorage) {
+                $outputDatabase[$dbKey][$dbObjectID] = $outputDatabase[$dbKey][$dbObjectID] ?? new stdClass();
+                /** @var FieldInterface $field */
+                foreach ($dbObjectStorage as $field) {
+                    /** @var mixed $field */
+                    $fieldValue = $dbObjectStorage[$field];
+                    $outputDatabase[$dbKey][$dbObjectID]->{$field->getOutputKey()} = $fieldValue;
+                }
+            }
+        }
     }
 }

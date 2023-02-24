@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit4af4ae06f37c47a84e0a066881660869
+class ComposerStaticInit37336bb9adee42ae70e025c4a038ad55
 {
     public static $files = array (
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
@@ -927,6 +927,7 @@ class ComposerStaticInit4af4ae06f37c47a84e0a066881660869
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractSchemaConfigCustomizableConfigurationBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractSchemaConfigCustomizableConfigurationBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractSchemaConfigSchemaAllowAccessToEntriesBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractSchemaConfigSchemaAllowAccessToEntriesBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AbstractSchemaConfigSchemaMetaBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/AbstractSchemaConfigSchemaMetaBlock.php',
+        'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\AllowAccessToEntriesBlockTrait' => __DIR__ . '/../..' . '/src/Services/Blocks/AllowAccessToEntriesBlockTrait.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\BlockInterface' => __DIR__ . '/../..' . '/src/Services/Blocks/BlockInterface.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\CustomEndpointOptionsBlock' => __DIR__ . '/../..' . '/src/Services/Blocks/CustomEndpointOptionsBlock.php',
         'GraphQLAPI\\GraphQLAPI\\Services\\Blocks\\EditorBlockInterface' => __DIR__ . '/../..' . '/src/Services/Blocks/EditorBlockInterface.php',
@@ -1287,12 +1288,15 @@ class ComposerStaticInit4af4ae06f37c47a84e0a066881660869
         'PoPAPI\\API\\Constants\\Params' => __DIR__ . '/..' . '/pop-api/api/src/Constants/Params.php',
         'PoPAPI\\API\\Engine\\RemoveEntryComponentFromOutputEngineTrait' => __DIR__ . '/..' . '/pop-api/api/src/Engine/RemoveEntryComponentFromOutputEngineTrait.php',
         'PoPAPI\\API\\Environment' => __DIR__ . '/..' . '/pop-api/api/src/Environment.php',
+        'PoPAPI\\API\\Facades\\HelperServices\\ApplicationStateFillerServiceFacade' => __DIR__ . '/..' . '/pop-api/api/src/Facades/HelperServices/ApplicationStateFillerServiceFacade.php',
         'PoPAPI\\API\\Facades\\PersistedFragmentManagerFacade' => __DIR__ . '/..' . '/pop-api/api/src/Facades/PersistedFragmentManagerFacade.php',
         'PoPAPI\\API\\Facades\\PersistedQueryManagerFacade' => __DIR__ . '/..' . '/pop-api/api/src/Facades/PersistedQueryManagerFacade.php',
         'PoPAPI\\API\\Facades\\QueryResolution\\QueryASTTransformationServiceFacade' => __DIR__ . '/..' . '/pop-api/api/src/Facades/QueryResolution/QueryASTTransformationServiceFacade.php',
         'PoPAPI\\API\\Facades\\Schema\\SchemaDefinitionServiceFacade' => __DIR__ . '/..' . '/pop-api/api/src/Facades/Schema/SchemaDefinitionServiceFacade.php',
         'PoPAPI\\API\\FeedbackItemProviders\\FeedbackItemProvider' => __DIR__ . '/..' . '/pop-api/api/src/FeedbackItemProviders/FeedbackItemProvider.php',
         'PoPAPI\\API\\FieldResolvers\\ObjectType\\RootObjectTypeFieldResolver' => __DIR__ . '/..' . '/pop-api/api/src/FieldResolvers/ObjectType/RootObjectTypeFieldResolver.php',
+        'PoPAPI\\API\\HelperServices\\ApplicationStateFillerService' => __DIR__ . '/..' . '/pop-api/api/src/HelperServices/ApplicationStateFillerService.php',
+        'PoPAPI\\API\\HelperServices\\ApplicationStateFillerServiceInterface' => __DIR__ . '/..' . '/pop-api/api/src/HelperServices/ApplicationStateFillerServiceInterface.php',
         'PoPAPI\\API\\Hooks\\DBEntriesHookSet' => __DIR__ . '/..' . '/pop-api/api/src/Hooks/DBEntriesHookSet.php',
         'PoPAPI\\API\\Hooks\\RoutingHookSet' => __DIR__ . '/..' . '/pop-api/api/src/Hooks/RoutingHookSet.php',
         'PoPAPI\\API\\Hooks\\VarsHookSet' => __DIR__ . '/..' . '/pop-api/api/src/Hooks/VarsHookSet.php',
@@ -3946,9 +3950,9 @@ class ComposerStaticInit4af4ae06f37c47a84e0a066881660869
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit4af4ae06f37c47a84e0a066881660869::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit4af4ae06f37c47a84e0a066881660869::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit4af4ae06f37c47a84e0a066881660869::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit37336bb9adee42ae70e025c4a038ad55::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit37336bb9adee42ae70e025c4a038ad55::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit37336bb9adee42ae70e025c4a038ad55::$classMap;
 
         }, null, ClassLoader::class);
     }

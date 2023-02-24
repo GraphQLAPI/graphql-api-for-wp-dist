@@ -102,4 +102,13 @@ class ModuleConfiguration extends AbstractModuleConfiguration
 
         return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue, $callback);
     }
+
+    public function enableSettingClientIPAddressServerPropertyName(): bool
+    {
+        $envVariable = Environment::ENABLE_SETTING_CLIENT_IP_ADDRESS_SERVER_PROPERTY_NAME;
+        $defaultValue = false;
+        $callback = \Closure::fromCallable([EnvironmentValueHelpers::class, 'toBool']);
+
+        return $this->retrieveConfigurationValueOrUseDefault($envVariable, $defaultValue, $callback);
+    }
 }

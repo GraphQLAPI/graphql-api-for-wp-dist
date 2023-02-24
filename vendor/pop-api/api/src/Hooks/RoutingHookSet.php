@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace PoPAPI\API\Hooks;
 
+use PoP\ComponentModel\Engine\Engine;
 use PoPAPI\API\Response\Schemes as APISchemes;
 use PoP\Root\App;
 use PoP\Root\Hooks\AbstractHookSet;
@@ -10,7 +11,7 @@ class RoutingHookSet extends AbstractHookSet
 {
     protected function init() : void
     {
-        App::addFilter('\\PoP\\ComponentModel\\Engine:getExtraRoutes', \Closure::fromCallable([$this, 'getExtraRoutes']), 10, 1);
+        App::addFilter(Engine::HOOK_EXTRA_ROUTES, \Closure::fromCallable([$this, 'getExtraRoutes']), 10, 1);
     }
     /**
      * The API cannot use getExtraRoutes()!!!!!

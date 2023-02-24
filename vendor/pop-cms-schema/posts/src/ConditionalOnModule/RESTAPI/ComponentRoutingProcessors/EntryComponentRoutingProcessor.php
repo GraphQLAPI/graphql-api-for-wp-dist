@@ -36,7 +36,7 @@ class EntryComponentRoutingProcessor extends AbstractCustomPostRESTEntryComponen
         $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
         /** @var ComponentModelModuleConfiguration */
         $componentModelModuleConfiguration = App::getModule(ComponentModelModule::class)->getConfiguration();
-        $routeComponents = array($moduleConfiguration->getPostsRoute() => [FieldDataloadComponentProcessor::class, $componentModelModuleConfiguration->exposeSensitiveDataInSchema() ? FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_ADMINPOSTLIST : FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_POSTLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]]);
+        $routeComponents = array($moduleConfiguration->getPostsRoute() => new Component(FieldDataloadComponentProcessor::class, $componentModelModuleConfiguration->exposeSensitiveDataInSchema() ? FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_ADMINPOSTLIST : FieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_POSTLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]));
         foreach ($routeComponents as $route => $component) {
             $ret[RequestNature::GENERIC][$route][] = ['component' => $component, 'conditions' => ['scheme' => APISchemes::API, 'datastructure' => $restDataStructureFormatter->getName()]];
         }

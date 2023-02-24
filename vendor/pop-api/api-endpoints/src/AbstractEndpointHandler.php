@@ -56,7 +56,7 @@ abstract class AbstractEndpointHandler extends AbstractAutomaticallyInstantiated
         // Compare the formatted requested URI against the endpoint
         $uri = $this->getRequestedURI();
         if ($this->doesEndpointMatchWholeURL()) {
-            return $uri == $this->endpoint;
+            return $uri === $this->endpoint;
         }
         return \PoPAPI\APIEndpoints\EndpointUtils::doesURIEndWith($uri, $this->endpoint);
     }

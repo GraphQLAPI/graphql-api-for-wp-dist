@@ -90,7 +90,7 @@ class ComponentPathHelpers implements \PoP\ComponentModel\ComponentPath\Componen
         // Check that the last character is ".", to avoid toplevel1 to be removed
         $paths = \array_filter($paths, function (string $item) use($paths) : bool {
             foreach ($paths as $path) {
-                if (\strlen($item) > \strlen($path) && \strncmp($item, $path, \strlen($path)) === 0 && $item[\strlen($path)] == ComponentPath::COMPONENT_SEPARATOR) {
+                if (\strlen($item) > \strlen($path) && \strncmp($item, $path, \strlen($path)) === 0 && $item[\strlen($path)] === ComponentPath::COMPONENT_SEPARATOR) {
                     return \false;
                 }
             }

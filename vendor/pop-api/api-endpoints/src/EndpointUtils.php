@@ -36,6 +36,6 @@ class EndpointUtils
      */
     public static function doesURIEndWith($uri, $endpointURI) : bool
     {
-        return \substr($uri, -1 * \strlen($endpointURI)) == $endpointURI;
+        return \substr($uri, -1 * \strlen($endpointURI)) === $endpointURI;
     }
 }

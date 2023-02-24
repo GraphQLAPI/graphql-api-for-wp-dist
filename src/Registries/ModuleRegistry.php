@@ -80,7 +80,7 @@ class ModuleRegistry implements ModuleRegistryInterface
      * @param bool $onlyVisible
      * @param bool $onlyWithVisibleSettings
      */
-    public function getAllModules($onlyEnabled = false, $onlyHasSettings = false, $onlyVisible = true, $onlyWithVisibleSettings = false): array
+    public function getAllModules($onlyEnabled = false, $onlyHasSettings = false, $onlyVisible = false, $onlyWithVisibleSettings = false): array
     {
         $modules = array_keys($this->getModuleResolversByModuleAndPriority());
         if ($onlyEnabled) {
@@ -185,7 +185,7 @@ class ModuleRegistry implements ModuleRegistryInterface
                 function (string $dependedModule): bool {
                     // Check if it has the "inverse" token at the beginning,
                     // then it depends on the module being disabled, not enabled
-                    if (substr($dependedModule, 0, strlen(ModuleRegistryTokens::INVERSE_DEPENDENCY)) == ModuleRegistryTokens::INVERSE_DEPENDENCY) {
+                    if (substr($dependedModule, 0, strlen(ModuleRegistryTokens::INVERSE_DEPENDENCY)) === ModuleRegistryTokens::INVERSE_DEPENDENCY) {
                         // The module is everything after the token
                         $dependedModule = substr($dependedModule, strlen(ModuleRegistryTokens::INVERSE_DEPENDENCY));
                         return !$this->isModuleEnabled($dependedModule);
@@ -242,6 +242,6 @@ class ModuleRegistry implements ModuleRegistryInterface
      */
     public function isInverseDependency($dependedModule): bool
     {
-        return substr($dependedModule, 0, strlen(ModuleRegistryTokens::INVERSE_DEPENDENCY)) == ModuleRegistryTokens::INVERSE_DEPENDENCY;
+        return substr($dependedModule, 0, strlen(ModuleRegistryTokens::INVERSE_DEPENDENCY)) === ModuleRegistryTokens::INVERSE_DEPENDENCY;
     }
 }

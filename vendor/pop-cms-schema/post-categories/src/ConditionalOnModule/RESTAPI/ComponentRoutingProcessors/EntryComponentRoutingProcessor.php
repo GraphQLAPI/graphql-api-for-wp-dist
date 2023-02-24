@@ -58,13 +58,13 @@ GRAPHQL;
         $ret = array();
         /** @var ModuleConfiguration */
         $moduleConfiguration = App::getModule(Module::class)->getConfiguration();
-        $routeComponents = array($moduleConfiguration->getPostCategoriesRoute() => [PostCategoryFieldDataloadComponentProcessor::class, PostCategoryFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_CATEGORYLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]]);
+        $routeComponents = array($moduleConfiguration->getPostCategoriesRoute() => new Component(PostCategoryFieldDataloadComponentProcessor::class, PostCategoryFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_CATEGORYLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]));
         foreach ($routeComponents as $route => $component) {
             $ret[RequestNature::GENERIC][$route][] = ['component' => $component, 'conditions' => ['scheme' => APISchemes::API, 'datastructure' => $restDataStructureFormatter->getName()]];
         }
         /** @var PostsModuleConfiguration */
         $moduleConfiguration = App::getModule(PostsModule::class)->getConfiguration();
-        $routeComponents = array($moduleConfiguration->getPostsRoute() => [CategoryPostFieldDataloadComponentProcessor::class, CategoryPostFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_CATEGORYPOSTLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]]);
+        $routeComponents = array($moduleConfiguration->getPostsRoute() => new Component(CategoryPostFieldDataloadComponentProcessor::class, CategoryPostFieldDataloadComponentProcessor::COMPONENT_DATALOAD_RELATIONALFIELDS_CATEGORYPOSTLIST, ['query' => !empty(App::getState('query')) ? App::getState('query') : $this->getGraphQLQueryToResolveRESTEndpoint()]));
         foreach ($routeComponents as $route => $component) {
             $ret[CategoryRequestNature::CATEGORY][$route][] = ['component' => $component, 'conditions' => ['scheme' => APISchemes::API, 'datastructure' => $restDataStructureFormatter->getName(), 'routing' => ['taxonomy-name' => $postCategoryTypeAPI->getPostCategoryTaxonomyName()]]];
         }

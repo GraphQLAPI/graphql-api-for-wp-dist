@@ -563,13 +563,14 @@ abstract class AbstractRelationalTypeResolver extends \PoP\ComponentModel\TypeRe
         $precedingMandatoryDirectivesForDirectives = [];
         $typeResolverDecorators = $this->getAllRelationalTypeResolverDecorators();
         foreach ($typeResolverDecorators as $typeResolverDecorator) {
+            if (!$typeResolverDecorator->enabled($this)) {
+                continue;
+            }
             /**
              * `array_merge_recursive` so that if 2 different decorators add a directive
              * for the same directive, the results are merged together, not override each other.
              */
-            if ($typeResolverDecorator->enabled($this)) {
-                $precedingMandatoryDirectivesForDirectives = \array_merge_recursive($precedingMandatoryDirectivesForDirectives, $typeResolverDecorator->getPrecedingMandatoryDirectivesForDirectives($this));
-            }
+            $precedingMandatoryDirectivesForDirectives = \array_merge_recursive($precedingMandatoryDirectivesForDirectives, $typeResolverDecorator->getPrecedingMandatoryDirectivesForDirectives($this));
         }
         return $precedingMandatoryDirectivesForDirectives;
     }
@@ -591,13 +592,14 @@ abstract class AbstractRelationalTypeResolver extends \PoP\ComponentModel\TypeRe
         $succeedingMandatoryDirectivesForDirectives = [];
         $typeResolverDecorators = $this->getAllRelationalTypeResolverDecorators();
         foreach ($typeResolverDecorators as $typeResolverDecorator) {
+            if (!$typeResolverDecorator->enabled($this)) {
+                continue;
+            }
             /**
              * `array_merge_recursive` so that if 2 different decorators add a directive
              * for the same directive, the results are merged together, not override each other.
              */
-            if ($typeResolverDecorator->enabled($this)) {
-                $succeedingMandatoryDirectivesForDirectives = \array_merge_recursive($succeedingMandatoryDirectivesForDirectives, $typeResolverDecorator->getSucceedingMandatoryDirectivesForDirectives($this));
-            }
+            $succeedingMandatoryDirectivesForDirectives = \array_merge_recursive($succeedingMandatoryDirectivesForDirectives, $typeResolverDecorator->getSucceedingMandatoryDirectivesForDirectives($this));
         }
         return $succeedingMandatoryDirectivesForDirectives;
     }
@@ -616,15 +618,27 @@ abstract class AbstractRelationalTypeResolver extends \PoP\ComponentModel\TypeRe
      */
     protected function calculateAllRelationalTypeResolverDecorators() : array
     {
+        /**
+         * Order them by object hash, as to return a single instance from each
+         *
+         * @var array<string,RelationalTypeResolverDecoratorInterface>
+         */
         $typeResolverDecorators = [];
         /**
          * Also get the decorators for the implemented interfaces
          */
         $classes = \array_merge([\get_class($this->getTypeResolverToCalculateSchema())], \array_map(\Closure::fromCallable('get_class'), $this->getImplementedInterfaceTypeResolvers()));
         foreach ($classes as $class) {
-            $typeResolverDecorators = \array_merge($typeResolverDecorators, $this->calculateAllRelationalTypeResolverDecoratorsForRelationalTypeOrInterfaceTypeResolverClass($class));
+            $relationalTypeResolverDecorators = $this->calculateAllRelationalTypeResolverDecoratorsForRelationalTypeOrInterfaceTypeResolverClass($class);
+            foreach ($relationalTypeResolverDecorators as $relationalTypeResolverDecorator) {
+                $relationalTypeResolverDecoratorObjectHash = \spl_object_hash($relationalTypeResolverDecorator);
+                if (isset($typeResolverDecorators[$relationalTypeResolverDecoratorObjectHash])) {
+                    continue;
+                }
+                $typeResolverDecorators[$relationalTypeResolverDecoratorObjectHash] = $relationalTypeResolverDecorator;
+            }
         }
-        return $typeResolverDecorators;
+        return \array_values($typeResolverDecorators);
     }
     /**
      * @return RelationalTypeResolverDecoratorInterface[]
@@ -632,6 +646,11 @@ abstract class AbstractRelationalTypeResolver extends \PoP\ComponentModel\TypeRe
      */
     protected function calculateAllRelationalTypeResolverDecoratorsForRelationalTypeOrInterfaceTypeResolverClass($class) : array
     {
+        /**
+         * Order them by object hash, as to return a single instance from each
+         *
+         * @var array<string,RelationalTypeResolverDecoratorInterface>
+         */
         $typeResolverDecorators = [];
         $attachableExtensionManager = $this->getAttachableExtensionManager();
         // Iterate classes from the current class towards the parent classes until finding typeResolver that satisfies processing this field
@@ -644,11 +663,22 @@ abstract class AbstractRelationalTypeResolver extends \PoP\ComponentModel\TypeRe
                 return $typeResolverDecorator->getPriorityToAttachToClasses();
             }, $attachedRelationalTypeResolverDecorators);
             \array_multisort($extensionPriorities, \SORT_DESC, \SORT_NUMERIC, $attachedRelationalTypeResolverDecorators);
-            // Add them to the results
-            $typeResolverDecorators = \array_merge($typeResolverDecorators, $attachedRelationalTypeResolverDecorators);
+            /**
+             * Add them to the results.
+             *
+             * A class and its parent class could be attached the
+             * same decorator, then do array_unique
+             */
+            foreach ($attachedRelationalTypeResolverDecorators as $attachedRelationalTypeResolverDecorator) {
+                $attachedRelationalTypeResolverDecoratorObjectHash = \spl_object_hash($attachedRelationalTypeResolverDecorator);
+                if (isset($typeResolverDecorators[$attachedRelationalTypeResolverDecoratorObjectHash])) {
+                    continue;
+                }
+                $typeResolverDecorators[$attachedRelationalTypeResolverDecoratorObjectHash] = $attachedRelationalTypeResolverDecorator;
+            }
             // Continue iterating for the class parents
         } while ($class = \get_parent_class($class));
-        return $typeResolverDecorators;
+        return \array_values($typeResolverDecorators);
     }
     /**
      * Execute a hook to allow to disable directives (eg: to implement a private schema)

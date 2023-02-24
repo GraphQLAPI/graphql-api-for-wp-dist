@@ -225,7 +225,7 @@ class ComponentFilterManager implements \PoP\ComponentModel\ComponentFiltering\C
                 $component_propagation_current_path = $this->getComponentPathManager()->getPropagationCurrentPath();
                 $component_propagation_current_path[] = $component;
                 // If the current component was set as the one not excluded, then reset it
-                if ($this->not_excluded_ancestor_component == $this->getComponentPathHelpers()->stringifyComponentPath($component_propagation_current_path)) {
+                if ($this->not_excluded_ancestor_component === $this->getComponentPathHelpers()->stringifyComponentPath($component_propagation_current_path)) {
                     $this->not_excluded_ancestor_component = null;
                 }
             }

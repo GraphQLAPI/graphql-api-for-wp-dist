@@ -73,7 +73,7 @@ abstract class AbstractReflectionPropertyObjectTypeFieldResolver extends \PoP\Co
                 continue;
             }
             // If the line is empty or starts with a @, then it's a param, we reached the end of the description
-            if (\substr($docCommentLines[$count], 0, 1) == '@') {
+            if (\substr($docCommentLines[$count], 0, 1) === '@') {
                 break;
             }
             // The line is added to the description

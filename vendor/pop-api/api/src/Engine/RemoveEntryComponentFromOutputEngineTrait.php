@@ -18,7 +18,7 @@ trait RemoveEntryComponentFromOutputEngineTrait
     {
         $data = parent::getEncodedDataObject($data);
         // For the API: maybe remove the entry component from the output
-        if (App::getModule(APIModule::class)->isEnabled() && App::getState('scheme') === APISchemes::API && \in_array(Actions::REMOVE_ENTRYCOMPONENT_FROM_OUTPUT, App::getState('actions')) && App::getState('dataoutputmode') == DataOutputModes::COMBINED) {
+        if (App::getModule(APIModule::class)->isEnabled() && App::getState('scheme') === APISchemes::API && \in_array(Actions::REMOVE_ENTRYCOMPONENT_FROM_OUTPUT, App::getState('actions')) && App::getState('dataoutputmode') === DataOutputModes::COMBINED) {
             if ($data['datasetcomponentsettings'] ?? null) {
                 $data['datasetcomponentsettings'] = $this->removeEntryComponentFromOutput($data['datasetcomponentsettings']);
             }

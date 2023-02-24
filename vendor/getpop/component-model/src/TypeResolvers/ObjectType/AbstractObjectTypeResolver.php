@@ -236,7 +236,8 @@ abstract class AbstractObjectTypeResolver extends AbstractRelationalTypeResolver
              * add a directive for the same field, the results are merged
              * together, not override each other.
              */
-            $mandatoryDirectivesForFields = \array_merge_recursive($mandatoryDirectivesForFields, $typeResolverDecorator->getMandatoryDirectivesForFields($this));
+            $objectTypeResolverMandatoryDirectivesForFields = $typeResolverDecorator->getMandatoryDirectivesForFields($this);
+            $mandatoryDirectivesForFields = \array_merge_recursive($mandatoryDirectivesForFields, $objectTypeResolverMandatoryDirectivesForFields);
         }
         return $mandatoryDirectivesForFields;
     }

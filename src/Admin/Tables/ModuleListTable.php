@@ -47,7 +47,7 @@ class ModuleListTable extends AbstractItemListTable
         $items = [];
         $moduleRegistry = ModuleRegistryFacade::getInstance();
         $moduleTypeRegistry = ModuleTypeRegistryFacade::getInstance();
-        $modules = $moduleRegistry->getAllModules();
+        $modules = $moduleRegistry->getAllModules(false, false, true);
         $currentView = $this->getCurrentView();
         foreach ($modules as $module) {
             $moduleResolver = $moduleRegistry->getModuleResolver($module);
@@ -55,7 +55,7 @@ class ModuleListTable extends AbstractItemListTable
             $moduleTypeResolver = $moduleTypeRegistry->getModuleTypeResolver($moduleType);
             $moduleTypeSlug = $moduleTypeResolver->getSlug($moduleType);
             // If filtering the view, only add the items with that module type
-            if (!$currentView || $currentView == $moduleTypeSlug) {
+            if (!$currentView || $currentView === $moduleTypeSlug) {
                 $isEnabled = $moduleRegistry->isModuleEnabled($module);
                 $items[] = [
                     'module' => $module,
@@ -107,14 +107,14 @@ class ModuleListTable extends AbstractItemListTable
         $views['all'] = sprintf(
             '<a href="%s" class="%s">%s</a>',
             $url,
-            $currentView == '' ? 'current' : '',
+            $currentView === '' ? 'current' : '',
             \__('All', 'graphql-api')
         );
 
         // Entries for every module type: retrieve the moduleType from all modules
         $moduleRegistry = ModuleRegistryFacade::getInstance();
         $moduleTypeRegistry = ModuleTypeRegistryFacade::getInstance();
-        $modules = $moduleRegistry->getAllModules();
+        $modules = $moduleRegistry->getAllModules(false, false, true);
         $moduleTypes = [];
         foreach ($modules as $module) {
             $moduleResolver = $moduleRegistry->getModuleResolver($module);
@@ -127,7 +127,7 @@ class ModuleListTable extends AbstractItemListTable
             $views[$moduleTypeSlug] = sprintf(
                 '<a href="%s" class="%s">%s</a>',
                 \add_query_arg(self::URL_PARAM_MODULE_TYPE, $moduleTypeSlug, $url),
-                'module-type-view module-type-' . $moduleTypeSlug . ($currentView == $moduleTypeSlug ? ' current' : ''),
+                'module-type-view module-type-' . $moduleTypeSlug . ($currentView === $moduleTypeSlug ? ' current' : ''),
                 $moduleTypeResolver->getName($moduleType)
             );
         }

@@ -15,6 +15,7 @@ use PoPCMSSchema\UserStateMutations\MutationResolvers\ValidateUserLoggedInMutati
 use PoPCMSSchema\Users\TypeAPIs\UserTypeAPIInterface;
 use PoP\ComponentModel\Feedback\ObjectTypeFieldResolutionFeedback;
 use PoP\ComponentModel\Feedback\ObjectTypeFieldResolutionFeedbackStore;
+use PoP\ComponentModel\HelperServices\RequestHelperServiceInterface;
 use PoP\ComponentModel\MutationResolvers\AbstractMutationResolver;
 use PoP\ComponentModel\QueryResolution\FieldDataAccessorInterface;
 use PoP\Root\App;
@@ -42,6 +43,10 @@ class AddCommentToCustomPostMutationResolver extends AbstractMutationResolver
      * @var \PoPCMSSchema\CustomPosts\TypeAPIs\CustomPostTypeAPIInterface|null
      */
     private $customPostTypeAPI;
+    /**
+     * @var \PoP\ComponentModel\HelperServices\RequestHelperServiceInterface|null
+     */
+    private $requestHelperService;
     /**
      * @param \PoPCMSSchema\Comments\TypeAPIs\CommentTypeAPIInterface $commentTypeAPI
      */
@@ -89,6 +94,18 @@ class AddCommentToCustomPostMutationResolver extends AbstractMutationResolver
     {
         /** @var CustomPostTypeAPIInterface */
         return $this->customPostTypeAPI = $this->customPostTypeAPI ?? $this->instanceManager->getInstance(CustomPostTypeAPIInterface::class);
+    }
+    /**
+     * @param \PoP\ComponentModel\HelperServices\RequestHelperServiceInterface $requestHelperService
+     */
+    public final function setRequestHelperService($requestHelperService) : void
+    {
+        $this->requestHelperService = $requestHelperService;
+    }
+    protected final function getRequestHelperService() : RequestHelperServiceInterface
+    {
+        /** @var RequestHelperServiceInterface */
+        return $this->requestHelperService = $this->requestHelperService ?? $this->instanceManager->getInstance(RequestHelperServiceInterface::class);
     }
     /**
      * @param \PoP\ComponentModel\QueryResolution\FieldDataAccessorInterface $fieldDataAccessor
@@ -164,7 +181,7 @@ class AddCommentToCustomPostMutationResolver extends AbstractMutationResolver
      */
     protected function getCommentData($fieldDataAccessor) : array
     {
-        $comment_data = ['authorIP' => App::server('REMOTE_ADDR'), 'agent' => App::server('HTTP_USER_AGENT'), 'content' => $fieldDataAccessor->getValue(MutationInputProperties::COMMENT), 'parent' => $fieldDataAccessor->getValue(MutationInputProperties::PARENT_COMMENT_ID), 'customPostID' => $fieldDataAccessor->getValue(MutationInputProperties::CUSTOMPOST_ID)];
+        $comment_data = ['authorIP' => $this->getRequestHelperService()->getClientIPAddress(), 'agent' => App::server('HTTP_USER_AGENT'), 'content' => $fieldDataAccessor->getValue(MutationInputProperties::COMMENT), 'parent' => $fieldDataAccessor->getValue(MutationInputProperties::PARENT_COMMENT_ID), 'customPostID' => $fieldDataAccessor->getValue(MutationInputProperties::CUSTOMPOST_ID)];
         /**
          * Override with the user's properties
          */
